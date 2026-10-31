@@ -7,6 +7,7 @@
 //!   gguf-qnn v4 STAR_DIR CLOUD_DIR YM_Z3_RESULTS OUT_DIR [Z3_LAYERS] [SWEEPS]
 //!   gguf-qnn v5 STAR_DIR CLOUD_DIR YM_Z3_RESULTS OUT_DIR [Z3_LAYERS] [SWEEPS]
 //!   gguf-qnn v6 STAR_DIR CLOUD_DIR YM_Z3_RESULTS V5_RESULTS OUT_DIR [Z3_LAYERS] [SWEEPS]
+//!   gguf-qnn v7 STAR_DIR YM_Z3_RESULTS V6_RESULTS OUT_DIR [SWEEPS]
 //!   gguf-qnn v2 STAR_DIR CLOUD_DIR YM_Z3_RESULTS OUT_DIR [CIRCLE_LAYERS] [Z3_LAYERS] [SWEEPS]
 #![forbid(unsafe_code)]
 #![deny(clippy::float_arithmetic)]
@@ -28,6 +29,7 @@ mod v3_run;
 mod v4_run;
 mod v5_run;
 mod v6_run;
+mod v7_run;
 mod ym_run;
 
 const STARS: [&str; 3] = ["ACER-OPUS-RED", "ACER-FABLE-GREEN", "ACER-MYTHOS-BLUE"];
@@ -457,6 +459,16 @@ fn main() {
             let layers = a.get(4).and_then(|v| v.parse().ok()).unwrap_or(3);
             let sweeps = a.get(5).and_then(|v| v.parse().ok()).unwrap_or(4);
             cmd_train(Path::new(&a[2]), Path::new(&a[3]), layers, sweeps);
+        }
+        Some("v7") if a.len() >= 6 => {
+            let sw = a.get(6).and_then(|v| v.parse().ok()).unwrap_or(6);
+            v7_run::run(
+                Path::new(&a[2]),
+                Path::new(&a[3]),
+                Path::new(&a[4]),
+                Path::new(&a[5]),
+                sw,
+            );
         }
         Some("v6") if a.len() >= 7 => {
             let zl = a.get(7).and_then(|v| v.parse().ok()).unwrap_or(1);

@@ -196,4 +196,11 @@ impl Big {
         }
         out
     }
+    /// number of significant bits of |x|; 0 for zero
+    pub fn bits(&self) -> usize {
+        match self.mag.last() {
+            None => 0,
+            Some(&top) => 32 * (self.mag.len() - 1) + (32 - top.leading_zeros() as usize),
+        }
+    }
 }
