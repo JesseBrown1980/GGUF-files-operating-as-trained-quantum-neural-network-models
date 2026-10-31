@@ -5,6 +5,7 @@
 pub mod bigint;
 pub mod cyclo;
 pub mod eisenstein;
+pub mod gfix;
 pub mod gguf_model;
 pub mod gguf_read;
 pub mod hbp;
@@ -17,6 +18,7 @@ pub mod sha256;
 pub mod task;
 pub mod torus;
 pub mod train;
+pub mod v10;
 pub mod v2;
 pub mod v4;
 pub mod v5;

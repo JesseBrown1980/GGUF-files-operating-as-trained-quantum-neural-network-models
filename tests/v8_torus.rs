@@ -128,3 +128,31 @@ fn v9_plaquette_layer_identity_and_exact_inverse() {
         o.v.iter().map(|x| x.mul(&dd).mul(&dd)).collect::<Vec<_>>()
     );
 }
+
+#[test]
+fn gauge_fixed_basis_matches_the_orbit_basis_on_3x2() {
+    use gguf_qnn::bigint::Big;
+    use gguf_qnn::gfix::GaugeFixed;
+    let gf = GaugeFixed::new(3, 2);
+    assert_eq!(gf.free.len(), 7);
+    let t = Torus::new(3, 2);
+    // a v8-style state, its orbit sums as gauge-fixed amplitudes: same exact energy
+    let params: Vec<i64> = (0..PARAMS)
+        .map(|i| if i % 16 == 5 || i % 16 == 13 { 1 } else { 0 })
+        .collect();
+    let mut s = StateR::zero_state(LINKS);
+    NetT { params }.forward(&mut s);
+    let mut x = vec![Big::zero(); gf.dim];
+    for (c, z) in s.v.iter().enumerate() {
+        if !z.is_zero() {
+            let f = gf.fix(&t.digits(c));
+            x[f] = x[f].add(z);
+        }
+    }
+    let (a, b) = t.energy_exact(&s.v, 9).expect("p");
+    let (c, d) = gf.energy_exact(&x, 9).expect("p");
+    assert_eq!(a.mul(&d), c.mul(&b));
+    let (_, k, adj) = gf.block_matrix();
+    assert!(adj);
+    println!("BLOCK3x2|classes={k}");
+}
