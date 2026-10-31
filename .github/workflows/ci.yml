@@ -16,7 +16,7 @@ jobs:
       - name: clippy
         run: cargo clippy --release --all-targets -- -D warnings
       - name: star inputs
-        run: cd data/stars && sha256sum -c SHA256SUMS
+        run: sha256sum -c data/stars/SHA256SUMS
       - name: tests
         run: cargo test --release
       - name: training reproduces the committed models and receipts
