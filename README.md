@@ -454,7 +454,71 @@ cargo run --release -- v6 data/stars data/cloud results-ym-z3 results-v5 out 1 8
 cd out && sha256sum -c ../results-v6/SHA256SUMS
 ```
 
-## 10. Reproduce
+## 10. Version 7: a correlated second layer and the pixel backend
+
+Version 7 ([`PREREG-V7.hbp`](PREREG-V7.hbp), sealed at `9527555` before any v7 code was
+compiled or run) keeps the v6 layer and adds a second one.
+- **Layer 2:** a SUM ring, R₀₁(b) and R₀₂(b′) on every link, then the inverse ring. A
+  rotation in the ring frame acts on sums of neighbouring link values, so it correlates
+  links. With its trits at zero it is exactly the identity. 256 trits in all.
+- **Seeds:** IDENTITY; WARM, the sealed v6 IDENTITY models with layer 2 at zero (checked
+  equal to the v6 energy as a fraction); and STAR.
+- **The pixel backend.** The 6,561 link configurations are an 81 × 81 framebuffer
+  (x = links 0–3, y = links 4–7) with 64 u32 channels, one per prime below 2³¹. Every gate
+  is a per-pixel gather, a pixel reading its own taps and writing only itself, and the
+  gauge projection is an 81-tap gather. The energy leaves the framebuffer as residues and
+  Garner's method lifts it back to exact integers, which must equal the big-integer energy
+  digit for digit. This workspace has no GPU, so the passes run on the CPU, written the way
+  a fragment shader runs them.
+- **Frames:** [`results-v7/frames/`](results-v7/frames/) holds a PNG of the exact state
+  after every pass of the best r = 9 model (40 passes, red positive, blue negative,
+  brightness by bit length), and the final and gauge-projected states at every coupling.
+
+Seal: [`SEAL-V7.hbp`](SEAL-V7.hbp). Receipts: [`results-v7/`](results-v7/), 9 GGUF models,
+44 PNG frames, `V7.hbp`, `INDEX.hbi`, `SHA256SUMS`. A fresh clone at `43a71e6` rebuilt the
+same binary (sha256 `cb886835…`) and reproduced all 56 files byte for byte, every frame
+included. One run takes about 12 minutes. The first code commit, `0677593`, compiled a
+generic circuit into the binary crate, which embedded the build path and made the two builds
+differ. `43a71e6` compiles the circuit once in the library; nothing ran before it.
+
+| Claim | Result |
+|---|---|
+| T5 (primary): best Z₃ energy at r = 9 in [15.378, 15.381] | **PASS**, 15.381 |
+| U1, U2: exact norm and exact inverse | PASS |
+| U3: IDENTITY starts at exactly 16 | PASS |
+| U4: WARM starts at exactly the v6 energy | PASS |
+| U5: T5 holds | PASS |
+| U6: best r = 27 ≤ 15.800 and best r = 81 ≤ 15.933 | PASS, 15.799 and 15.933 |
+| U7: every energy ≥ the certified E₀ | PASS |
+| U8: the pixel backend equals the exact energy | PASS, 9 of 9 models |
+| U9: STAR stays above 16 | PASS |
+| U10: all 9 models reload to their headers | PASS |
+| U11: independent replay byte-identical, frames included | PASS |
+
+| r | v7 best | v6 best | Certified E₀ |
+|---|---|---|---|
+| 9 | **15.381** | 15.382 | [15.378, 15.379) |
+| 27 | **15.799** | 15.800 | [15.799, 15.800), the same thousandth |
+| 81 | **15.933** | 15.933 | [15.933, 15.934), the same thousandth |
+
+**What version 7 reached.**
+- **Correlations help.** At r = 9 the trained IDENTITY model uses one correlated rotation
+  in layer 2, on link 1 with b = 12, 13, and reaches 15.381, three thousandths above E₀. At
+  r = 27 it uses b = 1, 1 and lands in the same thousandth as E₀. At r = 81 layer 2 stays
+  off.
+- **Joint training, not a warm start.** WARM did not move: no single trit of layer 2,
+  starting from zero, lowers the v6 optimum. The gain came only when both layers were
+  trained together from IDENTITY.
+- **The ground state is positive.** The gauge-projected r = 9 state is positive on all
+  6,561 configurations, as the Perron–Frobenius theorem requires for this Hamiltonian.
+
+Reproduce:
+```sh
+cargo run --release -- v7 data/stars results-ym-z3 results-v6 out 6
+cd out && sha256sum -c ../results-v7/SHA256SUMS
+```
+
+## 11. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -481,6 +545,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v7/`, `SEAL-V7.hbp`, `PREREG-V7.hbp` | version 7: 9 GGUF models, 44 PNG frames, `V7.hbp`, index, checksums; seal; predictions |
 | `results-v6/`, `SEAL-V6.hbp`, `PREREG-V6.hbp` | version 6: 15 GGUF models, `V6.hbp`, index, checksums; seal; predictions |
 | `results-v5/`, `SEAL-V5.hbp`, `PREREG-V5.hbp`, `examples/v4_diag.*` | version 5: 15 GGUF models, `V5.hbp`, index, checksums; seal; predictions; the v4 diagnostic that shaped it |
 | `results-v4/`, `SEAL-V4.hbp`, `PREREG-V4.hbp` | version 4: 12 GGUF models, `V4.hbp`, index, checksums; seal; predictions |
