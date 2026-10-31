@@ -1,0 +1,16 @@
+PREREG|experiment=ym-z3-qutrit-model-on-the-Z3-sector-of-S3-gauge-theory|sealed_before=ym_code_written|operator=OP-JESSE|json=0
+DESIGN|theory=Z3_lattice_gauge_theory_the_rotation_subgroup_of_S3|lattice=2x2_periodic_torus|links=8_qutrits_g_in_Z3|json=0
+DESIGN|plaquette=h_p=g_x(s)+g_y(s+x)-g_x(s+y)-g_y(s)_mod_3|json=0
+DESIGN|hamiltonian=H=J_E*E+J_B*M|E=sum_links(2-X-X^dagger)_eigenvalues_0_and_3|M=sum_p(2-chi_std(r^h_p))=3*[h_p_ne_0]|r=J_B/J_E|json=0
+DESIGN|physical_space=gauss_law_gauge_invariant_states|basis=uniform_superposition_over_each_gauge_orbit|json=0
+DESIGN|certifier=HEB-C_sturmfast_interval_sturm_inertia_integer_only|counts=eigenvalues_below_threshold_in_milli_J_E|couplings=r_9_27_81|json=0
+DESIGN|model=v1_qutrit_network_on_8_qutrits_trit_parameters_trained_by_coordinate_descent_to_minimise_exact_projected_energy|stored_as=GGUF_v3|json=0
+DESIGN|energy=num_over_den_exact_rational_of_the_gauge_projected_trial_state|json=0
+PREDICT|id=Z1|claim=physical_dimension_243_every_gauge_orbit_size_27|basis=claude|json=0
+PREDICT|id=Z2|claim=count_below_16+3r_equals_9_at_r_9_27_81|reason=nine_flat_Z3_vacua_holonomy_pairs|basis=claude|json=0
+PREDICT|id=Z3|claim=count_below_16+6r-12_equals_9_at_r_9_27_81|reason=on_a_torus_the_Z3_fluxes_sum_to_zero_so_no_single_plaquette_excitation|basis=claude|json=0
+PREDICT|id=Z4|claim=count_below_16+6r_ge_10_at_r_9_27_81|reason=the_first_excitation_is_two_plaquettes_at_6r|basis=claude|json=0
+PREDICT|id=Z5|claim=count_below_15_equals_0_and_count_below_16_equals_9_at_r_9_27_81|reason=second_order_shift_about_minus_16_over_6r|basis=claude|json=0
+PREDICT|id=Z6|claim=the_trained_stabilizer_model_energy_is_exactly_16_at_r_9_27_81_and_above_the_certified_E0|basis=claude|json=0
+PREDICT|id=C1|claim=Z3_leading_gap_is_6r_against_the_S3_leading_gap_3r_certified_in_HEB-C|reason=abelian_flux_conservation|basis=claude|json=0
+NOTE|hebc_serve=its_job_kinds_admit_only_S3_sector_matrices_so_this_Z3_run_uses_its_sturmfast_certifier_directly|S3_run_through_hebc_serve=phase_2_after_the_qutrit_T_gate|json=0
