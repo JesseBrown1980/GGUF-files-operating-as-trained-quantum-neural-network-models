@@ -84,7 +84,79 @@ diag(1, ζ, ζ⁸) with ζ = e^{2πi/9}, keeps the arithmetic exact and integer.
 `gguf-qnn infer results/star-virtual.gguf 13 13` prints each branch's exact
 P(0), P(1), P(2) = 129,140,163 / 3¹⁸ = 1/3, then score 0 and class 0.
 
-## 4. Reproduce
+## 4. Yang–Mills: the qutrit model on the Z₃ sector of S₃ gauge theory
+
+Z₃ is the rotation subgroup of S₃. Its 3-cycle plaquettes are the excitations behind
+the leading 3·J_B gap of the HEB-C S₃ certificates.
+
+- **Lattice:** a 2 × 2 periodic torus with 8 links. Each link is a qutrit g ∈ Z₃.
+- **Plaquettes:** h_p = g_x(s) + g_y(s + x̂) − g_x(s + ŷ) − g_y(s) mod 3.
+- **Hamiltonian:** H = J_E·E + J_B·M, where E = Σ_links (2 − X − X†), M = Σ_p 3·[h_p ≠ 0] and r = J_B/J_E.
+- **Physical states:** the Gauss-law sector, spanned by uniform superpositions over gauge orbits ([`src/ym_z3.rs`](src/ym_z3.rs)).
+
+The physical Hamiltonian is written in the matrix format of HEB-C's `sturmfast`
+certifier. Its levels are bracketed by exact interval Sturm counts: 185 calls,
+none ambiguous. The qutrit model is trained on the exact gauge-projected energy
+and stored as GGUF files.
+
+Predictions: [`PREREG-YM-Z3.hbp`](PREREG-YM-Z3.hbp) (commit `71ba280`, unchanged).
+Code: commit `a6d71e0`. Receipts: [`results-ym-z3/`](results-ym-z3/). Seal, provenance
+and replay: [`SEAL-YM-Z3.hbp`](SEAL-YM-Z3.hbp).
+
+### Certified levels (J_E = 1)
+
+| r | E₀ | E₈ | E₉ | E₉ − E₈ | E₉ − E₈ − 6r |
+|---|---|---|---|---|---|
+| 9 | [15.378, 15.379) | [15.854, 15.855) | [61.833, 61.834) | (45.978, 45.980) | (−8.022, −8.020) |
+| 27 | [15.799, 15.800) | [15.950, 15.951) | [170.742, 170.743) | (154.791, 154.793) | (−7.209, −7.207) |
+| 81 | [15.933, 15.934) | [15.983, 15.984) | [495.081, 495.082) | (479.097, 479.099) | (−6.903, −6.901) |
+
+### Verdicts
+
+| ID | Prediction | Result |
+|---|---|---|
+| Z1 | 243 physical states, every gauge orbit of size 27 | **PASS** |
+| Z2 | exactly 9 levels below 16 + 3r | **PASS** at r = 9, 27, 81 |
+| Z3 | exactly 9 levels below 16 + 6r − 12 | **PASS** |
+| Z4 | at least 10 levels below 16 + 6r | **PASS** (68 at each r) |
+| Z5 | none below 15, exactly 9 below 16 | **PASS** |
+| Z6 | the trained qutrit model reaches energy exactly 16, above the certified E₀ | **FAIL**: 48 and 64 at r = 9, 120 and 228 at r = 27, 336 and 662 at r = 81 (all above E₀) |
+| C1 | the Z₃ leading gap is 6r, against S₃'s 3r | **supported at three couplings, not proven**: (E₉ − E₈)/r ≥ 5.108, 5.733, 5.914 |
+
+**Results.**
+- **Ground cluster:** the nine flat Z₃ vacua (holonomy pairs in Z₃²) form the
+  ground cluster at every coupling, all below 16.
+- **The gap:** the first excitation sits near 16 + 6r, not 16 + 3r. On a torus the
+  Z₃ fluxes sum to zero mod 3, so the lightest excitation carries flux on two
+  plaquettes, not one.
+- **The model:** the Clifford model's best energies are far above the certified
+  ground energy. The reference state |0…0⟩, projected onto the trivial flat
+  orbit, has energy exactly 16. So 16 is the stabilizer value the v1 ansatz did not
+  reach. This is the baseline version 2 must improve on.
+
+**Replay.**
+- **Two runs:** run A (this working copy) and run B (a fresh clone at `a6d71e0`,
+  built separately) used the identical binary (sha256 `21ad3ad2…`).
+- **Identical output:** all 10 files are byte-identical, including the matrix, the
+  six GGUF models, the HBP and HBI receipts, the checksum manifest and the console
+  log.
+- **Certifier:** `sturmfast` sha256 `bf2455f5…`, built from HEB-C commit `5243e82`.
+
+**Erratum E1.** In `YM-Z3.hbp`, the `gap_minus_6r_in` field of the CERTIFIED rows
+formats negative milli-values incorrectly: it prints −9.978 for −8.022. The
+receipts are kept as produced. The correct values, recomputed from the certified
+E₈ and E₉ brackets in the same rows, are in the table above and in `SEAL-YM-Z3.hbp`.
+No certified bracket and no verdict is affected.
+
+Reproduce: build HEB-C's `sturmfast` (`native/ym`, `cargo build --release --bin
+sturmfast`), then:
+
+```sh
+cargo run --release -- ym-z3 PATH/TO/sturmfast data/stars out 2
+cd out && sha256sum -c ../results-ym-z3/SHA256SUMS
+```
+
+## 5. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -111,6 +183,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-ym-z3/`, `SEAL-YM-Z3.hbp` | the Z₃ Yang–Mills receipts: the matrix, 6 trained GGUF models, `YM-Z3.hbp`, index, checksums; the seal with provenance, replay and erratum |
 | `results/` | 8 trained GGUF models (6 branches, 2 virtual), `RESULT.hbp`, `INDEX.hbi`, `SHA256SUMS` |
 
 Operator: Jesse Daniel Brown.

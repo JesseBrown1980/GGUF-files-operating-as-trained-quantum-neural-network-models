@@ -1,0 +1,16 @@
+SEAL|experiment=ym-z3|prereg=PREREG-YM-Z3.hbp|prereg_sha256=3a262ae3469618728381e956e89805df154b278e73a57a21ac5982f1ebae8c92|prereg_commit=71ba280|prereg_unchanged=1|json=0
+CODE|commit=a6d71e07a6eeb3b9221b193f1aa30bf437b9181a|toolchain=rust_1.81.0|gguf_qnn_binary_sha256=21ad3ad24533176ba01554fe5ca0fd1db82e089f5871e0ac3124108e269a0847|json=0
+CERTIFIER|tool=sturmfast|source=Finite-universe-Yang-mills-existence-and-mass-gap-using-HEB-C|source_commit=5243e82|binary_sha256=bf2455f509ad5e2178deafdd7db6e5d5f1d34042f17bd95b299ab8bf5cc4272c|calls=185|every_call_ambiguous=0|json=0
+MATRIX|file=results-ym-z3/z3-2x2.mat|sha256=c38d4d88b4faeedcd87a42024bbd136e10f04b8576f14c1ccc89ffcee31b3a1a|json=0
+RUN|id=A|build=working_copy_at_a6d71e0|out=fresh_directory|exit=0|json=0
+RUN|id=B|build=fresh_clone_checked_out_at_a6d71e0_separate_target_dir|binary_sha256=21ad3ad24533176ba01554fe5ca0fd1db82e089f5871e0ac3124108e269a0847|out=second_fresh_directory|exit=0|json=0
+REPLAY|A_vs_B=byte_identical|files=10|matrix=identical|gguf_models=6_identical|hbp=identical|hbi=identical|sha256sums=identical|console_log=identical|json=0
+QUARANTINE|interrupted_run=moved_out_of_the_repository_not_used|its_only_file=z3-2x2.mat|its_sha256=c38d4d88b4faeedcd87a42024bbd136e10f04b8576f14c1ccc89ffcee31b3a1a|json=0
+VERDICT|id=Z1|claim=physical_dimension_243_every_orbit_size_27|result=PASS|json=0
+VERDICT|id=Z2|claim=count_below_16+3r_equals_9|result=PASS|r9=9|r27=9|r81=9|json=0
+VERDICT|id=Z3|claim=count_below_16+6r-12_equals_9|result=PASS|r9=9|r27=9|r81=9|json=0
+VERDICT|id=Z4|claim=count_below_16+6r_ge_10|result=PASS|r9=68|r27=68|r81=68|json=0
+VERDICT|id=Z5|claim=count_below_15_is_0_and_below_16_is_9|result=PASS|json=0
+VERDICT|id=Z6|claim=trained_model_energy_exactly_16_and_above_certified_E0|result=FAIL|energies_r9=48,64|energies_r27=120,228|energies_r81=336,662|above_certified_E0=all|json=0
+CLAIM|id=C1|claim=Z3_leading_gap_6r_against_S3_leading_gap_3r|result=SUPPORTED_AT_THREE_COUPLINGS_NOT_PROVEN|gap_over_r_permille_lower=5108,5733,5914_at_r_9_27_81|gap_minus_6r_milli=(-8022,-8020),(-7209,-7207),(-6903,-6901)|note=consistent_with_leading_coefficient_6_finite_coupling_only|json=0
+ERRATUM|id=E1|field=gap_minus_6r_in_of_CERTIFIED_rows_in_YM-Z3.hbp|defect=negative_milli_values_formatted_with_euclidean_split|printed=-9.978,-8.791,-7.097|correct=-8.022..-8.020,-7.209..-7.207,-6.903..-6.901|source_of_correct=the_certified_E8_E9_brackets_in_the_same_rows|certified_brackets_affected=0|verdicts_affected=0|receipts_kept_as_produced=1|json=0

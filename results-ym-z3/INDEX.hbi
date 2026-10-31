@@ -1,0 +1,9 @@
+YMZ3INDEX|files=8|json=0
+INDEXROW|row=1|file=z3-2x2.mat|bytes=23107|sha256=c38d4d88b4faeedcd87a42024bbd136e10f04b8576f14c1ccc89ffcee31b3a1a|json=0
+INDEXROW|row=2|file=ym-z3-r9-acer-mythos-blue.gguf|bytes=704|sha256=6e0b639bc777d923d6300bdb93f902de907c31e2550f1fc453d3b22601474db1|json=0
+INDEXROW|row=3|file=ym-z3-r9-sha-seed.gguf|bytes=704|sha256=e29b0a1ee37d223d55a3980c71e3e4b57553dfb18c188738f2a3ca7bc83ade9b|json=0
+INDEXROW|row=4|file=ym-z3-r27-acer-mythos-blue.gguf|bytes=704|sha256=2b75cde9e7c7aa145ee5b5bdee41d1c546730247ed2e3742ea172f426a214fc8|json=0
+INDEXROW|row=5|file=ym-z3-r27-sha-seed.gguf|bytes=704|sha256=5ba1264a1aea399c23b8468e90d58d2e10ad1a9eda246b39768832c88817daae|json=0
+INDEXROW|row=6|file=ym-z3-r81-acer-mythos-blue.gguf|bytes=704|sha256=06a8078fd51ef690ea092165cfe24a0fb709269207bebe77450a97db74fb3a66|json=0
+INDEXROW|row=7|file=ym-z3-r81-sha-seed.gguf|bytes=704|sha256=d68abfbe62dbb79a46aa26241f3ccd9ca7feddabc5bacc601a15e99c26df0948|json=0
+INDEXROW|row=8|file=YM-Z3.hbp|bytes=2404|sha256=1337fff627ecc37af20b7a82c054f2a8fcf1d50d52a1436373e15fb69ba84917|json=0
