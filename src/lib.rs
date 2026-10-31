@@ -18,5 +18,6 @@ pub mod train;
 pub mod v2;
 pub mod v4;
 pub mod v5;
+pub mod v6;
 pub mod virtual_qnn;
 pub mod ym_z3;

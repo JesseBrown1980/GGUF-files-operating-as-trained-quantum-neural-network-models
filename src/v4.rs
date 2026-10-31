@@ -32,11 +32,15 @@ impl StateR {
     }
     /// R_ij(b) on qutrit q: entries a^2-b^2, -2ab, 2ab, a^2-b^2 on levels i, j; a^2+b^2 on the third.
     pub fn rotate(&mut self, q: usize, i: usize, j: usize, b: i128) {
+        self.rotate_a(q, i, j, b, A);
+    }
+    /// R_ij(b) with tan(angle/2) = b/a
+    pub fn rotate_a(&mut self, q: usize, i: usize, j: usize, b: i128, a: i128) {
         if b == 0 {
             return;
         }
         let k = 3 - i - j;
-        let (c, s, d) = (A * A - b * b, 2 * A * b, A * A + b * b);
+        let (c, s, d) = (a * a - b * b, 2 * a * b, a * a + b * b);
         let st = stride(q);
         for base in 0..self.v.len() {
             if (base / st) % 3 != 0 {
