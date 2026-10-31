@@ -1,0 +1,22 @@
+SEAL|experiment=qutrit-vqnn-v2-non-clifford|prereg=PREREG-V2.hbp|prereg_sha256=6aa577bb13fffbc7295ff5e95304c6131b3d2c22ac8a2d9998c6f012a02e039b|prereg_commit=d5834b8|prereg_unchanged=1|json=0
+CODE|commit=334a0668ed6f166e5ee0f115fae3b2569de82ad5|toolchain=rust_1.81.0|binary_sha256=8ae71c096b32e32d81f24343b22db5b4b1ef99bb43f0c633058b512a438977a0|args=circle_layers_3_z3_layers_2_max_sweeps_4|json=0
+INPUTS|stars=data/stars_SHA256SUMS|cloud_star_sha256=73844b0c1e388ceb11fa913b4451badde771d530ef0778fc27c523e5ba9cca32|certified_E0=results-ym-z3/YM-Z3.hbp_sealed_a96842d|json=0
+PILOT|run=one_sweep_before_the_sealed_run|design_changed_after_pilot=0|measurements_changed_after_pilot=0|json=0
+RUN|id=A|build=working_copy_at_334a066|exit=0|json=0
+RUN|id=B|build=fresh_clone_at_334a066_separate_target_dir|binary_sha256=8ae71c096b32e32d81f24343b22db5b4b1ef99bb43f0c633058b512a438977a0|exit=0|json=0
+REPLAY|A_vs_B=byte_identical|files=23|models=21|hbp=identical|hbi=identical|sha256sums=identical|console_log=identical|json=0
+VERDICT|id=W1|claim=exact_norm_3_pow_k|result=PASS|json=0
+VERDICT|id=W2|claim=exact_inverse|result=PASS|json=0
+VERDICT|id=W3|claim=some_readout_probability_irrational|scope=readout_qutrit_0_of_every_trained_circle_branch_at_every_test_point|result=FAIL|json=0
+VERDICT|id=W4|claim=PRIMARY_best_branch_test_gt_154|measured=154_every_branch_every_set|result=FAIL|json=0
+VERDICT|id=W5|claim=virtual_test_ge_best_single|measured=154_ge_154_in_every_set|result=PASS|json=0
+VERDICT|id=W6|claim=PRIMARY_best_z3_energy_r9_lt_16_and_ge_15.378|measured=best_r9=33.578_CLOUD|result=FAIL|json=0
+VERDICT|id=W7|claim=STAR_CLOUD_SHA_best_test_within_50_permille|measured=633,633,633|result=PASS|json=0
+VERDICT|id=W8|claim=every_v2_model_reloaded_reproduces_its_header|measured=21_of_21|result=PASS|json=0
+VERDICT|id=W9|claim=independent_replay_byte_identical|result=PASS|json=0
+MEASURED|z3_best_by_r=9:33.578_CLOUD,27:105.954_CLOUD,81:177.608_CLOUD|v1_best_by_r=9:48,27:120,81:336|below_v1_at_every_r=1|below_16=0|above_certified_E0_every_model=1|one_seed_per_set_per_r=1|json=0
+POSTHOC|kind=diagnostic_not_a_verdict|program=examples/v2_readout_diag.rs_(cargo run --release --example v2_readout_diag)|seed=SHA-V2-0|json=0
+POSTHOC|layers=1|train_margin_exactly_zero=486_of_486|readout_irrational=0|json=0
+POSTHOC|layers=2|train_margin_exactly_zero=162_of_486|train_margin_positive=162|readout_irrational=1_every_qutrit_on_the_probe_input|json=0
+POSTHOC|layers=3|train_margin_exactly_zero=486_of_486|readout_irrational=0_qutrit_0|json=0
+POSTHOC|reading=at_the_sealed_3_layers_the_readout_qutrit_is_exactly_uniform_on_every_training_point_so_coordinate_descent_has_no_gradient|z3_reading=the_ansatz_begins_with_F_on_every_link_and_cannot_return_to_the_flat_orbit_energy_16|next=v3_needs_a_fresh_prereg|json=0

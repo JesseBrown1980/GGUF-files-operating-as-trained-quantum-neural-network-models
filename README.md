@@ -156,7 +156,81 @@ cargo run --release -- ym-z3 PATH/TO/sturmfast data/stars out 2
 cd out && sha256sum -c ../results-ym-z3/SHA256SUMS
 ```
 
-## 5. Reproduce
+## 5. Version 2: the non-Clifford qutrit network
+
+Predictions: [`PREREG-V2.hbp`](PREREG-V2.hbp) (commit `d5834b8`, unchanged). Code: commit
+`334a066`. Receipts: [`results-v2/`](results-v2/). Seal, replay and diagnostic:
+[`SEAL-V2.hbp`](SEAL-V2.hbp).
+
+**Exact arithmetic.**
+- **Amplitudes:** they live in Z[ζ₉], ζ = e^{2πi/9}, with six integer coefficients
+  modulo x⁶ + x³ + 1 ([`src/cyclo.rs`](src/cyclo.rs)).
+- **Probabilities:** they lie in Z[θ], θ = 2cos(2π/9), the root of x³ − 3x + 1 in
+  (1.5, 1.875) ([`src/real3.rs`](src/real3.rs)).
+- **Comparisons:** every comparison is an exact sign. θ is isolated by integer
+  bisection and the value is checked at both ends with big integers
+  ([`src/bigint.rs`](src/bigint.rs)). An undecided sign is counted as undecided;
+  none occurred.
+
+**The network.** Each qutrit in each layer gets diag(1, ζ^{3a+c}, ζ^{3a′+c′}), set by
+four trits. This includes every version 1 phase, and the qutrit T gate
+([`src/qutrit9.rs`](src/qutrit9.rs)).
+
+**Seed sets.**
+- STAR: Opus, Fable and Mythos.
+- CLOUD: this seat's own calling written as trits, `data/cloud/`, with sha256
+  `73844b0c…`.
+- SHA: SHA-256 control streams.
+
+### Verdicts
+
+| ID | Prediction | Result |
+|---|---|---|
+| W1 | exact norm Σ\|v\|² = 3ᵏ | **PASS** |
+| W2 | exact inverse | **PASS** |
+| W3 | some readout probability is irrational | **FAIL**: the readout qutrit of every trained circle branch stays rational |
+| W4 | **primary**: best branch test accuracy > 154/243 | **FAIL**: 154 for every branch in every set |
+| W5 | virtual ≥ best single branch | **PASS** (154 ≥ 154) |
+| W6 | **primary**: best Z₃ energy at r = 9 below 16, above the certified 15.378 | **FAIL**: best 33.578 |
+| W7 | STAR, CLOUD and SHA within 50‰ on test | **PASS** (633‰ each) |
+| W8 | every model, reloaded, reproduces its header | **PASS** (21 of 21) |
+| W9 | an independent replay is byte-identical | **PASS** (23 files) |
+
+### Z₃ energies (J_E = 1), best trained model per seed set
+
+| r | v1 best | STAR | CLOUD | SHA | certified E₀ |
+|---|---|---|---|---|---|
+| 9 | 48 | 53.634 | **33.578** | 40.975 | ≥ 15.378 |
+| 27 | 120 | 136.864 | **105.954** | 205.833 | ≥ 15.799 |
+| 81 | 336 | 386.554 | **177.608** | 565.809 | ≥ 15.933 |
+
+**What version 2 reached.**
+- **Z₃ energy:** it beats version 1's Clifford energies at every coupling, best with
+  the CLOUD seed. Every energy stays above the certified ground energy, as the
+  variational principle requires.
+- **Still short:** it does not reach the window below 16. Each seed set has one seed
+  per coupling, so the CLOUD advantage is a single measurement, not a finding about
+  seed sources.
+
+**Why it stops** (post-hoc diagnostic, [`examples/v2_readout_diag.rs`](examples/v2_readout_diag.rs),
+not a verdict).
+- **The circle:** at the sealed depth of 3 layers, the readout qutrit is exactly
+  uniform on every training point, so coordinate descent has nothing to climb.
+  At 2 layers the same seed gives 162 positive margins out of 486, and an irrational
+  readout on every qutrit.
+- **Z₃:** the circuit begins with F on every link, so it cannot return to the flat
+  orbit, the one state of energy 16.
+
+These are inputs for a version 3, which needs its own pre-registration.
+
+Reproduce:
+```sh
+cargo run --release -- v2 data/stars data/cloud results-ym-z3 out 3 2 4
+cd out && sha256sum -c ../results-v2/SHA256SUMS
+```
+About 8 minutes on one core.
+
+## 6. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -183,6 +257,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v2/`, `SEAL-V2.hbp`, `PREREG-V2.hbp`, `data/cloud/`, `examples/` | version 2: 21 GGUF models, `V2.hbp`, index, checksums; seal; this seat's calling and its trits; the post-hoc diagnostic |
 | `results-ym-z3/`, `SEAL-YM-Z3.hbp` | the Z₃ Yang–Mills receipts: the matrix, 6 trained GGUF models, `YM-Z3.hbp`, index, checksums; the seal with provenance, replay and erratum |
 | `results/` | 8 trained GGUF models (6 branches, 2 virtual), `RESULT.hbp`, `INDEX.hbi`, `SHA256SUMS` |
 
