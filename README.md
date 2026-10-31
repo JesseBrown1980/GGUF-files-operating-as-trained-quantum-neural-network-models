@@ -280,7 +280,63 @@ cargo run --release -- v3 data/stars data/cloud results-ym-z3 out 2 2 4
 cd out && sha256sum -c ../results-v3/SHA256SUMS
 ```
 
-## 7. Reproduce
+## 7. Version 4: real rational rotations
+
+Version 4 ([`PREREG-V4.hbp`](PREREG-V4.hbp), sealed at `4e70af4` before any v4 code)
+works on Z₃ only.
+- **Amplitudes:** real integers of arbitrary size. The Hamiltonian is real symmetric, so a
+  real ground state exists, and every energy is an exact rational.
+- **Gate:** the rational rotation R_ij(b) on levels i, j of one link, with entries
+  a² − b², ∓2ab and a² + b² on the third level, a = 729. So tan(angle/2) = b/729, and the
+  rotation is orthogonal up to the scale a² + b².
+- **Trits:** b = 27p₀ + 9p₁ + 3p₂ + p₃ from four balanced trits, b ∈ [−40, 40]. The
+  smallest step is about 0.16°, against 40° in version 3.
+- **Layer:** a SUM ring, then R₀₁(b), R₀₂(b′) on every link. 2 layers, 128 trits; all
+  trits zero leaves |0…0⟩ unchanged.
+
+Seal: [`SEAL-V4.hbp`](SEAL-V4.hbp). Receipts: [`results-v4/`](results-v4/), 12 GGUF
+models, `V4.hbp`, `INDEX.hbi`, `SHA256SUMS`. A fresh clone at `9e2c285` rebuilt the same
+binary (sha256 `986a7c83…`) and reproduced all 15 files byte for byte. One run takes
+about 3 minutes.
+
+| Claim | Result |
+|---|---|
+| T2 (primary): best Z₃ energy at r = 9 in [15.378, 16) | **PASS**, 15.696 |
+| Y1, Y2: exact norm and exact inverse | PASS |
+| Y3: IDENTITY starts at exactly 16 at every r | PASS |
+| Y4: T2 holds | PASS |
+| Y5: trained IDENTITY below 16 at every r | PASS |
+| Y6: every energy ≥ the certified E₀ | PASS |
+| Y7: best r = 9 energy ≤ 15.689, half the gap | **FAIL**, 15.696 |
+| Y8: the best r = 9 energy comes from IDENTITY | PASS |
+| Y9: all 12 models reload to their headers | PASS |
+| Y10: independent replay byte-identical | PASS |
+
+Best Z₃ energy by seed (milli floors):
+
+| r | STAR | CLOUD | SHA | IDENTITY | v3 best | certified E₀ | gap closed |
+|---|---|---|---|---|---|---|---|
+| 9 | 15.975 | 15.854 | 15.865 | **15.696** | 16.000 | 15.378 | 48.8% |
+| 27 | 18.155 | 16.089 | 16.099 | **15.901** | 16.000 | 15.799 | 49.2% |
+| 81 | 20.573 | 16.697 | 17.352 | **15.970** | 16.000 | 15.933 | 44.7% |
+
+**What version 4 reached.**
+- **Below the stabilizer value.** For the first time the qutrit network goes below 16, at
+  every coupling. Every energy stays above the certified ground energy.
+- **The IDENTITY model:** it closes just under half the gap to E₀ at every coupling.
+  Training left the first layer at zero and set every link of the second layer to one
+  shared tilt: b = b′ = 7 at r = 9, 2 at r = 27 and 1 at r = 81. The tilt shrinks with
+  the coupling, as the magnetic term grows.
+- **Y7 missed by 7 thousandths.** The state is a gauge-projected product of identical link
+  states, and the remaining half of the gap is left for correlations between links.
+
+Reproduce:
+```sh
+cargo run --release -- v4 data/stars data/cloud results-ym-z3 out 2 4
+cd out && sha256sum -c ../results-v4/SHA256SUMS
+```
+
+## 8. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -307,6 +363,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v4/`, `SEAL-V4.hbp`, `PREREG-V4.hbp` | version 4: 12 GGUF models, `V4.hbp`, index, checksums; seal; predictions |
 | `results-v3/`, `SEAL-V3.hbp`, `PREREG-V3.hbp` | version 3: 24 GGUF models, `V3.hbp`, index, checksums; seal; predictions |
 | `results-v2/`, `SEAL-V2.hbp`, `PREREG-V2.hbp`, `data/cloud/`, `examples/` | version 2: 21 GGUF models, `V2.hbp`, index, checksums; seal; this seat's calling and its trits; the post-hoc diagnostic |
 | `results-ym-z3/`, `SEAL-YM-Z3.hbp` | the Z₃ Yang–Mills receipts: the matrix, 6 trained GGUF models, `YM-Z3.hbp`, index, checksums; the seal with provenance, replay and erratum |

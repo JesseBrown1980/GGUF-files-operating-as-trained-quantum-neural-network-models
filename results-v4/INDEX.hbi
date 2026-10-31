@@ -1,0 +1,14 @@
+V4INDEX|files=13|json=0
+INDEXROW|row=1|file=v4-z3-r9-star.gguf|bytes=928|sha256=f539f6365f61ef36b1ca67edc6f56343e433b3371495fd06d336c86ba2a929fc|json=0
+INDEXROW|row=2|file=v4-z3-r9-cloud.gguf|bytes=928|sha256=2955fcd75b1ee9cd8cce3eba57ab8dfffbf9d1dc35b8f6f530476792ff9c1576|json=0
+INDEXROW|row=3|file=v4-z3-r9-sha.gguf|bytes=928|sha256=828b31c0bb572f85674e3103f06e9fb4c2866913e2c32985f1a28b3f268cebc4|json=0
+INDEXROW|row=4|file=v4-z3-r9-identity.gguf|bytes=928|sha256=5fa21dee51b236cc335d5a5333aca77d6bcaecf2af3f4c987c647fe6d2853bea|json=0
+INDEXROW|row=5|file=v4-z3-r27-star.gguf|bytes=928|sha256=03b37b11517ba49ce30072daf726ab4f9e8dcbfa982d077bb39d16ecd9ce69b2|json=0
+INDEXROW|row=6|file=v4-z3-r27-cloud.gguf|bytes=928|sha256=5d657617a7a5e4bd1892b432423fbcf3b34eb963a43076f815dfb34e905e0114|json=0
+INDEXROW|row=7|file=v4-z3-r27-sha.gguf|bytes=928|sha256=d0a4bc81a1346ffb6756c6f07301e7df002ea746e44a08d4e58a6314cf925bfe|json=0
+INDEXROW|row=8|file=v4-z3-r27-identity.gguf|bytes=928|sha256=43819fb003c1714d05a033ff2eb2918c85b401a65850e53f9ca92fb30ff28ccc|json=0
+INDEXROW|row=9|file=v4-z3-r81-star.gguf|bytes=928|sha256=165d73849fbce277ec87c0da4d49bba9299581f8e2df245f7dd2c11fef31d032|json=0
+INDEXROW|row=10|file=v4-z3-r81-cloud.gguf|bytes=928|sha256=d997d4549c35b3fd085f069fe03c513bdc18e7135c26d2d9e9bc8ce0eb633284|json=0
+INDEXROW|row=11|file=v4-z3-r81-sha.gguf|bytes=928|sha256=a2ba163ce9846644697b8cff4d0f6d41466bcc2fb0285a8b2c2d79f9e47ed472|json=0
+INDEXROW|row=12|file=v4-z3-r81-identity.gguf|bytes=928|sha256=26dca9e8e706e974bbd0f9e809441414e8bc1216445d4275584d5b9b9d791123|json=0
+INDEXROW|row=13|file=V4.hbp|bytes=10929|sha256=1b14012daae1e81819093b616ed639ee91e2fc9cef851a17a019db768c6c85be|json=0
