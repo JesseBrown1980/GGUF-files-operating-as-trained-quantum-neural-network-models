@@ -1,0 +1,10 @@
+MODELINDEX|files=9|json=0
+INDEXROW|row=1|file=star-branch-0.gguf|bytes=992|sha256=9773ca928a404bc4eda5bceb866ccdc73c701aea141c4437df1b8bbda0ef507d|json=0
+INDEXROW|row=2|file=star-branch-1.gguf|bytes=992|sha256=e7d103f1e10ad5f8bc92dc32be08e446504c7536fad24156de6f8485c87dc95c|json=0
+INDEXROW|row=3|file=star-branch-2.gguf|bytes=992|sha256=f60ba28c854301792e1f9fc5ec5db9dbdb3b67fc25432b766109abe20bbfdcdf|json=0
+INDEXROW|row=4|file=star-virtual.gguf|bytes=1344|sha256=b4a689ca9340d810370d5c0569411d74dde7cba63ec78e8fbe4daade0ee52467|json=0
+INDEXROW|row=5|file=sha-branch-0.gguf|bytes=992|sha256=5e48c8b14e1f454a6cd8e08ddc27229cfae8b2daec58cd3723043c782d220cd3|json=0
+INDEXROW|row=6|file=sha-branch-1.gguf|bytes=992|sha256=21184b4a2abff838a453445a13adcca49473203a9acda59c8350d06a67c5e34b|json=0
+INDEXROW|row=7|file=sha-branch-2.gguf|bytes=992|sha256=c10387639ee589eda70c479eb0228e5ac53396c0af0b1dd7843a2b62afe791d3|json=0
+INDEXROW|row=8|file=sha-virtual.gguf|bytes=1344|sha256=7147a99ba4975ed8182084919e99a32a6cf02821f6f3481e4dab9404327eedc3|json=0
+INDEXROW|row=9|file=RESULT.hbp|bytes=2671|sha256=a6b7ab37233f737f1864a08ae3e3a2a0211523d1001cc83f3992e081dc24951b|json=0

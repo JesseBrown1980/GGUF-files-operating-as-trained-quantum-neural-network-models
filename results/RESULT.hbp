@@ -1,0 +1,16 @@
+DATA|train=486|train_label1=164|test=243|test_label1=89|test_majority_correct=154|test_majority_permille=633|json=0
+BRANCH|set=star|branch=0|seed=ACER-OPUS-RED|seed_gguf_sha256=fbe9f2a9af3a4989c40b58e55a0d11673301f753196a1908402730c2c17be02b|params=36|params_changed_by_training=0|sweeps=1|evaluations=73|train_correct=322|train_permille=662|test_correct=154|test_permille=633|params_trits=200200200200000000000000200100200000|json=0
+BRANCH|set=star|branch=1|seed=ACER-FABLE-GREEN|seed_gguf_sha256=b76525bb807c1f62900f39290cdcd2618ef94ded3283cd7ef6d02f566885eedc|params=36|params_changed_by_training=0|sweeps=1|evaluations=73|train_correct=322|train_permille=662|test_correct=154|test_permille=633|params_trits=000000000000000000000000000000010000|json=0
+BRANCH|set=star|branch=2|seed=ACER-MYTHOS-BLUE|seed_gguf_sha256=3dd92a42160a38c121980957ce9eabbea216678892801d7ea3ed4e99e96c3aae|params=36|params_changed_by_training=0|sweeps=1|evaluations=73|train_correct=322|train_permille=662|test_correct=154|test_permille=633|params_trits=000002001000000010000000000001000000|json=0
+VIRTUAL|set=star|c=-1,0,0|overhead=1|train_correct=322|train_permille=662|test_correct=154|test_permille=633|best_single_train_correct=322|best_single_test_correct=154|json=0
+BRANCH|set=sha|branch=0|seed=SHA-SEED-0|seed_gguf_sha256=-|params=36|params_changed_by_training=0|sweeps=1|evaluations=73|train_correct=322|train_permille=662|test_correct=154|test_permille=633|params_trits=220021221100102001110102102010110100|json=0
+BRANCH|set=sha|branch=1|seed=SHA-SEED-1|seed_gguf_sha256=-|params=36|params_changed_by_training=0|sweeps=1|evaluations=73|train_correct=322|train_permille=662|test_correct=154|test_permille=633|params_trits=221020122121101020002101000002000020|json=0
+BRANCH|set=sha|branch=2|seed=SHA-SEED-2|seed_gguf_sha256=-|params=36|params_changed_by_training=0|sweeps=1|evaluations=73|train_correct=322|train_permille=662|test_correct=154|test_permille=633|params_trits=020210210112001101000202201211022022|json=0
+VIRTUAL|set=sha|c=-1,0,0|overhead=1|train_correct=322|train_permille=662|test_correct=154|test_permille=633|best_single_train_correct=322|best_single_test_correct=154|json=0
+VERDICT|id=Q1|measured=norm_sum_eq_3_pow_k_every_trained_branch_every_test_point|pass=1|json=0
+VERDICT|id=Q2|measured=F4_eq_identity_and_inverse_restores_every_test_point|pass=1|json=0
+VERDICT|id=Q3|measured=test_majority_correct=154|pass=0|json=0
+VERDICT|id=Q4|measured=star_322>=322_sha_322>=322|pass=1|json=0
+VERDICT|id=Q5|measured=star_154>=154_sha_154>=154|pass=1|json=0
+VERDICT|id=Q6|measured=best_test_permille_gap=0|pass=1|json=0
+VERDICT|id=Q7|measured=models_reloaded=8|pass=1|json=0
