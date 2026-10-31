@@ -1,0 +1,8 @@
+V9INDEX|files=7|json=0
+INDEXROW|row=1|file=v9-z3-3x2-r9-identity.gguf|bytes=1184|sha256=df5e4d6952b942ba88376ca1f17fa370fb8ecbbeeb303000bc6578dd715ab5bc|json=0
+INDEXROW|row=2|file=v9-z3-3x2-r9-warm.gguf|bytes=1184|sha256=0d9a70a6266de9b6456f58fceb1efa7a66ba518514a32a80093dd0415806d738|json=0
+INDEXROW|row=3|file=v9-z3-3x2-r27-identity.gguf|bytes=1184|sha256=8b0d54cbe0f65bcaa146d1dfc3081de7be28c700c43c9c95da9ff609dbcb840b|json=0
+INDEXROW|row=4|file=v9-z3-3x2-r27-warm.gguf|bytes=1184|sha256=a1afdfa43972c0dae9f6127f3806751c115b472f75c02d7fc5f09efed9d1567f|json=0
+INDEXROW|row=5|file=v9-z3-3x2-r81-identity.gguf|bytes=1184|sha256=e12ac054bd1cd66dc21b55d2af8eedbf1393584e44548e678180ac7a1f7fd29a|json=0
+INDEXROW|row=6|file=v9-z3-3x2-r81-warm.gguf|bytes=1184|sha256=6c830128b0a0b1035f9d9221bf92e21de10cd43fd306bd79fdd6e94b4ab683ee|json=0
+INDEXROW|row=7|file=V9.hbp|bytes=10223|sha256=4e9ce3147bb1df6dfa97f191cf3e7ebaae10b8e50fe9e934e998732ee3cf8bce|json=0

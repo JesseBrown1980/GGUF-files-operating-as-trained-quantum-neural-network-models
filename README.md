@@ -580,7 +580,67 @@ cargo run --release -- v8 PATH/TO/sturmfast out 4
 cd out && sha256sum -c ../results-v8/SHA256SUMS
 ```
 
-## 12. Reproduce
+## 12. Version 9: correlations in the plaquette's flux frame
+
+Version 9 ([`PREREG-V9.hbp`](PREREG-V9.hbp), sealed at `40851b0` before any v9 code) is built on
+the post-hoc diagnostic of the sealed v8 models. The diagnostic is
+[`examples/v8_diag.rs`](examples/v8_diag.rs); its output is
+[`examples/v8_diag.out`](examples/v8_diag.out). For r = 9 it found:
+- **Training budget:** not the limit. Resuming v8 to 16 sweeps moved nothing.
+- **Holonomy:** nine coherent sectors with a shift-covariant dressing reach 23.300, so the
+  target state is known.
+- **Correlation geometry:** the missing piece. With v8's layer 1 kept, a ring layer 2 never moved.
+  A plaquette-local layer 2 reached 23.302 and cut the residual ‖(H − E)φ‖/‖φ‖ from 2.07 to 0.49.
+
+**The network.** v8's layer 1 is kept, and layer 2 works one plaquette at a time.
+- **Frame.** For each plaquette (a, b, c, d), three SUMs (a→b, b→c inverted, c→d) make link d
+  hold minus the plaquette's flux.
+- **Rotation.** R₀₁ and R₀₂ act on c and d.
+- **Undo.** The three SUMs are undone.
+
+With its trits at zero the layer is the identity, and the inverse is exact. Seeds: IDENTITY, and
+WARM (the sealed v8 models with layer 2 at zero). E₀ is read from the sealed `V8.hbp`.
+
+Seal: [`SEAL-V9.hbp`](SEAL-V9.hbp). Receipts: [`results-v9/`](results-v9/): 6 GGUF models,
+`V9.hbp`, `INDEX.hbi` and `SHA256SUMS`. A fresh clone at `f3a9a0f` rebuilt the same binary
+(sha256 `aa7a1176…`) and reproduced all 9 files byte for byte. One run takes about 75 minutes.
+
+| Claim | Result |
+|---|---|
+| T7 (primary): r = 9 below 23.305 | **PASS**, 23.301 |
+| P1: exact norm and exact inverse | PASS |
+| P2: WARM starts at exactly the v8 energy | **FAIL**: the sealed v8 r = 9 model had its ring layer 2 on, and WARM sets layer 2 to zero |
+| P3: T7 holds | PASS |
+| P4: r = 27 below 23.780 and r = 81 below 23.931 | PASS, 23.774 and 23.925 |
+| P5: every energy ≥ the certified E₀ | PASS |
+| P6: WARM at r = 9 reaches 23.302 | PASS |
+| P7: the plaquette layer is on in every best model | PASS |
+| P8: r = 9 residual below v8's 2.071 | PASS, 0.413 |
+| P9: fixed point within one thousandth of exact | PASS |
+| P10: all 6 models reload to their headers | PASS |
+| P11: independent replay byte-identical | PASS |
+
+| r | Certified E₀ (3×2 torus) | v9 | v8 | Residual ‖(H − E)φ‖/‖φ‖ |
+|---|---|---|---|---|
+| 9 | [23.298, 23.299) | **23.301** | 23.380 | 0.413 |
+| 27 | [23.774, 23.775) | **23.774**, the same thousandth | 23.799 | 0.198 |
+| 81 | [23.925, 23.926) | **23.925**, the same thousandth | 23.933 | 0.233 |
+
+**What version 9 reached.** On the 3×2 torus, the largest lattice this machine holds exactly:
+- **r = 27 and r = 81:** the network lands in the same thousandth as the certified ground energy.
+- **r = 9:** it is two thousandths above.
+- **Both seeds agree.** IDENTITY and WARM reach the same values.
+
+The change that did it was the geometry of the correlations: rotations in each plaquette's flux
+frame. More training did not help, and more parameters were not needed.
+
+Reproduce:
+```sh
+cargo run --release -- v9 results-v8 out 4
+cd out && sha256sum -c ../results-v9/SHA256SUMS
+```
+
+## 13. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -607,6 +667,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v9/`, `SEAL-V9.hbp`, `PREREG-V9.hbp`, `examples/v8_diag.*` | version 9: 6 GGUF models, `V9.hbp`, index, checksums; seal; predictions; the v8 diagnostic that shaped it |
 | `results-v8/`, `SEAL-V8.hbp`, `PREREG-V8.hbp`, `ADDENDUM-V8.hbp` | version 8: the 3×2 torus, 3 GGUF models, sector matrices, `V8.hbp`, index, checksums; seal; predictions; addendum |
 | `results-v7/`, `SEAL-V7.hbp`, `PREREG-V7.hbp` | version 7: 9 GGUF models, 44 PNG frames, `V7.hbp`, index, checksums; seal; predictions |
 | `results-v6/`, `SEAL-V6.hbp`, `PREREG-V6.hbp` | version 6: 15 GGUF models, `V6.hbp`, index, checksums; seal; predictions |
