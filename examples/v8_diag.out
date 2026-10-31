@@ -1,0 +1,8 @@
+DIAG|sealed_r9_model|energy_milli_floor=23380|projection_fraction_permille=110|residual_milli=2071|json=0
+DIAG|D1_total_sweeps=8|energy_milli_floor=23380|projection_fraction_permille=110|residual_milli=2071|sweeps_used_this_stage=1|evaluations=769|json=0
+DIAG|D1_total_sweeps=16|energy_milli_floor=23380|projection_fraction_permille=110|residual_milli=2071|sweeps_used_this_stage=1|evaluations=769|json=0
+DIAG|D2_circulant_dressing_sectors=1|energy_milli_floor=23544|projection_fraction_permille=4|residual_milli=278|k_per_mille=19|json=0
+DIAG|D2_circulant_dressing_sectors=9|energy_milli_floor=23300|projection_fraction_permille=4|residual_milli=320|k_per_mille=19|json=0
+DIAG|D2_sealed_circuit_on_nine_sector_input|energy_milli_floor=23385|projection_fraction_permille=12|residual_milli=2132|json=0
+DIAG|D3_layer2_ring_2_sweeps|energy_milli_floor=23380|projection_fraction_permille=110|residual_milli=2071|trits_changed=0|json=0
+DIAG|D3_layer2_plaquette_2_sweeps|energy_milli_floor=23302|projection_fraction_permille=110|residual_milli=486|trits_changed=24|json=0
