@@ -230,7 +230,57 @@ cd out && sha256sum -c ../results-v2/SHA256SUMS
 ```
 About 8 minutes on one core.
 
-## 6. Reproduce
+## 6. Version 3: an identity-reachable network
+
+Version 3 ([`PREREG-V3.hbp`](PREREG-V3.hbp), sealed at `5a5cab5` before any v3 code)
+acts on both findings of the version 2 diagnostic:
+- **Circle:** the version 2 network and training, at 2 layers instead of 3.
+- **Z₃:** on every link the layer applies F, then diag(1, ζ^e1, ζ^e2), then F†, then the
+  SUM ring. With every trit at zero the layer is the identity, so the flat orbit
+  (energy 16) is reachable. A fourth seed, IDENTITY, starts there.
+
+The arithmetic is version 2's: Z[ζ₉] amplitudes and exact signs in Q(θ).
+Seal: [`SEAL-V3.hbp`](SEAL-V3.hbp). Receipts: [`results-v3/`](results-v3/), 24 GGUF
+models, `V3.hbp`, `INDEX.hbi`, `SHA256SUMS`. A fresh clone at `809095a` rebuilt the
+same binary (sha256 `a96f13ea…`) and reproduced all 27 files byte for byte.
+
+| Claim | Result |
+|---|---|
+| T1 (primary): best circle branch test > 154 of 243 | **FAIL**, 154 |
+| T2 (primary): best Z₃ energy at r = 9 in [15.378, 16) | **FAIL**, 16.000 exactly |
+| X1, X2: exact norm and exact inverse | PASS |
+| X3: an irrational readout on qutrit 0 | PASS |
+| X4: T1 holds | FAIL |
+| X5: virtual test ≥ best single, every set | PASS, 154 ≥ 154 |
+| X6: IDENTITY starts at exactly 16 at every r | PASS |
+| X7: T2 fails with best r = 9 energy exactly 16 | PASS |
+| X8: all 24 models reload to their headers | PASS |
+| X9: independent replay byte-identical | PASS |
+
+Best Z₃ energy by seed:
+
+| r | STAR | CLOUD | SHA | IDENTITY | v2 best | certified E₀ |
+|---|---|---|---|---|---|---|
+| 9 | 21.614 | 50.203 | 68.931 | **16.000** | 33.578 | ≥ 15.378 |
+| 27 | 32.844 | 118.611 | 174.795 | **16.000** | 105.954 | ≥ 15.799 |
+| 81 | 66.534 | 323.833 | 492.387 | **16.000** | 177.608 | ≥ 15.933 |
+
+**What version 3 reached.**
+- **Z₃:** the STAR seed (ACER-MYTHOS-BLUE) beats every version 2 energy at every
+  coupling, 21.614 against 33.578 at r = 9. IDENTITY sits at exactly 16, the
+  stabilizer value, and training changed none of its 64 trits: no single-trit move from
+  the identity lowers the energy. Each trit turns a phase by a multiple of 2π/9, a large
+  step next to the small amplitudes that separate the ground state from the flat orbit.
+- **Circle:** the readout now carries irrational probabilities, but training changed at
+  most one parameter per branch, and every branch tests at 154 or 133.
+
+Reproduce:
+```sh
+cargo run --release -- v3 data/stars data/cloud results-ym-z3 out 2 2 4
+cd out && sha256sum -c ../results-v3/SHA256SUMS
+```
+
+## 7. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -257,6 +307,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v3/`, `SEAL-V3.hbp`, `PREREG-V3.hbp` | version 3: 24 GGUF models, `V3.hbp`, index, checksums; seal; predictions |
 | `results-v2/`, `SEAL-V2.hbp`, `PREREG-V2.hbp`, `data/cloud/`, `examples/` | version 2: 21 GGUF models, `V2.hbp`, index, checksums; seal; this seat's calling and its trits; the post-hoc diagnostic |
 | `results-ym-z3/`, `SEAL-YM-Z3.hbp` | the Z₃ Yang–Mills receipts: the matrix, 6 trained GGUF models, `YM-Z3.hbp`, index, checksums; the seal with provenance, replay and erratum |
 | `results/` | 8 trained GGUF models (6 branches, 2 virtual), `RESULT.hbp`, `INDEX.hbi`, `SHA256SUMS` |
