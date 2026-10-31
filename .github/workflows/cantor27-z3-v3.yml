@@ -1,0 +1,32 @@
+name: Cantor-27 exact Z3 bridge and V3 Gauss negative controls
+on:
+  push:
+    branches:
+      - cantor27-v3-gauss-bridge
+  workflow_dispatch:
+jobs:
+  exact-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.81.0
+        with:
+          components: clippy
+      - name: Rust 1.81 exact gate tests
+        run: |
+          cargo +1.81.0 test --locked --release --test v3_gauge_boundary
+          cargo +1.81.0 test --locked --release --bin cantor27_z3
+      - name: Format and clippy zero warnings
+        run: |
+          cargo +1.81.0 clippy --locked --release --all-targets -- -D warnings
+      - name: Authentic stored V3 model and exact Cantor response
+        run: |
+          cargo +1.81.0 run --locked --release --bin cantor27_z3 -- results-v3/v3-z3-r9-star.gguf | tee /tmp/cantor27-v3-star.hbp
+          cargo +1.81.0 run --locked --release --bin cantor27_z3 -- results-v3/v3-z3-r9-identity.gguf | tee /tmp/cantor27-v3-identity.hbp
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cantor27-v3-gauss-exact-hbp
+          path: /tmp/cantor27-v3-*.hbp
+          if-no-files-found: warn
