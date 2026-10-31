@@ -2,6 +2,7 @@
 //!   gguf-qnn train STAR_DIR OUT_DIR [LAYERS] [MAX_SWEEPS]
 //!   gguf-qnn infer MODEL.gguf X Y
 //!   gguf-qnn verify OUT_DIR
+//!   gguf-qnn ym-z3 STURMFAST STAR_DIR OUT_DIR [LAYERS]
 #![forbid(unsafe_code)]
 #![deny(clippy::float_arithmetic)]
 
@@ -17,11 +18,13 @@ use gguf_qnn::virtual_qnn;
 use std::fs;
 use std::path::Path;
 
+mod ym_run;
+
 const STARS: [&str; 3] = ["ACER-OPUS-RED", "ACER-FABLE-GREEN", "ACER-MYTHOS-BLUE"];
 const ARCH: &str = "asolaria-qutrit-vqnn";
 
 /// Star trits by the Mythos rule (raw F32 bits: 0 -> 0, up to 1.0 -> 1, above -> 2).
-fn star_trits(path: &Path) -> (Vec<i64>, String) {
+pub(crate) fn star_trits(path: &Path) -> (Vec<i64>, String) {
     let raw = fs::read(path).expect("star gguf");
     let g = gguf_read::parse(&raw).expect("parse star");
     let mut t = Vec::new();
@@ -444,6 +447,10 @@ fn main() {
             let layers = a.get(4).and_then(|v| v.parse().ok()).unwrap_or(3);
             let sweeps = a.get(5).and_then(|v| v.parse().ok()).unwrap_or(4);
             cmd_train(Path::new(&a[2]), Path::new(&a[3]), layers, sweeps);
+        }
+        Some("ym-z3") if a.len() >= 5 => {
+            let layers = a.get(5).and_then(|v| v.parse().ok()).unwrap_or(2);
+            ym_run::run(Path::new(&a[2]), Path::new(&a[3]), Path::new(&a[4]), layers);
         }
         Some("infer") if a.len() == 5 => {
             cmd_infer(
