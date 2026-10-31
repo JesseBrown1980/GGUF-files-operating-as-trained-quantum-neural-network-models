@@ -336,7 +336,72 @@ cargo run --release -- v4 data/stars data/cloud results-ym-z3 out 2 4
 cd out && sha256sum -c ../results-v4/SHA256SUMS
 ```
 
-## 8. Reproduce
+## 8. Version 5: coherence between holonomy sectors
+
+Version 5 ([`PREREG-V5.hbp`](PREREG-V5.hbp), sealed at `86a8725` before any v5 code)
+starts from a post-hoc diagnostic of the sealed v4 code,
+[`examples/v4_diag.rs`](examples/v4_diag.rs), with its output in
+[`examples/v4_diag.out`](examples/v4_diag.out):
+- **v4's ceiling:** v4's 15.696 is the best uniform product state, and it equals the
+  second-order estimate inside the one holonomy sector that |0…0⟩ reaches.
+- **The missing half:** summing the nine flux-free holonomy configurations and dressing
+  each one reaches 15.381 at r = 9, 15.800 at r = 27 and 15.933 at r = 81. So the rest
+  of the gap is coherence between holonomy sectors.
+
+The v5 network:
+- **Angles:** the v4 rotations, with six trits per angle: b = 243p₀ + … + p₅, b ∈ [−364, 364].
+- **Partner SUMs:** after the rotations come SUMs 0→4, 2→6, 1→3 and 5→7, pairing the two
+  links of a column or row. Equal values on such a pair carry no flux and shift a holonomy,
+  so a wide rotation on one link and its SUM spread the state across holonomy sectors.
+- **Size:** one layer, 96 trits.
+
+Seal: [`SEAL-V5.hbp`](SEAL-V5.hbp). Receipts: [`results-v5/`](results-v5/), 15 GGUF
+models, `V5.hbp`, `INDEX.hbi`, `SHA256SUMS`. A fresh clone at `2ee26d6` rebuilt the same
+binary (sha256 `1a4be9fa…`) and reproduced all 18 files byte for byte. One run takes
+about 100 seconds.
+
+| Claim | Result |
+|---|---|
+| T3 (primary): best Z₃ energy at r = 9 in [15.378, 15.420] | **PASS**, 15.384 |
+| Z1, Z2: exact norm and exact inverse | PASS |
+| Z3: IDENTITY starts at exactly 16 | PASS |
+| Z4: WARM starts at the v4 product values | **FAIL**, 15.824, 15.949, 15.984 |
+| Z5: T3 holds | PASS |
+| Z6: best r = 27 ≤ 15.820 and best r = 81 ≤ 15.945 | PASS, 15.802 and 15.941 |
+| Z7: every energy ≥ the certified E₀ | PASS |
+| Z8: trained IDENTITY at r = 9 below 15.696 | PASS, 15.384 |
+| Z9: the best r = 9 energy comes from WARM | **FAIL**: IDENTITY, by an exact margin below the milli digit |
+| Z10: all 15 models reload to their headers | PASS |
+| Z11: independent replay byte-identical | PASS |
+
+Best Z₃ energy by seed (milli floors):
+
+| r | STAR | CLOUD | SHA | IDENTITY | WARM | v4 best | certified E₀ | gap closed |
+|---|---|---|---|---|---|---|---|---|
+| 9 | 81.308 | 20.176 | 15.385 | **15.384** | 15.384 | 15.696 | 15.378 | 99.0% |
+| 27 | 211.297 | 33.249 | 15.803 | **15.802** | 15.802 | 15.901 | 15.799 | 98.5% |
+| 81 | 601.263 | 21.641 | 16.540 | **15.941** | 15.941 | 15.970 | 15.933 | 88.0% |
+
+**What version 5 reached.**
+- **Within 6 thousandths of the ground energy.** At r = 9 the trained network is at 15.384
+  against the certified E₀ in [15.378, 15.379), closing 99% of the gap from the stabilizer
+  value 16, and 98.5% at r = 27. Every energy stays above the certified E₀.
+- **Three seeds agree.** IDENTITY, WARM and SHA reach the same energies to within one
+  thousandth from different starts.
+- **Z4 failed** because the partner SUMs copy the control link's dressing onto its partner,
+  so the WARM start is not the v4 product state.
+- **The STAR seed stalls.** Its six-trit angles start far from the flat orbit, and single-trit
+  moves change only 9 of its 96 trits.
+- **At r = 81 the angle grid limits it.** The smallest step, b = 1, is close to the optimal
+  dressing there, and that coupling closes 88%.
+
+Reproduce:
+```sh
+cargo run --release -- v5 data/stars data/cloud results-ym-z3 out 1 8
+cd out && sha256sum -c ../results-v5/SHA256SUMS
+```
+
+## 9. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -363,6 +428,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v5/`, `SEAL-V5.hbp`, `PREREG-V5.hbp`, `examples/v4_diag.*` | version 5: 15 GGUF models, `V5.hbp`, index, checksums; seal; predictions; the v4 diagnostic that shaped it |
 | `results-v4/`, `SEAL-V4.hbp`, `PREREG-V4.hbp` | version 4: 12 GGUF models, `V4.hbp`, index, checksums; seal; predictions |
 | `results-v3/`, `SEAL-V3.hbp`, `PREREG-V3.hbp` | version 3: 24 GGUF models, `V3.hbp`, index, checksums; seal; predictions |
 | `results-v2/`, `SEAL-V2.hbp`, `PREREG-V2.hbp`, `data/cloud/`, `examples/` | version 2: 21 GGUF models, `V2.hbp`, index, checksums; seal; this seat's calling and its trits; the post-hoc diagnostic |

@@ -1,0 +1,17 @@
+V5INDEX|files=16|json=0
+INDEXROW|row=1|file=v5-z3-r9-star.gguf|bytes=928|sha256=bc68c897a73c6bd487f65229db9b32ed907583841864c66a367883fabd8ac24d|json=0
+INDEXROW|row=2|file=v5-z3-r9-cloud.gguf|bytes=928|sha256=ff3f0ce3282418c9bc8159d6f2566c21960f5c5b3d66f133f97017ab27832b42|json=0
+INDEXROW|row=3|file=v5-z3-r9-sha.gguf|bytes=896|sha256=3f485c5a0109d5351366d1a880b03b093bd9f9bf8a282c240b8b4029f1b93ad2|json=0
+INDEXROW|row=4|file=v5-z3-r9-identity.gguf|bytes=928|sha256=33cd99d104aca3ca9f756ac2fab4b9f3248c1f71263b910414a107ac158aeccd|json=0
+INDEXROW|row=5|file=v5-z3-r9-warm.gguf|bytes=928|sha256=7741a8cc83f70a81b48a692eeac309d48e27320748d8fc298e024f9d30572518|json=0
+INDEXROW|row=6|file=v5-z3-r27-star.gguf|bytes=928|sha256=63f09fb60fe4657520470686d9aabd3a9e3c7f28e9495d37200764bfe2b01083|json=0
+INDEXROW|row=7|file=v5-z3-r27-cloud.gguf|bytes=928|sha256=ff825b03987debe756ccd3ea9e57e0a4e1fe64d222a1398d8e58455c3683360d|json=0
+INDEXROW|row=8|file=v5-z3-r27-sha.gguf|bytes=896|sha256=342f988987cac64671cd118383809dbe11a0dddea187eec7606bcee7e9b2bcd4|json=0
+INDEXROW|row=9|file=v5-z3-r27-identity.gguf|bytes=928|sha256=09dcc66fd5f5521036907c8858828f1a91e1c376a4aa6006723787e99226a4f8|json=0
+INDEXROW|row=10|file=v5-z3-r27-warm.gguf|bytes=928|sha256=55c6fadd56c2712d9fbc6a4dad42aa12d005ffa47455b7915a874dfdcfda1e1a|json=0
+INDEXROW|row=11|file=v5-z3-r81-star.gguf|bytes=928|sha256=32b4ab69118c5cf85f3ad5e03bc2936ed9c2124987738e5f0ea137b79c4d664f|json=0
+INDEXROW|row=12|file=v5-z3-r81-cloud.gguf|bytes=928|sha256=24d60bcca155f61bf5b931addaff177e1c416497067bc96b8b9da4a30ea192f8|json=0
+INDEXROW|row=13|file=v5-z3-r81-sha.gguf|bytes=896|sha256=a55c4d7ea95bb27fe1995408f5af0c54164d6db01662f68feb0823d594f9bb1e|json=0
+INDEXROW|row=14|file=v5-z3-r81-identity.gguf|bytes=928|sha256=8326c475d696487945593592587fdaa3e946ac7870f6086b3a0631965d7b6b7b|json=0
+INDEXROW|row=15|file=v5-z3-r81-warm.gguf|bytes=928|sha256=e162527973fd90c4dae42138d4479e4d52055ca8f5a50592fbf53b116635a375|json=0
+INDEXROW|row=16|file=V5.hbp|bytes=12059|sha256=ba138a8939cba0b1287d8fe7c886fa3686978e379ce55dadacf151c0c8d3275f|json=0
