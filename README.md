@@ -21,7 +21,7 @@ come from HEB-C's sturmfast in exact integer arithmetic.
 
 | Version | Lattice | What changed | Best r = 9 energy | Certified E₀ at r = 9 | Primary target |
 |---|---|---|---|---|---|
-| v1 | 2×2 Z₃ | Clifford qutrit network | 48 | [15.378, 15.379) | FAIL |
+| v1 | 2×2 Z₃ | Clifford qutrit network | 48 | [15.378, 15.379) | see §3–4 |
 | v2 | 2×2 | non-Clifford, Z[ζ₉] | 33.578 | same | FAIL |
 | v3 | 2×2 | identity-reachable layer | 16.000 | same | FAIL |
 | v4 | 2×2 | real rational rotations | 15.696 | same | PASS |
@@ -715,6 +715,9 @@ one complete and unambiguous. One run takes about 38 minutes.
   once. A rotation of a single free link therefore cannot dress a tree link. The post-hoc test is
   [`examples/v10_diag.rs`](examples/v10_diag.rs): it dresses each tree link in its own frame on top of
   the sealed model.
+- **The test confirms it.** In [`examples/v10_diag.out`](examples/v10_diag.out), a tree-frame layer
+  trained for one sweep on top of the sealed r = 9 model lowers the energy from 35.622 to 35.321. That
+  closes 90% of the remaining distance to E₀ ([35.288, 35.289)). This is the input for a version 11.
 
 Reproduce:
 ```sh
