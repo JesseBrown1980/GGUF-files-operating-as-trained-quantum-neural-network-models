@@ -83,3 +83,15 @@ fn network_identity_exact_and_fixed_point_close() {
         "{exact_milli} {fixed_milli}"
     );
 }
+
+#[test]
+fn sector_matrices_are_w_self_adjoint() {
+    let (_, k22, a22) = Torus::new(2, 2).sector_matrix();
+    assert!(a22);
+    let t = Torus::new(3, 2);
+    let (m, k, a) = t.sector_matrix();
+    assert!(a && t.perron_frobenius_ok());
+    assert!(k22 < 243 && k < 2187);
+    std::fs::write(std::env::temp_dir().join("z3-3x2-sector-probe.mat"), m).expect("write");
+    println!("SECTOR|k22={k22}|k32={k}");
+}

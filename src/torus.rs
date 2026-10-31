@@ -216,6 +216,112 @@ impl Torus {
     }
 }
 
+impl Torus {
+    /// the image of configuration index c under the translation (dx, dy)
+    fn translate(&self, c: usize, dx: usize, dy: usize) -> usize {
+        let g = self.digits(c);
+        let mut h = vec![0i64; self.links];
+        for y in 0..self.ly {
+            for x in 0..self.lx {
+                let s = y * self.lx + x;
+                let t = ((y + dy) % self.ly) * self.lx + (x + dx) % self.lx;
+                h[2 * t] = g[2 * s];
+                h[2 * t + 1] = g[2 * s + 1];
+            }
+        }
+        self.index(&h)
+    }
+    /// The translation-invariant sector in sturmfast's weighted format: classes of gauge orbits under
+    /// the torus translations, weights = class sizes, Z_ij = moves from the class representative's
+    /// representative configuration into class j (W-self-adjoint: w_i Z_ij = w_j Z_ji, checked).
+    /// Returns (matrix text, number of classes, w-self-adjoint).
+    pub fn sector_matrix(&self) -> (String, usize, bool) {
+        let n = self.reps.len();
+        let mut class_of = vec![usize::MAX; n];
+        let mut reps: Vec<usize> = Vec::new();
+        let mut w: Vec<i64> = Vec::new();
+        for o in 0..n {
+            if class_of[o] != usize::MAX {
+                continue;
+            }
+            let id = reps.len();
+            let mut members: Vec<usize> = Vec::new();
+            for dy in 0..self.ly {
+                for dx in 0..self.lx {
+                    members.push(self.orbit_of[self.translate(self.reps[o], dx, dy)]);
+                }
+            }
+            members.sort_unstable();
+            members.dedup();
+            for &m in &members {
+                class_of[m] = id;
+            }
+            reps.push(o);
+            w.push(members.len() as i64);
+        }
+        let k = reps.len();
+        let mut z: Vec<BTreeMap<usize, i64>> = vec![BTreeMap::new(); k];
+        for (i, &o) in reps.iter().enumerate() {
+            let c = self.reps[o];
+            *z[i].entry(i).or_insert(0) += 2 * self.links as i64;
+            for l in 0..self.links {
+                for d in 1..=2usize {
+                    let st = p3(l);
+                    let x = (c / st) % 3;
+                    let h = c - x * st + ((x + d) % 3) * st;
+                    *z[i].entry(class_of[self.orbit_of[h]]).or_insert(0) -= 1;
+                }
+            }
+        }
+        let mut adjoint = true;
+        for i in 0..k {
+            for (&j, &v) in &z[i] {
+                adjoint &= w[i] * v == w[j] * z[j].get(&i).copied().unwrap_or(0);
+            }
+        }
+        let mags: Vec<String> = reps.iter().map(|&o| self.mag[o].to_string()).collect();
+        let mut s = format!("{k}\n");
+        s.push_str(&w.iter().map(i64::to_string).collect::<Vec<_>>().join(" "));
+        s.push('\n');
+        s.push_str(&mags.join(" "));
+        s.push('\n');
+        for (i, row) in z.iter().enumerate() {
+            for (&j, &v) in row.range(i..) {
+                if v != 0 {
+                    s.push_str(&format!("{i} {j} {v}\n"));
+                }
+            }
+        }
+        (s, k, adjoint)
+    }
+    /// every off-diagonal hop count is a move (so H's off-diagonal entries are non-positive) and the
+    /// orbit graph is connected
+    pub fn perron_frobenius_ok(&self) -> bool {
+        let n = self.reps.len();
+        let mut adj: Vec<Vec<usize>> = vec![Vec::new(); n];
+        for &(a, b, k) in &self.hop {
+            if k <= 0 {
+                return false;
+            }
+            if a != b {
+                adj[a].push(b);
+            }
+        }
+        let mut seen = vec![false; n];
+        let mut stack = vec![0usize];
+        seen[0] = true;
+        while let Some(u) = stack.pop() {
+            for &v in &adj[u] {
+                if !seen[v] {
+                    seen[v] = true;
+                    stack.push(v);
+                }
+            }
+        }
+        seen.iter().all(|&x| x)
+    }
+}
+
 /// A fixed-point real state at scale 2^36, gates applied with rounded integer division (training only).
 #[derive(Clone)]
 pub struct StateF {

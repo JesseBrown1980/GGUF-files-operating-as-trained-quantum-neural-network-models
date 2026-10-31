@@ -45,7 +45,18 @@ fn below(sturm: &Path, mat: &Path, r: i64, t: i64, calls: &mut usize, clean: &mu
 
 /// smallest t (milli) with at least one eigenvalue below it: E0 in [(t-1)/1000, t/1000)
 fn e0_milli(sturm: &Path, mat: &Path, r: i64, calls: &mut usize, clean: &mut bool) -> i64 {
-    let (mut lo, mut hi) = (0i64, 24_000i64);
+    e0_milli_from(sturm, mat, r, 24_000, calls, clean)
+}
+
+fn e0_milli_from(
+    sturm: &Path,
+    mat: &Path,
+    r: i64,
+    top: i64,
+    calls: &mut usize,
+    clean: &mut bool,
+) -> i64 {
+    let (mut lo, mut hi) = (0i64, top);
     assert!(below(sturm, mat, r, hi, calls, clean) > 0);
     assert_eq!(below(sturm, mat, r, lo, calls, clean), 0);
     while hi - lo > 1 {
@@ -79,13 +90,24 @@ pub fn run(sturm: &Path, out: &Path, sweeps: usize) {
     let mut files: Vec<(String, usize, String)> = Vec::new();
     let t = Torus::new(LX, LY);
     let c1 = t.reps.len() == 2187 && t.sizes.iter().all(|&s| s == 243);
-    let mat_text = t.sturm_matrix();
-    let mat = out.join("z3-3x2.mat");
+    let (mat_text, classes, adjoint) = t.sector_matrix();
+    let pf = t.perron_frobenius_ok();
+    let mat = out.join("z3-3x2-sector.mat");
     fs::write(&mat, &mat_text).expect("matrix");
     files.push((
-        "z3-3x2.mat".into(),
+        "z3-3x2-sector.mat".into(),
         mat_text.len(),
         hex_digest(mat_text.as_bytes()),
+    ));
+    // C2b: the same construction on the sealed 2x2 torus at r = 9
+    let t22 = Torus::new(2, 2);
+    let (m22, k22, adj22) = t22.sector_matrix();
+    let mat22 = out.join("z3-2x2-sector.mat");
+    fs::write(&mat22, &m22).expect("matrix 2x2");
+    files.push((
+        "z3-2x2-sector.mat".into(),
+        m22.len(),
+        hex_digest(m22.as_bytes()),
     ));
     let sturm_sha = hex_digest(&fs::read(sturm).expect("sturmfast binary"));
     println!(
@@ -98,12 +120,32 @@ pub fn run(sturm: &Path, out: &Path, sweeps: usize) {
                 ("amplitudes", t.dim.to_string()),
                 ("orbits", t.reps.len().to_string()),
                 ("orbit_size", t.sizes[0].to_string()),
-                ("matrix_sha256", hex_digest(mat_text.as_bytes())),
+                ("sector_classes", classes.to_string()),
+                ("sector_w_self_adjoint", u8::from(adjoint).to_string()),
+                (
+                    "perron_frobenius_offdiag_nonpositive_connected",
+                    u8::from(pf).to_string()
+                ),
+                ("sector_matrix_sha256", hex_digest(mat_text.as_bytes())),
                 ("sturmfast_sha256", sturm_sha),
             ],
         )
     );
     let (mut calls, mut clean) = (0usize, true);
+    let e0_22 = e0_milli_from(sturm, &mat22, 9, 16_000, &mut calls, &mut clean);
+    let c2b = adj22 && e0_22 == 15_379;
+    println!(
+        "{}",
+        rec.row(
+            "CHECK_2X2",
+            &[
+                ("sector_classes", k22.to_string()),
+                ("w_self_adjoint", u8::from(adj22).to_string()),
+                ("E0_r9_in", format!("[{},{})_milli", e0_22 - 1, e0_22)),
+                ("sealed", "[15378,15379)".into()),
+            ],
+        )
+    );
     let (mut c3, mut c5, mut c6, mut c7, mut c8, mut t6) = (true, true, true, true, true, false);
     let mut models: Vec<(String, i64, Option<i128>)> = Vec::new();
     for &r in &[9i64, 27, 81] {
@@ -250,6 +292,16 @@ pub fn run(sturm: &Path, out: &Path, sweeps: usize) {
             "C2",
             clean,
             "sturmfast_complete_and_unambiguous_at_r_9_27_81".to_string(),
+        ),
+        (
+            "C2b",
+            c2b,
+            format!("2x2_sector_E0_r9_milli_upper={e0_22}_sealed_15379"),
+        ),
+        (
+            "C2c",
+            pf && adjoint,
+            "offdiag_nonpositive_orbit_graph_connected_sector_w_self_adjoint".to_string(),
         ),
         ("C3", c3, "identity_starts_at_exactly_24".to_string()),
         ("C4", t6, "T6".to_string()),
