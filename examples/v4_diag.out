@@ -1,0 +1,9 @@
+DIAG|r=9|best_product_b=7,7|best_product_milli=15696|second_order_terms=16|E2_milli=15703|json=0
+DIAG|r=27|best_product_b=2,2|best_product_milli=15901|second_order_terms=16|E2_milli=15901|json=0
+DIAG|r=81|best_product_b=1,1|best_product_milli=15970|second_order_terms=16|E2_milli=15967|json=0
+HOLONOMY|r=9|sectors=1|best_k_per_mille=19|energy_milli=15696|json=0
+HOLONOMY|r=9|sectors=9|best_k_per_mille=19|energy_milli=15381|json=0
+HOLONOMY|r=27|sectors=1|best_k_per_mille=6|energy_milli=15900|json=0
+HOLONOMY|r=27|sectors=9|best_k_per_mille=6|energy_milli=15800|json=0
+HOLONOMY|r=81|sectors=1|best_k_per_mille=2|energy_milli=15967|json=0
+HOLONOMY|r=81|sectors=9|best_k_per_mille=2|energy_milli=15933|json=0
