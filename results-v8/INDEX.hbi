@@ -1,0 +1,7 @@
+V8INDEX|files=6|json=0
+INDEXROW|row=1|file=z3-3x2-sector.mat|bytes=47624|sha256=dbafa03d4e0cdb448b2eaae6956cbc995373c8ab38f7a18d1d30c78dbd737723|json=0
+INDEXROW|row=2|file=z3-2x2-sector.mat|bytes=4989|sha256=e6e8720a74c1cef11bec2219330a5a68e041409741f8a7b028fc0c0188d7ad38|json=0
+INDEXROW|row=3|file=v8-z3-3x2-r9-identity.gguf|bytes=1216|sha256=a75c81e88e98324ab855521ae1a12a209500906b31b675ddc930d7466f5f4ed1|json=0
+INDEXROW|row=4|file=v8-z3-3x2-r27-identity.gguf|bytes=1216|sha256=1fe5879aedfb4719ed615c1fed23034057c1dbd7f79cebe68d5962b382ef42b7|json=0
+INDEXROW|row=5|file=v8-z3-3x2-r81-identity.gguf|bytes=1216|sha256=9a957eeb66e1ffaff91fb00c696b82d2d5ec6b216618f6fa3986e82c363dc0fa|json=0
+INDEXROW|row=6|file=V8.hbp|bytes=5339|sha256=f5ab3843f0d25a21c75b7b9ad1426d5f165274e62c82056d4641aa74f94e2501|json=0

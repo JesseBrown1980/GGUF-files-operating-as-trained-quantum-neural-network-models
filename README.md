@@ -518,7 +518,69 @@ cargo run --release -- v7 data/stars results-ym-z3 results-v6 out 6
 cd out && sha256sum -c ../results-v7/SHA256SUMS
 ```
 
-## 11. Reproduce
+## 11. Version 8: the 3×2 torus
+
+Version 8 ([`PREREG-V8.hbp`](PREREG-V8.hbp), sealed at `d4f782b` before any v8 code) moves to the
+largest Z₃ torus this machine holds as an exact big-integer state: 3×2. That is 12 links,
+531,441 amplitudes and 2,187 gauge orbits of 243 configurations each. At about 15 qutrits the
+8.4 GB of RAM runs out for exact states.
+
+- **Certification.** E₀ is certified by HEB-C's sturmfast, the same pinned binary as the 2×2
+  certificate. [`ADDENDUM-V8.hbp`](ADDENDUM-V8.hbp), written before any v8 energy, moves the
+  certificate to the translation-invariant sector (390 classes). One count on the full orbit
+  matrix had taken 10 minutes; a sector count takes 5 seconds.
+  - Two checks back the sector move. Every off-diagonal entry of H is ≤ 0 and the orbit graph is
+    connected (C2c), so the ground state is unique, positive and therefore translation-invariant.
+  - The same construction on the 2×2 torus returns the sealed E₀ (C2b).
+- **Network.** v7's two layers, with SUMs along the flux-free cuts of the 3×2 torus. Each x-cut
+  is the two x-links of a column. Each y-cut is the three y-links of a row. 384 trits.
+- **Training.** Candidates are ranked by integer fixed-point energies at scale 2³⁶. Every
+  reported energy is exact. The fixed-point estimate matched the exact thousandth at every
+  coupling (C8).
+
+Seal: [`SEAL-V8.hbp`](SEAL-V8.hbp). Receipts: [`results-v8/`](results-v8/), 3 GGUF models, both
+sector matrices, `V8.hbp`, `INDEX.hbi`, `SHA256SUMS`. A fresh clone at `ad0c8ea` rebuilt the same
+binary (sha256 `22d180d5…`) and reproduced all 9 files byte for byte. One run takes about 28 minutes.
+
+| Claim | Result |
+|---|---|
+| T6 (primary): r = 9 within 0.020 of the certified E₀ | **FAIL**, 0.081 above |
+| C1: 2,187 orbits of size 243 | PASS |
+| C2, C2b, C2c: certificate complete; 2×2 control; Perron–Frobenius conditions | PASS |
+| C3: IDENTITY starts at exactly 24 | PASS |
+| C4: T6 holds | FAIL |
+| C5: r = 27 and r = 81 within 0.010 | **FAIL**, 0.024 and 0.007 |
+| C6: every energy ≥ the certified E₀ | PASS |
+| C7: exact norm and exact inverse | PASS |
+| C8: fixed point within one thousandth of exact | PASS |
+| C9: all 3 models reload to their headers | PASS |
+| C10: independent replay byte-identical | PASS |
+
+| r | Certified E₀ | v8 network | Above E₀ | Gap from 24 closed |
+|---|---|---|---|---|
+| 9 | [23.298, 23.299) | 23.380 | 0.081 | 88.3% |
+| 27 | [23.774, 23.775) | 23.799 | 0.024 | 88.9% |
+| 81 | [23.925, 23.926) | 23.933 | 0.007 | 89.3% |
+
+**What version 8 reached.**
+- **The gap fraction is steady.** The network closes 88–89% of the gap from the flat value at
+  every coupling. On the 2×2 torus v7 closed over 99%.
+- **Training may be short.** Every run used all four sweeps.
+- **Layer 2 is mostly idle.** It switched on only at r = 9.
+- **Holonomy is spread.** The trained layer 1 spreads every cut's control link (b = 2065, 2722
+  and similar), so the holonomy superposition is present.
+
+The post-hoc diagnostic [`examples/v8_diag.rs`](examples/v8_diag.rs) tests three explanations on
+the sealed models before version 9 is pre-registered: training budget, holonomy, and the geometry
+of the correlations.
+
+Reproduce:
+```sh
+cargo run --release -- v8 PATH/TO/sturmfast out 4
+cd out && sha256sum -c ../results-v8/SHA256SUMS
+```
+
+## 12. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -545,6 +607,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v8/`, `SEAL-V8.hbp`, `PREREG-V8.hbp`, `ADDENDUM-V8.hbp` | version 8: the 3×2 torus, 3 GGUF models, sector matrices, `V8.hbp`, index, checksums; seal; predictions; addendum |
 | `results-v7/`, `SEAL-V7.hbp`, `PREREG-V7.hbp` | version 7: 9 GGUF models, 44 PNG frames, `V7.hbp`, index, checksums; seal; predictions |
 | `results-v6/`, `SEAL-V6.hbp`, `PREREG-V6.hbp` | version 6: 15 GGUF models, `V6.hbp`, index, checksums; seal; predictions |
 | `results-v5/`, `SEAL-V5.hbp`, `PREREG-V5.hbp`, `examples/v4_diag.*` | version 5: 15 GGUF models, `V5.hbp`, index, checksums; seal; predictions; the v4 diagnostic that shaped it |
