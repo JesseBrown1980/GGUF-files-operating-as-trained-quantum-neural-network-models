@@ -392,8 +392,8 @@ Best Z₃ energy by seed (milli floors):
   so the WARM start is not the v4 product state.
 - **The STAR seed stalls.** Its six-trit angles start far from the flat orbit, and single-trit
   moves change only 9 of its 96 trits.
-- **At r = 81 the angle grid limits it.** The smallest step, b = 1, is close to the optimal
-  dressing there, and that coupling closes 88%.
+- **r = 81 closes less, 88%.** There the best product dressing in v4 was already the
+  smallest step, b = 1, so the angle grid is the likely limit; v5 does not test this.
 
 Reproduce:
 ```sh
