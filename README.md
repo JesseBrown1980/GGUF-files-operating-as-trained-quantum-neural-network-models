@@ -13,6 +13,25 @@ Node. Receipts are HBP/HBI with SHA-256, and every receipt line ends in `json=0`
 Predictions were sealed in [`PREREG.hbp`](PREREG.hbp) (sha256 `5485a600…`) and
 pushed in commit `03ff607` before any code existed.
 
+## Versions at a glance
+
+Every version was pre-registered before its code, run twice (the second time from a fresh clone, byte
+for byte), and sealed with its failures kept. Every energy is exact. The certified ground energies E₀
+come from HEB-C's sturmfast in exact integer arithmetic.
+
+| Version | Lattice | What changed | Best r = 9 energy | Certified E₀ at r = 9 | Primary target |
+|---|---|---|---|---|---|
+| v1 | 2×2 Z₃ | Clifford qutrit network | 48 | [15.378, 15.379) | FAIL |
+| v2 | 2×2 | non-Clifford, Z[ζ₉] | 33.578 | same | FAIL |
+| v3 | 2×2 | identity-reachable layer | 16.000 | same | FAIL |
+| v4 | 2×2 | real rational rotations | 15.696 | same | PASS |
+| v5 | 2×2 | holonomy-sector coherence | 15.384 | same | PASS |
+| v6 | 2×2 | 9× finer angle grid | 15.382 | same | PASS |
+| v7 | 2×2 | correlated layer, pixel backend | 15.381 | same | PASS |
+| v8 | 3×2 Z₃ | the largest torus held exactly; sector certificate | 23.380 | [23.298, 23.299) | FAIL |
+| v9 | 3×2 | correlations in each plaquette's flux frame | 23.301 | same | PASS |
+| v10 | 3×3 Z₃ | gauge-fixed basis; zero-winding certificate block | 35.622 | [35.288, 35.289) | FAIL |
+
 ## 1. The exact simulator
 
 | | |
@@ -640,7 +659,70 @@ cargo run --release -- v9 results-v8 out 4
 cd out && sha256sum -c ../results-v9/SHA256SUMS
 ```
 
-## 13. Reproduce
+## 13. Version 10: the 3×3 torus in the gauge-fixed basis
+
+Version 10 ([`PREREG-V10.hbp`](PREREG-V10.hbp), sealed at `77d0f79` before any v10 code) has two
+addenda written before its run. [`ADDENDUM-V10.hbp`](ADDENDUM-V10.hbp) records the operator's five
+requirements and the evidence rule: sturmfast is the only certificate, and floating-point spectra are
+cross-checks. [`ADDENDUM-V10b.hbp`](ADDENDUM-V10b.hbp) adds the exact checks QA and QB, with a
+fallback.
+
+- **Basis.** The comb spanning tree is gauge-fixed to zero, leaving the 10 free links of the 3×3 torus.
+  That is 3¹⁰ = 59,049 states, and every one is gauge invariant, so no amplitude is unphysical.
+- **Certificate.** E₀ is certified on the zero-winding, zero-momentum block. Its classes are free
+  configurations under the two cut shifts and the translations: 753 of them on 3×3. The block carries
+  the ground state because of two checks, each run in exact integers on the 2×2, 3×2 and 3×3 tori:
+  - QA: the symmetries commute with H, entry by entry.
+  - QB: every off-diagonal entry is ≤ 0, and the move graph reaches all states.
+- **Controls.** The same construction returns the sealed 2×2 E₀ and the sealed v8 3×2 intervals.
+  Mapped into this basis, the sealed v9 model reproduces its 23.301 exactly.
+- **Network.** Rotations on every free link, then a plaquette-flux layer built from the free links of
+  each plaquette. 304 trits.
+
+Seal: [`SEAL-V10.hbp`](SEAL-V10.hbp). Receipts: [`results-v10/`](results-v10/): 3 GGUF models, the three
+block matrices, `V10.hbp`, `INDEX.hbi` and `SHA256SUMS`. A fresh clone at `af737e0` rebuilt the same
+binary (sha256 `278d1cb3…`) and reproduced all 9 files byte for byte. sturmfast made 117 counts, every
+one complete and unambiguous. One run takes about 38 minutes.
+
+| Claim | Result |
+|---|---|
+| T8 (primary): r = 9 within 0.010 of the certified 3×3 E₀ | **FAIL**, 0.333 above |
+| QA, QB: exact commutation; Perron–Frobenius conditions (2×2, 3×2, 3×3) | PASS |
+| Q1: the 3×3 block has 753 classes | PASS |
+| Q2, Q3: the 2×2 and 3×2 controls return the sealed intervals | PASS |
+| Q4: sturmfast complete and unambiguous | PASS |
+| Q5: the sealed v9 energy, reproduced in the gauge-fixed basis | PASS |
+| Q6: IDENTITY starts at exactly 36 | PASS |
+| Q7: T8 holds | FAIL |
+| Q8: r = 27 and r = 81 within 0.005 | **FAIL**, 0.101 and 0.032 |
+| Q9: every energy ≥ the certified E₀ | PASS |
+| Q10: exact norm and exact inverse | PASS |
+| Q11: all 3 models reload to their headers | PASS |
+| Q12: independent replay byte-identical | PASS |
+
+| r | Certified E₀ (3×3 torus) | v10 network | Gap from 36 closed |
+|---|---|---|---|
+| 9 | [35.288, 35.289) | 35.622 | 53% |
+| 27 | [35.773, 35.774) | 35.875 | 55% |
+| 81 | [35.925, 35.926) | 35.958 | 56% |
+
+**What version 10 reached.**
+- **The certificate.** The 3×3 ground energy is certified at three couplings, every symmetry is checked
+  in exact integers, and the controls hold.
+- **The network.** It closes only about half of the gap, and training stops after 2 sweeps at a local
+  minimum.
+- **The working hypothesis.** In the gauge-fixed basis, moving a tree link shifts several free links at
+  once. A rotation of a single free link therefore cannot dress a tree link. The post-hoc test is
+  [`examples/v10_diag.rs`](examples/v10_diag.rs): it dresses each tree link in its own frame on top of
+  the sealed model.
+
+Reproduce:
+```sh
+cargo run --release -- v10 PATH/TO/sturmfast results-v9 out 4
+cd out && sha256sum -c ../results-v10/SHA256SUMS
+```
+
+## 14. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -667,6 +749,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v10/`, `SEAL-V10.hbp`, `PREREG-V10.hbp`, `ADDENDUM-V10*.hbp` | version 10: the 3×3 torus, 3 GGUF models, block matrices, `V10.hbp`, index, checksums; seal; predictions; addenda |
 | `results-v9/`, `SEAL-V9.hbp`, `PREREG-V9.hbp`, `examples/v8_diag.*` | version 9: 6 GGUF models, `V9.hbp`, index, checksums; seal; predictions; the v8 diagnostic that shaped it |
 | `results-v8/`, `SEAL-V8.hbp`, `PREREG-V8.hbp`, `ADDENDUM-V8.hbp` | version 8: the 3×2 torus, 3 GGUF models, sector matrices, `V8.hbp`, index, checksums; seal; predictions; addendum |
 | `results-v7/`, `SEAL-V7.hbp`, `PREREG-V7.hbp` | version 7: 9 GGUF models, 44 PNG frames, `V7.hbp`, index, checksums; seal; predictions |
