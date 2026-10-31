@@ -401,7 +401,60 @@ cargo run --release -- v5 data/stars data/cloud results-ym-z3 out 1 8
 cd out && sha256sum -c ../results-v5/SHA256SUMS
 ```
 
-## 9. Reproduce
+## 9. Version 6: a finer angle grid
+
+Version 6 ([`PREREG-V6.hbp`](PREREG-V6.hbp), sealed at `a477e39` before any v6 code)
+tests whether the angle grid is what held r = 81 at 88% in version 5.
+- **Network:** the v5 network unchanged.
+- **Grid:** a = 6561 instead of 729, with eight trits per angle,
+  b = 2187p₀ + … + p₇ ∈ [−3280, 3280]. The smallest step is 9× finer.
+- **WARM seed:** starts from the sealed v5 IDENTITY models with every b multiplied by 9.
+  That is the same rotation, and the run checks that the start energy equals the v5 energy
+  exactly.
+
+Seal: [`SEAL-V6.hbp`](SEAL-V6.hbp). Receipts: [`results-v6/`](results-v6/), 15 GGUF
+models, `V6.hbp`, `INDEX.hbi`, `SHA256SUMS`. A fresh clone at `65a4ba7` rebuilt the same
+binary (sha256 `244fee81…`) and reproduced all 18 files byte for byte. One run takes
+about 150 seconds. After the shared rotation code was generalised, the v5 run was
+repeated and still matched `results-v5/SHA256SUMS`.
+
+| Claim | Result |
+|---|---|
+| T4 (primary): best Z₃ energy at r = 81 in [15.933, 15.937] | **PASS**, 15.933 |
+| V1, V2: exact norm and exact inverse | PASS |
+| V3: IDENTITY starts at exactly 16 | PASS |
+| V4: WARM starts at exactly the v5 energy | PASS |
+| V5: T4 holds | PASS |
+| V6: best r = 9 ≤ 15.384 and best r = 27 ≤ 15.802 | PASS, 15.382 and 15.800 |
+| V7: every energy ≥ the certified E₀ | PASS |
+| V8: the STAR seed stays above 16 | PASS |
+| V9: all 15 models reload to their headers | PASS |
+| V10: independent replay byte-identical | PASS |
+
+Best Z₃ energy by seed (milli floors):
+
+| r | STAR | CLOUD | SHA | IDENTITY | WARM | v5 best | certified E₀ | gap closed |
+|---|---|---|---|---|---|---|---|---|
+| 9 | 81.269 | 60.068 | 60.049 | **15.382** | 15.382 | 15.384 | [15.378, 15.379) | 99.3% |
+| 27 | 211.189 | 151.022 | 150.419 | **15.800** | 15.800 | 15.802 | [15.799, 15.800) | 99.5% |
+| 81 | 600.949 | 421.971 | 419.983 | **15.933** | 15.933 | 15.941 | [15.933, 15.934) | same milli as E₀ |
+
+**What version 6 reached.**
+- **The grid was the limit at r = 81.** On the finer grid, r = 81 lands in [15.933, 15.934),
+  the same thousandth as the certified ground energy, against 15.941 in version 5.
+- **The other couplings:** r = 27 is one thousandth above E₀ and r = 9 four thousandths.
+- **Every energy** stays above the certified E₀.
+- **IDENTITY and WARM** reach the same energies at every coupling.
+- **The random and star seeds stall.** The SHA, CLOUD and STAR seeds start far out on the
+  eight-trit grid and stay above 16.
+
+Reproduce:
+```sh
+cargo run --release -- v6 data/stars data/cloud results-ym-z3 results-v5 out 1 8
+cd out && sha256sum -c ../results-v6/SHA256SUMS
+```
+
+## 10. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -428,6 +481,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v6/`, `SEAL-V6.hbp`, `PREREG-V6.hbp` | version 6: 15 GGUF models, `V6.hbp`, index, checksums; seal; predictions |
 | `results-v5/`, `SEAL-V5.hbp`, `PREREG-V5.hbp`, `examples/v4_diag.*` | version 5: 15 GGUF models, `V5.hbp`, index, checksums; seal; predictions; the v4 diagnostic that shaped it |
 | `results-v4/`, `SEAL-V4.hbp`, `PREREG-V4.hbp` | version 4: 12 GGUF models, `V4.hbp`, index, checksums; seal; predictions |
 | `results-v3/`, `SEAL-V3.hbp`, `PREREG-V3.hbp` | version 3: 24 GGUF models, `V3.hbp`, index, checksums; seal; predictions |
