@@ -1,0 +1,17 @@
+PREREG|experiment=gguf-files-as-trained-qutrit-virtual-qnn-v1|sealed_before=any_code_written|operator=OP-JESSE|reference=Zhao_Zhao_Li_Li_Chiribella_Virtual_quantum_neural_networks_arXiv_2609.11327|json=0
+DESIGN|toolchain=rust_1.81_clippy_deny_warnings|arithmetic=integer_only_no_f32_f64|receipts=hbp_hbi_sha256|json=0
+DESIGN|simulator=exact_state_vector_n_qutrits|amplitudes=eisenstein_integers_a_plus_b_omega|scale=amplitude_true_equals_v_over_sqrt3_pow_k|probability=norm_a2_minus_ab_plus_b2_over_3_pow_k_exact_fraction|json=0
+DESIGN|gates=X_shift,Z_phase,F_fourier,SUM_controlled_add,P_ab_diag_1_omega_a_omega_b|trainable_parameters=trits_a_b_in_0_1_2|json=0
+DESIGN|task=binary_classification|data=all_points_x_y_in_0..26|label=1_iff_(x-13)^2+(y-13)^2_le_81|train=(7x+11y)_mod_3_ne_0|test=(7x+11y)_mod_3_eq_0|json=0
+DESIGN|encoding=x_and_y_as_three_base3_digits_each_on_six_qutrits_by_X_shifts|readout=qutrit_0|class=1_iff_P(0)_gt_P(1)|json=0
+DESIGN|circuit=L_layers_of_F_each_then_P_ab_each_then_SUM_chain|loss=train_errors_integer|training=coordinate_descent_over_trits_try_3_values_keep_strict_improvement|json=0
+DESIGN|branches=three_seeded_from_ACER-OPUS-RED,ACER-FABLE-GREEN,ACER-MYTHOS-BLUE_trits|control=three_seeded_from_sha256_streams|json=0
+DESIGN|virtual=score_c(x)=sum_b_c_b(P_b(0)-P_b(1))_exact|c_in_-1_0_+1_cubed_nonzero_26|class=1_iff_score_gt_0|c_chosen_on_train_only|overhead=L1_norm|json=0
+DESIGN|model_files=each_trained_branch_and_the_virtual_model_written_as_GGUF_v3_int8_tensors|header=architecture,task,qutrits,layers,train_and_test_accuracy|inference=load_gguf_run_exact|json=0
+PREDICT|id=Q1|claim=every_circuit_preserves_the_exact_norm_sum_of_norms_equals_3_pow_k|basis=claude|json=0
+PREDICT|id=Q2|claim=F_fourth_power_is_identity_and_every_trained_circuit_inverse_restores_the_input_state_exactly|basis=claude|json=0
+PREDICT|id=Q3|claim=each_trained_branch_beats_the_majority_class_on_the_test_set|basis=claude|json=0
+PREDICT|id=Q4|claim=virtual_train_accuracy_ge_best_single_branch_train_accuracy|basis=claude|reason=single_branches_are_c_100_010_001|json=0
+PREDICT|id=Q5|claim=virtual_test_accuracy_ge_best_single_branch_test_accuracy|basis=claude|json=0
+PREDICT|id=Q6|claim=star_seeded_and_sha_seeded_best_test_accuracy_within_50_permille|basis=claude|json=0
+PREDICT|id=Q7|claim=every_GGUF_model_reloaded_reproduces_its_header_accuracies_exactly|basis=claude|json=0
