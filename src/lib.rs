@@ -17,5 +17,6 @@ pub mod task;
 pub mod train;
 pub mod v2;
 pub mod v4;
+pub mod v5;
 pub mod virtual_qnn;
 pub mod ym_z3;
