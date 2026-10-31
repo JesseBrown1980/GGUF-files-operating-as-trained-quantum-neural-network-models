@@ -89,3 +89,29 @@ fn z3_energy_of_the_trivial_flat_orbit_is_16_in_v2_arithmetic() {
         assert_eq!(e.0, e.1.scale(16));
     }
 }
+
+#[test]
+fn v3_sandwich_is_identity_at_zero_and_exactly_invertible() {
+    use gguf_qnn::qutrit9::Net9S;
+    let zero = Net9S {
+        n: 8,
+        layers: 2,
+        params: vec![0; 64],
+    };
+    let mut s = State9::basis(8, &[0; 8]);
+    zero.forward(&mut s);
+    assert_eq!(s, State9::basis(8, &[0; 8]));
+    let e = gguf_qnn::v2::z3_energy(&s, 9).unwrap();
+    assert_eq!(e.0, e.1.scale(16));
+    let net = Net9S {
+        n: 3,
+        layers: 2,
+        params: (0..24).map(|i| (i * 5 + 2) % 3).collect(),
+    };
+    let mut t = State9::basis(3, &[2, 1, 0]);
+    let o = t.clone();
+    net.forward(&mut t);
+    assert_eq!(t.norm_sum(), R3::int(3i128.pow(t.k)));
+    net.inverse(&mut t);
+    assert!(t.equals_scaled(&o, t.k / 2));
+}

@@ -136,3 +136,53 @@ impl Net9 {
         }
     }
 }
+
+/// The v3 Z3 network: L layers of [F, diag(1, zeta^e1, zeta^e2), F^dagger on every link,
+/// then the SUM ring]. With every trit zero it is exactly the identity.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Net9S {
+    pub n: usize,
+    pub layers: usize,
+    pub params: Vec<i64>,
+}
+
+impl Net9S {
+    pub fn param_count(n: usize, layers: usize) -> usize {
+        4 * n * layers
+    }
+    fn exps(&self, l: usize, q: usize) -> (i64, i64) {
+        let i = (l * self.n + q) * 4;
+        let p = &self.params;
+        (3 * p[i] + p[i + 1], 3 * p[i + 2] + p[i + 3])
+    }
+    pub fn forward(&self, s: &mut State9) {
+        for l in 0..self.layers {
+            for q in 0..self.n {
+                let (e1, e2) = self.exps(l, q);
+                if e1 != 0 || e2 != 0 {
+                    s.fourier(q, 1);
+                    s.phase9(q, e1, e2);
+                    s.fourier(q, -1);
+                }
+            }
+            for q in 0..self.n {
+                s.sum(q, (q + 1) % self.n, 1);
+            }
+        }
+    }
+    pub fn inverse(&self, s: &mut State9) {
+        for l in (0..self.layers).rev() {
+            for q in (0..self.n).rev() {
+                s.sum(q, (q + 1) % self.n, -1);
+            }
+            for q in 0..self.n {
+                let (e1, e2) = self.exps(l, q);
+                if e1 != 0 || e2 != 0 {
+                    s.fourier(q, 1);
+                    s.phase9(q, -e1, -e2);
+                    s.fourier(q, -1);
+                }
+            }
+        }
+    }
+}

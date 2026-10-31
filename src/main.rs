@@ -3,6 +3,7 @@
 //!   gguf-qnn infer MODEL.gguf X Y
 //!   gguf-qnn verify OUT_DIR
 //!   gguf-qnn ym-z3 STURMFAST STAR_DIR OUT_DIR [LAYERS]
+//!   gguf-qnn v3 STAR_DIR CLOUD_DIR YM_Z3_RESULTS OUT_DIR [CIRCLE_LAYERS] [Z3_LAYERS] [SWEEPS]
 //!   gguf-qnn v2 STAR_DIR CLOUD_DIR YM_Z3_RESULTS OUT_DIR [CIRCLE_LAYERS] [Z3_LAYERS] [SWEEPS]
 #![forbid(unsafe_code)]
 #![deny(clippy::float_arithmetic)]
@@ -20,6 +21,7 @@ use std::fs;
 use std::path::Path;
 
 mod v2_run;
+mod v3_run;
 mod ym_run;
 
 const STARS: [&str; 3] = ["ACER-OPUS-RED", "ACER-FABLE-GREEN", "ACER-MYTHOS-BLUE"];
@@ -449,6 +451,20 @@ fn main() {
             let layers = a.get(4).and_then(|v| v.parse().ok()).unwrap_or(3);
             let sweeps = a.get(5).and_then(|v| v.parse().ok()).unwrap_or(4);
             cmd_train(Path::new(&a[2]), Path::new(&a[3]), layers, sweeps);
+        }
+        Some("v3") if a.len() >= 6 => {
+            let cl = a.get(6).and_then(|v| v.parse().ok()).unwrap_or(2);
+            let zl = a.get(7).and_then(|v| v.parse().ok()).unwrap_or(2);
+            let sw = a.get(8).and_then(|v| v.parse().ok()).unwrap_or(4);
+            v3_run::run(
+                Path::new(&a[2]),
+                Path::new(&a[3]),
+                Path::new(&a[4]),
+                Path::new(&a[5]),
+                cl,
+                zl,
+                sw,
+            );
         }
         Some("v2") if a.len() >= 6 => {
             let cl = a.get(6).and_then(|v| v.parse().ok()).unwrap_or(3);
