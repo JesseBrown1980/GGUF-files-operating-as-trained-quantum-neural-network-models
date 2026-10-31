@@ -95,3 +95,36 @@ fn sector_matrices_are_w_self_adjoint() {
     std::fs::write(std::env::temp_dir().join("z3-3x2-sector-probe.mat"), m).expect("write");
     println!("SECTOR|k22={k22}|k32={k}");
 }
+
+#[test]
+fn v9_plaquette_layer_identity_and_exact_inverse() {
+    use gguf_qnn::v9::NetV9;
+    let t = Torus::new(3, 2);
+    let mut s = StateR::zero_state(LINKS);
+    NetV9 {
+        params: vec![0; PARAMS],
+    }
+    .forward(&mut s);
+    let (n, d) = t.energy_exact(&s.v, 9).expect("p");
+    assert_eq!(n, d.mul_i128(24));
+    let params: Vec<i64> = (0..PARAMS)
+        .map(|i| {
+            if i % 16 == 7 || (i > PARAMS / 2 && i % 16 == 15) {
+                1
+            } else {
+                0
+            }
+        })
+        .collect();
+    let net = NetV9 { params };
+    let mut s = StateR::zero_state(LINKS);
+    let o = s.clone();
+    net.forward(&mut s);
+    let dd = s.scale();
+    assert_eq!(s.norm_sq(), dd.mul(&dd));
+    net.inverse(&mut s);
+    assert_eq!(
+        s.v,
+        o.v.iter().map(|x| x.mul(&dd).mul(&dd)).collect::<Vec<_>>()
+    );
+}

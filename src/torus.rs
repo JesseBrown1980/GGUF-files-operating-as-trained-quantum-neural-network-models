@@ -322,6 +322,69 @@ impl Torus {
     }
 }
 
+fn isqrt_ratio(a: &Big, b: &Big) -> i128 {
+    let (mut lo, mut hi) = (0i128, 1i128 << 40);
+    while hi - lo > 1 {
+        let mid = (lo + hi) / 2;
+        if b.mul_i128(mid * mid).sub(a).sign() <= 0 {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    lo
+}
+
+impl Torus {
+    /// (fraction of the norm that survives gauge projection, per mille; residual |(H - E) phi| / |phi|
+    /// of the projected state, milli), both floors; requires equal orbit sizes
+    pub fn projection_and_residual(&self, v: &[Big], r: i64, e: &(Big, Big)) -> (i128, i128) {
+        let n = self.reps.len();
+        let mut s = vec![Big::zero(); n];
+        for (c, z) in v.iter().enumerate() {
+            if !z.is_zero() {
+                s[self.orbit_of[c]] = s[self.orbit_of[c]].add(z);
+            }
+        }
+        let w = (self.group_order / self.sizes[0]) as i128;
+        let size = self.sizes[0] as i128;
+        let num_p = s
+            .iter()
+            .fold(Big::zero(), |a, x| a.add(&x.mul(x)))
+            .mul_i128(w);
+        let den_p = v
+            .iter()
+            .fold(Big::zero(), |a, x| a.add(&x.mul(x)))
+            .mul_i128(self.group_order as i128);
+        let frac = isqrt_ratio(&num_p.mul(&num_p).mul_i128(1_000_000), &den_p.mul(&den_p));
+        let phi: Vec<Big> = s.iter().map(|x| x.mul_i128(w)).collect();
+        let mut a: Vec<Big> = phi
+            .iter()
+            .enumerate()
+            .map(|(o, x)| {
+                x.mul_i128(
+                    size * (2 * self.links as i128 + i128::from(r) * i128::from(self.mag[o])),
+                )
+            })
+            .collect();
+        for &(o, o2, k) in &self.hop {
+            a[o] = a[o].sub(&phi[o2].mul_i128(i128::from(k)));
+            a[o2] = a[o2].sub(&phi[o].mul_i128(i128::from(k)));
+        }
+        let q: Vec<Big> = (0..n)
+            .map(|o| e.1.mul(&a[o]).sub(&e.0.mul(&phi[o]).mul_i128(size)))
+            .collect();
+        let rn = q.iter().fold(Big::zero(), |acc, x| acc.add(&x.mul(x)));
+        let rd = phi
+            .iter()
+            .fold(Big::zero(), |acc, x| acc.add(&x.mul(x)))
+            .mul(&e.1)
+            .mul(&e.1)
+            .mul_i128(size * size);
+        (frac, isqrt_ratio(&rn.mul_i128(1_000_000), &rd))
+    }
+}
+
 /// A fixed-point real state at scale 2^36, gates applied with rounded integer division (training only).
 #[derive(Clone)]
 pub struct StateF {
