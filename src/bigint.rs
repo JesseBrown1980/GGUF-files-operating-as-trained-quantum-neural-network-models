@@ -169,4 +169,31 @@ impl Big {
         mag.push(1u32 << (e % 32));
         Big { neg: false, mag }
     }
+    /// decimal digits, with a leading '-' when negative
+    pub fn dec(&self) -> String {
+        if self.is_zero() {
+            return "0".into();
+        }
+        let mut mag = self.mag.clone();
+        let mut chunks = Vec::new();
+        while !mag.is_empty() {
+            let mut rem = 0u64;
+            for limb in mag.iter_mut().rev() {
+                let cur = (rem << 32) | u64::from(*limb);
+                *limb = (cur / 1_000_000_000) as u32;
+                rem = cur % 1_000_000_000;
+            }
+            trim(&mut mag);
+            chunks.push(rem);
+        }
+        let mut out = String::new();
+        if self.neg {
+            out.push('-');
+        }
+        out.push_str(&chunks.pop().unwrap_or(0).to_string());
+        while let Some(c) = chunks.pop() {
+            out.push_str(&format!("{c:09}"));
+        }
+        out
+    }
 }
