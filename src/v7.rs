@@ -1,7 +1,8 @@
 //! v7: the v6 layer, then a correlated dressing layer: SUM ring, rotations on every link,
 //! inverse SUM ring. With its trits zero the second layer is exactly the identity.
 //! As sealed in PREREG-V7.hbp. The circuit is written once against `Engine`, so the same
-//! description runs on the big-integer state and on the residue pixel framebuffer.
+//! description runs on the big-integer state and on the residue pixel framebuffer. The
+//! circuit takes `&mut dyn Engine`, so it is compiled once, in this crate.
 
 use crate::bigint::Big;
 use crate::v4::{cmp_q, StateR, Z3Orbits};
@@ -41,7 +42,7 @@ impl NetQ {
             b8(&self.params[i + TRITS_PER_B..i + TRITS_PER_LINK]),
         )
     }
-    fn rotations<E: Engine>(&self, l: usize, e: &mut E, sign: i128) {
+    fn rotations(&self, l: usize, e: &mut dyn Engine, sign: i128) {
         if sign > 0 {
             for q in 0..LINKS {
                 let (b1, b2) = self.bs(l, q);
@@ -56,7 +57,7 @@ impl NetQ {
             }
         }
     }
-    fn ring<E: Engine>(e: &mut E, s: i64) {
+    fn ring(e: &mut dyn Engine, s: i64) {
         if s > 0 {
             for q in 0..LINKS {
                 e.sum(q, (q + 1) % LINKS, 1);
@@ -70,7 +71,7 @@ impl NetQ {
     fn layer2_active(&self) -> bool {
         self.params[PER_LAYER..].iter().any(|&x| x != 0)
     }
-    pub fn forward<E: Engine>(&self, e: &mut E) {
+    pub fn forward(&self, e: &mut dyn Engine) {
         self.rotations(0, e, 1);
         for &(c, t) in &PARTNERS {
             e.sum(c, t, 1);
@@ -81,7 +82,7 @@ impl NetQ {
             Self::ring(e, -1);
         }
     }
-    pub fn inverse<E: Engine>(&self, e: &mut E) {
+    pub fn inverse(&self, e: &mut dyn Engine) {
         if self.layer2_active() {
             Self::ring(e, 1);
             self.rotations(1, e, -1);
