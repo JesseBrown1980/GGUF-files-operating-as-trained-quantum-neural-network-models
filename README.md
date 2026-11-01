@@ -31,6 +31,7 @@ come from HEB-C's sturmfast in exact integer arithmetic.
 | v8 | 3×2 Z₃ | the largest torus held exactly; sector certificate | 23.380 | [23.298, 23.299) | FAIL |
 | v9 | 3×2 | correlations in each plaquette's flux frame | 23.301 | same | PASS |
 | v10 | 3×3 Z₃ | gauge-fixed basis; zero-winding certificate block | 35.622 | [35.288, 35.289) | FAIL |
+| v11 | 3×3 | tree links dressed in their own frames | 35.321 | same | FAIL (r = 27, 81 within 0.002) |
 
 ## 1. The exact simulator
 
@@ -725,7 +726,57 @@ cargo run --release -- v10 PATH/TO/sturmfast results-v9 out 4
 cd out && sha256sum -c ../results-v10/SHA256SUMS
 ```
 
-## 14. Reproduce
+## 14. Version 11: tree links dressed in their own frames
+
+Version 11 ([`PREREG-V11.hbp`](PREREG-V11.hbp), sealed at `514f4c3` before any v11 code) adds the layer
+the v10 diagnostic pointed to. A tree link's electric move shifts a fixed vector of free links,
+δₜ = fix(eₜ). For each of the 8 tree links the new layer does three things:
+- SUMs map δₜ onto a single free qutrit;
+- R₀₁ and R₀₂ rotate that qutrit;
+- the SUMs are undone.
+
+That gives 432 trits. The layer is the identity at zero, and its inverse is exact. E₀ is reused from the
+sealed `V10.hbp`. The seeds are IDENTITY and WARM (the sealed v10 models).
+
+Seal: [`SEAL-V11.hbp`](SEAL-V11.hbp). Receipts: [`results-v11/`](results-v11/), 6 GGUF models, `V11.hbp`,
+`INDEX.hbi`, `SHA256SUMS`. A fresh clone at `9859c6b` rebuilt the same binary (sha256 `d0bc135f…`) and
+reproduced all 9 files byte for byte. One run takes about 7 minutes.
+
+| Claim | Result |
+|---|---|
+| T9 (primary): r = 9 below 35.309 | **FAIL**, 35.321 |
+| R1: exact norm and exact inverse | PASS |
+| R2: WARM starts at exactly the v10 energy | PASS |
+| R3: T9 holds | FAIL |
+| R4: r = 27 and r = 81 within 0.010 | PASS, 0.002 and the same thousandth |
+| R5: every energy ≥ the certified E₀ | PASS |
+| R6: WARM at r = 9 reaches 35.321 | PASS |
+| R7: the tree layer is on in every best model | PASS |
+| R8: fixed point within one thousandth of exact | PASS |
+| R9: all 6 models reload to their headers | PASS |
+| R10: independent replay byte-identical | PASS |
+
+| r | Certified E₀ (3×3 torus) | v11 | v10 |
+|---|---|---|---|
+| 9 | [35.288, 35.289) | 35.321 | 35.622 |
+| 27 | [35.773, 35.774) | **35.776** | 35.875 |
+| 81 | [35.925, 35.926) | **35.925**, the same thousandth | 35.958 |
+
+**What version 11 reached.**
+- **The two larger couplings.** On the 3×3 torus the network lands in the same thousandth as the
+  certified ground energy at r = 81, and two thousandths above it at r = 27.
+- **r = 9.** It is 32 thousandths above, and both seeds stop at the same energy, so this is a limit of
+  the ansatz rather than of training.
+- **Candidate for what is missing.** The zero-winding ground state is a uniform superposition over the
+  cut shifts. That is the 3×3 counterpart of the holonomy coherence that version 5 added on the 2×2 torus.
+
+Reproduce:
+```sh
+cargo run --release -- v11 results-v10 out 4
+cd out && sha256sum -c ../results-v11/SHA256SUMS
+```
+
+## 15. Reproduce
 
 ```sh
 cargo clippy --release --all-targets -- -D warnings
@@ -752,6 +803,7 @@ and then:
 | `data/stars/` | the three seed GGUFs and their sha256 |
 | `src/` | simulator, network, task, training, virtual QNN, GGUF model writer and reader, SHA-256, HBP |
 | `tests/exact.rs` | ω³ = 1, F⁴ = I, exact norm, exact inverse, the stabilizer property, the GGUF round trip |
+| `results-v11/`, `SEAL-V11.hbp`, `PREREG-V11.hbp`, `examples/v10_diag.*` | version 11: 6 GGUF models, `V11.hbp`, index, checksums; seal; predictions; the v10 diagnostic that shaped it |
 | `results-v10/`, `SEAL-V10.hbp`, `PREREG-V10.hbp`, `ADDENDUM-V10*.hbp` | version 10: the 3×3 torus, 3 GGUF models, block matrices, `V10.hbp`, index, checksums; seal; predictions; addenda |
 | `results-v9/`, `SEAL-V9.hbp`, `PREREG-V9.hbp`, `examples/v8_diag.*` | version 9: 6 GGUF models, `V9.hbp`, index, checksums; seal; predictions; the v8 diagnostic that shaped it |
 | `results-v8/`, `SEAL-V8.hbp`, `PREREG-V8.hbp`, `ADDENDUM-V8.hbp` | version 8: the 3×2 torus, 3 GGUF models, sector matrices, `V8.hbp`, index, checksums; seal; predictions; addendum |

@@ -1,0 +1,8 @@
+V11INDEX|files=7|json=0
+INDEXROW|row=1|file=v11-z3-3x3-r9-identity.gguf|bytes=1280|sha256=2c905f125e09d0bd123158e1920416dd85ccb518a9f28443c5132a7526ee238b|json=0
+INDEXROW|row=2|file=v11-z3-3x3-r9-warm.gguf|bytes=1248|sha256=701de1a9495faf304f8c260a30ca0b3d37d1d200232c37a3b0ceaddba2967324|json=0
+INDEXROW|row=3|file=v11-z3-3x3-r27-identity.gguf|bytes=1280|sha256=619c2ebf959999e9f06192afccae95eb69169c15d8a06c7ac01a1366adbc4fdb|json=0
+INDEXROW|row=4|file=v11-z3-3x3-r27-warm.gguf|bytes=1248|sha256=c36d420410f7de36fc637e0ba4a8d62273e346b102c23a3af09a716c18be3e79|json=0
+INDEXROW|row=5|file=v11-z3-3x3-r81-identity.gguf|bytes=1280|sha256=08e7453d351df13706b60c43c623570521048b7d7352c149920c976a5e3fcd1d|json=0
+INDEXROW|row=6|file=v11-z3-3x3-r81-warm.gguf|bytes=1248|sha256=2a4d96f30a24c69e1163f77059e8dbae6147474b580f6e872d8f8bdab84226c9|json=0
+INDEXROW|row=7|file=V11.hbp|bytes=10854|sha256=b6813e767ffc5313bc9f9252ce0ae210d9f12bc6a9d4a428cffe0790923d1a70|json=0
