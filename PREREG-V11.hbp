@@ -1,0 +1,16 @@
+PREREG|experiment=qutrit-vqnn-v11|sealed_before=any_v11_code_written|after=v10_seal_6b2ba22_and_diagnostic_a7d9f11|operator=OP-JESSE|json=0
+BASELINE|lattice=3x3_torus_gauge_fixed_59049_states|certified_E0=r9_[35.288,35.289),r27_[35.773,35.774),r81_[35.925,35.926)|from=results-v10/V10.hbp_sha256=4ad4dd427efa598dbee026ad7612ad0d6f91ae9656185c62e40f4a9dd46d7302|v10=35.622,35.875,35.958|v10_FAILs_kept=T8,Q7,Q8|json=0
+INPUTS|from=examples/v10_diag.out_sha256=8a15de9af2de0a6398773a52d4fc2aff491446610d3e721ed3b297d5e3bc80a9|reading=a_tree_links_electric_move_shifts_the_fixed_vector_delta_t=fix(e_t)_of_free_links_so_single_free_link_rotations_cannot_dress_it|measured=one_sweep_of_a_tree_frame_layer_on_the_sealed_r9_model:_35.622_to_35.321|json=0
+DESIGN|layer1=v10_R_01,R_02_on_every_free_link|layer2=v10_plaquette_flux_layer|layer3=tree_frame:_for_each_of_the_8_tree_links,_SUM(q->i,-delta_i*delta_q)_for_every_other_free_link_i_with_delta_i!=0_(q_the_first_free_link_with_delta_q!=0)_so_delta_t_lands_on_q_alone,_then_R_01,R_02_on_q,_then_the_SUMs_undone|identity_when_its_trits_are_zero|params=432_(160+144+128)|json=0
+DESIGN|training=coordinate_descent_over_all_432_trits_ranked_by_fixed_point_energy_max_sweeps=4|reported=exact_big_integer_energy|seeds=IDENTITY(all_zero),WARM(sealed_v10_model_at_the_same_r,_layer3_zero)|warm_inputs=results-v10/v10-z3-3x3-r{9,27,81}-identity.gguf_sha256_checked_in_code|r=9,27,81|models=6|certificate=reused_from_the_sealed_V10.hbp_no_new_sturmfast_counts|json=0
+TARGET|id=T9|primary=best_r9_exact_energy_below_35.309_(within_0.020_of_the_certified_E0_upper_end)|json=0
+PREDICT|id=R1|claim=exact_norm_and_exact_inverse_every_model|basis=claude|json=0
+PREDICT|id=R2|claim=WARM_starts_at_exactly_the_sealed_v10_energy_at_every_r|basis=claude|json=0
+PREDICT|id=R3|claim=T9_holds|basis=claude|json=0
+PREDICT|id=R4|claim=best_r27_below_35.784_and_best_r81_below_35.936_(within_0.010)|basis=claude|json=0
+PREDICT|id=R5|claim=every_exact_energy_ge_the_certified_E0_lower_end|basis=claude|json=0
+PREDICT|id=R6|claim=WARM_at_r9_reaches_35.321_or_lower|basis=claude|json=0
+PREDICT|id=R7|claim=the_tree_frame_layer_is_active_in_the_best_model_at_every_r|basis=claude|json=0
+PREDICT|id=R8|claim=exact_milli_floor_within_1_of_the_fixed_point_estimate_every_model|basis=claude|json=0
+PREDICT|id=R9|claim=every_v11_GGUF_model_reloaded_reproduces_its_header|basis=claude|json=0
+PREDICT|id=R10|claim=independent_replay_from_a_fresh_clone_is_byte_identical|basis=claude|json=0
