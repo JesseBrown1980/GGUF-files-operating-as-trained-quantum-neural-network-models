@@ -11,6 +11,7 @@
 //!   gguf-qnn v8 STURMFAST OUT_DIR [SWEEPS]
 //!   gguf-qnn v9 V8_RESULTS OUT_DIR [SWEEPS]
 //!   gguf-qnn v10 STURMFAST V9_RESULTS OUT_DIR [SWEEPS]
+//!   gguf-qnn v11 V10_RESULTS OUT_DIR [SWEEPS]
 //!   gguf-qnn v2 STAR_DIR CLOUD_DIR YM_Z3_RESULTS OUT_DIR [CIRCLE_LAYERS] [Z3_LAYERS] [SWEEPS]
 #![forbid(unsafe_code)]
 #![deny(clippy::float_arithmetic)]
@@ -28,6 +29,7 @@ use std::fs;
 use std::path::Path;
 
 mod v10_run;
+mod v11_run;
 mod v2_run;
 mod v3_run;
 mod v4_run;
@@ -465,6 +467,10 @@ fn main() {
             let layers = a.get(4).and_then(|v| v.parse().ok()).unwrap_or(3);
             let sweeps = a.get(5).and_then(|v| v.parse().ok()).unwrap_or(4);
             cmd_train(Path::new(&a[2]), Path::new(&a[3]), layers, sweeps);
+        }
+        Some("v11") if a.len() >= 4 => {
+            let sw = a.get(4).and_then(|v| v.parse().ok()).unwrap_or(4);
+            v11_run::run(Path::new(&a[2]), Path::new(&a[3]), sw);
         }
         Some("v10") if a.len() >= 5 => {
             let sw = a.get(5).and_then(|v| v.parse().ok()).unwrap_or(4);

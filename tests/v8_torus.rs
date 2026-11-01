@@ -156,3 +156,29 @@ fn gauge_fixed_basis_matches_the_orbit_basis_on_3x2() {
     assert!(adj);
     println!("BLOCK3x2|classes={k}");
 }
+
+#[test]
+fn v11_tree_frames_move_one_qutrit_and_invert_exactly() {
+    use gguf_qnn::gfix::GaugeFixed;
+    use gguf_qnn::v11::{params_v11, tree_frames, NetV11};
+    let gf = GaugeFixed::new(3, 3);
+    assert_eq!(tree_frames(&gf).len(), 8);
+    let n = params_v11(&gf);
+    let p: Vec<i64> = (0..n)
+        .map(|i| if i % 16 == 7 || i % 16 == 15 { 1 } else { 0 })
+        .collect();
+    let net = NetV11 {
+        gf: &gf,
+        params: &p,
+    };
+    let mut s = StateR::zero_state(gf.free.len());
+    let o = s.clone();
+    net.forward(&mut s);
+    let d = s.scale();
+    assert_eq!(s.norm_sq(), d.mul(&d));
+    net.inverse(&mut s);
+    assert_eq!(
+        s.v,
+        o.v.iter().map(|x| x.mul(&d).mul(&d)).collect::<Vec<_>>()
+    );
+}

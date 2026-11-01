@@ -19,6 +19,7 @@ pub mod task;
 pub mod torus;
 pub mod train;
 pub mod v10;
+pub mod v11;
 pub mod v2;
 pub mod v4;
 pub mod v5;
