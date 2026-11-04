@@ -2,6 +2,10 @@
 
 **November 4, 2026.** This is the direct external reference gate for [the full 24-qubit, 1,257-gate QNN execution](FULL-Q24-INTEGER-20261104.md). The original prediction already registers 64 selected bitstrings, 128 real and imaginary components each within 10^-6 of the official Google simulator, and a sign-flipped √Y control that should disagree.
 
+**Hosted reference result: PASS.** [GitHub Actions run 41926857572](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/41926857572) compiled Google's exact pinned source and computed 64 original reference amplitudes. **128/128 QNN real/imaginary components agreed within 10⁻⁶**, with maximum absolute discrepancy **1.667 × 10⁻⁹**. The sign-flipped √Y control was rejected on **128/128 components**, maximum discrepancy **0.000801481671**.
+
+The complete summary is pinned in [`GOOGLE-QSIM-OFFICIAL-REFERENCE-20261104.hbp`](GOOGLE-QSIM-OFFICIAL-REFERENCE-20261104.hbp); the [original Google output, QNN output, mutant output, verdict and SHA receipts](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/41926857572) are retained in artifact ID **13370186164** (archive SHA-256 `cb164f56fe0ae645feb43f66116224e2b619e1fe405083ad3b86c91a226412d8`).
+
 ## Hosted method
 
 1. GitHub Actions fetches the public official [quantumlib/qsim](https://github.com/quantumlib/qsim) source, **pinned at `50cac4b3fa331450b70387735479a00e223b8d25`**, without persisting write credentials. Both the original Google source file and the QNN circuit must match pinned Git blob `0c96e260ac6a9b765a703f4ca971924f674b76f3`.
