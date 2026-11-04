@@ -1,0 +1,87 @@
+name: Same 64 amplitudes against official Google qsim
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tools/qsim_reference_gate.py"
+      - ".github/workflows/qsim-official-reference.yml"
+      - "docs/QSIM-OFFICIAL-REFERENCE-20261104.md"
+  push:
+    branches: [main]
+    paths:
+      - "tools/qsim_reference_gate.py"
+      - ".github/workflows/qsim-official-reference.yml"
+      - "docs/QSIM-OFFICIAL-REFERENCE-20261104.md"
+permissions:
+  contents: read
+jobs:
+  actual-upstream-qsim:
+    name: Pinned Google qsim 64 amplitudes, 128 component comparisons and mutant rejection
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Checkout QNN full Google circuit implementation
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Checkout Google qsim at frozen reference revision (read only)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: quantumlib/qsim
+          ref: 50cac4b3fa331450b70387735479a00e223b8d25
+          path: google-qsim-upstream
+          persist-credentials: false
+      - name: Verify both pinned Google source identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C google-qsim-upstream rev-parse HEAD)" = "50cac4b3fa331450b70387735479a00e223b8d25"
+          test "$(git hash-object data/google-qsim/circuit_q24)" = "0c96e260ac6a9b765a703f4ca971924f674b76f3"
+          cmp data/google-qsim/circuit_q24 google-qsim-upstream/circuits/circuit_q24
+          test "$(wc -l < data/google-qsim/full24_bitstrings.txt)" -eq 64
+      - name: Compile Google's official C++ qsim_amplitudes on the runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          g++ --version | head -1
+          g++ -std=c++17 -O3 -fopenmp -o google-qsim-upstream/apps/qsim_amplitudes.x google-qsim-upstream/apps/qsim_amplitudes.cc
+      - name: Rust 1.81 full QNN simulation (same input and 64 selected amplitudes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
+          cargo +1.81.0 fmt --all -- --check
+          cargo +1.81.0 clippy --locked --offline --bin google_qsim_full24 -- -D warnings
+          cargo +1.81.0 build --release --locked --offline --bin google_qsim_full24
+          mkdir -p qsim-reference
+          target/release/google_qsim_full24 data/google-qsim/circuit_q24 data/google-qsim/full24_bitstrings.txt > qsim-reference/QNN-FULL24.hbp
+          cmp qsim-reference/QNN-FULL24.hbp docs/FULL-Q24-RECEIPT-20261104.hbp
+          target/release/google_qsim_full24 data/google-qsim/circuit_q24 data/google-qsim/full24_bitstrings.txt mutate=y2_sign > qsim-reference/QNN-MUTANT.hbp
+      - name: Independently run Google's simulator on exactly the same circuit
+        shell: bash
+        run: |
+          set -euo pipefail
+          google-qsim-upstream/apps/qsim_amplitudes.x \
+            -c data/google-qsim/circuit_q24 \
+            -d 100 \
+            -i data/google-qsim/full24_bitstrings.txt \
+            -o qsim-reference/GOOGLE-QSIM-64.txt \
+            -t 2 -f 2 -s 1 -v 0
+          test "$(wc -l < qsim-reference/GOOGLE-QSIM-64.txt)" -eq 64
+      - name: Fail closed on all 128 original amplitude parts and require wrong-gate detection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/qsim_reference_gate.py \
+            data/google-qsim/full24_bitstrings.txt \
+            qsim-reference/QNN-FULL24.hbp \
+            qsim-reference/GOOGLE-QSIM-64.txt \
+            qsim-reference/QNN-MUTANT.hbp \
+            qsim-reference/GOOGLE-REFERENCE-VERDICT.hbp
+          grep -F "original=PASS|mutant=REJECTED" qsim-reference/GOOGLE-REFERENCE-VERDICT.hbp
+          (cd qsim-reference && sha256sum QNN-FULL24.hbp QNN-MUTANT.hbp GOOGLE-QSIM-64.txt GOOGLE-REFERENCE-VERDICT.hbp > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - name: Preserve Google's reference output and both QNN results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pinned-google-qsim-64-complex-amplitude-crosscheck
+          path: qsim-reference/
+          if-no-files-found: warn
