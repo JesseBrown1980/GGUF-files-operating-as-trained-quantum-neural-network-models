@@ -5,5 +5,6 @@ PRED|id=GOOGLE_Q24_ALL_ZERO|bitstring=0|phase_mod8=0|amp_den_sqrt2_power=24|prob
 PRED|id=GOOGLE_Q24_ONE_BIT0|bitstring=1|phase_mod8=1|amp_den_sqrt2_power=24|prob_den=16777216|json=0
 PRED|id=GOOGLE_Q24_TWO_BITS01|bitstring=3|phase_mod8=6|amp_den_sqrt2_power=24|prob_den=16777216|json=0
 PRED|id=GOOGLE_Q24_ALL_ONES|bitstring=16777215|phase_mod8=4|amp_den_sqrt2_power=24|prob_den=16777216|json=0
+PRED|id=GOOGLE_Q24_PHASE_HISTOGRAM|phase0=2031616|phase1=2099712|phase2=2168576|phase3=2094592|phase4=2031616|phase5=2094592|phase6=2156800|phase7=2099712|sum=16777216|json=0
 PRED|id=FORBID_SUBSTITUTION|unknown_gate=REJECT|invalid_qubit=REJECT|repeat_h=REJECT|bad_source_sha=REJECT|json=0
 PRED|id=SCOPE|qsim_t0_2_prefix=EXECUTE|qsim_full_24_gate_circuit=NOT_RUN|willow_103_qubit_depth40=NOT_RUN|googles_105_phys_qubit_chip=NOT_REPLICATED|http0_96cubed=PHYSICAL_TRITS_NOT_QUBITS|json=0
