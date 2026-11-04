@@ -2,7 +2,7 @@
 
 **Scope:** all 1,257 gates of Google's published 24-qubit qsim sample, times 0 to 100, as a noiseless state vector on one laptop CPU, with interference from its 490 √X and √Y gates. Willow's 103-qubit depth-40 experiment is a different circuit, and `willow_103_depth40=NOT_RUN` stands.
 
-**Status: the integer run met every row it could read. The comparison with Google's own simulator is OPEN.**
+**Status: every predicted row was met, including the comparison with Google's own simulator: [128 of 128 parts within 10⁻⁶](QSIM-OFFICIAL-REFERENCE-20261104.md), with the largest difference 1.667 × 10⁻⁹.**
 
 [The engine](../src/bin/google_qsim_full24.rs) is Rust 1.81, integers only, clippy `-D warnings`, with the [prediction](PREDICTION-FULL-Q24-20261104.hbp) pushed before it was written. It keeps two separate records of the same gates:
 
@@ -32,8 +32,19 @@ The statistic rises and settles at 2, the value for a deep random circuit:
 
 Run time on an i5-8300H, one thread, with other work on the machine: 138 s for the exact record and 49 s for the fixed-point record.
 
-## What is open
+## The reference
 
-**The reference.** The prediction names 64 amplitudes, within 10⁻⁶ of Google's `qsim_amplitudes` at commit `50cac4b`. Those are [the bitstrings](../data/google-qsim/full24_bitstrings.txt) and the receipt's `FULL_Q24_AMPLITUDE` rows, and [the comparison script](../tools/compare_full24_with_qsim.py) reads qsim's output as exact decimals. It has not run: the binary built here was lost with WSL's `/tmp` before it produced output, and the rebuild was stopped by this machine's permission check on code from outside. This comparison is what tests the gate and bit-order conventions, which the engine reads from Google's `lib/gates_qsim.h` and `lib/bitstring.h`. The norm and the statistic above hold for a wrong convention too.
+**The prediction named 64 amplitudes within 10⁻⁶ of Google's `qsim_amplitudes` at commit `50cac4b`. They agree.** [GPT-6's hosted run 41926857572](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/41926857572) built Google's source and ran the whole circuit on [these bitstrings](../data/google-qsim/full24_bitstrings.txt).
 
-**The control.** Flipping the sign of √Y's off-diagonal gives 1.999464 at time 100, so the statistic alone cannot see it. The prediction has this mutant disagreeing with the reference, and that row waits with the comparison.
+| Compared with Google's output | Parts | Above 10⁻⁶ | Largest difference |
+|---|---:|---:|---:|
+| This engine | 128 | 0 | 1.667 × 10⁻⁹ |
+| The control, √Y's off-diagonal sign flipped | 128 | 128 | 8.01 × 10⁻⁴ |
+
+So the gate and bit-order conventions the engine reads from Google's `lib/gates_qsim.h` and `lib/bitstring.h` are confirmed. The norm and the statistic above could not show this: the flipped sign reads 1.999464 at time 100, against 2.000356.
+
+**A second reading of the same output.** FABLE5 ran [its own comparison script](../tools/compare_full24_with_qsim.py) on the hosted artifact, reading qsim's decimals exactly, and got the same four numbers. The hosted QNN outputs are byte-identical to this machine's: SHA-256 `6d2204b1…` for the engine and `3f6218c6…` for the control.
+
+**How it came to run there.** The binary first built here was lost with WSL's `/tmp` before it produced output, and the rebuild was stopped by this machine's permission check on code from outside. The operator chose a GitHub runner, which leaves that code off this machine.
+
+[The method, the receipt and the workflow](QSIM-OFFICIAL-REFERENCE-20261104.md).
