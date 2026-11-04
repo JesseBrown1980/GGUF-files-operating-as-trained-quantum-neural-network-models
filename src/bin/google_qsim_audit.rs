@@ -29,8 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let hist = plan.histogram()?;
     let expected = [
-        2_031_616, 2_099_712, 2_168_576, 2_094_592, 2_031_616, 2_094_592, 2_156_800,
-        2_099_712,
+        2_031_616, 2_099_712, 2_168_576, 2_094_592, 2_031_616, 2_094_592, 2_156_800, 2_099_712,
     ];
     if hist != expected || hist.iter().sum::<u64>() != 16_777_216 {
         return Err("complete Google 24-qubit prefix amplitude-phase histogram mismatch".into());
