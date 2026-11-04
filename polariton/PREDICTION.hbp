@@ -27,3 +27,6 @@ POLARITON_WAVEVECTOR|model_level|with_x(k)_a_grid_of_step_1/16_at_N=2187|argmax_
 POLARITON_SECOND_ROUTE|exact_rationals|sector_levels_within_4096_units_of_2^-60_for_N<=243|full_space_E,<A>,<B>_within_10^-5_for_small_N|exact_power_series_jbar,<A>_within_10^-3_at_N=9_and_27|json=0
 POLARITON_CONTROL|name=no_bose_enhancement|mutation=pair_element_without_(n+ + 1)(n- + 1)|must_miss_the_quench_closed_form=1|json=0
 POLARITON_TIME|whole_run_under_minutes=120|machine=this_laptop_i5-8300H|proof_lanes_share_the_cpu=1|json=0
+POLARITON_ATTEMPT|run=first|engine=f47d662|finished=1|read_met=845|read_miss=73|exact_route_sector_rows_outside_4096_units=143_of_143|exact_route_full_rows_bad=0_of_36|exact_route_series_rows_bad=0_of_6|kept_in=polariton/first-run|json=0
+POLARITON_ATTEMPT|run=first|engine_bug_1=count_below_turned_a_zero_pivot_negative_without_counting_it|effect=e0_read_0_when_one_level_lay_below_0_and_the_first_bisection_hit_0|rows_touched=disordered_e,gap,jbar_at_large_N|engine_bug_2=matrix_elements_held_32_fractional_bits_in_their_roots|effect=levels_off_by_about_10^-11|fixed_after_this_run=1|json=0
+POLARITON_ATTEMPT|run=second|stopped_by_the_seat=1|cause=bug_2_found_while_it_ran|json=0

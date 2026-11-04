@@ -216,6 +216,8 @@ def compare_full(path, n_max):
         n = int(row["N"])
         if n > n_max:
             continue
+        if n > 3 and row["s"] != "4":  # Nine polaritons cost minutes a row, so one pinned row per point.
+            continue
         x, u, y = F(row["x"]), F(row["u"]), F(row["y"])
         e = full_ground(n, x, u, y)
         read_e = F(int(row["energy_ppb"]), 10 ** 9)
@@ -312,7 +314,7 @@ def compare_taylor(path):
         norm, pair, a_value = taylor(n, x, u, y, t, 8 * n + 120)
         off_norm = abs(norm - 1)
         read_pair, read_a = F(int(row["jbar_ppb"]), 10 ** 9), F(int(row["A_ppb"]), 10 ** 9)
-        good = off_norm < F(1, 10 ** 12) and abs(pair - read_pair) < F(1, 1000) and abs(abs(a_value) - abs(read_a)) < F(1, 1000)
+        good = off_norm < F(1, 10 ** 12) and abs(pair - read_pair) < F(1, 1000) and abs(a_value - read_a) < F(1, 1000)
         bad += not good
         count += 1
         print("SECOND_ROUTE_TAYLOR|N=%d|u=%s|x=%s|y=%s|t=%s|exact_jbar=%s|rust_jbar=%s|exact_A=%s|rust_A=%s|series_norm_off_1e-12=%d|json=0" % (n, u, x, y, t, decimal(pair), decimal(read_pair), decimal(a_value), decimal(read_a), off_norm * 10 ** 12))

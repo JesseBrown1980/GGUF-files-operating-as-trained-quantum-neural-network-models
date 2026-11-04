@@ -73,6 +73,24 @@ fn isqrt(n: u128) -> u128 {
     }
 }
 
+/// sqrt(m) with as many fractional bits as fit: floor(sqrt(m) * 2^bits), and bits.
+fn root_bits(m: u128) -> (i128, u32) {
+    if m == 0 {
+        return (0, 0);
+    }
+    let bits = (126 - (128 - m.leading_zeros())) / 2;
+    (isqrt(m << (2 * bits)) as i128, bits)
+}
+
+/// value * 2^(to - from), with a shift either way.
+fn rescale(value: i128, from: u32, to: u32) -> i128 {
+    if from >= to {
+        value >> (from - to)
+    } else {
+        value << (to - from)
+    }
+}
+
 fn parallel<T: Send, F: Fn(usize) -> T + Sync>(count: usize, workers: usize, job: F) -> Vec<T> {
     let next = AtomicUsize::new(0);
     let out: Mutex<Vec<Option<T>>> = Mutex::new((0..count).map(|_| None).collect());
@@ -113,9 +131,9 @@ fn sector_o2(n: u64, charge: u64) -> Vec<i64> {
             let (plus, minus) = (i128::from(j + charge), i128::from(j));
             let n0 = big - 2 * minus - i128::from(charge);
             // o/N at 2^60 is sqrt((n+ + 1)(n- + 1)) sqrt(n0(n0 - 1)) / N^2, and o^2 is its square at 2^60.
-            let one = isqrt((((plus + 1) * (minus + 1)) as u128) << 64) as i128; // at 2^32
-            let two = isqrt(((n0 * (n0 - 1)) as u128) << 64) as i128; // at 2^32
-            let o = (((one * two) >> 4) + big * big / 2) / (big * big);
+            let (one, b1) = root_bits(((plus + 1) * (minus + 1)) as u128);
+            let (two, b2) = root_bits((n0 * (n0 - 1)) as u128);
+            let o = round_div(rescale(one * two, b1 + b2, SCALE), big * big);
             ((o * o) >> SCALE) as i64
         })
         .collect()
@@ -155,13 +173,12 @@ fn sector_d(n: u64, charge: u64, x: Q, u: Q, dx: Shift, kappa: Shift) -> Vec<i64
 }
 
 fn count_below(d: &[i64], o2: &[i64], lambda: i64) -> usize {
-    let mut q = i128::from(d[0] - lambda);
+    // A zero pivot is read as a tiny negative one, so it is counted as negative.
+    let signed = |q: i128| if q == 0 { -1 } else { q };
+    let mut q = signed(i128::from(d[0] - lambda));
     let mut count = usize::from(q < 0);
     for (dk, ok) in d[1..].iter().zip(o2.iter()) {
-        if q == 0 {
-            q = -1;
-        }
-        q = i128::from(*dk - lambda) - ((i128::from(*ok)) << SCALE) / q;
+        q = signed(i128::from(*dk - lambda) - ((i128::from(*ok)) << SCALE) / q);
         if q < 0 {
             count += 1;
         }
@@ -435,13 +452,13 @@ struct Sparse {
 
 fn pair_element(p: i128, m: i128, n0: i128, big: i128, bits: u32, no_bose: bool) -> i64 {
     let bose = if no_bose { 1 } else { (p + 1) * (m + 1) };
-    let root = isqrt(((bose * n0 * (n0 - 1)) as u128) << 64) as i128;
-    round_div(root << (bits - 32), big) as i64
+    let (root, from) = root_bits((bose * n0 * (n0 - 1)) as u128);
+    round_div(rescale(root, from, bits), big) as i64
 }
 
 fn linear_element(a: i128, b: i128, y: Q, bits: u32) -> i64 {
-    let root = isqrt(((a * b) as u128) << 64) as i128;
-    -(round_div((root * y.n) << (bits - 32), y.d) as i64)
+    let (root, from) = root_bits((a * b) as u128);
+    -(round_div(rescale(root * y.n, from, bits), y.d) as i64)
 }
 
 fn build(space: &Space, par: Params, shift: u32) -> Sparse {
@@ -536,25 +553,25 @@ fn read(space: &Space, u: &[i64], v: &[i64]) -> Reading {
         let n0 = big - p - m;
         if n0 >= 2 {
             if let Some(t) = space.index(p + 1, m + 1) {
-                let root = isqrt((((p + 1) * (m + 1) * n0 * (n0 - 1)) as u128) << 40) as i128;
-                r.re_p += (product(t, i) * root) >> 20;
+                let root = isqrt((((p + 1) * (m + 1) * n0 * (n0 - 1)) as u128) << 64) as i128;
+                r.re_p += (product(t, i) * root) >> 32;
             }
         }
         if space.full {
             if n0 >= 1 {
                 if let Some(t) = space.index(p + 1, m) {
-                    let root = isqrt((((p + 1) * n0) as u128) << 40) as i128;
-                    r.a += (product(t, i) * root) >> 20;
+                    let root = isqrt((((p + 1) * n0) as u128) << 64) as i128;
+                    r.a += (product(t, i) * root) >> 32;
                 }
                 if let Some(t) = space.index(p, m + 1) {
-                    let root = isqrt((((m + 1) * n0) as u128) << 40) as i128;
-                    r.a += (product(t, i) * root) >> 20;
+                    let root = isqrt((((m + 1) * n0) as u128) << 64) as i128;
+                    r.a += (product(t, i) * root) >> 32;
                 }
             }
             if p >= 1 {
                 if let Some(t) = space.index(p - 1, m + 1) {
-                    let root = isqrt(((p * (m + 1)) as u128) << 40) as i128;
-                    r.b += (product(t, i) * root) >> 20;
+                    let root = isqrt(((p * (m + 1)) as u128) << 64) as i128;
+                    r.b += (product(t, i) * root) >> 32;
                 }
             }
         }
