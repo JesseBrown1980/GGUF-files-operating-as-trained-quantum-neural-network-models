@@ -7,6 +7,7 @@ pub mod cyclo;
 pub mod eisenstein;
 pub mod gfix;
 pub mod gguf_model;
+pub mod google_qsim;
 pub mod gguf_read;
 pub mod hbp;
 pub mod pixels;
