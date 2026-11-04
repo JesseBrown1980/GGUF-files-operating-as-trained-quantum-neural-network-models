@@ -55,3 +55,5 @@ Read [`google-qsim.yml`](../.github/workflows/google-qsim.yml) for hosted Rust 1
 A 103-qubit arbitrary pure state has `2^103` complex amplitudes; the HTTP-0 `3^16=43,046,721` virtual addresses and `96^3*27=23,887,872` trit channels are not quantum state amplitudes. The physical 96³ HEB-C engine processes a distinct reversible ternary workload. No claim of surpassing Willow, 103-qubit exact simulation, or equivalent output-distribution fidelity follows from addressability.
 
 Result semantics: exact gate list + full amplitude/probability check ⇒ PASS within that circuit's scope; incomplete circuit or unsupported gate ⇒ explicit NOT_RUN/REJECTED. Keep existing QNN version FAIL and OPEN receipts intact.
+
+**Update, same day:** times 3 to 100 of the 24-qubit sample ran in [the whole-circuit integer engine](FULL-Q24-INTEGER-20261104.md), so this audit's prefix now has its full circuit beside it. The comparison with Google's simulator is OPEN there.
