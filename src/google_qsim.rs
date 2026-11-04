@@ -230,7 +230,10 @@ mod tests {
     fn complete_google_qsim_bell_circuit() {
         let c = parse_qsim(BELL).expect("original tutorial gates");
         assert_eq!(c.gates.len(), 2);
-        assert_eq!(run_bell(&c).expect("exact amplitude evolution"), ([1, 0, 0, 1], 1));
+        assert_eq!(
+            run_bell(&c).expect("exact amplitude evolution"),
+            ([1, 0, 0, 1], 1)
+        );
     }
 
     #[test]
@@ -241,7 +244,15 @@ mod tests {
         );
         let c = parse_qsim(Q24).expect("unaltered published Google gate sequence");
         let plan = compile_diagonal_prefix(&c).expect("all initial H then CZ/T");
-        assert_eq!((plan.qubits, plan.gate_count, plan.cz_count(), plan.t_count()), (24, 48, 12, 12));
+        assert_eq!(
+            (
+                plan.qubits,
+                plan.gate_count,
+                plan.cz_count(),
+                plan.t_count()
+            ),
+            (24, 48, 12, 12)
+        );
         assert_eq!(plan.phase_of(0), 0);
         assert_eq!(plan.phase_of(1), 1);
         assert_eq!(plan.phase_of(3), 6);
@@ -250,7 +261,10 @@ mod tests {
         let hist = plan.histogram().expect("all 24 qubit output bitstrings");
         assert_eq!(
             hist,
-            [2_031_616, 2_099_712, 2_168_576, 2_094_592, 2_031_616, 2_094_592, 2_156_800, 2_099_712]
+            [
+                2_031_616, 2_099_712, 2_168_576, 2_094_592, 2_031_616, 2_094_592, 2_156_800,
+                2_099_712
+            ]
         );
         assert_eq!(hist.iter().sum::<u64>(), 16_777_216);
     }
