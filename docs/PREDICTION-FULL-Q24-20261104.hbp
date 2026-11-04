@@ -1,0 +1,9 @@
+FULL_Q24_PREDICTION|date=2026-11-04|seat=ACER-CLAUDE-FABLE5|prediction_first=1|source=quantumlib/qsim/circuits/circuit_q24|source_git_blob=0c96e260ac6a9b765a703f4ca971924f674b76f3|reference_engine_commit=50cac4b3fa331450b70387735479a00e223b8d25|integers_only_in_this_seat's_code=1|json=0
+FULL_Q24_GATES|total=1257|h=24|cz=474|t=269|x_1_2=243|y_1_2=247|max_time=100|counted_from_the_file=1|json=0
+FULL_Q24_EXACT|ring=Z[omega]_with_coordinates_mod_2^61-1|sqrt2_power_at_the_end=1004|sum_abs2_rational_part_equals=2^1004_mod_p|sum_abs2_sqrt2_part_equals=0|what_it_shows=every_gate_applied_is_unitary_in_exact_arithmetic|json=0
+FULL_Q24_PREFIX|time=2|phase_histogram=2031616,2099712,2168576,2094592,2031616,2094592,2156800,2099712|read_gate_by_gate_from_the_state=1|compared_with=the_rows_of_PREDICTION-GOOGLE-QSIM-20261104|json=0
+FULL_Q24_FIXED|scale=2^60|norm_within=10^-9|at_each_reading=2,10,20,40,60,80,100|json=0
+FULL_Q24_XEB|statistic=2^24*sum_p^2|at_t=2_reads=1|at_t=100_lies_in=[19/10,21/10]|because=Porter_Thomas_for_a_deep_random_circuit|tag=CONJECTURE_until_read|json=0
+FULL_Q24_REFERENCE|engine=Google_qsim_amplitudes_built_from_the_commit_above|bitstrings=64|each_real_and_imaginary_part_within=10^-6|tag=CONJECTURE_until_read|json=0
+FULL_Q24_CONTROL|mutation=the_sign_of_y_1_2's_off-diagonal|must_disagree_with_the_reference=1|shows_the_comparison_can_fail=1|json=0
+FULL_Q24_SCOPE|qubits=24|noiseless_statevector_on_this_machine|a_different_circuit_from_Willow's|willow_103_depth40=NOT_RUN|statement_about_quantum_advantage=none|json=0

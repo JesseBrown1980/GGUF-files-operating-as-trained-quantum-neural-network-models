@@ -1,0 +1,51 @@
+name: Google qsim whole circuit_q24 in integers
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/bin/google_qsim_full24.rs"
+      - "data/google-qsim/**"
+      - "docs/FULL-Q24-RECEIPT-20261104.hbp"
+      - "docs/PREDICTION-FULL-Q24-20261104.hbp"
+      - ".github/workflows/google-qsim-full24.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/bin/google_qsim_full24.rs"
+      - "data/google-qsim/**"
+      - "docs/FULL-Q24-RECEIPT-20261104.hbp"
+      - "docs/PREDICTION-FULL-Q24-20261104.hbp"
+      - ".github/workflows/google-qsim-full24.yml"
+permissions:
+  contents: read
+jobs:
+  full24:
+    name: All 1,257 gates, exact record and fixed-point record, byte-equal to the receipt
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Rust 1.81 and lints
+        run: rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
+      - name: Format, Clippy, build
+        run: |
+          set -euo pipefail
+          cargo +1.81.0 fmt --all -- --check
+          cargo +1.81.0 clippy --locked --offline --bin google_qsim_full24 -- -D warnings
+          cargo +1.81.0 build --release --locked --offline --bin google_qsim_full24
+      - name: Google's file is the pinned blob
+        run: test "$(git hash-object data/google-qsim/circuit_q24)" = "0c96e260ac6a9b765a703f4ca971924f674b76f3"
+      - name: The whole circuit reproduces the receipt byte for byte
+        run: |
+          set -euo pipefail
+          target/release/google_qsim_full24 data/google-qsim/circuit_q24 data/google-qsim/full24_bitstrings.txt > full24.out
+          cmp full24.out docs/FULL-Q24-RECEIPT-20261104.hbp
+      - name: The flipped sign changes every amplitude row
+        run: |
+          set -euo pipefail
+          target/release/google_qsim_full24 data/google-qsim/circuit_q24 data/google-qsim/full24_bitstrings.txt mutate=y2_sign > mutated.out
+          grep '^FULL_Q24_AMPLITUDE' full24.out > a.txt
+          grep '^FULL_Q24_AMPLITUDE' mutated.out > b.txt
+          test "$(wc -l < a.txt)" -eq 64
+          test "$(comm -12 <(sort a.txt) <(sort b.txt) | wc -l)" -eq 0
