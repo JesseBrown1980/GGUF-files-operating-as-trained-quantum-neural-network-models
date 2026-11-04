@@ -1,0 +1,10 @@
+GOOGLE_QSIM_PREDICTION|date=2026-11-04|prediction_first=1|source_repo=quantumlib/qsim|source_path=circuits/circuit_q24|source_git_blob=0c96e260ac6a9b765a703f4ca971924f674b76f3|arithmetic=EXACT_INTEGER|json=0
+PRED|id=TUTORIAL_FULL_BELL|source=https://quantumai.google/qsim/qsimcirq_tutorial|qubits=2|gates=2|h=1|cnot=1|p00_num=1|p00_den=2|p11_num=1|p11_den=2|p01_num=0|p10_num=0|expect=PASS|json=0
+PRED|id=GOOGLE_Q24_PREFIX_T0_2|source_file=circuits/circuit_q24|qubits=24|max_time=2|gates=48|h=24|cz=12|t=12|output_states=16777216|state_prob_num=1|state_prob_den=16777216|expect=PASS|json=0
+PRED|id=GOOGLE_Q24_ALL_ZERO|bitstring=0|phase_mod8=0|amp_den_sqrt2_power=24|prob_den=16777216|json=0
+PRED|id=GOOGLE_Q24_ONE_BIT0|bitstring=1|phase_mod8=1|amp_den_sqrt2_power=24|prob_den=16777216|json=0
+PRED|id=GOOGLE_Q24_TWO_BITS01|bitstring=3|phase_mod8=6|amp_den_sqrt2_power=24|prob_den=16777216|json=0
+PRED|id=GOOGLE_Q24_ALL_ONES|bitstring=16777215|phase_mod8=4|amp_den_sqrt2_power=24|prob_den=16777216|json=0
+PRED|id=GOOGLE_Q24_PHASE_HISTOGRAM|phase0=2031616|phase1=2099712|phase2=2168576|phase3=2094592|phase4=2031616|phase5=2094592|phase6=2156800|phase7=2099712|sum=16777216|json=0
+PRED|id=FORBID_SUBSTITUTION|unknown_gate=REJECT|invalid_qubit=REJECT|repeat_h=REJECT|bad_source_sha=REJECT|json=0
+PRED|id=SCOPE|qsim_t0_2_prefix=EXECUTE|qsim_full_24_gate_circuit=NOT_RUN|willow_103_qubit_depth40=NOT_RUN|googles_105_phys_qubit_chip=NOT_REPLICATED|http0_96cubed=PHYSICAL_TRITS_NOT_QUBITS|json=0

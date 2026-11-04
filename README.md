@@ -13,6 +13,16 @@ Node. Receipts are HBP/HBI with SHA-256, and every receipt line ends in `json=0`
 Predictions were sealed in [`PREREG.hbp`](PREREG.hbp) (sha256 `5485a600…`) and
 pushed in commit `03ff607` before any code existed.
 
+## Google qsim exact circuit compatibility — November 4, 2026
+
+The [prediction-first Google-circuit audit](docs/GOOGLE-QSIM-LIKE-FOR-LIKE-20261104.md) uses this repository's integer-only Rust environment to run **exact Google-defined qubit operations** without replacing them with the existing QNN's qutrit operations. Its sources are [Google qsim's actual 24-qubit sample circuit](https://github.com/quantumlib/qsim/blob/master/circuits/circuit_q24) and [Google's complete Bell-state tutorial](https://quantumai.google/qsim/qsimcirq_tutorial).
+
+- Complete **2-qubit H/CNOT tutorial**: expected `P(00)=P(11)=1/2`, `P(01)=P(10)=0`.
+- Exact **24-qubit 48-gate published prefix**: 24 H, 12 CZ, 12 T; enumerate all **16,777,216** output bitstrings, their eighth-root amplitude phases and exact `1/2^24` probabilities.
+- [Frozen prediction](docs/PREDICTION-GOOGLE-QSIM-20261104.hbp) committed before the implementation; [Rust 1.81 CI](.github/workflows/google-qsim.yml) tests gate/source identity, exact counts and unsupported-gate rejection.
+
+**Measured scope:** Google's 103-active-qubit depth-40 Willow experiment is an entirely different iSWAP-like, noisy quantum circuit. No full Willow circuit or quantum speed advantage is claimed. HTTP-0 has [23,887,872 actual ternary channels](https://github.com/JesseBrown1980/qoled-internet-HEB-C-revisted-HTTP---free-0-hbi-hbp-sha-sh-hash/blob/main/engine96/MEASURED-20261104.hbp) and 43,046,721 virtual evidence addresses, but those counts are not `2^103` complex qubit amplitudes.
+
 ## Versions at a glance
 
 Every version was pre-registered before its code, run twice (the second time from a fresh clone, byte

@@ -1,0 +1,58 @@
+name: Google qsim exact published qubit circuit compatibility
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/google_qsim.rs"
+      - "src/bin/google_qsim_audit.rs"
+      - "src/lib.rs"
+      - "data/google-qsim/**"
+      - "docs/PREDICTION-GOOGLE-QSIM-20261104.hbp"
+      - ".github/workflows/google-qsim.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/google_qsim.rs"
+      - "src/bin/google_qsim_audit.rs"
+      - "src/lib.rs"
+      - "data/google-qsim/**"
+      - "docs/PREDICTION-GOOGLE-QSIM-20261104.hbp"
+      - ".github/workflows/google-qsim.yml"
+permissions:
+  contents: read
+jobs:
+  exact-google-same-gates:
+    name: Exact full Google Bell and 48-gate 24-qubit Google qsim prefix
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Rust 1.81 and lints
+        run: rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
+      - name: Format, all-target Clippy and exact unit tests
+        run: |
+          set -euo pipefail
+          cargo +1.81.0 fmt --all -- --check
+          cargo +1.81.0 clippy --locked --offline --all-targets -- -D warnings
+          cargo +1.81.0 test --release --locked --offline --lib google_qsim -- --nocapture
+      - name: Execute same published Google gate sequence and save receipts
+        run: |
+          set -euo pipefail
+          mkdir -p google-qsim-out
+          cargo +1.81.0 run --release --locked --offline --bin google_qsim_audit | tee google-qsim-out/GOOGLE-QSIM.hbp
+          grep -F 'GOOGLE_QSIM_BELL|qubits=2|gates=2|' google-qsim-out/GOOGLE-QSIM.hbp | grep -F 'exact=PASS'
+          grep -F 'GOOGLE_QSIM_24|' google-qsim-out/GOOGLE-QSIM.hbp | grep -F 'gates=48|h=24|cz=12|t=12|outputs=16777216|prob_each=1/16777216'
+          grep -F 'GOOGLE_QSIM_NEGATIVE|' google-qsim-out/GOOGLE-QSIM.hbp | grep -F 'result=PASS'
+          grep -F 'willow_103_depth40=NOT_RUN' google-qsim-out/GOOGLE-QSIM.hbp
+          test "$(grep -c '^GOOGLE_QSIM_PHASE|' google-qsim-out/GOOGLE-QSIM.hbp)" -eq 8
+          (cd google-qsim-out && sha256sum GOOGLE-QSIM.hbp > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - name: Upload full original-gates evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: google-qsim-exact-full-bell-and-24-qubit-prefix
+          path: |
+            google-qsim-out/GOOGLE-QSIM.hbp
+            google-qsim-out/SHA256SUMS
+          if-no-files-found: warn

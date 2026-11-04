@@ -8,6 +8,7 @@ pub mod eisenstein;
 pub mod gfix;
 pub mod gguf_model;
 pub mod gguf_read;
+pub mod google_qsim;
 pub mod hbp;
 pub mod pixels;
 pub mod qnn;
