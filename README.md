@@ -25,7 +25,7 @@ The [prediction-first Google-circuit audit](docs/GOOGLE-QSIM-LIKE-FOR-LIKE-20261
 
 - [The whole 1,257-gate circuit](docs/FULL-Q24-INTEGER-20261104.md), times 0 to 100, with interference, in integers: exact-record Σ|a|² ≡ 2¹⁰⁰⁴ mod 2⁶¹−1, and 2²⁴Σp² settling at 2.000356 at time 100. **[Official Google qsim 64-amplitude comparison PASS](docs/QSIM-OFFICIAL-REFERENCE-20261104.md): 128/128 complex components within 10⁻⁶ (largest discrepancy 1.667 × 10⁻⁹), with 128/128 wrong-√Y control components rejected.** [Source-pinned HBP receipt](docs/GOOGLE-QSIM-OFFICIAL-REFERENCE-20261104.hbp).
 
-**Measured scope:** Google's 103-active-qubit depth-40 Willow experiment is an entirely different iSWAP-like, noisy quantum circuit. No full Willow circuit or quantum speed advantage is claimed. HTTP-0 has [23,887,872 actual ternary channels](https://github.com/JesseBrown1980/qoled-internet-HEB-C-revisted-HTTP---free-0-hbi-hbp-sha-sh-hash/blob/main/engine96/MEASURED-20261104.hbp) and 43,046,721 virtual evidence addresses, but those counts are not `2^103` complex qubit amplitudes.
+**Measured scope:** Google's 103-active-qubit depth-40 Willow experiment is an entirely different iSWAP-like, noisy quantum circuit. No full Willow circuit or quantum speed advantage is claimed. HTTP-0 has [23,887,872 actual ternary channels](https://github.com/JesseBrown1980/qoled-internet-HEB-C-revisted-HTTP---free-0-hbi-hbp-sha-sh-hash/blob/main/engine96/MEASURED-20261104.hbp) and 43,046,721 virtual evidence addresses.
 
 ## Three-mode polariton test — November 4, 2026
 
