@@ -1,0 +1,23 @@
+polariton/README.md:12 | 2025 | digits_only | SENT: The source is [Trypogeorgos et al., Nature 639, 337 (2025)](https://www.nature.com/articles/s41586-025-08616-9), read at [arXiv:2407.02373](http
+polariton/README.md:39 | 0.0798 | digits_only | SENT: C₂ itself reads 0.0801 at zero field and 0.0798 at yN = 16, so the order in g² holds as the density appears.
+polariton/README.md:72 | 0.047 | digits_only | SENT: At N = 81 it spreads from 0.02 to 1.27 of the law: the lowest row, y√N = 4, t = 3, has returned to f = 0.047.
+polariton/README.md:103 | 3.875 | digits_only | SENT: At u = 1, x = −1/4, N = 243, yN = 4, D₂ reads 0.00009 against the rotor's 0.437, and A₁/y reads 1.605 against the rotor's 3.875, with ⟨P²⟩ at 0.
+polariton/README.md:103 | 0.99965 | digits_only | SENT: At u = 1, x = −1/4, N = 243, yN = 4, D₂ reads 0.00009 against the rotor's 0.437, and A₁/y reads 1.605 against the rotor's 3.875, with ⟨P²⟩ at 0.
+polariton/README.md:103 | 0.0005 | digits_only | SENT: At u = 1/2, x = −1/4 D₂ reads 0.0005 against 0.511.
+polariton/README.md:109 | 0.837781 | UNMATCHED | SENT: B carries P = +1 into P = −1, so the parity-even member the engine holds has ⟨B⟩ = (3/4)(1 + 1/√73) = 0.837781, and the engine reads 0.837780860
+polariton/README.md:125 | 0.625005 | digits_only | SENT: At N = 531,441, u = 1/2, x = 0, the rotor reads 0.625005, 2.500023, 5.625053, against 5/8, 5/2, 45/8.
+polariton/README.md:125 | 2.500023 | digits_only | SENT: At N = 531,441, u = 1/2, x = 0, the rotor reads 0.625005, 2.500023, 5.625053, against 5/8, 5/2, 45/8.
+polariton/README.md:125 | 5.625053 | digits_only | SENT: At N = 531,441, u = 1/2, x = 0, the rotor reads 0.625005, 2.500023, 5.625053, against 5/8, 5/2, 45/8.
+polariton/README.md:139 | 0.002113 | digits_only | SENT: It reads 0.002113 at δ = 0, t = 1, N = 729, against 0.002121.
+polariton/README.md:150 | 0.0279 | digits_only | SENT: 0.0279 against 0.0354 | Pairs read 9.2% of N there, where the closed form gives 13.8%, so the condensate has depleted.
+polariton/README.md:150 | 13.8% | digits_only | SENT: 0.0279 against 0.0354 | Pairs read 9.2% of N there, where the closed form gives 13.8%, so the condensate has depleted.
+polariton/README.md:161 | 4,755 ppm | UNMATCHED | SENT: Its first element is 622 units at N = 3¹⁶, so the third run read the pairs at the takeover 4,755 ppm high and the gap 371 ppm high there, and th
+polariton/README.md:170 | 105.535428 | UNMATCHED | SENT: At N = 43,046,721, x = 1/2, pairs read 105.535428 against exact 105.537258, and the gap 0.011037825 at both.
+polariton/README.md:170 | 105.537258 | UNMATCHED | SENT: At N = 43,046,721, x = 1/2, pairs read 105.535428 against exact 105.537258, and the gap 0.011037825 at both.
+polariton/README.md:171 | 9.18 × 10⁻¹⁰ | digits_only | SENT: The central rows at N = 243 and 729 rest on the engine's Lanczos, with residuals at most 9.18 × 10⁻¹⁰.
+polariton/README.md:174 | 141,061, | UNMATCHED | SENT: At yN = 16 they form a doublet, with the odd level 141,061, 12,014 and 3,059 × 10⁻¹² above at N = 81, 243, 729.
+polariton/README.md:174 | 12,014 | UNMATCHED | SENT: At yN = 16 they form a doublet, with the odd level 141,061, 12,014 and 3,059 × 10⁻¹² above at N = 81, 243, 729.
+polariton/README.md:190 | 4.226×10⁻⁵ | UNMATCHED | SENT: The paper writes that its K = (n₁ + n₋₁)/2n₀ scales as A²/4, an expected 0.02%, and a density 1 + A cos kx with flat phase has K = A²/16, by dir
+README.md:32 | 2025 | digits_only | SENT: [The test](polariton/README.md) takes the pair scattering behind [the 2025 Nature polariton supersolid](https://www.nature.com/articles/s41586-0
+README.md:32 | 0.3558 | UNMATCHED | SENT: It answers GPT-6's central question at U = J/2, a model point chosen at derivation, where contact interactions alone give U = J: with every pred
+PR#8 body:29 | 4,755 ppm | UNMATCHED | SENT: The separate exact-rational route caught two engine errors, a zero pivot left uncounted and roots held at 32 fractional bits, and the attack cau

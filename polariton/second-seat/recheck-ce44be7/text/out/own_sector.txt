@@ -1,0 +1,36 @@
+rows 143
+ row N 27 u 0 x 0 P 1 off units 0.537
+ row N 27 u 1 x -1/4 P 1 off units 0.552
+ row N 27 u 0 x 1/2 P 1 off units 0.567
+ row N 27 u 0 x 1/2 P 3 off units 0.678
+ row N 27 u 0 x -1/2 P 3 off units 0.602
+ row N 27 u 1/2 x 1/4 P 2 off units 0.681
+ row N 81 u 1 x -1/4 P 3 off units 0.518
+ row N 3 u 0 x 0 P 0 off units 0.664
+ row N 3 u 0 x 1/2 P 0 off units 0.878
+ row N 3 u 0 x -1/2 P 0 off units 0.544
+ row N 3 u 1/2 x 0 P 0 off units 0.868
+ row N 3 u 1 x -1/4 P 0 off units 0.868
+ row N 3 u 1/2 x 1 P 0 off units 0.817
+ row N 3 u 1 x 1/2 P 0 off units 1.004
+ row N 3 u 1/2 x 1/2 P 0 off units 0.823
+ row N 3 u 1 x 0 P 0 off units 0.878
+ row N 9 u 0 x 2 P 0 off units 0.678
+ row N 9 u 1/2 x 3/2 P 0 off units 0.763
+ row N 9 u 1 x 1 P 0 off units 0.953
+ row N 9 u 1 x 1/2 P 0 off units 0.857
+ row N 9 u 1/2 x 1/2 P 0 off units 0.656
+ row N 27 u 1/2 x 3/2 P 0 off units 0.861
+ row N 27 u 1 x 1 P 0 off units 0.585
+ row N 27 u 0 x 3/2 P 0 off units 0.741
+ row N 27 u 0 x 1 P 0 off units 0.704
+ row N 81 u 0 x 0 P 0 off units 0.707
+ row N 81 u 1 x 1 P 0 off units 0.752
+ row N 81 u 1/2 x 1 P 0 off units 0.583
+ row N 243 u 1 x -1/4 P 0 off units 0.545
+ row N 243 u 1/2 x 3/2 P 0 off units 0.770
+ row N 243 u 1/2 x 1 P 0 off units 0.740
+ row N 243 u 1 x 1/2 P 0 off units 0.677
+ row N 243 u 1/2 x 1/2 P 0 off units 0.580
+ row N 243 u 1 x 0 P 0 off units 0.562
+largest off in units of 2^-60 1.004 buckets [(0, 142), (1, 1)]

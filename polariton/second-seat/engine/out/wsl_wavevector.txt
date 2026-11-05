@@ -1,0 +1,4 @@
+POLARITON_WAVEVECTOR|N=2187|u=0|t=2|grid_step=1/16|argmax_x=0/16|predicted_x=-u|jbar_ppb_at_max=12861365376|json=0
+POLARITON_WAVEVECTOR|N=2187|u=1/2|t=2|grid_step=1/16|argmax_x=-8/16|predicted_x=-u|jbar_ppb_at_max=12860994865|json=0
+POLARITON_WAVEVECTOR|N=2187|u=1|t=2|grid_step=1/16|argmax_x=-16/16|predicted_x=-u|jbar_ppb_at_max=12859883746|json=0
+POLARITON_DONE|json=0

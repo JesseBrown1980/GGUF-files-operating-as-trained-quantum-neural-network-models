@@ -1,0 +1,6 @@
+rows 80
+blocks 80 by lane {'derivations': 13, 'engine': 32, 'text': 35}
+blocks with no row []
+rows with no block []
+dispositions Counter({'applied': 56, 'merged': 14, 'replaced': 3, 'applied_at_89a026a': 2, 'applied_top_rung_text_from_the_fourth_run': 1, 'superseded': 1, 'applied_last_sentence_replaced_since_the_top_rungs_are_now_read': 1, 'applied_its_second_item_replaced': 1, 'applied_the_new_run_to_be_named_when_it_passes': 1})
+files 87 with CR 0 CR bytes 0 with NUL 0

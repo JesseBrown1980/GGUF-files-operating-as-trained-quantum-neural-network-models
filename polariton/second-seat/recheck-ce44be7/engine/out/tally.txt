@@ -1,0 +1,166 @@
+MUTANT TABLE. reader_value = new misses on a value; reader_absent = new misses because a row is gone or a tag count moved; route = a lane read bad rows; route_prints_other_rows_exit_0 = the lane still exits 0 on a different row count, which only the workflow's cmp of the filed route rows sees, so it does not count as a kill here; panic = a stage exited nonzero or timed out.
+S01_o2_no_bose                     S   killed reader_value=302 route=sector boundary=2 families=C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+S02_o2_n0n0                        S   killed reader_value=1 route=sector families=e
+S03_o2_minus_off_by_one            S   killed reader_value=116 route=sector boundary=2 families=e,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+S04_d_drop_npnm                    S   killed reader_value=154 route=sector miss_to_met=1 boundary=2 families=C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,rotor_P=1,rotor_P=2,rotor_P=3
+S05_d_double_npnm                  S   killed reader_value=148 route=sector boundary=2 families=C1N,C2,e,f,gap,rotor_P=1,rotor_P=2,rotor_P=3
+S06_d_n0minus1                     S   killed reader_value=1 route=sector families=e
+S07_d_x_sum_plus1                  S   killed reader_value=1 route=sector families=e
+S08_zero_pivot_uncounted           SL  killed reader_value=42 route=sector families=gap,jbar
+S09_roots_16_bits_each             F   killed reader_value=3 route=convert,full families=hand_C2,hand_E,hand_f
+S11_fd_f_double                    S   killed reader_value=100 boundary=1 families=C1N,f,jbar
+S12_fd_s_double                    S   killed reader_value=70 families=C1N,C2
+S13_gap_index2                     S   killed reader_value=65 boundary=1 families=gap
+S14_c1c2_no_N_over_Nm1             S   SURVIVED  
+S15_c2_half                        S   killed reader_value=35 families=C2
+S16_c1_wk_f3s                      S   killed reader_value=35 families=C1N
+S17_rotor_o2_no_charge             S   killed reader_value=84 route=sector families=rotor_P=1,rotor_P=2,rotor_P=3
+S18_rotor_d_n0                     S   killed reader_value=49 route=sector miss_to_met=1 families=plane_wave,rotor_P=1,rotor_P=2,rotor_P=3
+S19_fd_sum_plus1                   S   killed reader_value=30 families=jbar
+S20_o2_minus_one_unit_of_2^60      S   SURVIVED  
+F01_pair_sign                      F   killed reader_value=8 route=taylor,convert families=quench_pin_A1,quench_pin_at_edge
+F02_pair_bose_pp                   F   killed reader_value=2 route=taylor,convert families=quench_pin_A1
+F03_pair_n0n0                      F   killed reader_value=149 route=taylor,convert miss_to_met=1 families=energy
+F04_pair_reverse_nonherm           F   killed reader_value=4 route=taylor,convert families=quench_pin_A1
+F05_direct_drop_pm                 F   killed reader_value=156 route=taylor,convert miss_to_met=5 families=energy,quench_phase
+F06_direct_n0minus1                F   killed reader_value=155 route=taylor,convert miss_to_met=1 families=energy
+F07_x_on_plus_only                 F   killed reader_value=6 route=taylor,convert families=quench_pin_A1,quench_pin_at_edge
+F08_linear_sign                    F   killed reader_value=8 route=taylor,convert,full families=hand_dA_dh,hand_sign_A_follows_h,pin_A_positive
+F09_linear_up_nonherm              F   killed reader_value=15 route=taylor,convert,full boundary=1 families=conversion,hand_dA_dh,no_leading_order_A1,no_leading_order_D2,pin_A1,pin_D2
+F10_linear_down_nonherm            F   killed reader_value=2 route=taylor,convert families=quench_pin_A1
+F11_linear_minus_half              F   killed reader_value=4 route=taylor,convert families=quench_pin_A1
+T01_symplectic_euler               F   killed reader_value=1 route=convert families=energy
+T02_retreat_swapped                V   killed reader_value=4 families=reversal
+T03_step_4x_larger                 F   killed panic=quench:rc=101 
+T04_step_16x_larger                F   killed panic=reversal:rc=101,quench:rc=101,wavevector:rc=101 
+T05_first_kick_full                F   killed reader_value=8 route=convert families=energy
+R01_A_sign                         F   killed reader_value=8 route=taylor,convert,full families=hand_dA_dh,hand_sign_A_follows_h,pin_A_positive
+R02_A_second_term_zero             F   killed reader_value=4 route=taylor,convert families=quench_pin_A1
+R03_B_root_pm                      F   killed reader_value=2 route=convert,full families=disordered_D2
+R04_B_sign                         F   killed reader_value=6 route=convert,full boundary=1 families=pin_B_negative
+R05_P_root_n0n0                    F   killed reader_value=150 route=convert families=energy
+R06_P_sign                         F   killed reader_value=220 route=convert families=energy,quench_C1,quench_phase
+R07_npnm_pp                        F   killed reader_value=42 route=convert,full families=conversion_energy
+R08_n0pairs_plus1                  F   killed reader_value=155 route=convert families=energy
+R09_pairs_plus1                    F   killed reader_value=1 route=taylor,convert families=control_no_bose_must_miss
+R10_pin_a1_half                    L   killed reader_value=16 families=disordered_A1,no_leading_order_A1,pin_A1
+R11_pin_d2_half                    L   killed reader_value=11 families=conversion,disordered_D2,pin_D2
+R12_pin_c1_sign                    L   killed reader_value=1 families=hand_C1
+R13_pin_c2_denominator             L   killed reader_value=1 route=full families=hand_C2
+R14_pin_f_not_per_N                L   killed reader_value=1 families=hand_f
+R15_pin_energy_double              L   killed reader_value=5 route=full families=hand_E,window_below_E_at_zero
+R16_predicted_A1_is_read           Q   SURVIVED  
+R17_closed_is_read                 Q   SURVIVED  
+R18_predicted_C1_is_read           Q   SURVIVED  
+R19_energy_off_zero                Q   SURVIVED  
+R20_quench_c1_uses_big2            Q   SURVIVED  
+L01_tol_2^44                       L   killed reader_value=2 route=full families=zero_field_A,zero_field_B
+L02_second_ritz                    L   killed reader_value=93 route=full boundary=1 families=conversion,hand_B,hand_C1,hand_C2,hand_E,hand_dA_dh,hand_f,pin_A1,pin_B_negative,pin_D2,susceptibility_ratio,symmetry_A_flips,symmetry_B_same,symmetry_E_same,window_below_A1,window_below_D2,window_below_P2,window_inside_A1,window_inside_B_negative,window_inside_D2
+L03_one_cycle                      L   killed reader_value=51 route=full boundary=1 families=conversion,no_leading_order_A1,no_leading_order_D2,pin_A1,pin_B_negative,pin_D2,susceptibility_ratio,window_inside_A1,window_inside_B_negative,window_inside_D2
+L04_start_not_even                 L   killed route=full 
+W01_u_wrong_in_list                W   killed reader_absent=6 reads_lost=18 
+W02_x_wrong_in_list                W   killed reader_absent=6 reads_lost=18 
+W03_s_list_6_for_8                 W   killed reader_absent=9 reads_lost=31 
+W04_y_sign_window_only             W   SURVIVED  
+W05_y_half_window_only             W   killed reader_value=93 families=window_below_A1,window_below_D2,window_inside_A1,window_inside_D2
+W06_y_label_only                   W   killed route=full 
+W07_P2_sum_not_difference          W   SURVIVED  
+W08_P2_constant                    W   SURVIVED  
+W09_P2_abs_times_N                 W   SURVIVED  
+W10_chain_upward                   W   SURVIVED  
+W11_generic_start_each_row         L   SURVIVED  
+W12_drop_a_point                   W   killed reader_absent=9 reads_lost=19 
+W13_small_list_shorter             W   killed reader_absent=1 route_prints_other_rows_exit_0=full 
+W14_tag_lost                       W   killed reader_absent=63 route_prints_other_rows_exit_0=full reads_lost=166 
+C01_x_is_delta                     C   killed reader_value=22 families=conversion_A1,conversion_A_negative,conversion_C1,conversion_D2,conversion_V2
+C02_u_half                         C   killed reader_value=17 families=conversion_A1,conversion_C1,conversion_D2,conversion_V2
+C03_c1_big2                        C   killed reader_value=1 route=convert families=conversion_C1
+C04_c1_P_sign                      C   killed reader_value=7 route=convert families=conversion_C1,conversion_V2
+C05_f_not_per_N                    C   SURVIVED  
+C06_A_sign                         C   killed reader_value=5 route=convert families=conversion_A_negative
+C07_B_sign                         C   killed reader_value=5 route=convert families=conversion_B_positive
+C08_stale_time                     C   killed reader_value=1 families=conversion_V2
+C09_k_plus_1                       C   SURVIVED  
+C10_k_minus_3                      C   SURVIVED  
+C11_energy_A_sign                  C   killed reader_value=42 families=conversion_energy
+C12_energy_zero                    C   SURVIVED  
+C13_norm_off_zero                  C   SURVIVED  
+C14_root_243_is_15                 C   killed reader_value=1 reads_lost=39 families=conversion_C1
+C15_delta_quarter                  C   SURVIVED reads_lost=36 
+C16_jbar_double                    C   killed route=convert 
+C17_start_not_vacuum               C   killed reader_value=51 route=convert families=conversion_C1,conversion_V2,conversion_energy
+C18_y_sign                         C   killed reader_value=5 reads_lost=69 families=conversion_A_negative
+C19_s_label                        C   SURVIVED  
+C20_c2_big2                        C   killed route=convert 
+TC1_k_10                           C   killed route=convert 
+TC2_k_6                            C   killed route=convert 
+TC3_one_point_only                 C   SURVIVED route_prints_other_rows_exit_0=convert 
+O01_one_fewer_limb_scale_off       S   killed reader_crash route=sector 
+O02_one_fewer_limb_scale_kept      S   SURVIVED  
+O03_order_rem_before_quo           S   killed reader_crash route=sector 
+O04_order_shift_last               S   killed reader_crash route=sector 
+O05_den_N3_Nminus1                 S   killed reader_value=1 route=sector families=e
+O06_bose_plus_plus                 S   killed reader_value=84 route=sector families=rotor_P=1,rotor_P=2,rotor_P=3
+O07_quo_plus_1_unit_of_2^90        S   SURVIVED  
+P01_pivot_shift_29                 SL  killed reader_value=308 route=sector panic=pin:timeout,window:timeout boundary=2 families=C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+P02_pivot_shift_31                 SL  killed reader_value=299 route=sector panic=pin:timeout,window:timeout miss_to_met=1 boundary=2 families=C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+P03_zero_pivot_positive            SL  SURVIVED  
+P04_o2_floor_2^60_in_pivot         SL  SURVIVED  
+P05_lambda_one_unit                SL  SURVIVED  
+P06_first_pivot_not_counted        SL  killed panic=rotor:timeout,sector:timeout,pin:timeout,window:timeout 
+Z01_lanczos_o2_shift_31            L   killed panic=pin:timeout,window:timeout 
+Z02_lanczos_o2_shift_29            L   killed panic=pin:timeout,window:timeout 
+Z03_lanczos_o2_floor_2^60          L   SURVIVED  
+Q01_quench_energy_A_sign           Q   SURVIVED  
+Q03_jbar_over_N_not_per_N          Q   SURVIVED reads_lost=90 
+Q04_band_largest_constant          Q   SURVIVED  
+V02_reversal_flag_constant         V   SURVIVED  
+V03_equals_full_counts_zero        Q   SURVIVED  
+L05_tol_2^36                       L   killed reader_value=1 families=zero_field_B
+L08_tol_2^34                       L   SURVIVED  
+L06_residual_print_zero            L   SURVIVED  
+L07_cycle_cap_3                    L   killed reader_value=8 route=full families=window_inside_A1,window_inside_B_negative,window_inside_D2
+S21_C1N_not_times_N                S   SURVIVED  
+S22_e_ppb_shift_1e-6               S   SURVIVED  
+C21_conv_a_half                    C   killed reader_value=51 route=convert families=conversion_A1,conversion_V2,conversion_energy
+RATE|earlier_59|run=59|killed=52|reader_on_value=49|route_on_value_alone=1|panic_alone=2|absent_rows_alone=0|survived=7|json=0
+RATE|new|run=65|killed=36|reader_on_value=22|route_on_value_alone=5|panic_alone=3|absent_rows_alone=6|survived=29|json=0
+RATE|all|run=124|killed=88|reader_on_value=71|route_on_value_alone=6|panic_alone=5|absent_rows_alone=6|survived=36|json=0
+SURVIVORS, with the largest move of each field against the base rows:
+S14_c1c2_no_N_over_Nm1|rows_lost=0|rows_gained=0|SECTOR.C2_ppm:84569(333335ppm,N=3,253705->169136);SECTOR.C1_ppm:182590(333332ppm,N=3,-547771->-365181);SECTOR.C1_times_N_ppm:547770(333332ppm,N=3,-1643312->-1095542)
+S20_o2_minus_one_unit_of_2^60|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:232(116ppm,N=1594323,-1985638->-1985406);SECTOR.f_ppb:1(26ppm,N=1594323,37356->37357);SECTOR.jbar_ppb:510410(10ppm,N=1594323,47446179501->47446689911);SECTOR.e_at_2^60:562220(2ppm,N=1594323,-276215396908->-276214834688)
+R16_predicted_A1_is_read|rows_lost=0|rows_gained=0|QUENCH_PIN.predicted_A1_ppm:21036(593901ppm,N=81,35420->14384)
+R17_closed_is_read|rows_lost=0|rows_gained=0|QUENCH.ratio_ppm:1000000(1000000000000ppm,N=243,0->1000000);QUENCH_PIN.ratio_ppm:817389(4476121ppm,N=81,182611->1000000);QUENCH.closed_ppb:2221525222204398(999999ppm,N=243,2221527130126943->1907922545);QUENCH_PIN.closed_ppb:82031376081(817388ppm,N=81,100357818061->18326441980)
+R18_predicted_C1_is_read|rows_lost=0|rows_gained=0|QUENCH.predicted_C1_ppm:267627(373114ppm,N=81,717279->449652);QUENCH_PIN.predicted_C1_ppm:160358(310668ppm,N=81,516170->355812);QUENCH_OTHER_U.predicted_C1_ppm:51732(159620ppm,N=6561,324094->272362);CONTROL_NO_BOSE.predicted_C1_ppm:26(7323ppm,N=6561,3550->3576)
+R19_energy_off_zero|rows_lost=0|rows_gained=0|CONTROL_NO_BOSE.energy_off_1e-9:89965045(1000000ppm,N=6561,89965045->0);QUENCH.energy_off_1e-9:24(1000000ppm,N=729,-24->0);QUENCH_OTHER_U.energy_off_1e-9:1(1000000ppm,N=6561,-1->0);QUENCH_PIN.energy_off_1e-9:7(1000000ppm,N=81,-7->0)
+R20_quench_c1_uses_big2|rows_lost=0|rows_gained=0|QUENCH.C1_ppm:9896(12345ppm,N=81,801584->791688);QUENCH_PIN.C1_ppm:9896(12345ppm,N=81,801582->791686);QUENCH_OTHER_U.C1_ppm:41(150ppm,N=6561,272362->272321)
+W04_y_sign_window_only|rows_lost=144|rows_gained=144|no_field_moved_in_rows_with_a_partner
+W07_P2_sum_not_difference|rows_lost=0|rows_gained=0|PIN_WINDOW.P2_over_N2_ppm:600499(5404496ppm,N=3,111111->711610)
+W08_P2_constant|rows_lost=0|rows_gained=0|PIN_WINDOW.P2_over_N2_ppm:1000000(1000000000000ppm,N=3,0->1000000)
+W09_P2_abs_times_N|rows_lost=0|rows_gained=0|PIN_WINDOW.P2_over_N2_ppm:241579(1371812ppm,N=81,176102->417681)
+W10_chain_upward|rows_lost=0|rows_gained=0|PIN_WINDOW.A_ppb:25(0ppm,N=243,1141270980->1141270955);PIN_WINDOW.B_ppb:354(0ppm,N=243,-6277818524->-6277818170)
+W11_generic_start_each_row|rows_lost=0|rows_gained=0|PIN.A_ppb:10(0ppm,N=243,8017620054->8017620044);PIN.B_ppb:478(0ppm,N=243,-7403263299->-7403262821);PIN_WINDOW.A_ppb:16(0ppm,N=243,1141270980->1141270964);PIN_WINDOW.B_ppb:181(0ppm,N=243,-6277818524->-6277818705)
+C05_f_not_per_N|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.f_ppb:184650413723(242000000ppm,N=243,763018238->185413431961);TAYLOR_CONVERT.f_ppb:15915225026(26000000ppm,N=27,612124039->16527349065)
+C09_k_plus_1|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.norm_off_1e-9:48(750000ppm,N=81,-64->-16);QUENCH_CONVERSION.energy_off_1e-9:161(745370ppm,N=81,-216->-55);QUENCH_CONVERSION.A_ppb:2699(0ppm,N=81,-32543375079->-32543377778);QUENCH_CONVERSION.B_ppb:2979(0ppm,N=81,24223622282->24223625261)
+C10_k_minus_3|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.energy_off_1e-9:13592(62925925ppm,N=81,-216->-13808);QUENCH_CONVERSION.norm_off_1e-9:4013(62703125ppm,N=81,-64->-4077);QUENCH_CONVERSION.C2_ppb:3363(17ppm,N=81,188375572->188372209);QUENCH_CONVERSION.C1_ppb:4418(14ppm,N=81,315150647->315146229)
+C12_energy_zero|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.energy_off_1e-9:216(1000000ppm,N=81,-216->0);TAYLOR_CONVERT.energy_off_1e-9:1(1000000ppm,N=27,-1->0)
+C13_norm_off_zero|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.norm_off_1e-9:64(1000000ppm,N=81,-64->0);TAYLOR_CONVERT.norm_off_1e-9:1(1000000ppm,N=27,-1->0)
+C15_delta_quarter|rows_lost=21|rows_gained=21|no_field_moved_in_rows_with_a_partner
+C19_s_label|rows_lost=42|rows_gained=42|no_field_moved_in_rows_with_a_partner
+TC3_one_point_only|rows_lost=3|rows_gained=0|no_field_moved_in_rows_with_a_partner
+O02_one_fewer_limb_scale_kept|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:371(187ppm,N=1594323,-1982992->-1983363);SECTOR.e_at_2^60:107(0ppm,N=1594323,-276215085060->-276215084953);SECTOR.gap_ppb:1(0ppm,N=1594323,2236072449->2236072448);SECTOR.jbar_ppb:23200(0ppm,N=1594323,47446179501->47446202701)
+O07_quo_plus_1_unit_of_2^90|rows_lost=0|rows_gained=0|no_field_moved_in_rows_with_a_partner
+P03_zero_pivot_positive|rows_lost=0|rows_gained=0|SECTOR.e_at_2^60:1(1000000ppm,N=19683,-1->0);SECTOR.e_ppb:1(1000000ppm,N=19683,-1->0)
+P04_o2_floor_2^60_in_pivot|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:232(116ppm,N=1594323,-1985638->-1985406);PIN.B_ppb:726(29ppm,N=243,24248558->24247832);SECTOR.f_ppb:1(26ppm,N=1594323,37356->37357);SECTOR.jbar_ppb:301606(6ppm,N=1594323,47446179501->47446481107)
+P05_lambda_one_unit|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:4(2ppm,N=59049,-1956622->-1956626);PIN.A_ppb:18(0ppm,N=243,16036264198->16036264216);PIN.B_ppb:1254(0ppm,N=243,6051324760->6051326014);PIN_WINDOW.A_ppb:3(0ppm,N=243,1063656195->1063656198)
+Z03_lanczos_o2_floor_2^60|rows_lost=0|rows_gained=0|PIN.B_ppb:726(29ppm,N=243,24248558->24247832);PIN.A_ppb:7(0ppm,N=243,1002180962->1002180955);PIN_WINDOW.A_ppb:8(0ppm,N=243,2137175503->2137175511);PIN_WINDOW.B_ppb:454(0ppm,N=243,-21817428400->-21817427946)
+Q01_quench_energy_A_sign|rows_lost=0|rows_gained=0|QUENCH_PIN.energy_off_1e-9:2275749(2275749000000ppm,N=81,-1->-2275750)
+Q03_jbar_over_N_not_per_N|rows_lost=0|rows_gained=0|CONTROL_NO_BOSE.jbar_over_N_ppm:5822717(6564506200ppm,N=6561,887->5823604);QUENCH_OTHER_U.jbar_over_N_ppm:531514627(6560046246ppm,N=6561,81023->531595650);QUENCH.jbar_over_N_ppm:2131858898(6560009902ppm,N=6561,324978->2132183876);QUENCH_PIN.jbar_over_N_ppm:20646809(80000034ppm,N=81,258085->20904894)
+Q04_band_largest_constant|rows_lost=0|rows_gained=0|QUENCH_BAND.largest_f_ppm:358640(500000ppm,N=81,717279->358639)
+V02_reversal_flag_constant|rows_lost=0|rows_gained=0|no_field_moved_in_rows_with_a_partner
+V03_equals_full_counts_zero|rows_lost=0|rows_gained=0|no_field_moved_in_rows_with_a_partner
+L08_tol_2^34|rows_lost=0|rows_gained=0|PIN.B_ppb:8704(358ppm,N=243,24248558->24239854);PIN_WINDOW.D2_ppm:1(306ppm,N=243,3266->3265);PIN_WINDOW.B_ppb:9953(25ppm,N=243,-396821555->-396811602);PIN.A_ppb:259(0ppm,N=243,1105042064->1105042323)
+L06_residual_print_zero|rows_lost=0|rows_gained=0|no_field_moved_in_rows_with_a_partner
+S21_C1N_not_times_N|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:1989358(999998ppm,N=1594323,-1989360->-2)
+S22_e_ppb_shift_1e-6|rows_lost=0|rows_gained=0|SECTOR.e_ppb:1000(3ppm,N=3,-272165527->-272164527)
+NOT_RUN|0|

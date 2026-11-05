@@ -1,0 +1,78 @@
+GRID band rows 756
+delta=-1 N=81 rows=10  worst |read/law-1|: A1=0.0332 C1=0.0976 V2=0.0357 D2=0.0627 ;  worst |read/(law+first)-1|: A1=0.0033 C1=0.0150 V2lin=0.0023 D2=0.0081
+delta=-1 N=243 rows=16  worst |read/law-1|: A1=0.0795 C1=0.2155 V2=0.0801 D2=0.1719 ;  worst |read/(law+first)-1|: A1=0.0166 C1=0.0892 V2lin=0.0098 D2=0.0662
+delta=-1 N=729 rows=21  worst |read/law-1|: A1=0.1156 C1=0.2906 V2=0.1025 D2=0.2484 ;  worst |read/(law+first)-1|: A1=0.0341 C1=0.2118 V2lin=0.0200 D2=0.1652
+delta=-3/4 N=81 rows=10  worst |read/law-1|: A1=0.0336 C1=0.0941 V2=0.0309 D2=0.0603 ;  worst |read/(law+first)-1|: A1=0.0034 C1=0.0144 V2lin=0.0022 D2=0.0076
+delta=-3/4 N=243 rows=15  worst |read/law-1|: A1=0.0266 C1=0.0670 V2=0.0156 D2=0.0389 ;  worst |read/(law+first)-1|: A1=0.0012 C1=0.0052 V2lin=0.0008 D2=0.0021
+delta=-3/4 N=729 rows=19  worst |read/law-1|: A1=0.0418 C1=0.1065 V2=0.0275 D2=0.0885 ;  worst |read/(law+first)-1|: A1=0.0037 C1=0.0166 V2lin=0.0027 D2=0.0125
+delta=-1/2 N=81 rows=10  worst |read/law-1|: A1=0.0340 C1=0.0908 V2=0.0263 D2=0.0568 ;  worst |read/(law+first)-1|: A1=0.0036 C1=0.0138 V2lin=0.0019 D2=0.0070
+delta=-1/2 N=243 rows=15  worst |read/law-1|: A1=0.0263 C1=0.0660 V2=0.0151 D2=0.0359 ;  worst |read/(law+first)-1|: A1=0.0012 C1=0.0051 V2lin=0.0008 D2=0.0018
+delta=-1/2 N=729 rows=19  worst |read/law-1|: A1=0.0445 C1=0.1082 V2=0.0238 D2=0.0914 ;  worst |read/(law+first)-1|: A1=0.0044 C1=0.0180 V2lin=0.0028 D2=0.0136
+delta=0 N=81 rows=10  worst |read/law-1|: A1=0.0358 C1=0.0861 V2=0.0172 D2=0.0471 ;  worst |read/(law+first)-1|: A1=0.0038 C1=0.0127 V2lin=0.0013 D2=0.0052
+delta=0 N=243 rows=15  worst |read/law-1|: A1=0.0265 C1=0.0651 V2=0.0138 D2=0.0291 ;  worst |read/(law+first)-1|: A1=0.0012 C1=0.0048 V2lin=0.0006 D2=0.0013
+delta=0 N=729 rows=19  worst |read/law-1|: A1=0.0410 C1=0.0903 V2=0.0109 D2=0.0749 ;  worst |read/(law+first)-1|: A1=0.0038 C1=0.0131 V2lin=0.0017 D2=0.0096
+delta=1/2 N=81 rows=10  worst |read/law-1|: A1=0.0452 C1=0.0937 V2=0.0201 D2=0.0345 ;  worst |read/(law+first)-1|: A1=0.0049 C1=0.0134 V2lin=0.0004 D2=0.0033
+delta=1/2 N=243 rows=15  worst |read/law-1|: A1=0.0319 C1=0.0735 V2=0.0118 D2=0.0215 ;  worst |read/(law+first)-1|: A1=0.0014 C1=0.0054 V2lin=0.0004 D2=0.0008
+delta=1/2 N=729 rows=21  worst |read/law-1|: A1=0.0469 C1=0.0999 V2=0.0092 D2=0.0541 ;  worst |read/(law+first)-1|: A1=0.0039 C1=0.0140 V2lin=0.0018 D2=0.0053
+delta=3/4 N=81 rows=11  worst |read/law-1|: A1=0.0791 C1=0.1509 V2=0.0286 D2=0.0314 ;  worst |read/(law+first)-1|: A1=0.0092 C1=0.0257 V2lin=0.0025 D2=0.0028
+delta=3/4 N=243 rows=16  worst |read/law-1|: A1=0.0663 C1=0.1417 V2=0.0172 D2=0.0244 ;  worst |read/(law+first)-1|: A1=0.0036 C1=0.0152 V2lin=0.0013 D2=0.0009
+delta=3/4 N=729 rows=22  worst |read/law-1|: A1=0.0632 C1=0.1260 V2=0.0141 D2=0.0419 ;  worst |read/(law+first)-1|: A1=0.0046 C1=0.0175 V2lin=0.0019 D2=0.0033
+delta=1 N=81 rows=12  worst |read/law-1|: A1=n/a C1=n/a V2=n/a D2=0.0282 ;  worst |read/(law+first)-1|: A1=0.1021 C1=0.1465 V2lin=n/a D2=0.0023
+delta=1 N=243 rows=19  worst |read/law-1|: A1=n/a C1=n/a V2=n/a D2=0.0539 ;  worst |read/(law+first)-1|: A1=0.1054 C1=0.1845 V2lin=n/a D2=0.0083
+delta=1 N=729 rows=29  worst |read/law-1|: A1=n/a C1=n/a V2=n/a D2=0.0933 ;  worst |read/(law+first)-1|: A1=0.1243 C1=0.3297 V2lin=n/a D2=0.0181
+EDGE_PLUS: delta=+1, read/first at each s,t,N (first correction is the leading term there)
+  N=81 s=1/4 t=1/2 A1_read=0.00004182 A1_first=0.00004421 C1_read=-0.000113083 C1_first=-0.000116693 V2_read=-0.000008 V2_first=-0.000008 f=0.0064
+  N=243 s=1/4 t=1/2 A1_read=0.00000812 A1_first=0.00000828 C1_read=-0.000012816 C1_first=-0.000012952 V2_read=-0.000003 V2_first=-0.000003 f=0.0022
+  N=729 s=1/4 t=1/2 A1_read=0.00000163 A1_first=0.00000164 C1_read=-0.000001436 C1_first=-0.000001441 V2_read=-0.000001 V2_first=-0.000001 f=0.0007
+  N=81 s=1/4 t=1 A1_read=0.00064225 A1_first=0.00070730 C1_read=-0.000855488 C1_first=-0.000952599 V2_read=-0.000241 V2_first=-0.000263 f=0.0252
+  N=243 s=1/4 t=1 A1_read=0.00012814 A1_first=0.00013242 C1_read=-0.000101768 C1_first=-0.000105629 V2_read=-0.000081 V2_first=-0.000083 f=0.0086
+  N=729 s=1/4 t=1 A1_read=0.00002591 A1_first=0.00002620 C1_read=-0.000011613 C1_first=-0.000011760 V2_read=-0.000029 V2_first=-0.000029 f=0.0029
+  N=81 s=1/4 t=2 A1_read=0.00852972 A1_first=0.01131687 C1_read=-0.007347111 C1_first=-0.011583600 V2_read=-0.004951 V2_first=-0.005528 f=0.0889
+  N=243 s=1/4 t=2 A1_read=0.00190691 A1_first=0.00211865 C1_read=-0.001076446 C1_first=-0.001283627 V2_read=-0.001689 V2_first=-0.001748 f=0.0328
+  N=729 s=1/4 t=2 A1_read=0.00040400 A1_first=0.00041914 C1_read=-0.000134317 C1_first=-0.000143007 V2_read=-0.000608 V2_first=-0.000614 f=0.0114
+  N=81 s=1/4 t=3 A1_read=0.03110895 A1_first=0.05729167 C1_read=-0.017013264 C1_first=-0.055212620 V2_read=-0.028442 V2_first=-0.029725 f=0.1514
+  N=243 s=1/4 t=3 A1_read=0.00825052 A1_first=0.01072566 C1_read=-0.003629452 C1_first=-0.006117321 V2_read=-0.009378 V2_first=-0.009403 f=0.0652
+  N=729 s=1/4 t=3 A1_read=0.00192115 A1_first=0.00212191 C1_read=-0.000556704 C1_first=-0.000681637 V2_read=-0.003315 V2_first=-0.003303 f=0.0245
+  N=81 s=1 t=1/2 A1_read=0.00024442 A1_first=0.00025720 C1_read=-0.000146104 C1_first=-0.000152416 V2_read=-0.000204 V2_first=-0.000217 f=0.0122
+  N=243 s=1 t=1/2 A1_read=0.00004661 A1_first=0.00004741 C1_read=-0.000016486 C1_first=-0.000016720 V2_read=-0.000066 V2_first=-0.000067 f=0.0040
+  N=729 s=1 t=1/2 A1_read=0.00000947 A1_first=0.00000953 C1_read=-0.000001873 C1_first=-0.000001882 V2_read=-0.000024 V2_first=-0.000024 f=0.0014
+  N=81 s=1 t=1 A1_read=0.00369486 A1_first=0.00411523 C1_read=-0.001300940 C1_first=-0.001524158 V2_read=-0.005247 V2_first=-0.005556 f=0.0471
+  N=243 s=1 t=1 A1_read=0.00073132 A1_first=0.00075854 C1_read=-0.000157134 C1_first=-0.000165911 V2_read=-0.001702 V2_first=-0.001734 f=0.0158
+  N=729 s=1 t=1 A1_read=0.00015054 A1_first=0.00015242 C1_read=-0.000018467 C1_first=-0.000018817 V2_read=-0.000614 V2_first=-0.000617 f=0.0055
+  N=81 s=1 t=2 A1_read=0.04597017 A1_first=0.06584362 C1_read=-0.009316841 C1_first=-0.020728547 V2_read=-0.113411 V2_first=-0.104575 f=0.1576
+  N=243 s=1 t=2 A1_read=0.01060985 A1_first=0.01213670 C1_read=-0.001653737 C1_first=-0.002248133 V2_read=-0.034035 V2_first=-0.032760 f=0.0589
+  N=729 s=1 t=2 A1_read=0.00232458 A1_first=0.00243865 C1_read=-0.000228668 C1_first=-0.000255908 V2_read=-0.011816 V2_first=-0.011619 f=0.0213
+  N=81 s=1 t=3 A1_read=0.15408005 A1_first=0.33333333 C1_read=-0.006100017 C1_first=-0.101508916 V2_read=-1.945950 V2_first=-0.547297 f=0.2442
+  N=243 s=1 t=3 A1_read=0.04379893 A1_first=0.06144206 C1_read=-0.003930741 C1_first=-0.011000133 V2_read=-0.244018 V2_first=-0.171595 f=0.1109
+  N=729 s=1 t=3 A1_read=0.01081105 A1_first=0.01234568 C1_read=-0.000839980 C1_first=-0.001253196 V2_read=-0.069572 V2_first=-0.060811 f=0.0445
+  N=81 s=4 t=1/2 A1_read=0.00559355 A1_first=0.00617284 C1_read=-0.000590794 C1_first=-0.000723975 V2_read=-0.026479 V2_first=-0.026316 f=0.1005
+  N=243 s=4 t=1/2 A1_read=0.00107044 A1_first=0.00110516 C1_read=-0.000072129 C1_first=-0.000077002 V2_read=-0.007943 V2_first=-0.007931 f=0.0328
+  N=729 s=4 t=1/2 A1_read=0.00022612 A1_first=0.00022862 C1_read=-0.000008735 C1_first=-0.000008938 V2_read=-0.002927 V2_first=-0.002924 f=0.0116
+  N=81 s=4 t=1 A1_read=0.06907242 A1_first=0.09876543 C1_read=-0.002774823 C1_first=-0.010669105 V2_read=-0.859694 V2_first=-0.457143 f=0.3471
+  N=243 s=4 t=1 A1_read=0.01570776 A1_first=0.01768261 C1_read=-0.000757276 C1_first=-0.001130417 V2_read=-0.162909 V2_first=-0.138301 f=0.1249
+  N=729 s=4 t=1 A1_read=0.00350878 A1_first=0.00365798 C1_read=-0.000114274 C1_first=-0.000131717 V2_read=-0.053868 V2_first=-0.050794 f=0.0456
+  N=81 s=4 t=2 A1_read=0.42694679 A1_first=1.58024691 C1_read=0.082008068 C1_first=-0.167047706 V2_read=1.111376 V2_first=-7.474453 f=0.7662
+  N=243 s=4 t=2 A1_read=0.17087268 A1_first=0.28292181 C1_read=0.009633047 C1_first=-0.017680232 V2_read=1.515485 V2_first=-2.263679 f=0.3782
+  N=729 s=4 t=2 A1_read=0.04812478 A1_first=0.05852766 C1_read=-0.000046205 C1_first=-0.002062317 V2_read=-25.062426 V2_first=-0.830495 f=0.1623
+  N=81 s=4 t=3 A1_read=0.69079583 A1_first=8.00000000 C1_read=0.256597117 C1_first=-0.842249657 V2_read=0.929860 V2_first=-37.993485 f=0.8471
+  N=243 s=4 t=3 A1_read=0.47677884 A1_first=1.43229167 C1_read=0.109684259 C1_first=-0.089125133 V2_read=1.036238 V2_first=-11.508872 f=0.5014
+  N=729 s=4 t=3 A1_read=0.17857753 A1_first=0.29629630 C1_read=0.014021989 C1_first=-0.010398144 V2_read=1.137140 V2_first=-4.221498 f=0.2721
+GRID outside rows 540
+delta=-2 N=81 rows=17  worst |read/law-1|: A1=3.4361 C1=4.3950 V2=2.6476 D2=5.9916 ;  worst |read/(law+first)-1|: A1=1.2748 C1=1.0635 V2lin=4.8561 D2=1.7933
+delta=-2 N=243 rows=22  worst |read/law-1|: A1=3.9401 C1=11.3663 V2=1.2582 D2=7.2183 ;  worst |read/(law+first)-1|: A1=1.0890 C1=3.0361 V2lin=1.0302 D2=2.3725
+delta=-2 N=729 rows=26  worst |read/law-1|: A1=1.7411 C1=3.5299 V2=0.9987 D2=2.5836 ;  worst |read/(law+first)-1|: A1=35.7308 C1=1.8429 V2lin=0.9974 D2=2.6569
+delta=-5/3 N=81 rows=13  worst |read/law-1|: A1=0.9465 C1=0.9113 V2=1.5320 D2=0.9271 ;  worst |read/(law+first)-1|: A1=12.9671 C1=4.5141 V2lin=1.8371 D2=0.9772
+delta=-5/3 N=243 rows=18  worst |read/law-1|: A1=0.9751 C1=0.9000 V2=0.9938 D2=0.9396 ;  worst |read/(law+first)-1|: A1=1.3721 C1=1.1386 V2lin=1.6884 D2=0.9799
+delta=-5/3 N=729 rows=23  worst |read/law-1|: A1=0.9972 C1=0.9617 V2=0.9998 D2=0.9810 ;  worst |read/(law+first)-1|: A1=7.2104 C1=3.5840 V2lin=2.7546 D2=0.9954
+delta=-5/4 N=81 rows=6  worst |read/law-1|: A1=0.0328 C1=0.1011 V2=0.0408 D2=0.0640 ;  worst |read/(law+first)-1|: A1=0.0031 C1=0.0155 V2lin=0.0023 D2=0.0083
+delta=-5/4 N=243 rows=13  worst |read/law-1|: A1=0.7039 C1=0.6747 V2=0.7306 D2=0.9731 ;  worst |read/(law+first)-1|: A1=0.5203 C1=3.5679 V2lin=1.2500 D2=11.1379
+delta=-5/4 N=729 rows=18  worst |read/law-1|: A1=0.7642 C1=0.7937 V2=0.7304 D2=0.9711 ;  worst |read/(law+first)-1|: A1=0.6899 C1=2.0725 V2lin=7.2057 D2=16.5839
+delta=5/4 N=81 rows=14  worst |read/law-1|: A1=0.1989 C1=15.7789 V2=1.0772 D2=0.1549 ;  worst |read/(law+first)-1|: A1=0.0532 C1=0.2746 V2lin=1.0034 D2=0.1925
+delta=5/4 N=243 rows=22  worst |read/law-1|: A1=0.0990 C1=2.1943 V2=5.4800 D2=0.0842 ;  worst |read/(law+first)-1|: A1=0.0106 C1=1.9657 V2lin=2.3875 D2=0.0734
+delta=5/4 N=729 rows=27  worst |read/law-1|: A1=0.0650 C1=2.2841 V2=1.7944 D2=0.0563 ;  worst |read/(law+first)-1|: A1=0.0076 C1=0.0661 V2lin=1.2339 D2=0.0590
+delta=5/3 N=81 rows=20  worst |read/law-1|: A1=0.0974 C1=24.4855 V2=0.9928 D2=0.0900 ;  worst |read/(law+first)-1|: A1=0.0533 C1=0.1453 V2lin=1.0016 D2=0.0481
+delta=5/3 N=243 rows=25  worst |read/law-1|: A1=0.0411 C1=0.9952 V2=2.1450 D2=0.0375 ;  worst |read/(law+first)-1|: A1=0.0055 C1=1.1757 V2lin=0.5271 D2=0.0053
+delta=5/3 N=729 rows=30  worst |read/law-1|: A1=0.0390 C1=3.0071 V2=0.7478 D2=0.0379 ;  worst |read/(law+first)-1|: A1=0.0037 C1=0.0105 V2lin=1.1244 D2=0.0034
+delta=2 N=81 rows=22  worst |read/law-1|: A1=0.0540 C1=0.7492 V2=0.4607 D2=0.0255 ;  worst |read/(law+first)-1|: A1=0.0095 C1=0.1096 V2lin=15.0560 D2=0.0202
+delta=2 N=243 rows=27  worst |read/law-1|: A1=0.0692 C1=1.1422 V2=0.4664 D2=0.0462 ;  worst |read/(law+first)-1|: A1=0.0012 C1=0.1436 V2lin=1.0245 D2=0.0031
+delta=2 N=729 rows=30  worst |read/law-1|: A1=0.0239 C1=0.2471 V2=0.1593 D2=0.0170 ;  worst |read/(law+first)-1|: A1=0.0002 C1=0.0180 V2lin=0.0217 D2=0.0005

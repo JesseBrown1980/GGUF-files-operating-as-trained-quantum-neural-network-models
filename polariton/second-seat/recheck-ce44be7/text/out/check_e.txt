@@ -1,0 +1,163 @@
+quench Ns [81, 243, 729, 2187, 6561, 19683] rows 240 dt ['2^-12', '2^-13', '2^-14', '2^-15', '2^-17'] delta ['-1', '-1/2', '-2', '0', '1', '1/2', '2'] t ['1', '2', '3', '4', '6', '8']
+== band table
+ delta -2 98 0.0001 0.0001 OK
+ delta -1 6902 0.0069 0.0069 OK
+ delta -1/2 211659 0.2117 0.2117 OK
+ delta 0 384243 0.3842 0.3842 OK
+ delta 1/2 649956 0.6500 0.6500 OK
+ delta 1 15422 0.0154 0.0154 OK
+ delta 2 98 0.0001 0.0001 OK
+== reversal
+  POLARITON_REVERSAL|N=243|full=1|y=1/1024|steps=49152|state_moved=1|every_byte_returned=1|json=0
+  POLARITON_REVERSAL|N=81|full=0|y=0|steps=24576|state_moved=1|every_byte_returned=1|json=0
+  POLARITON_REVERSAL|N=243|full=0|y=0|steps=49152|state_moved=1|every_byte_returned=1|json=0
+  POLARITON_REVERSAL|N=729|full=0|y=0|steps=12288|state_moved=1|every_byte_returned=1|json=0
+  POLARITON_REVERSAL|N=2187|full=0|y=0|steps=49152|state_moved=1|every_byte_returned=1|json=0
+== pin in the quench line 139
+  1/1024 A1_ppm 2113 pred 2121 A_ppb -770381655
+  -1/1024 A1_ppm 2113 pred 2121 A_ppb 770381654
+  0 A1_ppm 0 pred 0 A_ppb 0
+closed 0.002121
+== the sign rows inside the band: A negative at y>0
+ rows 12 A<0 12 delta ['0', '1/2']
+ at delta=1: [('243', '1', '945352', '7'), ('243', '2', '14094407', '116'), ('243', '3', '61200506', '503'), ('729', '1', '966281', '2'), ('729', '2', '15077491', '41'), ('729', '3', '71817884', '197')]
+== wavevector
+  POLARITON_WAVEVECTOR|N=2187|u=0|t=2|grid_step=1/16|argmax_x=0/16|predicted_x=-u|jbar_ppb_at_max=12861365376|json=0
+  POLARITON_WAVEVECTOR|N=2187|u=1/2|t=2|grid_step=1/16|argmax_x=-8/16|predicted_x=-u|jbar_ppb_at_max=12860994865|json=0
+  POLARITON_WAVEVECTOR|N=2187|u=1|t=2|grid_step=1/16|argmax_x=-16/16|predicted_x=-u|jbar_ppb_at_max=12859883746|json=0
+== C1 after a quench line 138: C1 vs 4(1-delta)jbar/N on rows N>=6561, jbar<=N/100
+ checked below under what missed
+== misses 35
+  e_rises_with_P_u=1/2_x=0 -100012819,-92670785,-49557110,15951321,-1 rising
+  quench_jbar_N=6561_delta=-1_t=3 961379 1000000
+  quench_jbar_N=6561_delta=-1_t=4 893518 1000000
+  quench_jbar_N=6561_delta=-1_t=6 629006 1000000
+  quench_jbar_N=6561_delta=-1_t=8 328150 1000000
+  quench_jbar_N=6561_delta=-1/2_t=3 941426 1000000
+  quench_phase_N=6561_delta=-1/2_t=3 524402 1/2
+  quench_phase_N=6561_delta=0_t=1 858 0
+  quench_phase_N=6561_delta=0_t=2 6147 0
+  quench_jbar_N=6561_delta=1/2_t=3 971632 1000000
+  quench_phase_N=6561_delta=1/2_t=3 -474069 -1/2
+  quench_jbar_N=6561_delta=1_t=4 979919 1000000
+  quench_jbar_N=6561_delta=1_t=6 918430 1000000
+  quench_jbar_N=6561_delta=1_t=8 790524 1000000
+  quench_jbar_N=19683_delta=-1/2_t=3 979545 1000000
+  quench_phase_N=19683_delta=0_t=2 2070 0
+  quench_phase_N=19683_delta=0_t=3 14778 0
+  quench_jbar_N=19683_delta=1_t=6 970987 1000000
+  quench_jbar_N=19683_delta=1_t=8 918253 1000000
+  quench_pin_A1_N=243_delta=0_y=1/1024_t=2 9739 10789
+  quench_pin_A1_N=243_delta=0_y=1/1024_t=3 21416 35420
+  quench_pin_A1_N=243_delta=0_y=-1/1024_t=2 9739 10789
+  quench_pin_A1_N=243_delta=0_y=-1/1024_t=3 21416 35420
+  quench_pin_A1_N=243_delta=1/2_y=1/1024_t=2 4515 4985
+  quench_pin_A1_N=243_delta=1/2_y=1/1024_t=3 10000 14989
+  quench_pin_A1_N=243_delta=1/2_y=-1/1024_t=2 4515 4985
+  quench_pin_A1_N=243_delta=1/2_y=-1/1024_t=3 10000 14989
+  quench_pin_A1_N=729_delta=0_y=1/1024_t=3 27941 35420
+  quench_pin_A1_N=729_delta=0_y=-1/1024_t=3 27941 35420
+  quench_pin_A1_N=729_delta=1/2_y=1/1024_t=3 12545 14989
+  quench_pin_A1_N=729_delta=1/2_y=-1/1024_t=3 12545 14989
+  conversion_C1_N=729_delta=0_y=1/108_t=2 70945 77409
+  conversion_C1_N=729_delta=1/2_y=1/108_t=2 26557 28533
+  conversion_C1_N=729_delta=1/2_y=1/54_t=2 29282 31885
+  conversion_C1_N=2187_delta=0_y=1/47_t=2 48868 51690
+== miss row 1: pair count
+ N 6561 delta -1 t 8 ratio 0.3282 ppm col 328150 jbar/N ppm 3200 f =2jbar/N 0.00640
+ N 6561 delta 1 t 8 ratio 0.7905 ppm col 790524 jbar/N ppm 7711 f =2jbar/N 0.01542
+ delta=1 t=4 N 2187 deviation % 5.722 N*dev 125.1 form 135.40
+ delta=1 t=4 N 6561 deviation % 2.008 N*dev 131.7 form 135.40
+ delta=1 t=4 N 19683 deviation % 0.682 N*dev 134.2 form 135.40
+ band-edge deviation coefficient at t^4: delta=1,u=1 2/5  delta=-1,u=1 14/5
+== all 12 rows: (read - (J0+J1/N))/J0 over (J1/(N J0))^2, using the J1 closed form
+ N 6561 delta -1 t 3 read/J0 0.9614 first order -0.0402 residual/first^2 0.982 signed 0.982 jbar/N 1318
+ N 6561 delta -1 t 4 read/J0 0.8935 first order -0.1192 residual/first^2 0.893 signed 0.893 jbar/N 2178
+ N 6561 delta -1 t 6 read/J0 0.6290 first order -0.5752 residual/first^2 0.617 signed 0.617 jbar/N 3451
+ N 6561 delta -1 t 8 read/J0 0.3282 first order -1.7872 residual/first^2 0.349 signed 0.349 jbar/N 3200
+ N 6561 delta -1/2 t 3 read/J0 0.9414 first order -0.0629 residual/first^2 1.090 signed 1.090 jbar/N 8541
+ N 6561 delta 1/2 t 3 read/J0 0.9716 first order -0.0296 residual/first^2 1.374 signed 1.374 jbar/N 8815
+ N 6561 delta 1 t 4 read/J0 0.9799 first order -0.0206 residual/first^2 1.308 signed 1.308 jbar/N 2389
+ N 6561 delta 1 t 6 read/J0 0.9184 first order -0.0901 residual/first^2 1.055 signed 1.055 jbar/N 5039
+ N 6561 delta 1 t 8 read/J0 0.7905 first order -0.2694 residual/first^2 0.826 signed 0.826 jbar/N 7711
+ N 19683 delta -1/2 t 3 read/J0 0.9795 first order -0.0210 residual/first^2 1.154 signed 1.154 jbar/N 2962
+ N 19683 delta 1 t 6 read/J0 0.9710 first order -0.0300 residual/first^2 1.145 signed 1.145 jbar/N 1775
+ N 19683 delta 1 t 8 read/J0 0.9183 first order -0.0898 residual/first^2 0.998 signed 0.998 jbar/N 2985
+ range 0.349 1.374 claim 0.35 to 1.37
+== miss row 2: phase
+ N 6561 delta -1/2 t 3 read 0.5244 gaussian form 0.5259 off from -delta 0.0244 rel off 4.9% rows pred 1/2
+ N 6561 delta 0 t 1 read 0.0009 gaussian form 0.0009 off from -delta 0.0009 rel off 4.3% rows pred 0
+ N 6561 delta 0 t 2 read 0.0061 gaussian form 0.0062 off from -delta 0.0061 rel off 30.7% rows pred 0
+ N 6561 delta 1/2 t 3 read -0.4741 gaussian form -0.4733 off from -delta 0.0259 rel off 5.2% rows pred -1/2
+ N 19683 delta 0 t 2 read 0.0021 gaussian form 0.0021 off from -delta 0.0021 rel off 10.4% rows pred 0
+ N 19683 delta 0 t 3 read 0.0148 gaussian form 0.0151 off from -delta 0.0148 rel off 73.9% rows pred 0
+== all phase rows read at delta=0: largest
+ count 5 miss 4 read [('N=6561_delta=0_t=1', '858', 'MISS'), ('N=6561_delta=0_t=2', '6147', 'MISS'), ('N=19683_delta=0_t=1', '286', 'MET'), ('N=19683_delta=0_t=2', '2070', 'MISS'), ('N=19683_delta=0_t=3', '14778', 'MISS')]
+== miss row 3: pinned A1
+  quench_pin_A1_N=243_delta=0_y=1/1024_t=2 9739 10789
+  quench_pin_A1_N=243_delta=0_y=1/1024_t=3 21416 35420
+  quench_pin_A1_N=243_delta=0_y=-1/1024_t=2 9739 10789
+  quench_pin_A1_N=243_delta=0_y=-1/1024_t=3 21416 35420
+  quench_pin_A1_N=243_delta=1/2_y=1/1024_t=2 4515 4985
+  quench_pin_A1_N=243_delta=1/2_y=1/1024_t=3 10000 14989
+  quench_pin_A1_N=243_delta=1/2_y=-1/1024_t=2 4515 4985
+  quench_pin_A1_N=243_delta=1/2_y=-1/1024_t=3 10000 14989
+  quench_pin_A1_N=729_delta=0_y=1/1024_t=3 27941 35420
+  quench_pin_A1_N=729_delta=0_y=-1/1024_t=3 27941 35420
+  quench_pin_A1_N=729_delta=1/2_y=1/1024_t=3 12545 14989
+  quench_pin_A1_N=729_delta=1/2_y=-1/1024_t=3 12545 14989
+delta=0 t=3 N=729 rows:
+ A1_ppm 27941 pred 35420 jbar/N ppm 91849 f 0.1837 closed f 0.2753 ratio 667197
+w1 form at delta=0,u=1: read over 2|y||w0+w1/N|, N=729 and 243
+ N 243 [(1, '1.0004', 'A1_ppm over form', '1.0002'), (2, '1.0266', 'A1_ppm over form', '1.0266'), (3, '43.9693', 'A1_ppm over form', '43.9681')]
+ N 729 [(1, '1.0000', 'A1_ppm over form', '0.9998'), (2, '1.0032', 'A1_ppm over form', '1.0031'), (3, '1.1752', 'A1_ppm over form', '1.1752')]
+A1 hits: pattern by t, N, delta
+  N=243_delta=0_y=1/1024_t=1 MET 2098 2121
+  N=243_delta=0_y=1/1024_t=2 MISS 9739 10789
+  N=243_delta=0_y=1/1024_t=3 MISS 21416 35420
+  N=243_delta=0_y=-1/1024_t=1 MET 2098 2121
+  N=243_delta=0_y=-1/1024_t=2 MISS 9739 10789
+  N=243_delta=0_y=-1/1024_t=3 MISS 21416 35420
+  N=243_delta=1/2_y=1/1024_t=1 MET 1024 1039
+  N=243_delta=1/2_y=1/1024_t=2 MISS 4515 4985
+  N=243_delta=1/2_y=1/1024_t=3 MISS 10000 14989
+  N=243_delta=1/2_y=-1/1024_t=1 MET 1024 1039
+  N=243_delta=1/2_y=-1/1024_t=2 MISS 4515 4985
+  N=243_delta=1/2_y=-1/1024_t=3 MISS 10000 14989
+  N=729_delta=0_y=1/1024_t=1 MET 2113 2121
+  N=729_delta=0_y=1/1024_t=2 MET 10388 10789
+  N=729_delta=0_y=1/1024_t=3 MISS 27941 35420
+  N=729_delta=0_y=-1/1024_t=1 MET 2113 2121
+  N=729_delta=0_y=-1/1024_t=2 MET 10388 10789
+  N=729_delta=0_y=-1/1024_t=3 MISS 27941 35420
+  N=729_delta=1/2_y=1/1024_t=1 MET 1034 1039
+  N=729_delta=1/2_y=1/1024_t=2 MET 4810 4985
+  N=729_delta=1/2_y=1/1024_t=3 MISS 12545 14989
+  N=729_delta=1/2_y=-1/1024_t=1 MET 1034 1039
+  N=729_delta=1/2_y=-1/1024_t=2 MET 4810 4985
+  N=729_delta=1/2_y=-1/1024_t=3 MISS 12545 14989
+== 12 C1 rows at delta=1 held out
+ rows 12 largest |C1_ppm| 200 [('6561', '1', '-1'), ('6561', '2', '-2'), ('6561', '3', '-8'), ('6561', '4', '-24'), ('6561', '6', '-96'), ('6561', '8', '-200'), ('19683', '1', '-1'), ('19683', '2', '-1'), ('19683', '3', '-1'), ('19683', '4', '-3'), ('19683', '6', '-13'), ('19683', '8', '-34')]
+== constant A1/y = 2.29 against the 12 pinned A1 rows
+ pass count 12 of 12
+== miss row 4 in check_b; miss row 5 in check_c
+
+== engine record: first and third
+first rows 918 met 845 miss 73 DONE POLARITON_READ_DONE|met=845|miss=73|json=0
+third rows 918 met 887 miss 31 DONE POLARITON_READ_DONE|met=887|miss=31|json=0
+ rows that flip first->third 42 only in first 0 only in third 0
+ families Counter({'gap': 30, 'jbar': 12}) directions Counter({'MISS>MET': 42})
+
+ first-run rows with e_ppb=0 at P=0 85 by delta class Counter({'disordered': 78, 'critical': 7})
+ first-run rows with e_at_2^60=0 at P=0 85 smallest N 3
+ first-run route: largest off 0.060368 ('3', '1/2', '3/2', '0') second 0.056981 ('9', '1/2', '1/2', '0') rows off>=1e-9 33 rows total 143
+ first run route done SECOND_ROUTE_SECTOR_DONE|rows=143|bad=143|json=0
+
+ fix1only route rows 143 SECOND_ROUTE_SECTOR_DONE|rows=143|bad=137|json=0
+ fix1only: max off 0.000000000009322 median 0.000000000001545 rows outside 4096 units 137 of 143
+ read1 DONE POLARITON_READ_DONE|met=887|miss=31|json=0
+ read1 vs third-run: rows differ 0 rows only in one 0
+ third-run route SECOND_ROUTE_SECTOR_DONE|rows=143|bad=0|json=0
+ fourth vs third: common rows 918 flips [] count 0 new rows in fourth 539 rows dropped [] 0
+ new row families [('C1N', 4), ('C2', 4), ('conversion_A1', 21), ('conversion_A_negative', 29), ('conversion_B_positive', 29), ('conversion_C1', 21), ('conversion_D2', 21), ('conversion_V2', 29), ('conversion_energy', 94), ('e', 4), ('f', 4), ('gap', 8), ('hand_A', 1), ('hand_B', 1), ('hand_C1', 1), ('hand_C2', 1), ('hand_E', 1), ('hand_dA_dh', 1), ('hand_f', 1), ('hand_rows', 1), ('hand_sign_A_follows_h', 1), ('jbar', 4), ('rows_POLARITON_CONTROL_NO_BOSE', 1), ('rows_POLARITON_PIN', 1), ('rows_POLARITON_PIN_WINDOW', 1), ('rows_POLARITON_QUENCH', 1), ('rows_POLARITON_QUENCH_BAND', 1), ('rows_POLARITON_QUENCH_CONVERSION', 1), ('rows_POLARITON_QUENCH_PIN', 1), ('rows_POLARITON_REVERSAL', 1), ('rows_POLARITON_SECTOR', 1), ('rows_POLARITON_SECTOR_EQUALS_FULL', 1), ('rows_POLARITON_SYMMETRY', 1), ('rows_POLARITON_WAVEVECTOR', 1), ('window_below_A1', 36), ('window_below_B_sign', 18), ('window_below_D2', 18), ('window_below_E_at_zero', 6), ('window_below_P2', 42), ('window_inside_A1', 42), ('window_inside_B_negative', 42), ('window_inside_D2', 42)]
+ new rows met/miss 535 4

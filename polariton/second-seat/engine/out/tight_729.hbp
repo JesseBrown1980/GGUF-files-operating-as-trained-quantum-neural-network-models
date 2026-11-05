@@ -1,0 +1,4 @@
+POLARITON_PIN|N=729|u=1/2|x=0|y=2/729|s=2|energy_ppb=-73158928058|A_ppb=2231682772|B_ppb=-22621796353|A1_ppm=6122|D2_ppm=62062|C1_ppm=-1430|C2_ppm=80087|f_ppm=399202|residual_1e-12=14|cycles=62|json=0
+POLARITON_PIN|N=729|u=1/2|x=0|y=1/729|s=1|energy_ppb=-73154359539|A_ppb=1104343853|B_ppb=-5770135916|A1_ppm=3029|D2_ppm=15830|C1_ppm=-1445|C2_ppm=80089|f_ppm=399199|residual_1e-12=11|cycles=74|json=0
+POLARITON_PIN|N=729|u=1/2|x=0|y=1/1458|s=1/2|energy_ppb=-73153224900|A_ppb=550696232|B_ppb=-1444392476|A1_ppm=1510|D2_ppm=3962|C1_ppm=-1448|C2_ppm=80090|f_ppm=399198|residual_1e-12=11|cycles=56|json=0
+POLARITON_PIN|N=729|u=1/2|x=0|y=0/729|s=0|energy_ppb=-73152847362|A_ppb=-1|B_ppb=-1|A1_ppm=0|D2_ppm=0|C1_ppm=-1449|C2_ppm=80090|f_ppm=399198|residual_1e-12=12|cycles=87|json=0

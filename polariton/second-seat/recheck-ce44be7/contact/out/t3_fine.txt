@@ -1,0 +1,14 @@
+POLE delta>1: where C1 crosses 0 (V^2 pole), read, law and law+first correction
+N=729 delta=5/4 s=1/2 C1=0 at read 2.982 law 3.014 first 2.981
+N=729 delta=5/4 s=1 C1=0 at read 2.147 law 2.172 first 2.147
+N=729 delta=2 s=1 C1=0 at read 1.021 law 1.022 first 1.021
+N=729 delta=2 s=2 C1=0 at read 2.994 law 2.994 first 2.994
+
+PERIOD delta<-1: first maximum and first minimum of A1 against the law (pi/w, 2 pi/w), N=729
+N=729 delta=-5/4 s=1/4 t(max A1)=3.875 law 4.189; t(min A1)=7.750 law 8.378; A1 at min=0.00057; f at max=0.0083; V2 at min=0.0003
+N=729 delta=-5/4 s=1 t(max A1)=3.000 law 4.189; t(min A1)=5.875 law 8.378; A1 at min=0.00331; f at max=0.0675; V2 at min=0.0007
+N=729 delta=-5/4 s=4 t(max A1)=1.875 law 4.189; t(min A1)=3.750 law 8.378; A1 at min=0.00387; f at max=0.2570; V2 at min=0.0006
+N=729 delta=-2 s=1/4 t(max A1)=1.750 law 1.814; t(min A1)=3.625 law 3.628; A1 at min=0.00001; f at max=0.0007; V2 at min=0.0000
+N=729 delta=-2 s=1 t(max A1)=1.750 law 1.814; t(min A1)=3.500 law 3.628; A1 at min=0.00040; f at max=0.0103; V2 at min=0.0013
+N=729 delta=-2 s=4 t(max A1)=1.500 law 1.814; t(min A1)=3.000 law 3.628; A1 at min=0.00127; f at max=0.1089; V2 at min=0.0012
+rows 398

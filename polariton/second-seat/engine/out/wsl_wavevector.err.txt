@@ -1,0 +1,2 @@
+TIMING|whole|ms=49624
+STAGE|wavevector|seconds=49.63|maxrss_kb=2736

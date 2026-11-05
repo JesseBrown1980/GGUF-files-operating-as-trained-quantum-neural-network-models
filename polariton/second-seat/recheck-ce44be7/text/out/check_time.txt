@@ -1,0 +1,24 @@
+third {'TIMING_MACHINE': 1, 'TIMING': 456}
+ first TIMING|whole|ms=2271|stage=taylor|json=0
+ keys ['ms', 'stage', 'json']
+ key ms total 8254221 in hours (cpu-sum) 2.293
+ per stage [('quench_pin', 2212081), ('sector', 2179082), ('pin', 2009382), ('quench', 1736480), ('reversal', 67604), ('wavevector', 30020), ('rotor', 11214), ('control', 6087), ('taylor', 2271)]
+ machine TIMING_MACHINE|cpu=Intel_i5-8300H|workers=5_and_3_for_N=729|other_work_on_the_machine=1|json=0
+fourth {'TIMING_MACHINE': 1, 'TIMING': 686}
+ first TIMING|whole|ms=4125|stage=taylor|json=0
+ keys ['ms', 'stage', 'json']
+ key ms total 20229645 in hours (cpu-sum) 5.619
+ per stage [('conversion', 9068204), ('pin', 2723688), ('window', 2538664), ('sector', 2116322), ('quench_pin', 2051666), ('quench', 1617118), ('reversal', 62548), ('wavevector', 31443), ('rotor', 10155), ('control', 5712), ('taylor', 4125)]
+ machine TIMING_MACHINE|cpu=Intel_i5-8300H|workers=5_and_3_for_N=729|other_work_on_the_machine=1|json=0
+
+receipt sha 347480a5b9467017d07b9a52334edb1536c5b4e72df58c3a4afd85e2be0b9681 bytes 265757 CR 0 lines 1269
+third receipt sha 393b093336443fb1bc64ccc5181ba9e7f5d7cec360b1b631333c90bef05dd966 bytes 200339 lines 975
+ratio of receipts bytes 1.327
+ prediction names 393b093336443fb1bc64ccc5181ba9e7f5d7cec360b1b631333c90bef05dd966
+ prediction names 347480a5b9467017d07b9a52334edb1536c5b4e72df58c3a4afd85e2be0b9681
+workflow sha pins ['91d6a6e706c606be959cd8deb590f973a315fc923cf7589095aff8e489371f4e', '347480a5b9467017d07b9a52334edb1536c5b4e72df58c3a4afd85e2be0b9681', '347480a5b9467017d07b9a52334edb1536c5b4e72df58c3a4afd85e2be0b9681', 'b1e14433d722b950cc45c970a8f0d75a163f1578bce31e3c73eb716c2c99329f', 'f0f10236e6e50064c0e5790fb62160e69b1ae4c288e7c59e69cf84b4b57b1bb7', '41638616460448a18304edbf90a406e59ab413f780ab4e122b579d7474e2a5d0', 'bc8109c5e8994de9365496419d98990a43c6b65340258e9dd37bb0eb5d2ac916']
+  polariton/RECEIPT.hbp 347480a5b9467017d07b9a52334edb1536c5b4e72df58c3a4afd85e2be0b9681
+  polariton/READ.hbp f0f10236e6e50064c0e5790fb62160e69b1ae4c288e7c59e69cf84b4b57b1bb7
+  polariton/read_prediction.py b1e14433d722b950cc45c970a8f0d75a163f1578bce31e3c73eb716c2c99329f
+  polariton/second_route.py 41638616460448a18304edbf90a406e59ab413f780ab4e122b579d7474e2a5d0
+  polariton/SECOND-ROUTE.hbp bc8109c5e8994de9365496419d98990a43c6b65340258e9dd37bb0eb5d2ac916

@@ -1,0 +1,5 @@
+SAMPLE_IN_PLACE|stage=taylor|rows=10|first_row_at=1|slice_equal=1|json=0
+SAMPLE_IN_PLACE|stage=control|rows=4|first_row_at=11|slice_equal=1|json=0
+SAMPLE_IN_PLACE|stage=reversal|rows=5|first_row_at=15|slice_equal=1|json=0
+SAMPLE_IN_PLACE|stage=wavevector|rows=3|first_row_at=20|slice_equal=1|json=0
+SAMPLE_IN_PLACE|stage=rotor|rows=218|first_row_at=23|slice_equal=1|json=0

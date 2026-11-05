@@ -1,0 +1,34 @@
+HELD_READER_ON_8dfa11a_RECEIPT|rc=0|POLARITON_READ_DONE|met=934|miss=31|json=0
+  rows_changed_result=[]
+  new_rows=47 new_miss=[]
+HELD_READER_ON_HELD_ENGINE_SECTOR_ROTOR_TAYLOR|rc=0|POLARITON_READ_DONE|met=934|miss=31|json=0
+  flips_against_8dfa11a_read=[]
+HELD_ROUTE|sector|rc=0|SECOND_ROUTE_SECTOR_DONE|rows=143|bad=0|json=0
+  largest_off_units=1 rows=143
+HELD_ROUTE|taylor|rc=0|SECOND_ROUTE_TAYLOR_DONE|rows=6|bad=0|json=0
+HELD_ROUTE|hand|rc=0|HAND_N2_PIN|d_A_d_h_exact_route=0.222222268|by_hand=2/9|visibility_per_h=2/9|json=0
+TOP_COMPARE_ON_held|rc=0|SECOND_ROUTE_TOP_DONE|rows=44|bad=0|json=0
+  N=43046721|u=1/2|x=1/2|exact_jbar=105.537257829|rust_jbar=105.535427678|off_ppm=17|exact_gap=0.011037825|rust_gap=0.011037825|off_ppm=0|json=0
+  N=43046721|u=1/2|x=3/2|exact_jbar=0.077350265|rust_jbar=0.077352123|off_ppm=24|exact_gap=3.464101696|rust_gap=3.464101696|off_ppm=0|json=0
+  N=23887872|u=1/2|x=1/2|exact_jbar=86.648165869|rust_jbar=86.647727966|off_ppm=5|exact_gap=0.013430782|rust_gap=0.013430782|off_ppm=0|json=0
+  N=23887872|u=1/2|x=3/2|exact_jbar=0.077350261|rust_jbar=0.077349610|off_ppm=8|exact_gap=3.464101761|rust_gap=3.464101761|off_ppm=0|json=0
+TOP_COMPARE_ON_8dfa11a|rc=1|SECOND_ROUTE_TOP_DONE|rows=44|bad=4|json=0
+  N=43046721|u=1/2|x=1/2|exact_jbar=105.537257829|rust_jbar=106.039063115|off_ppm=4754|exact_gap=0.011037825|rust_gap=0.011041917|off_ppm=370|json=0
+  N=43046721|u=1/2|x=3/2|exact_jbar=0.077350265|rust_jbar=0.077322760|off_ppm=355|exact_gap=3.464101696|rust_gap=3.464215303|off_ppm=32|json=0
+  N=23887872|u=1/2|x=1/2|exact_jbar=86.648165869|rust_jbar=86.797897338|off_ppm=1728|exact_gap=0.013430782|rust_gap=0.013432754|off_ppm=146|json=0
+  N=23887872|u=1/2|x=3/2|exact_jbar=0.077350261|rust_jbar=0.077338747|off_ppm=148|exact_gap=3.464101761|rust_gap=3.464082832|off_ppm=5|json=0
+HELD_ROUTE_FULL_N_LE_3_ON_8dfa11a|rc=0|SECOND_ROUTE_FULL_DONE|rows=32|bad=0|json=0|C2_rows=32
+LITE_BASE_HELD|met=689|miss=24
+SURVIVOR_VS_HOLDS|L04_start_not_even|new_miss=0|miss_to_met=0|route_full3_rc=0|first=[]
+SURVIVOR_VS_HOLDS|R07_npnm_pp|new_miss=0|miss_to_met=0|route_full3_rc=1|first=[]
+SURVIVOR_VS_HOLDS|R12_pin_c1_sign|new_miss=1|miss_to_met=0|route_full3_rc=0|first=['hand_C1']
+SURVIVOR_VS_HOLDS|R13_pin_c2_denominator|new_miss=1|miss_to_met=0|route_full3_rc=1|first=['hand_C2']
+SURVIVOR_VS_HOLDS|R14_pin_f_not_per_N|new_miss=1|miss_to_met=0|route_full3_rc=0|first=['hand_f']
+SURVIVOR_VS_HOLDS|R16_predicted_A1_is_read|new_miss=0|miss_to_met=0|route_full3_rc=0|first=[]
+SURVIVOR_VS_HOLDS|R17_closed_is_read|new_miss=0|miss_to_met=0|route_full3_rc=0|first=[]
+SURVIVOR_VS_HOLDS|R18_predicted_C1_is_read|new_miss=0|miss_to_met=0|route_full3_rc=0|first=[]
+SURVIVOR_VS_HOLDS|R19_energy_off_zero|new_miss=0|miss_to_met=0|route_full3_rc=0|first=[]
+SURVIVOR_VS_HOLDS|R20_quench_c1_uses_big2|new_miss=0|miss_to_met=0|route_full3_rc=0|first=[]
+SURVIVOR_VS_HOLDS|S14_c1c2_no_N_over_Nm1|new_miss=0|miss_to_met=0|route_full3_rc=0|first=[]
+SURVIVOR_VS_HOLDS|S20_o2_minus_one_unit|new_miss=0|miss_to_met=0|route_full3_rc=0|first=[]
+HELD_PIN_ROWS_N_LE_243|rows=146|byte_same=70|largest_change_E_A_B_ppb_A1_D2_C2_ppm=[0, 7, 726, 0, 0, 0]|json=0

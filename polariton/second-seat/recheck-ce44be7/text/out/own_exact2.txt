@@ -1,0 +1,29 @@
+== conversion rows
+ N 27 x -1 y 1/5 t 1 norm-1 -0.000 e-12 {'jbar': '0.252', 'A': '-1.553', 'B': '-0.531', 'C1': '-0.324', 'C2': '-0.269'} largest 1.553
+ N 27 x -1 y 1/5 t 2 norm-1 0.000 e-12 {'jbar': '-1.283', 'A': '-0.036', 'B': '-1.453', 'C1': '-0.462', 'C2': '-0.844'} largest 1.453
+ N 27 x -1/2 y 2/5 t 1 norm-1 0.000 e-12 {'jbar': '1.442', 'A': '-0.743', 'B': '1.472', 'C1': '-0.960', 'C2': '-0.790'} largest 1.472
+ N 9 x -1 y 1/3 t 2 norm-1 0.000 e-12 {'jbar': '-1.089', 'A': '0.306', 'B': '-1.178', 'C1': '-0.661', 'C2': '-0.832'} largest 1.178
+== taylor rows
+ N 27 u 1 x -1 y 0 t 1 off jbar e-9 -0.394 off A e-9 0.000
+ N 27 u 1 x -1 y 0 t 2 off jbar e-9 -0.028 off A e-9 0.000
+ N 27 u 1/2 x 0 y 0 t 2 off jbar e-9 -0.416 off A e-9 0.000
+ N 9 u 1 x -1 y 1/64 t 1 off jbar e-9 -0.629 off A e-9 -0.024
+ N 9 u 1 x -1 y 1/64 t 2 off jbar e-9 -0.053 off A e-9 -0.043
+ N 9 u 1/2 x 1/2 y -1/64 t 2 off jbar e-9 -1.050 off A e-9 -0.611
+== N=2 hand rows from the receipt
+  POLARITON_PIN|N=2|u=0|x=1/4|y=0|s=hand|energy_ppb=-500000001|A_ppb=0|B_ppb=0|A1_ppm=0|D2_ppm=0|C1_ppm=-1333334|C2_ppm=333333|f_ppm=333333|residual_1e-12=0|cycles=1|json=0
+  POLARITON_PIN|N=2|u=0|x=1/4|y=1/64|s=hand|energy_ppb=-500217344|A_ppb=13931151|B_ppb=-289142|A1_ppm=13931|D2_ppm=289|C1_ppm=-1332270|C2_ppm=332850|f_ppm=332995|residual_1e-12=0|cycles=1|json=0
+  POLARITON_PIN|N=2|u=0|x=1/4|y=-1/64|s=hand|energy_ppb=-500217344|A_ppb=-13931152|B_ppb=-289142|A1_ppm=13931|D2_ppm=289|C1_ppm=-1332270|C2_ppm=332850|f_ppm=332995|residual_1e-12=0|cycles=1|json=0
+  POLARITON_PIN|N=2|u=0|x=1/4|y=1/1024|s=hand|energy_ppb=-500000848|A_ppb=868065|B_ppb=-1131|A1_ppm=868|D2_ppm=1|C1_ppm=-1333330|C2_ppm=333331|f_ppm=333332|residual_1e-12=0|cycles=1|json=0
+ element^2 to |1,1,0> 1/3  denominator 3  d<A>/dh = 2/9
+ g2(r) coefficients C1, C2 at N=2: <n0(n+ + n-)> = 0 ; Re<P> = sqrt2 c0 c1 = -c0^2 = -2/3 ; C1 = -4/3  C2 = 1/3
+== N=3 doublet, exact
+ level -1.045333645 P=0 level -0.951009 B closed 0.837780860
+ engine row POLARITON_PIN_WINDOW|N=3|u=1/4|x=-1/4|y=0/3|s=0|energy_ppb=-1045333646|A_ppb=-1|B_ppb=837780860|A1_ppm=0|D2_ppm=558520|C1_ppm=-407928|C2_ppm=450374|f_ppm=783707|residual_1e-12=0|cycles=1|P2_over_N2_pp
+== constants of -lap + r^4 at m = 0, oscillator basis, exact rationals truncated to 2^300
+ E0 2.34482907 E1 9.52978138 gap constant 7.184952 text 7.18495 <r^2> 0.6514778 <r^2>/4 0.162869 text 0.162869
+== N(D2 ratio - 1), own exact second order
+u=1/2,x=0 N 243 e0 -0.101045272 <B>/y^2 sign - D2/y^2 918.384 over rotor 0.972057 N(ratio-1) -6.790
+u=1/2,x=0 N 729 e0 -0.100346841 <B>/y^2 sign - D2/y^2 8424.431 over rotor 0.990753 N(ratio-1) -6.741
+u=1/2,x=0 N 2187 e0 -0.100115440 <B>/y^2 sign - D2/y^2 76292.212 over rotor 0.996925 N(ratio-1) -6.724
+u=1/2,x=0 N 6561 e0 -0.100038461 <B>/y^2 sign - D2/y^2 688042.242 over rotor 0.998976 N(ratio-1) -6.719

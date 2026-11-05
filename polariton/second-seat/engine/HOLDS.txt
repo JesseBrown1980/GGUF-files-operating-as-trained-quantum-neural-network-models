@@ -1,0 +1,476 @@
+HOLD H1 | file=src/bin/polariton_three_mode.rs | severity=high
+OLD<<<
+fn sector_o2(n: u64, charge: u64) -> Vec<i64> {
+    let top = (n - charge) / 2;
+>>>
+NEW<<<
+/// o^2 of the tridiagonal at 2^90: (n+ + 1)(n- + 1) n0 (n0 - 1) / N^4, floor exact by long division, with no roots.
+fn sector_o2(n: u64, charge: u64) -> Vec<i128> {
+    let top = (n - charge) / 2;
+>>>
+REASON: o2[0] is about 2^60/N^2 = 622 units at N = 3^16, so its floor at 2^60 moves jbar at the takeover by +4755 ppm and the gap by +371 ppm against exact rationals; part 1 of 4
+
+HOLD H1b | file=src/bin/polariton_three_mode.rs | severity=high
+OLD<<<
+            // o/N at 2^60 is sqrt((n+ + 1)(n- + 1)) sqrt(n0(n0 - 1)) / N^2, and o^2 is its square at 2^60.
+            let (one, b1) = root_bits(((plus + 1) * (minus + 1)) as u128);
+            let (two, b2) = root_bits((n0 * (n0 - 1)) as u128);
+            let o = round_div(rescale(one * two, b1 + b2, SCALE), big * big);
+            ((o * o) >> SCALE) as i64
+>>>
+NEW<<<
+            let den = (big * big * big * big) as u128;
+            let mut rem = ((plus + 1) * (minus + 1) * n0 * (n0 - 1)) as u128;
+            let mut quo = 0u128;
+            for _ in 0..5 {
+                rem <<= 18;
+                quo = (quo << 18) + rem / den;
+                rem %= den;
+            }
+            quo as i128
+>>>
+REASON: part 2 of 4 of H1
+
+HOLD H1c | file=src/bin/polariton_three_mode.rs | severity=high
+OLD<<<
+fn count_below(d: &[i64], o2: &[i64], lambda: i64) -> usize {
+    // A zero pivot is read as a tiny negative one, so it is counted as negative.
+    let signed = |q: i128| if q == 0 { -1 } else { q };
+    let mut q = signed(i128::from(d[0] - lambda));
+    let mut count = usize::from(q < 0);
+    for (dk, ok) in d[1..].iter().zip(o2.iter()) {
+        q = signed(i128::from(*dk - lambda) - ((i128::from(*ok)) << SCALE) / q);
+>>>
+NEW<<<
+fn count_below(d: &[i64], o2: &[i128], lambda: i64) -> usize {
+    // A zero pivot is read as a tiny negative one, so it is counted as negative. Here o^2 is at 2^90.
+    let signed = |q: i128| if q == 0 { -1 } else { q };
+    let mut q = signed(i128::from(d[0] - lambda));
+    let mut count = usize::from(q < 0);
+    for (dk, ok) in d[1..].iter().zip(o2.iter()) {
+        q = signed(i128::from(*dk - lambda) - (*ok << 30) / q);
+>>>
+REASON: part 3 of 4 of H1
+
+HOLD H1d | file=src/bin/polariton_three_mode.rs | severity=high
+OLD<<<
+fn level(d: &[i64], o2: &[i64], index: usize, seed: i64, start_width: i64) -> i64 {
+>>>
+NEW<<<
+fn level(d: &[i64], o2: &[i128], index: usize, seed: i64, start_width: i64) -> i64 {
+>>>
+REASON: part 4 of 4 of H1
+
+HOLD H1e | file=src/bin/polariton_three_mode.rs | severity=high
+OLD<<<
+        let o2: Vec<i64> = beta
+            .iter()
+            .map(|b| ((i128::from(*b) * i128::from(*b)) >> SCALE) as i64)
+            .collect();
+>>>
+NEW<<<
+        let o2: Vec<i128> = beta
+            .iter()
+            .map(|b| (i128::from(*b) * i128::from(*b)) >> 30)
+            .collect();
+>>>
+REASON: the Lanczos caller of level, at the same 2^90
+
+HOLD H2 | file=src/bin/polariton_three_mode.rs | severity=medium
+OLD<<<
+    let m = if critical { 20 + 3 * power / 4 } else { 20 };
+>>>
+NEW<<<
+    let m = if critical { 20 + power / 2 } else { 20 };
+>>>
+REASON: at the takeover one unit of up-down is 380 ppm of jbar at N = 3^16 with step 2^-32; with 2^-28 and H1 the read is -17 ppm of exact, -4 ppm at 3^15, +0.5 ppm at 3^13
+
+HOLD H3 | file=polariton/read_prediction.py | severity=medium
+OLD<<<
+BIG = [3 ** p for p in range(9, 14)]
+>>>
+NEW<<<
+BIG = [3 ** p for p in range(9, 14)]
+TOP = [3 ** 14, 3 ** 15, 23887872, 3 ** 16]  # The frozen rows say N >= 19683, and the stage runs these for u = 1/2, x = 0 and x = 3/2.
+>>>
+REASON: POLARITON_SECTOR_ORDERED and _DISORDERED say N>=19683; the 28 readings at the four top N are unread, and the README table quotes them; part 1 of 3
+
+HOLD H3b | file=polariton/read_prediction.py | severity=medium
+OLD<<<
+    for n in BIG:
+        r = sector(n, u, x)
+        if r is None:
+            report("sector_ordered_N=%d_u=%s_x=%s" % (n, u, x), False, "no_row", "row")
+>>>
+NEW<<<
+    for n in BIG + (TOP if (u, x) == ("1/2", "0") else []):
+        r = sector(n, u, x)
+        if r is None:
+            report("sector_ordered_N=%d_u=%s_x=%s" % (n, u, x), False, "no_row", "row")
+>>>
+REASON: part 2 of 3 of H3
+
+HOLD H3c | file=polariton/read_prediction.py | severity=medium
+OLD<<<
+        for n in BIG:
+            r = sector(n, u, str(x))
+>>>
+NEW<<<
+        for n in BIG + (TOP if (delta, u) == (F(2), "1/2") else []):
+            r = sector(n, u, str(x))
+>>>
+REASON: part 3 of 3 of H3
+
+HOLD H4 | file=polariton/read_prediction.py | severity=high
+OLD<<<
+def sector(n, u, x, p="0"):
+>>>
+NEW<<<
+def sinh_cosh(square):
+    """sinh(z)/z and cosh(z) for z^2 = square, a rational of either sign, at 2^200, in integers."""
+    one = 1 << 200
+    v = (F(square).numerator << 200) // F(square).denominator
+    a, b, chz, shc = one, one, one, one
+    for k in range(1, 400):
+        a = (a * v >> 200) // ((2 * k - 1) * (2 * k))
+        b = (b * v >> 200) // ((2 * k) * (2 * k + 1))
+        chz += a
+        shc += b
+    return F(shc, one), F(chz, one)
+
+
+def closed_jbar(delta, t):
+    """sinh^2(gamma t)/gamma^2 with gamma^2 = 1 - delta^2: t^2 at the band edge and sin^2(omega t)/omega^2 outside, from the one series."""
+    return sinh_cosh((1 - delta * delta) * t * t)[0] ** 2 * t * t
+
+
+def closed_a1(delta, t, y):
+    """4|y|(cosh(gamma t) - 1)/(1 + delta)."""
+    return 4 * abs(y) * (sinh_cosh((1 - delta * delta) * t * t)[1] - 1) / (1 + delta)
+
+
+def sector(n, u, x, p="0"):
+>>>
+REASON: the reader takes ratio_ppm, closed_ppb, predicted_C1_ppm, predicted_A1_ppm from the engine, so mutants R16 and R17 turn 8 and 9 misses into mets and R18 passes; the frozen forms belong in the reader; part 1 of 5
+
+HOLD H4b | file=polariton/read_prediction.py | severity=high
+OLD<<<
+    report("quench_jbar_" + tag, abs(int(r["ratio_ppm"]) - 10 ** 6) <= 20000, r["ratio_ppm"], "1000000")
+    delta = F(r["delta"])
+>>>
+NEW<<<
+    delta = F(r["delta"])
+    report("quench_jbar_" + tag, within(F(int(r["jbar_ppb"]), 10 ** 9), closed_jbar(delta, int(r["t"])), F(2, 100)), r["ratio_ppm"], "1000000")
+>>>
+REASON: part 2 of 5 of H4
+
+HOLD H4c | file=polariton/read_prediction.py | severity=high
+OLD<<<
+            report("quench_C1_" + tag, within(F(int(r["C1_ppm"])), F(int(r["predicted_C1_ppm"])), F(5, 100)) if int(r["predicted_C1_ppm"]) else True, r["C1_ppm"], r["predicted_C1_ppm"])
+>>>
+NEW<<<
+            report("quench_C1_" + tag, within(F(int(r["C1_ppm"]), 10 ** 6), 4 * (1 - delta) * F(int(r["jbar_ppb"]), 10 ** 9) / n, F(5, 100)), r["C1_ppm"], r["predicted_C1_ppm"])
+>>>
+REASON: part 3 of 5 of H4; it also removes the else True that counts a zero prediction as met (0 rows use it at this head)
+
+HOLD H4d | file=polariton/read_prediction.py | severity=high
+OLD<<<
+        report("quench_pin_A1_" + tag, within(F(int(r["A1_ppm"])), F(int(r["predicted_A1_ppm"])), F(5, 100)), r["A1_ppm"], r["predicted_A1_ppm"])
+>>>
+NEW<<<
+        report("quench_pin_A1_" + tag, within(F(int(r["A1_ppm"]), 10 ** 6), closed_a1(delta, int(r["t"]), y), F(5, 100)), r["A1_ppm"], r["predicted_A1_ppm"])
+>>>
+REASON: part 4 of 5 of H4
+
+HOLD H4e | file=polariton/read_prediction.py | severity=high
+OLD<<<
+    report("control_no_bose_must_miss_t=%s" % r["t"], abs(int(r["ratio_ppm"]) - 10 ** 6) > 20000, r["ratio_ppm"], "off_1000000_by_more_than_20000")
+>>>
+NEW<<<
+    report("control_no_bose_must_miss_t=%s" % r["t"], not within(F(int(r["jbar_ppb"]), 10 ** 9), closed_jbar(F(r["delta"]), int(r["t"])), F(2, 100)), r["ratio_ppm"], "off_1000000_by_more_than_20000")
+>>>
+REASON: part 5 of 5 of H4
+
+HOLD H5 | file=polariton/read_prediction.py | severity=medium
+OLD<<<
+print("POLARITON_READ_DONE|met=%d|miss=%d|json=0" % (met, miss))
+>>>
+NEW<<<
+# POLARITON_HAND, on the engine's own rows at N = 2. The levels -2 and 4 are in units of H with JN = 4, so E = -1/2 here.
+hand = {r["y"]: r for r in R.get("POLARITON_PIN", []) if r["s"] == "hand"}
+report("hand_rows", len(hand) == 4, len(hand), "4")
+if "0" in hand:
+    z = hand["0"]
+    report("hand_E", abs(int(z["energy_ppb"]) + 500000000) <= 10, z["energy_ppb"], "-1/2")
+    report("hand_A", abs(int(z["A_ppb"])) <= 10, z["A_ppb"], "0")
+    report("hand_B", abs(int(z["B_ppb"])) <= 10, z["B_ppb"], "0")
+    report("hand_C1", abs(F(int(z["C1_ppm"]), 10 ** 6) + F(4, 3)) <= F(2, 10 ** 6), z["C1_ppm"], "-4/3")
+    report("hand_C2", abs(F(int(z["C2_ppm"]), 10 ** 6) - F(1, 3)) <= F(2, 10 ** 6), z["C2_ppm"], "1/3")
+    report("hand_f", abs(F(int(z["f_ppm"]), 10 ** 6) - F(1, 3)) <= F(2, 10 ** 6), z["f_ppm"], "1/3")
+if "1/1024" in hand:
+    # y = h/4, so h = 1/256 and <A> = (2/9) h at this size.
+    slope = F(int(hand["1/1024"]["A_ppb"]), 10 ** 9) * 256
+    report("hand_dA_dh", within(slope, F(2, 9), F(1, 1000)), hand["1/1024"]["A_ppb"], "2/9_per_h")
+if "1/64" in hand and "-1/64" in hand:
+    report("hand_sign_A_follows_h", int(hand["1/64"]["A_ppb"]) > 0 > int(hand["-1/64"]["A_ppb"]), hand["1/64"]["A_ppb"] + "," + hand["-1/64"]["A_ppb"], "opposite")
+
+# A row the prediction names and the receipt lacks is a miss.
+for tag, count in (("POLARITON_REVERSAL", 5), ("POLARITON_CONTROL_NO_BOSE", 4), ("POLARITON_SYMMETRY", 2), ("POLARITON_WAVEVECTOR", 3), ("POLARITON_QUENCH", 240), ("POLARITON_QUENCH_BAND", 40), ("POLARITON_QUENCH_PIN", 54), ("POLARITON_SECTOR_EQUALS_FULL", 2), ("POLARITON_SECTOR", 438), ("POLARITON_PIN", 172)):
+    report("rows_" + tag, len(R.get(tag, [])) == count, len(R.get(tag, [])), str(count))
+
+print("POLARITON_READ_DONE|met=%d|miss=%d|json=0" % (met, miss))
+>>>
+REASON: POLARITON_HAND has no read of the engine: its C1, C2, f, sign and slope rows are unread (mutants R12, R13, R14 pass); and the reader passes a receipt with 8 tags removed at 434 met, 1 miss, rc=0
+
+HOLD H6 | file=polariton/second_route.py | severity=medium
+OLD<<<
+    c0_sq, c1_sq = F(2, 3), F(1, 3)
+    c0c1_times_root2 = -F(2, 3)  # sqrt2 c0 c1 = -2/3 with c0 = sqrt(2/3), c1 = -sqrt(1/3)
+>>>
+NEW<<<
+    # (H - E)c = 0 on |2,0,0> and |0,1,1> with H_2 = [[0, o], [o, d]] and o^2 = 2J^2 gives c1/c0 = E/o, so everything below follows from E = -2 and J = 2.
+    level_exact, j_value = F(-2), F(2)
+    c0_sq = 1 / (1 + level_exact * level_exact / (2 * j_value * j_value))
+    c1_sq = 1 - c0_sq
+    c0c1_times_root2 = c0_sq * level_exact / j_value  # sqrt2 c0 c1 = sqrt2 c0^2 E/o = c0^2 E/J
+    ok &= c0_sq == F(2, 3) and c1_sq == F(1, 3) and c0c1_times_root2 == -F(2, 3)
+>>>
+REASON: hand() types c0^2, c1^2 and c0c1 as literals and then checks arithmetic on those literals, while the README says the exact route reads these; the output bytes stay the same
+
+HOLD H7 | file=polariton/second_route.py | severity=medium
+OLD<<<
+def congruent_matrix(n, x, u, y, lam, kappa_b=F(0)):
+>>>
+NEW<<<
+def congruent_matrix(n, x, u, y, lam, kappa_b=F(0), kappa_n=F(0)):
+>>>
+REASON: C2 at y != 0 has no read on any route, and mutant R07 (<n+ n-> read as <n+ n+>) passes every check; part 1 of 4
+
+HOLD H7b | file=polariton/second_route.py | severity=medium
+OLD<<<
+        put(i, i, norm * (x * (p + m) + u * pn * (n0 * (p + m) + p * m) - lam))
+        if n0 >= 2:
+            put(i, index[(p + 1, m + 1)], pn * norm * (p + 1) * (m + 1))
+>>>
+NEW<<<
+        put(i, i, norm * (x * (p + m) + u * pn * (n0 * (p + m) + p * m) + kappa_n * p * m - lam))
+        if n0 >= 2:
+            put(i, index[(p + 1, m + 1)], pn * norm * (p + 1) * (m + 1))
+>>>
+REASON: part 2 of 4 of H7
+
+HOLD H7c | file=polariton/second_route.py | severity=medium
+OLD<<<
+def full_ground(n, x, u, y, kappa_b=F(0), width=F(1, 1 << 44)):
+>>>
+NEW<<<
+def full_ground(n, x, u, y, kappa_b=F(0), width=F(1, 1 << 44), kappa_n=F(0)):
+>>>
+REASON: part 3 of 4 of H7
+
+HOLD H7d | file=polariton/second_route.py | severity=medium
+OLD<<<
+        below = inertia_negative(congruent_matrix(n, x, u, y, mid, kappa_b))
+        except ZeroDivisionError:
+            mid += F(1, 1 << 80)
+            below = inertia_negative(congruent_matrix(n, x, u, y, mid, kappa_b))
+>>>
+NEW<<<
+        below = inertia_negative(congruent_matrix(n, x, u, y, mid, kappa_b, kappa_n))
+        except ZeroDivisionError:
+            mid += F(1, 1 << 80)
+            below = inertia_negative(congruent_matrix(n, x, u, y, mid, kappa_b, kappa_n))
+>>>
+REASON: part 4 of 4 of H7, with H7e
+
+HOLD H7e | file=polariton/second_route.py | severity=medium
+OLD<<<
+        good = abs(e - read_e) < F(1, 10 ** 6) and abs(a - read_a) < F(1, 10 ** 5) and abs(b - read_b) < F(1, 10 ** 5)
+>>>
+NEW<<<
+        good = abs(e - read_e) < F(1, 10 ** 6) and abs(a - read_a) < F(1, 10 ** 5) and abs(b - read_b) < F(1, 10 ** 5)
+        if n <= 3:
+            # C2 = 2<n+ n->/(N(N-1)) from the level's slope in kappa_n, for N = 2 and 3.
+            c2 = (full_ground(n, x, u, y, kappa_n=step) - full_ground(n, x, u, y, kappa_n=-step)) / (2 * step) * 2 / (n * (n - 1))
+            read_c2 = F(int(row["C2_ppm"]), 10 ** 6)
+            good = good and abs(c2 - read_c2) < F(1, 10 ** 5)
+            print("SECOND_ROUTE_FULL_C2|N=%d|u=%s|x=%s|y=%s|exact_C2=%s|rust_C2=%s|json=0" % (n, u, x, y, decimal(c2), decimal(read_c2)))
+>>>
+REASON: H7 continued: the comparison itself
+
+HOLD H8 | file=polariton/second_route.py | severity=high
+OLD<<<
+def taylor(n, x, u, y, t, terms):
+>>>
+NEW<<<
+def compare_top(path, n_min):
+    """The P = 0 rows at N >= n_min with delta >= 1, whose ground state sits at low j, against exact o^2 and d on a block of 6000 states, at 2^320 in integers."""
+    bits, one = 320, 1 << 320
+    def entries(n, u, x, j_top, step=F(0)):
+        return [(((x + step) * F(2 * j, n) + u * F((n - 2 * j) * 2 * j + j * j, n * n)).numerator << bits) // ((x + step) * F(2 * j, n) + u * F((n - 2 * j) * 2 * j + j * j, n * n)).denominator for j in range(j_top + 1)]
+    def count(d, o, lam):
+        q = d[0] - lam or -1
+        total = int(q < 0)
+        for k in range(1, len(d)):
+            q = (d[k] - lam - (o[k - 1] << bits) // q) or -1
+            total += q < 0
+        return total
+    def level(d, o, index, guess, width):
+        lo, hi = guess - width, guess + width
+        while count(d, o, lo) > index:
+            lo -= width
+            width *= 4
+        while count(d, o, hi) <= index:
+            hi += width
+            width *= 4
+        while hi - lo > 1 << (bits - 170):
+            mid = (lo + hi) >> 1
+            if count(d, o, mid) > index:
+                hi = mid
+            else:
+                lo = mid
+        return (lo + hi) >> 1
+    bad, total = 0, 0
+    for line in open(path, encoding="utf-8").read().splitlines():
+        if not line.startswith("POLARITON_SECTOR|"):
+            continue
+        row = dict(f.split("=", 1) for f in line.split("|")[1:] if "=" in f)
+        n, u, x = int(row["N"]), F(row["u"]), F(row["x"])
+        if n < n_min or row["P"] != "0" or u + x < 1:
+            continue
+        j_top = 6000
+        o = [(((j + 1) * (j + 1) * (n - 2 * j) * (n - 2 * j - 1)) << bits) // n ** 4 for j in range(j_top)]
+        d = entries(n, u, x, j_top)
+        guess = (int(row["e_at_2^60"]) << (bits - 60))
+        e0 = level(d, o, 0, guess, one >> 60)
+        gap_read = F(int(row["gap_ppb"]), 10 ** 9)
+        e1 = level(d, o, 1, e0 + (gap_read.numerator << bits) // (gap_read.denominator * n), one >> 40)
+        step = F(1, 1 << 70)
+        up = level(entries(n, u, x, j_top, step), o, 0, e0, one >> 60)
+        down = level(entries(n, u, x, j_top, -step), o, 0, e0, one >> 60)
+        jbar = F(up - down, one) / (2 * step) * n / 2
+        gap = F(e1 - e0, one) * n
+        read_jbar = F(int(row["jbar_ppb"]), 10 ** 9)
+        off_jbar, off_gap = abs(read_jbar / jbar - 1) * 10 ** 6, abs(gap_read / gap - 1) * 10 ** 6
+        good = off_jbar <= 200 and off_gap <= 10
+        bad += not good
+        total += 1
+        print("SECOND_ROUTE_TOP|N=%d|u=%s|x=%s|exact_jbar=%s|rust_jbar=%s|off_ppm=%d|exact_gap=%s|rust_gap=%s|off_ppm=%d|json=0" % (n, u, x, decimal(jbar), decimal(read_jbar), off_jbar, decimal(gap), decimal(gap_read), off_gap))
+    print("SECOND_ROUTE_TOP_DONE|rows=%d|bad=%d|json=0" % (total, bad))
+    return 1 if bad or not total else 0
+
+
+def taylor(n, x, u, y, t, terms):
+>>>
+REASON: sector_compare stops at N = 243, where o2[0] is 2e13 units, so the exact route has no view of the error that grows as N^2; this is the separate method that found H1; part 1 of 3
+
+HOLD H8b | file=polariton/second_route.py | severity=high
+OLD<<<
+    if what == "taylor_compare":
+        return compare_taylor(sys.argv[2])
+>>>
+NEW<<<
+    if what == "taylor_compare":
+        return compare_taylor(sys.argv[2])
+    if what == "top_compare":
+        return compare_top(sys.argv[2], int(sys.argv[3]))
+>>>
+REASON: part 2 of 3 of H8
+
+HOLD H8c | file=.github/workflows/polariton.yml | severity=high
+OLD<<<
+          python3 -I -X utf8 polariton/second_route.py full_compare polariton/RECEIPT.hbp 9 >> route.hbp
+>>>
+NEW<<<
+          python3 -I -X utf8 polariton/second_route.py full_compare polariton/RECEIPT.hbp 9 >> route.hbp
+          python3 -I -X utf8 polariton/second_route.py top_compare polariton/RECEIPT.hbp 59049 >> route.hbp
+          python3 -I -X utf8 polariton/second_route.py mathieu 1/50 2/25 8/25 32/25 128/25 512/25 >> route.hbp
+>>>
+REASON: part 3 of 3 of H8, and the frozen f(q) table has no check in the workflow; run by hand it reads 9999, 39944, 156537, 490857, 776331, 889412, all equal
+
+HOLD H9 | file=polariton/README.md | severity=high
+OLD<<<
+| x = 3/2: pairs | 0.07734 | 0.07732 | 0.07735 |
+| x = 3/2: gap | 3.46408 | 3.46422 | 2√3 = 3.46410 |
+| x = 1/2, at the takeover: pairs | 86.80 | 106.04 | Grows as N^(1/3) |
+| x = 1/2: gap | 0.013433 | 0.011042 | Falls as N^(−1/3) |
+>>>
+NEW<<<
+| x = 3/2: pairs | 0.07735 | 0.07735 | 0.07735 |
+| x = 3/2: gap | 3.46410 | 3.46410 | 2√3 = 3.46410 |
+| x = 1/2, at the takeover: pairs | 86.65 | 105.54 | Grows as N^(1/3) |
+| x = 1/2: gap | 0.013431 | 0.011038 | Falls as N^(−1/3) |
+>>>
+REASON: measured with exact o^2 at 2^320: 86.6482, 105.5373, 0.0134308, 0.0110378, 0.0773503, 3.464102; the current numbers carry the o2 floor of H1. Take the final digits from the rerun
+
+HOLD H9b | file=polariton/README.md | severity=high
+OLD<<<
+- **Takeover scaling:** the pair count rises by 1.4509 at the top step, against 3^(1/3) = 1.4422, and the gap falls by 0.6937, against 0.6934.
+>>>
+NEW<<<
+- **Takeover scaling:** the pair count rises by 1.4449 at the top step, against 3^(1/3) = 1.4422, and the gap falls by 0.6935, against 0.6934. The steps below it read 1.4478 and 1.4461, so the ratio is falling toward 3^(1/3).
+>>>
+REASON: exact: 105.53726/73.04080 = 1.44491, 0.0110378/0.0159166 = 0.69348, 50.50925/34.88706 = 1.44779, 73.04080/50.50925 = 1.44608; 1.4509 is the engine floor
+
+HOLD H9c | file=polariton/README.md | severity=high
+OLD<<<
+- **Matrix elements held 32 fractional bits in their roots,** so levels sat about 10⁻¹¹ from exact, outside the frozen 4,096 units of 2⁻⁶⁰ on all 143 rows. They now read within 66 units.
+
+A second run was stopped when the second error was found.
+>>>
+NEW<<<
+- **Matrix elements held 32 fractional bits in their roots,** so levels sat about 10⁻¹¹ from exact, outside the frozen 4,096 units of 2⁻⁶⁰ on all 143 rows. They read within 66 units in the third run.
+- **The squared off-diagonal was floored at 2⁻⁶⁰,** found by the second seat's attack. Its first element is 622 units at N = 3¹⁶, so the third run read the pairs at the takeover 4,755 ppm high and the gap 371 ppm high there, and the disordered pairs 356 ppm low. It now sits at 2⁻⁹⁰, by long division, with levels within 1 unit at N ≤ 243.
+
+A second run was stopped when the second error was found.
+>>>
+REASON: the third engine error and its size stay on record beside the other two
+
+HOLD H10 | file=polariton/README.md | severity=medium
+OLD<<<
+- **The conversion:** at strong pinning D₂ = f(q)·√(2C₂(y = 0)), so the correlation at zero field sets the modulation. Read within 0.6% at N = 729 for yN = 4, 8, 16.
+>>>
+NEW<<<
+- **The conversion:** at strong pinning D₂ = f(q)·√(2C₂(y = 0)), read within 0.6% at N = 729 for yN = 4, 8, 16. Here √(2C₂) reads 0.40022, against 2ρ = 2/5, so these rows and the D₂ rows above read one number. Where the two differ, D₂/(f·2ρ) lies closer to 1 than D₂/(f·√(2C₂)) on all nine rows at N = 81, 243, 729, so a finite-N effect of C₂ on D₂ is OPEN.
+>>>
+REASON: with the bold result the rows read D2 against 2rho f at leading order; misc.hbp, CONVERSION_TEST, has the nine rows, for example N = 729, yN = 8: 0.99927 against 0.99871
+
+HOLD H11 | file=polariton/README.md | severity=low
+OLD<<<
+A generic even start at N = 729 converges to ⟨A⟩ = −30 ppb and ⟨B⟩ = −1 ppb, with C₂ = 0.0801 against 2ρ² = 0.08.
+>>>
+NEW<<<
+A generic even start at N = 729 converges to ⟨A⟩ = −30 ppb and ⟨B⟩ = −1 ppb at the residual 8 × 10⁻¹⁰, with C₂ = 0.0801 against 2ρ² = 0.08. At the residual 1 × 10⁻¹¹ ⟨A⟩ reads −1 ppb, and the energy equals N·e of the P = 0 sector within 1 ppb on every y = 0 row with a sector row.
+>>>
+REASON: -30 ppb is solver residue: tight_729.hbp reads -1 at residual 12e-12; the row is a convergence read
+
+HOLD H12 | file=polariton/README.md | severity=low
+OLD<<<
+- **Sector against full space:** at y = 0 the full-space run keeps every amplitude with n₊ ≠ n₋ at exactly 0, and the rest byte-equal to the sector engine, at N = 243 and 729.
+>>>
+NEW<<<
+- **Sector against full space:** at y = 0 the full-space run keeps every amplitude with n₊ ≠ n₋ at exactly 0, and the rest byte-equal to the sector engine, at N = 243 and 729.
+- **Parity:** the engine's even start stays byte-even, so it reads the even space. Exact inertia of each exchange parity at N = 2, 3, 9 and 19 of 28 rows at N = 27, and Lanczos on the odd basis at N = 81, 243 and 5 pinned rows at N = 729, u = 1/2, x = 0, put the odd level above the even one on every row. At yN = 16 they form a doublet, with the odd level 141,061, 12,014 and 3,059 × 10⁻¹² above at N = 81, 243, 729.
+>>>
+REASON: the even restriction had no check on file, and the reader cannot see parity: mutant L04 passes
+
+HOLD H13 | file=polariton/README.md | severity=low
+OLD<<<
+| Rows | Prediction | Read | What it shows |
+>>>
+NEW<<<
+The rows above are read by [`read_prediction.py`](read_prediction.py), first committed at `099b0c6`, after the first run; the predictions it reads were frozen at `fce08f9`. Its floor of 2% of 1/50 at δ = 0 is the reader's own choice, and a constant A₁/y of 2.29 would meet all twelve pinned A₁ rows at their 5%, so the table's fourth digit is what separates them.
+
+| Rows | Prediction | Read | What it shows |
+>>>
+REASON: order of commits and the width of one tolerance belong beside the table
+
+HOLD H14 | file=polariton/PREDICTION.hbp | severity=low
+OLD<<<
+POLARITON_ATTEMPT|run=third|engine=099b0c6|finished=1|read_met=887|read_miss=31|exact_route_sector_rows_outside_4096_units=0_of_143|largest_units=66|exact_route_full_rows_bad=0_of_36|exact_route_series_rows_bad=0_of_6|receipt_sha256=393b093336443fb1bc64ccc5181ba9e7f5d7cec360b1b631333c90bef05dd966|the_receipt=polariton/RECEIPT.hbp|json=0
+>>>
+NEW<<<
+POLARITON_ATTEMPT|run=third|engine=099b0c6|finished=1|read_met=887|read_miss=31|exact_route_sector_rows_outside_4096_units=0_of_143|largest_units=66|exact_route_full_rows_bad=0_of_36|exact_route_series_rows_bad=0_of_6|receipt_sha256=393b093336443fb1bc64ccc5181ba9e7f5d7cec360b1b631333c90bef05dd966|the_receipt=polariton/RECEIPT.hbp|json=0
+POLARITON_ATTEMPT|run=third|engine_bug_3=o^2_floored_at_2^-60_with_first_element_622_units_at_N=3^16|effect_at_N=3^16=takeover_jbar_+4755_ppm,gap_+371_ppm,disordered_jbar_-356_ppm,gap_+33_ppm|rows_touched=top_rungs_read_within_their_tolerances|found_by=second_seat|fix=o^2_at_2^-90|json=0
+>>>
+REASON: rows after the 29 frozen ones are free, and each attempt has its row; the third run stays as filed

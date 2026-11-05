@@ -1,0 +1,48 @@
+# Writes HOLDS.txt and checks that each OLD text occurs exactly once in the file at this head, byte for byte.
+import sys
+sys.dont_write_bytecode = True
+ROOT = "C:/tmp/qnn-polariton-wt/"
+OUT = "C:/tmp/opus55/polariton-recheck-window-20261105/HOLDS.txt"
+README = "polariton/README.md"
+holds = []
+
+
+def hold(severity, path, old, new, reason):
+    holds.append((severity, path, old, new, reason))
+
+
+hold("medium", README,
+     "**Below the plane-wave edge,** the ground state is the even mix of the two plane waves, read through ⟨(n₊ − n₋)²⟩/N².",
+     "**Below the plane-wave edge,** for Nu(u − x) above about 1, the ground state is the even mix of the two plane waves, read through ⟨(n₊ − n₋)²⟩/N². At smaller u, and at u = 0 for every x below −1, the lowest sector stays balanced, P = 0 on even N and P = ±1 on odd N, and at y on it reads D₂ near 1: 0.98 at N = 81, u = 1/64, x = −1, yN = 4, with ⟨B⟩ positive and ⟨P²⟩ at 0.005 of N². The exact crossing with the plane wave reads Nu(u − x) = 1.0098 at N = 122, x = −5, 1.0685 at x = −2 and 1.526 at x = −1. Over all P on a grid of step 1/64 at every N ≤ 24, and at those crossings to N = 244, the lowest sector is P = 0, P = ±1 on odd N, or P = N.",
+     "out/t3_scan_fine.hbp, t3_boundary.hbp, t3_margin.hbp, t2_forms_b.hbp: at u = 0, x = -1, N = 243 the lowest sector is P = 1, N = 244 P = 0, N u (u-x) -> 1 at the crossing; N = 81, u = 1/64, x = -1, s = 4 reads P^2/N^2 = 0.00494, B = +39.81, D2 = 0.983 against the form's 0.0047.")
+
+hold("medium", README,
+     "At u = 1 the edge sits at δ = 1, where the disordered branch begins, so in mean field the ordered pair state is excited at every x there.",
+     "At u = 1 the edge sits at δ = 1, where the disordered branch begins. The ordered pair state exists there for −1/2 < x < 0, and in mean field it lies above the plane wave at each such x, at e = −x² against e = x. For x > 0 the ground state is the disordered branch, with ⟨n₊ + n₋⟩ at 1.18 at x = 1/8 and 0.155 at x = 1, N = 6561. Exact levels over all P cross from P = N to P = 0 at x = −0.967/N at N = 19683.",
+     "out/t3_u1.hbp, t3_edges.hbp: U1_LOWEST at N = 27 to 2187, U1_P0 f*N at x > 0 equals 2 jbar of the disordered form, CROSS u = 1, N = 19683 reads N x_cross = -0.96662. For x >= 0 mean field has no ordered state at u = 1, since rho = -x.")
+
+hold("low", README,
+     "First-order theory from one plane wave gives A₁/y = 2/(u − x), and second order, with the pair term mixing n₀ = 2 into n₋ = 1, gives D₂/y² and its sign.",
+     "First-order theory from one plane wave gives A₁/y = 2/(u − x), and second order, with the pair term mixing n₀ = 2 into n₋ = 1, gives D₂/y² and its sign. Exact in N, with D₁ = u(N − 1)/N − x, a = 2(u(N − 2)/N − x) and b = u(N − 1)/N, these are A₁/y = 2/D₁ and D₂/y² = 4|u − x − 1 + (1 − 2u)/N|/(D₁(ab − 2(N − 1)/N²)), which read the table's gaps: 1.7917 at (1/2, −1/4), N = 729, and 0.4520 at (3/4, −1/8), N = 243. The two routes cancel at u − x = 1, and ⟨B⟩ changes sign at u − x − 1 = −(1 − 2u)/N − 2(1 − u)y². So the limit form holds D₂/y² within 5% outside a band around that line: at N = 243 |u − x − 1| above 0.03 to 0.18 at u = 1/4 and 0.004 to 0.11 at u = 1/2 for yN = 4 and 16, and at N = 729 above 0.013 to 0.032 and 0.0005 to 0.011.",
+     "code/pw_lib.py closed forms equal the exact rational series on 20 of 20 (out/t1_series.hbp); out/t2_series.hbp TOLERANCE_5PCT and B_ZERO; at N = 243, u = 1/4, x = -49/64, s = 16 D2/y^2 reads 0.190 against the form's 0.121, and at (1/2, -1/2) the form reads 0 where s = 16 reads 0.0178.")
+
+hold("low", README,
+     "The read met 126 of 126, against D₂ within 20% at N = 243 and 10% at N = 729, and A₁/y within 2% and 1%.",
+     "The read met 126 of 126: 42 on D₂ within 20% at N = 243 and 10% at N = 729, 42 on A₁/y within 2% and 1%, and 42 on ⟨B⟩ negative, a check the reader adds beside the row as pushed.",
+     "polariton/PREDICTION.hbp POLARITON_WINDOW_INSIDE carries no sign clause; read_prediction.py line 292 adds window_inside_B_negative, 42 rows of the 126. All 42 hold on the rows.")
+
+hold("low", README,
+     "The read met 120 of 120, against ⟨P²⟩/N² at least 98%, A₁/y within 1%, D₂/y² within 5% at yN ≥ 4 and E = xN at y = 0.",
+     "The read met 120 of 120, against ⟨P²⟩/N² at least 98%, A₁/y within 1%, D₂/y² within 5% and the sign of ⟨B⟩ at yN ≥ 4, and E = xN at y = 0. The sign also holds on the rows at yN = 1/2, 1 and 2, read here outside the reader's count.",
+     "Row counts 6 + 42 + 36 + 18 + 18 = 120 include 18 sign rows the sentence omits. The frozen row states the sign with no limit on s; read_prediction.py line 316 reads it at s >= 4; out/t6_text.hbp BELOW_ALL shows signB_ok = 1 at every s on all six tags.")
+
+data = open(ROOT + README, encoding="utf-8", newline="").read()
+out = []
+for i, (severity, path, old, new, reason) in enumerate(holds, 1):
+    count = data.count(old)
+    if count != 1:
+        print("OLD_NOT_UNIQUE|H%d|count=%d" % (i, count))
+        sys.exit(1)
+    out.append("HOLD H%d | file=%s | severity=%s\nOLD<<<\n%s\n>>>\nNEW<<<\n%s\n>>>\nREASON: %s\n" % (i, path, severity, old, new, reason))
+open(OUT, "w", encoding="utf-8", newline="\n").write("\n".join(out))
+print("HOLDS_WRITTEN|count=%d|each_old_occurs_once=1|json=0" % len(holds))

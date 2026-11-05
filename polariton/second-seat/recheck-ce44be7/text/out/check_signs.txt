@@ -1,0 +1,42 @@
+conversion rows 94 A>=0 [] B<=0 [('81', '0', '4', '3', '-122153693')]
+below s<4 sign rows checked
+  1 -1/4 N=729 s 1/2 D2/y2 0.3201 B 54884 A1/y 1.6018 P2 999999 res 876
+  1 -1/4 N=729 s 1 D2/y2 0.3201 B 219537 A1/y 1.6018 P2 999997 res 300
+  1 -1/4 N=729 s 2 D2/y2 0.3201 B 878154 A1/y 1.6018 P2 999990 res 724
+  1 -1/4 N=729 s 4 D2/y2 0.3201 B 3512690 A1/y 1.6017 P2 999961 res 92
+  1 -1/4 N=729 s 8 D2/y2 0.3201 B 14051908 A1/y 1.6017 P2 999845 res 619
+  1 -1/4 N=729 s 16 D2/y2 0.3202 B 56225989 A1/y 1.6016 P2 999382 res 276
+  1/2 -1/4 N=729 s 1/2 D2/y2 1.7917 B -307217 A1/y 2.6691 P2 999998 res 806
+  1/2 -1/4 N=729 s 1 D2/y2 1.7917 B -1228864 A1/y 2.6691 P2 999993 res 279
+  1/2 -1/4 N=729 s 2 D2/y2 1.7917 B -4915470 A1/y 2.6691 P2 999973 res 368
+  1/2 -1/4 N=729 s 4 D2/y2 1.7917 B -19662161 A1/y 2.6691 P2 999892 res 172
+  1/2 -1/4 N=729 s 8 D2/y2 1.7918 B -78653130 A1/y 2.6689 P2 999571 res 351
+  1/2 -1/4 N=729 s 16 D2/y2 1.7922 B -314683424 A1/y 2.6683 P2 998283 res 0
+
+third whole rows [('taylor', 2271), ('control', 6087), ('reversal', 67604), ('wavevector', 30020), ('rotor', 11214), ('sector', 342537), ('quench_pin', 456656), ('quench', 302547), ('pin', 769830)] sum minutes 33.1
+fourth whole rows [('taylor', 4125), ('control', 5712), ('reversal', 62548), ('wavevector', 31443), ('rotor', 10155), ('quench_pin', 421413), ('quench', 281956), ('pin', 1040231), ('sector', 333368), ('window', 1021262), ('conversion', 2576670)] sum minutes 96.5
+
+READ rows by kind that are existence or construction checks
+ rows_* count checks 12 hand_rows 1
+ energy rows (conversion + quench) 334
+ zero-A rows at y=0 18 sign rows 161
+
+== the 26 rows, exact, with the 1.07
+ N=3 u=0: energy_ppb -816496582 N e -0.816496580928 diff ppb -1.072
+
+== the 0.92 and the 0.95 at yN=1/2, N=729
+ D2 from B 0.00396267 D2_ppm 3962 2 rho f 0.00399965 shortfall % 0.925 from the printed six digits 0.950 6.72/729 % 0.922
+  s 1/2 shortfall % 0.925 range check D2 within off 0.925
+  s 1 shortfall % 0.922 range check D2 within off 0.922
+  s 2 shortfall % 0.883 range check D2 within off 0.883
+  s 4 shortfall % 0.511 range check D2 within off 0.511
+  s 8 shortfall % 0.073 range check D2 within off 0.073
+  s 16 shortfall % 0.122 range check D2 within off 0.122
+
+== A1/y, D2 at N=243 within their tolerances: how close
+ N 243 D2 ratio ['0.9721', '0.9721', '0.9731', '0.9835', '0.9946', '0.9843']
+ N 729 D2 ratio ['0.9908', '0.9908', '0.9912', '0.9949', '0.9993', '0.9988']
+
+== window inside: lowest ratio against the frozen tolerance
+ N 243 rows 30 lowest [('0.8145', '3/4', '1/8', '4'), ('0.8150', '3/4', '1/8', '2'), ('0.8154', '3/4', '1/8', '1'), ('0.8160', '3/4', '1/8', '1/2')] highest [('0.9987', '1/4', '-1/4', '8'), ('1.0007', '1/4', '-1/4', '4')]
+ N 729 rows 12 lowest [('0.9764', '3/4', '0', '1/2'), ('0.9764', '3/4', '0', '1'), ('0.9766', '3/4', '0', '2'), ('0.9800', '3/4', '0', '4')] highest [('1.0006', '1/4', '-1/4', '4'), ('1.0009', '1/4', '-1/4', '8')]

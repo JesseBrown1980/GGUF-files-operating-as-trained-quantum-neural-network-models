@@ -1,0 +1,50 @@
+CHECK_J1|machine n_1(s^0)/2 against the README J1 form, at (delta,u,t):
+  delta=0 u=1 t=1/2 machine=-0.499696950309 README=-0.499696950309 off_lt_1e-40=True
+  delta=0 u=1 t=1 machine=-7.713825806238 README=-7.713825806238 off_lt_1e-40=True
+  delta=0 u=1 t=3 machine=-39780.488648120777 README=-39780.488648120777 off_lt_1e-40=True
+  delta=1/2 u=1 t=1/2 machine=-0.447170897365 README=-0.447170897365 off_lt_1e-40=True
+  delta=1/2 u=1 t=1 machine=-5.692908169998 README=-5.692908169998 off_lt_1e-40=True
+  delta=1/2 u=1 t=3 machine=-11548.322082223997 README=-11548.322082223997 off_lt_1e-40=True
+  delta=-1/2 u=1 t=1/2 machine=-0.533173930603 README=-0.533173930603 off_lt_1e-40=True
+  delta=-1/2 u=1 t=1 machine=-8.559123194260 README=-8.559123194260 off_lt_1e-40=True
+  delta=-1/2 u=1 t=3 machine=-24560.063967509721 README=-24560.063967509721 off_lt_1e-40=True
+  delta=3/4 u=1 t=1/2 machine=-0.415485054590 README=-0.415485054590 off_lt_1e-40=True
+  delta=3/4 u=1 t=1 machine=-4.523131653430 README=-4.523131653430 off_lt_1e-40=True
+  delta=3/4 u=1 t=3 machine=-3046.645577590551 README=-3046.645577590551 off_lt_1e-40=True
+  delta=-3/4 u=1 t=1/2 machine=-0.541474280466 README=-0.541474280466 off_lt_1e-40=True
+  delta=-3/4 u=1 t=1 machine=-8.375271372624 README=-8.375271372624 off_lt_1e-40=True
+  delta=-3/4 u=1 t=3 machine=-9898.790913167316 README=-9898.790913167316 off_lt_1e-40=True
+  delta=1/2 u=1/2 t=1/2 machine=-0.468671655674 README=-0.468671655674 off_lt_1e-40=True
+  delta=1/2 u=1/2 t=1 machine=-6.409461926063 README=-6.409461926063 off_lt_1e-40=True
+  delta=1/2 u=1/2 t=3 machine=-14801.257553545428 README=-14801.257553545428 off_lt_1e-40=True
+  delta=0 u=1/2 t=1/2 machine=-0.499696950309 README=-0.499696950309 off_lt_1e-40=True
+  delta=0 u=1/2 t=1 machine=-7.713825806238 README=-7.713825806238 off_lt_1e-40=True
+  delta=0 u=1/2 t=3 machine=-39780.488648120777 README=-39780.488648120777 off_lt_1e-40=True
+  delta=1 u=1 t=1/2 machine=-0.381250000000 README=-0.381250000000 off_lt_1e-40=True
+  delta=1 u=1 t=1 machine=-3.400000000000 README=-3.400000000000 off_lt_1e-40=True
+  delta=1 u=1 t=3 machine=-462.600000000000 README=-462.600000000000 off_lt_1e-40=True
+  delta=-1 u=1 t=1/2 machine=-0.543750000000 README=-0.543750000000 off_lt_1e-40=True
+  delta=-1 u=1 t=1 machine=-7.800000000000 README=-7.800000000000 off_lt_1e-40=True
+  delta=-1 u=1 t=3 machine=-2374.200000000000 README=-2374.200000000000 off_lt_1e-40=True
+  delta=1 u=1/2 t=1/2 machine=-0.421875000000 README=-0.421875000000 off_lt_1e-40=True
+  delta=1 u=1/2 t=1 machine=-4.500000000000 README=-4.500000000000 off_lt_1e-40=True
+  delta=1 u=1/2 t=3 machine=-940.500000000000 README=-940.500000000000 off_lt_1e-40=True
+  delta=-1 u=1/2 t=1/2 machine=-0.503125000000 README=-0.503125000000 off_lt_1e-40=True
+  delta=-1 u=1/2 t=1 machine=-6.700000000000 README=-6.700000000000 off_lt_1e-40=True
+  delta=-1 u=1/2 t=3 machine=-1896.300000000000 README=-1896.300000000000 off_lt_1e-40=True
+CHECK_J1|bad=0|json=0
+  w1 t=1/2 machine=0.129976016853 README=0.129976016853 ok=True
+  w1 t=1 machine=2.973012205688 README=2.973012205688 ok=True
+  w1 t=2 machine=162.139197265352 README=162.139197265352 ok=True
+  w1 t=3 machine=4346.283077111637 README=4346.283077111637 ok=True
+CHECK_W1|bad=0|json=0
+CHECK_ENERGY|delta=0|u=1|nonzero_terms=0|json=0
+CHECK_ENERGY|delta=1/2|u=1|nonzero_terms=0|json=0
+CHECK_ENERGY|delta=-1/2|u=1|nonzero_terms=0|json=0
+CHECK_ENERGY|delta=3/4|u=1|nonzero_terms=0|json=0
+CHECK_ENERGY|delta=-3/4|u=1|nonzero_terms=0|json=0
+CHECK_ENERGY|delta=1|u=1|nonzero_terms=0|json=0
+CHECK_ENERGY|delta=-1|u=1|nonzero_terms=0|json=0
+CHECK_ENERGY|delta=5/4|u=1|nonzero_terms=0|json=0
+CHECK_ENERGY|delta=-5/4|u=1|nonzero_terms=0|json=0
+CHECK_ENERGY|delta=1/2|u=1/3|nonzero_terms=0|json=0

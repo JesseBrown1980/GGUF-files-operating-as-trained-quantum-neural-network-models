@@ -1,0 +1,469 @@
+HOLD H1 | file=.gitignore | severity=high
+OLD<<<
+out/
+>>>
+NEW<<<
+out/
+!polariton/second-seat/*/out/
+>>>
+REASON: 87 of the 102 files SHA256SUMS lists (engine/out 69, derivations/out 18, 936,914 bytes) are ignored by this line and absent from the commit; the GitHub contents API returns 404 for polariton/second-seat/engine/out at this head, so REPORT.md's "row files are in the folders beside this one" and the rows behind -6.72, 4e-5, 18 points, parity and 2.25e-7 are not at the head; tested in a scratch repo, the exception adds only those folders; then git add polariton/second-seat.
+
+HOLD H2 | file=polariton/README.md | severity=medium
+OLD<<<
+follows Y/(1 + Y) within 2.7% on all 29 rows read.
+>>>
+NEW<<<
+follows Y/(1 + Y) within 2.7% on the 29 rows of its frozen range, N ≥ 243 with predicted f ≤ 1/10, and reads 0.96 to 1.15 of it on the 35 rows past that range.
+>>>
+REASON: The receipt holds 94 rows, 64 at N >= 243; the 29 are the frozen range, and the table two screens below has 10 of 30 cells off by more than 2.7%, up to 1.096; the 35-row read is also undersold in the status.
+
+HOLD H3 | file=polariton/README.md | severity=medium
+OLD<<<
+- **At the contact value U = J,** the same move reads on the quench branch at k, the harmonic the paper reads.
+>>>
+NEW<<<
+- **At the contact value U = J,** the order moves from g² into the mean density on the quench branch, from |N, 0, 0⟩, at k, the harmonic the paper reads, where the central result is a ground state at 2k: one question, with its own state, harmonic, law and scale.
+>>>
+REASON: "The same move" joins a ground state at 2k with f(q) and y ~ 1/N to a quench at k with Y/(1 + Y) and y ~ N^(-1/2); the rows differ on all four, and D2 at U = J in the ground state reads 0.00009.
+
+HOLD H4 | file=polariton/README.md | severity=low
+OLD<<<
+## The same move at contact, on the quench branch at k
+>>>
+NEW<<<
+## At contact, on the quench branch at k: the order moves from g² into the density by its own law
+>>>
+REASON: The same reading as H3, in the heading a new reader scans first.
+
+HOLD H5 | file=polariton/README.md | severity=medium
+OLD<<<
+Before writing the law I had seen four rows at y = 1/1024, N = 729: three at δ = 0 and one at δ = 1/2, t = 3. Every row in this table was unseen.
+>>>
+NEW<<<
+Before writing the law I had seen four rows at y = 1/1024, N = 729: three at δ = 0, which `POLARITON_ADDED` records, and one at δ = 1/2, t = 3, which the row beside it records. The third run's receipt held all 12 rows at y = 1/1024 with δ = 0, 1/2, in `POLARITON_QUENCH_PIN`. This table is at N = 729, with y = s/27 so y√N = s, from y = 1/108 up, and its 30 cells come from the conversion stage, first in the engine after `89a026a`, so all 30 were unseen. Of them 16 have predicted f ≤ 1/10 and sit in the frozen range below, and the largest ratio, 1.096, is past it. The grid is y = s/9 at N = 81, s/16 at N = 243 and s/47 at N = 2187, so y√N is 0.974 s at N = 243 and 0.995 s at N = 2187.
+>>>
+REASON: The table names no N; all 30 cells match N = 729 rows; POLARITON_ADDED says three rows where this sentence says four; 89a026a's engine has 0 hits for run_conversion; y*sqrt(N) reads 0.97428 s at N = 243 and 0.99501 s at N = 2187 from the rows' y.
+
+HOLD H6 | file=polariton/PREDICTION.hbp | severity=low
+OLD<<<
+POLARITON_ADDED|date=2026-11-05|seat=ACER-CLAUDE-FABLE5|after=third_run_and_second_seat_attack|pushed_before_the_stages_below_existed=1|the_first_29_rows_stay_frozen=1|seen_before_writing=second_seat_grid_at_N=81,243_and_the_three_rows_y=1/1024,N=729,delta=0|unseen=every_N=729_window_row_and_every_conversion_row_with_y_above_1/1024|reason=the_paper_reads_k_and_contact_gives_u=1|json=0
+>>>
+NEW<<<
+POLARITON_ADDED|date=2026-11-05|seat=ACER-CLAUDE-FABLE5|after=third_run_and_second_seat_attack|pushed_before_the_stages_below_existed=1|the_first_29_rows_stay_frozen=1|seen_before_writing=second_seat_grid_at_N=81,243_and_the_three_rows_y=1/1024,N=729,delta=0|unseen=every_N=729_window_row_and_every_conversion_row_with_y_above_1/1024|reason=the_paper_reads_k_and_contact_gives_u=1|json=0
+POLARITON_ADDED_BESIDE|also_seen_before_writing=the_row_y=1/1024,N=729,delta=1/2,t=3|on_file_in_the_third_run_receipt=12_rows_y=1/1024,delta=0,1/2,N=243,729,t=1,2,3|second_seat_grid_below_the_edge=s=1/2,4,16_only|json=0
+>>>
+REASON: README line 55 discloses a fourth seen row that this record lacks; d4_grid_fail.hbp holds s = 1/2, 4, 16 at N = 81, 243; rows after the 29 are free, and head -n 29 stays pinned.
+
+HOLD H7 | file=polariton/README.md | severity=medium
+OLD<<<
+The read met 126 of 126, against D₂ within 20% at N = 243 and 10% at N = 729, and A₁/y within 2% and 1%.
+>>>
+NEW<<<
+The read met 126 of 126, against D₂ within 20% at N = 243 and 10% at N = 729, and A₁/y within 2% and 1%. Of these, 36 are at N = 729, the unseen read. The other 90 are at N = 243, on the second seat's grid, seen before those limits were written, and the lowest D₂ there reads 0.8145 of the rotor, at (3/4, 1/8), yN = 4.
+>>>
+REASON: READ.hbp has 36 window_inside rows at N = 729 and 90 at N = 243; d4_grid_pass.hbp holds all five points at N = 243 for all six s; the 20% limit was written after 0.815 was on file (POLARITON_ADDED).
+
+HOLD H8 | file=polariton/README.md | severity=medium
+OLD<<<
+The read met 120 of 120, against ⟨P²⟩/N² at least 98%, A₁/y within 1%, D₂/y² within 5% at yN ≥ 4 and E = xN at y = 0.
+>>>
+NEW<<<
+The read met 120 of 120, against ⟨P²⟩/N² at least 98%, A₁/y within 1%, D₂/y² within 5% at yN ≥ 4 and E = xN at y = 0. Of these, 40 are at N = 729, the unseen read, and 80 are at N = 243, where the second seat's grid held yN = 1/2, 4, 16.
+>>>
+REASON: READ.hbp has 40 window_below rows at N = 729 and 80 at N = 243; the sentence before it says N = 729 is the unseen read, and a reader takes 120 as that read.
+
+HOLD H9 | file=PR#8-body | severity=medium
+OLD<<<
+Five more points inside the pair state's window met 126 of 126, and the rows below its edge, where the ground state is the even mix of the two plane waves, met 120 of 120.
+>>>
+NEW<<<
+Five more points inside the pair state's window met 126 of 126, and the rows below its edge, where the ground state is the even mix of the two plane waves, met 120 of 120. Those two forms were frozen at `89a026a`, after the second seat's rows at N = 81 and 243, so 36 of the 126 and 40 of the 120, at N = 729, are the unseen read. At U = J, Δ < 0 the ground state is that even mix: D₂ reads 0.00009 at N = 243, yN = 4, where the rotor form of the pair state gives 0.437.
+>>>
+REASON: These counts sit under the bold "frozen first" with no split; the body nowhere gives the U = J ground-state number that the README's status gives (row N=243, u=1, x=-1/4, s=4: D2 0.000087).
+
+HOLD H10 | file=polariton/README.md | severity=medium
+OLD<<<
+Levels come from counting pivots at scale 2⁶⁰, with the squared off-diagonal at 2⁻⁹⁰, on 220 rows, and f, pairs and C₂ come from finite differences of those levels, with the step in each row. The exact route reads levels up to N = 243 and, at 2³²⁰ on a low-k block of 6,000 states, pairs and gap on the 44 rows from N = 59,049 up. [`READ.hbp`](READ.hbp) reads energy, f, gap, C₂ and the takeover ratios up to these rungs.
+>>>
+NEW<<<
+Levels come from counting pivots at scale 2⁶⁰, with the squared off-diagonal at 2⁻⁹⁰, on 438 rows, 220 of them at P = 0, and f, pairs and C₂ come from finite differences of those levels, with the step in each row. The exact route reads levels up to N = 243 and, at 2³²⁰ on a low-k block of 6,000 states, pairs and gap on the 44 rows from N = 59,049 up with δ ≥ 1. The other 32 rows from N = 59,049 up have δ < 1, with their states around j = ρN, and the recheck of this head reads x = 0 at N = 23,887,872 and 43,046,721 at 2²²⁰ on 120,001 states around that peak: e, f and gap equal the rows at their printed digits. [`READ.hbp`](READ.hbp) reads energy, f, gap and C₂ at x = 0 and pairs and gap at x = 3/2 up to these rungs, and the takeover ratios on powers of 3 up to 3¹⁶, so the takeover rows at N = 23,887,872 rest on the exact route.
+>>>
+REASON: top_compare skips u + x < 1: 44 of the 76 P = 0 rows at N >= 59,049 are read, 32 are not, including the table's x = 0 lines; own read at N = 43,046,721 gives e -0.100000005861, f 0.399999986466, gap 1.095445086; READ names N = 23887872 in 7 rows, none at x = 1/2; POLARITON_SECTOR has 438 rows.
+
+HOLD H11 | file=polariton/README.md | severity=medium
+OLD<<<
+- **Top rungs:** pairs and gap on 44 rows at N ≥ 59,049, at 2³²⁰ on a low-k block of 6,000 states,
+>>>
+NEW<<<
+- **Top rungs:** pairs and gap on the 44 rows at N ≥ 59,049 with δ ≥ 1, at 2³²⁰ on a low-k block of 6,000 states,
+>>>
+REASON: Same scope as H10; SECOND_ROUTE_TOP rows are (u,x) with u + x >= 1 only.
+
+HOLD H12 | file=README.md | severity=medium
+OLD<<<
+At U = J the same move reads on the quench branch at k, the harmonic the paper reads: the visible share of the g² order follows a closed law, V² = Y/(1 + Y), within 2.7% on the 29 rows read.
+>>>
+NEW<<<
+At U = J the ground state at the Δ < 0 points read is an even mix of the two plane waves, and the order moves into the density on the quench branch, at k, the harmonic the paper reads: the visible share of the g² order follows a closed law at leading order in 1/N, V² = Y/(1 + Y), within 2.7% on the 29 rows of its frozen range and at 0.96 to 1.15 of it on the 35 rows past that range.
+>>>
+REASON: The root section is the first thing read and says nothing of the U = J ground state; same scope faults as H2 and H3.
+
+HOLD H13 | file=README.md | severity=medium
+OLD<<<
+On those rungs the energy, pair fraction and gap read the predicted values at three points of the model.
+>>>
+NEW<<<
+On those rungs, at U = J/2, the energy, pair fraction and gap read the predicted values at Δ = 0, the pairs and gap at Δ = 3JN/2, and at the takeover, Δ = JN/2, the pairs and gap scale as N^(1/3) and N^(−1/3).
+>>>
+REASON: READ has e and f at x = 0 only, jbar and gap at x = 3/2, and only ratios at x = 1/2; no energy or pair-fraction value is predicted at the other two points.
+
+HOLD H14 | file=README.md | severity=medium
+OLD<<<
+a separate exact-rational route on 143 levels at N ≤ 243 and on pairs and gaps at the top rungs,
+>>>
+NEW<<<
+a separate exact-rational route on 143 levels at N ≤ 243 and on pairs and gaps at the top rungs from the takeover up,
+>>>
+REASON: Same scope as H10, in the root's own terms.
+
+HOLD H15 | file=PR#8-body | severity=medium
+OLD<<<
+There, energy, pair fraction and gap read the predicted values at three points of the model, and the takeover scales as N^(1/3) and N^(−1/3), each step reading 1.4449 and 0.6935 at the top.
+>>>
+NEW<<<
+There, at U = J/2, energy, pair fraction and gap read the predicted values at Δ = 0, pairs and gap at Δ = 3JN/2, and the takeover at Δ = JN/2 scales as N^(1/3) and N^(−1/3), each step reading 1.4449 and 0.6935 at the top.
+>>>
+REASON: Same as H13.
+
+HOLD H16 | file=PR#8-body | severity=medium
+OLD<<<
+The route now reads all 143 sector levels within 1 unit of 2⁻⁶⁰, 44 top-rung rows at 2³²⁰, and 60 full-space rows,
+>>>
+NEW<<<
+The route now reads all 143 sector levels within 1 unit of 2⁻⁶⁰, the 44 top-rung rows with δ ≥ 1 at 2³²⁰, and 60 full-space rows,
+>>>
+REASON: Same scope as H10.
+
+HOLD H17 | file=PR#8-body | severity=medium
+OLD<<<
+**The same move at contact, U = J, on the quench branch at k, the harmonic the paper reads.** A closed law, derived for this test and pushed first:
+>>>
+NEW<<<
+**At contact, U = J, the order moves into the density on the quench branch, from |N, 0, 0⟩, at k, the harmonic the paper reads, where the central result is a ground state at 2k.** A closed law at leading order in 1/N, derived for this test and pushed first:
+>>>
+REASON: Same as H3 and H24.
+
+HOLD H18 | file=polariton/README.md | severity=medium
+OLD<<<
+Exact inertia of each exchange parity at N = 2, 3, 9 and 19 of 28 rows at N = 27, and Lanczos on the odd basis at N = 81, 243 and 5 pinned rows at N = 729, u = 1/2, x = 0, put the odd level
+>>>
+NEW<<<
+Exact inertia of each exchange parity at N = 3, 9 and 23 of 28 rows at N = 27, and Lanczos on the odd basis at N = 81, 243 and 7 pinned rows at N = 729, five at u = 1/2, x = 0, and two at u = 0, x = 0, put the odd level
+>>>
+REASON: REFUTED by the row file: parity_inertia.hbp holds 79 rows, 28 at N = 3, 28 at N = 9, 23 at N = 27, 0 at N = 2 (the tool reads the receipt in order and the timeout came before the hand rows); parity_729.hbp holds 7 rows. My engine lane's F4 and H12 carried the error; retraction beside in FINDINGS.
+
+HOLD H19 | file=polariton/README.md | severity=medium
+OLD<<<
+so ⟨A⟩ at N = 9 sat about 5 × 10⁻⁸ from exact.
+>>>
+NEW<<<
+so ⟨A⟩ at N = 9 sat up to 7.0 × 10⁻⁷ from exact, median 2.4 × 10⁻⁷ on 24 rows, and an exact eigenvector read through roots floored at 20 bits gives the first run's offsets within 1 × 10⁻⁹.
+>>>
+REASON: REFUTED by own exact read (own_n9.py): first-run A_ppb off 16.7e-9 to 697.9e-9 on 24 rows at N = 9, read-out alone 16.4e-9 to 697.1e-9, largest difference 1.0e-9; third run and head within 1.9e-9. My text lane's H24 carried the 5e-8; retraction beside in FINDINGS.
+
+HOLD H20 | file=polariton/README.md | severity=medium
+OLD<<<
+The rows are read by [`read_prediction.py`](read_prediction.py), first committed at `099b0c6`, after the first run finished and before its first read; the predictions it reads were frozen at `fce08f9`.
+>>>
+NEW<<<
+The rows are read by [`read_prediction.py`](read_prediction.py), written after the first run finished and before its first read, by the session log, and first committed at `099b0c6`, with that read. The predictions it reads were frozen at `fce08f9` and `89a026a`, and its reads of the added rows were first committed at `ce44be7`, with those rows.
+>>>
+REASON: git show --stat 099b0c6 adds read_prediction.py together with first-run/READ.hbp, so that commit follows the first read (session log in text/FINDINGS.txt: first read 23:15:21Z, commit 23:30:33Z); engine H13 and text H31 merged into a false order; 89a026a's reader has 0 hits for the added tags.
+
+HOLD H21 | file=polariton/README.md | severity=medium
+OLD<<<
+at strong pinning D₂ = f(q)·√(2C₂(y = 0)), so the correlation at zero field sets the modulation. Read within
+>>>
+NEW<<<
+at strong pinning D₂ = f(q)·√(2C₂(y = 0)), so the modulation reaches the size the correlation at zero field gives. Read within
+>>>
+REASON: The same bullet says the rows read sqrt(2C2) and 2rho as one number (0.40022 against 2/5, and 2rho closer on 9 of 9 rows), so no row separates a cause; engine H10 removed this clause and its row says applied, but text H28 kept it.
+
+HOLD H22 | file=PR#8-body | severity=medium
+OLD<<<
+The size at strong pinning is set by the correlation at zero field, within 0.6%.
+>>>
+NEW<<<
+The size at strong pinning matches f(q)·√(2C₂(y = 0)), from the correlation at zero field, within 0.6%, with √(2C₂) at 0.40022 against 2ρ = 2/5.
+>>>
+REASON: Same as H21.
+
+HOLD H23 | file=polariton/README.md | severity=medium
+OLD<<<
+Each deviation falls as 1/N.
+>>>
+NEW<<<
+Over the last tripling they fall by 2.75, 2.84 and 2.76, so each deviation approaches 1/N, with N times it at 11.46, 33.96 and 78.45 at N = 2187 and still rising. Here y√N is 0.487 at N = 243 and 0.498 at N = 2187, and each law value is taken at that row's y.
+>>>
+REASON: Own read of the rows: step ratios 2.19, 2.37, 2.75 (V2), 2.20, 2.57, 2.84 (A1), 1.99, 2.42, 2.76 (C1); N*dev 6.04, 8.29, 10.50, 11.46 and 38.47, 58.14, 72.23, 78.45.
+
+HOLD H24 | file=polariton/README.md | severity=medium
+OLD<<<
+**The law (derived for this test, pushed at `89a026a`).** With c
+>>>
+NEW<<<
+**The law, at leading order in 1/N with t and y√N fixed (derived for this test, pushed at `89a026a`, tagged CONJECTURE until read).** With c
+>>>
+REASON: The frozen row ends tag=CONJECTURE_until_read, the derivation sets a0 to sqrt(N), and the rows show the 1/N correction; "law" alone reads as exact.
+
+HOLD H25 | file=polariton/README.md | severity=medium
+OLD<<<
+At the paper's Bragg fraction of 0.5%, 2.6% then needs (1 − δ)V² ≈ 0.017.
+>>>
+NEW<<<
+At the paper's Bragg fraction of 0.5%, 2.6% then needs (1 − δ)V² ≈ 0.017, with V = A₁/√(2C₁) the visibility of the density modulation after averaging over pulses, which the paper says phase fluctuations reduce. Its symbol 𝒱(x) is the fringe visibility of the interferometer, proportional to g¹.
+>>>
+REASON: Text H15 and derivations H8 both kept "with V the visibility after averaging over pulses", and the merge lost it; the paper uses both senses (main.tex visibility of the density modulation; Methods V(x) = (I_u - I_l)/(I_u + I_l)).
+
+HOLD H26 | file=polariton/README.md | severity=low
+OLD<<<
+C₂ itself reads 0.0801 at zero field and 0.0798 at yN = 16, so the order in g² holds as the density appears.
+>>>
+NEW<<<
+C₂ itself reads 0.0801 at zero field and 0.0798 at yN = 16, so the order in g² holds as the density appears, and the share of it in the density, D₂²/2C₂, reads f(q)²: 0.79107 against 0.79105 at N = 729, yN = 16, and within 2% at all six fields there.
+>>>
+REASON: Undersold: the central rows carry the same measure as the contact law's V²; own read at N = 729: ratio 0.9805, 0.9806, 0.9814, 0.9889, 0.9983, 1.0000.
+
+HOLD H27 | file=polariton/README.md | severity=low
+OLD<<<
+within 1 ppb on the 26 y = 0 rows that hold P = 0 and have a sector row.
+>>>
+NEW<<<
+within 1.1 ppb on the 26 y = 0 rows that hold P = 0 and have a sector row.
+>>>
+REASON: N = 3, u = 0, x = 0: energy_ppb -816496582 against N e -816496580.928, off 1.072 ppb; the other 25 are within 0.99 ppb; engine F4 had 1.07e-9.
+
+HOLD H28 | file=polariton/README.md | severity=low
+OLD<<<
+Exact y → 0 chains to N = 6561 reach the rotor as 1/N, with N(D₂ ratio − 1) = −6.72 at u = 1/2, x = 0, about the 0.95% at yN = 1/2 in the table.
+>>>
+NEW<<<
+Exact y → 0 chains to N = 6561 reach the rotor at 9 points as 1/N, with N(D₂ ratio − 1) = −6.72 at u = 1/2, x = 0, which is 0.92% at N = 729. From ⟨B⟩ in ppb the shortfall reads 0.925% at yN = 1/2 and 0.922% at yN = 1, and the table's six digits, rounded down, show 0.95% at yN = 1/2.
+>>>
+REASON: Undersold: 0.95% is a truncation of D2_ppm = 3962; B_ppb gives 0.925%, against 6.72/729 = 0.922%; own chains read -6.741, -6.724, -6.719 at N = 729, 2187, 6561; derivations H13 had "at 9 points".
+
+HOLD H29 | file=polariton/README.md | severity=low
+OLD<<<
+The coefficient reads 1/ω to within 4×10⁻⁵ at seven x,
+>>>
+NEW<<<
+The coefficient reads 1/ω to within 4.1×10⁻⁵ at seven x,
+>>>
+REASON: x = 3/4: chain extrapolation 1.069004 against 1.069045, both on d5_u0.hbp and from own chains (off 40.49e-6).
+
+HOLD H30 | file=polariton/README.md | severity=low
+OLD<<<
+The signs met 58 of 58, and energy stayed within 810 × 10⁻⁹ on all 94 rows.
+>>>
+NEW<<<
+The signs met 58 of 58 there. On all 94 rows ⟨A⟩ is negative on 94 and ⟨B⟩ positive on 93, with ⟨B⟩ = −0.122 at N = 81, δ = 0, y√N = 4, t = 3, and energy stayed within 810 × 10⁻⁹.
+>>>
+REASON: The frozen row states the signs with no range ahead of its N >= 243 clause; the reader reads them on 29 rows; the one row outside is N = 81, y = 4/9, t = 3, B_ppb = -122153693.
+
+HOLD H31 | file=polariton/README.md | severity=low
+OLD<<<
+It reads 1.20 on one row at N = 81 and 1.015 on one at N = 243.
+>>>
+NEW<<<
+It passes 1 on three rows at N = 81, up to 1.20, and on one at N = 243, at 1.015.
+>>>
+REASON: Rows with V2 above 1: N = 81 at 1.0244, 1.0566, 1.1979; N = 243 at 1.0146.
+
+HOLD H32 | file=polariton/README.md | severity=low
+OLD<<<
+on 4 rows at N = 9, 27, largest off 1 × 10⁻⁹.
+>>>
+NEW<<<
+on 4 rows at N = 9, 27, largest off 1.6 × 10⁻⁹.
+>>>
+REASON: The route prints largest_off_1e-9 with %d, which truncates; own exact series reads 1.553, 1.453, 1.472, 1.178 e-9 on the four rows.
+
+HOLD H33 | file=polariton/README.md | severity=low
+OLD<<<
+all met their tolerances at N ≥ 19683. At N = 531,441,
+>>>
+NEW<<<
+all met their tolerances at N ≥ 19683. The u = 1 rows at x = −1/4 and −1/8 read the P = 0 branch, which lies above the plane wave there. At N = 531,441,
+>>>
+REASON: Derivations H2 had this sentence and the merge lost it; the bullet's "ordered points" includes both u = 1 rows, and at N = 19683 e(P = N) reads -0.25 against e(0) = -0.0625.
+
+HOLD H34 | file=polariton/README.md | severity=low
+OLD<<<
+at δ = 1, t = 4 it reads 5.7%, 2.0%, 0.7% at N = 2187, 6561, 19683. At the band edge
+>>>
+NEW<<<
+at δ = 1, t = 4 it reads 5.7%, 2.0%, 0.7% at N = 2187, 6561, 19683, so N times it reads 125, 132, 134 against the form's 135.4. The δ = −1 rows stop at N = 6561. At the band edge
+>>>
+REASON: Text H13 had the N limit on the furthest row's family and the merge lost it; POLARITON_QUENCH at N = 19683 holds delta -1/2, 0, 1/2, 1, 2; the N*dev read supports the form.
+
+HOLD H35 | file=polariton/README.md | severity=low
+OLD<<<
+`fce08f9` was pushed at 22:16:20Z and the engine file was first written at 22:16:32Z.
+>>>
+NEW<<<
+The prediction text was fixed at 22:14:01Z. `fce08f9` reached GitHub at 22:16:20Z on GitHub's clock. On this machine's clock, at least 5 seconds ahead of GitHub's by the commit stamps of the seven pushes, its commit reads 22:16:24Z, the push returned at 22:16:31Z and the engine file was first written at 22:16:32Z, from source composed in the same model turn, complete at 22:16:22Z.
+>>>
+REASON: The sentence compares two clocks: fce08f9's commit stamp is 22:16:24Z, after its quoted push; stamp minus GitHub activity time reads 4, 5, 4, 5, 4, 5, 4 s on fce08f9, f47d662, 099b0c6, 395219a, 8dfa11a, 89a026a, ce44be7; the order stands on one clock, by a 1 s margin for the file, and text/FINDINGS.txt line 16 holds the same-turn nuance the README lost.
+
+HOLD H36 | file=polariton/README.md | severity=low
+OLD<<<
+the exact series at N = 81 lies at most 2.25 × 10⁻⁷ from it,
+>>>
+NEW<<<
+the exact series at N = 81 lies at most 2.25 × 10⁻⁷ from it in relative terms, on all 42 rows,
+>>>
+REASON: Own integer series on this head's 42 rows: largest relative off 2.245e-7 (delta = 2, t = 2), largest absolute 9.99e-8.
+
+HOLD H37 | file=polariton/README.md | severity=low
+OLD<<<
+A narrow recheck of this head is OPEN.
+>>>
+NEW<<<
+A narrow recheck of this head and the hosted run of this receipt are OPEN.
+>>>
+REASON: The status read alone gives the run with no owning-gate status; line 177 and the PR body already name the hosted run as OPEN.
+
+HOLD H38 | file=polariton/README.md | severity=low
+OLD<<<
+its wavevector shift of 0.04 μm⁻¹ at about 2.3 μm⁻¹, or 1.7%,
+>>>
+NEW<<<
+its wavevector shift of 0.04 μm⁻¹ at about 2.3 μm⁻¹ in its Methods, or 1.7%, where its main text writes 1/k_r = 2.3 μm,
+>>>
+REASON: Derivations F8 measured this and no hold carried it: main.tex line 142 has 1/k_r = 2.3 um, line 301 has about 2.3 um^-1; with the first, 0.04 is 9.2%.
+
+HOLD H39 | file=PR#8-body | severity=low
+OLD<<<
+its wavevector shift of 0.04 μm⁻¹ at about 2.3 μm⁻¹, or 1.7%,
+>>>
+NEW<<<
+its wavevector shift of 0.04 μm⁻¹ at about 2.3 μm⁻¹ in its Methods, or 1.7%,
+>>>
+REASON: Same as H38, shorter for the body.
+
+HOLD H40 | file=polariton/README.md | severity=low
+OLD<<<
+with every predicted value frozen first and zero free parameters, the correlation order at zero field becomes
+>>>
+NEW<<<
+with every predicted value frozen first and zero fitted numbers, the correlation order at zero field becomes
+>>>
+REASON: u and x are chosen, as the next sentence says; text H1 had "no fitted number", and line 42 already uses "zero fitted numbers".
+
+HOLD H41 | file=polariton/README.md | severity=low
+OLD<<<
+All of this was written before any engine run, with zero free parameters.
+>>>
+NEW<<<
+All of this was written before any engine run, with zero fitted numbers.
+>>>
+REASON: Same as H40.
+
+HOLD H42 | file=README.md | severity=low
+OLD<<<
+with every predicted value frozen first and zero free parameters, the order that sits
+>>>
+NEW<<<
+with every predicted value frozen first and zero fitted numbers, the order that sits
+>>>
+REASON: Same as H40.
+
+HOLD H43 | file=PR#8-body | severity=low
+OLD<<<
+**The central result, with every predicted value frozen first and zero free parameters.**
+>>>
+NEW<<<
+**The central result, with every predicted value frozen first and zero fitted numbers.**
+>>>
+REASON: Same as H40.
+
+HOLD H44 | file=polariton/README.md | severity=low
+OLD<<<
+so in that count the paper's point lies near u = 1 and outside this one-parameter form (CONJECTURE).
+>>>
+NEW<<<
+so in that count the paper's point lies near u = 1 and takes the two couplings u₁ and u₂ of the Open list (CONJECTURE).
+>>>
+REASON: Operator's rule on what a result is not; own count: 0.955 and 1.169 at X^2 = 0.54, 0.4, and 0.814 and 1.080 at X = 0.54, 0.4.
+
+HOLD H45 | file=polariton/README.md | severity=low
+OLD<<<
+so two polaritons are never found at one point and g² at half a period reads 8/3.
+>>>
+NEW<<<
+so g² reads 0 at zero separation and 8/3 at half a period.
+>>>
+REASON: Operator's rule; the measured form is g2(0) = 0 (POLARITON_HAND, HAND_N2).
+
+HOLD H46 | file=README.md | severity=low
+OLD<<<
+are tridiagonal sectors of 11,943,937 and 21,523,361 states, a separate quantity from the HTTP-0 channel and address counts of the same size in the section above.
+>>>
+NEW<<<
+are tridiagonal sectors of 11,943,937 and 21,523,361 states, and the section above counts HTTP-0 channels and addresses at those two sizes.
+>>>
+REASON: Operator's rule; the positive form carries the same disambiguation.
+
+HOLD H47 | file=polariton/README.md | severity=low
+OLD<<<
+How its Fig. 1e defines A is unread.
+>>>
+NEW<<<
+How its Fig. 1e defines A is OPEN.
+>>>
+REASON: Operator's status word for an open item.
+
+HOLD H48 | file=PR#8-body | severity=low
+OLD<<<
+The table is in the README, with closed-form first corrections from the second seat.
+>>>
+NEW<<<
+The table is in the README, with closed-form first corrections from the second seat for the pair count, the pair phase and, at δ = 0, pinned A₁, and the first correction to C₁ is OPEN.
+>>>
+REASON: README row 4 of the table has C1's first correction as OPEN, and pinned A1 has its closed form at delta = 0 only.
+
+HOLD H49 | file=PR#8-body | severity=low
+OLD<<<
+V² met 29 of 29 at its frozen range, reading 0.9905 to 1.0267 of the law, and A₁ and D₂ met 21 of 21.
+>>>
+NEW<<<
+V² met 29 of 29 at its frozen range, reading 0.9905 to 1.0267 of the law, and 0.96 to 1.15 on the 35 rows past it at the same N, and A₁ and D₂ met 21 of 21.
+>>>
+REASON: Undersold in the body, and the body's own table shows only the frozen-range column at t = 2.
+
+HOLD H50 | file=polariton/README.md | severity=low
+OLD<<<
+with [the prediction](PREDICTION.hbp) pushed before the engine existed, at `fce08f9`,
+>>>
+NEW<<<
+with [the prediction](PREDICTION.hbp) pushed before the engine file existed, at `fce08f9`,
+>>>
+REASON: The session log in text/FINDINGS.txt has the engine source complete in the model turn at 22:16:22Z, before the commit stamp at 22:16:24Z, and the file written at 22:16:32Z; the prediction text was fixed at 22:14:01Z, so the claim stands for the file and for the text order.
+
+HOLD H51 | file=PR#8-body | severity=low
+OLD<<<
+pushed at `fce08f9`, before the engine existed,
+>>>
+NEW<<<
+pushed at `fce08f9`, before the engine file existed,
+>>>
+REASON: Same as H50.
+
+HOLD H52 | file=PR#8-title | severity=low
+OLD<<<
+The three-mode polariton test: pair correlations becoming a pinned density modulation, in integers
+>>>
+NEW<<<
+The three-mode polariton test: pair correlations becoming a pinned density modulation at U = J/2, in integers
+>>>
+REASON: The title reads alone in every list; no pinned ground state of this kind appears at U = J, where D2 reads 0.00009 against the rotor's 0.437.

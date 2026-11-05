@@ -1,0 +1,32 @@
+jobs 30
+chain 0 N 729 delta 5/4 y 1/108 sec 23.1 total 23.1
+chain 1 N 729 delta 5/4 y 1/54 sec 14.4 total 23.1
+chain 2 N 729 delta 5/4 y 1/27 sec 27.3 total 27.5
+chain 3 N 729 delta 5/4 y 2/27 sec 28.1 total 28.4
+chain 4 N 729 delta 5/4 y 4/27 sec 22.8 total 37.2
+chain 5 N 729 delta 5/3 y 1/108 sec 17.4 total 40.6
+chain 6 N 729 delta 5/3 y 1/54 sec 23.1 total 50.6
+chain 7 N 729 delta 5/3 y 1/27 sec 26.5 total 54.9
+chain 8 N 729 delta 5/3 y 2/27 sec 38.1 total 75.3
+chain 9 N 729 delta 5/3 y 4/27 sec 29.8 total 75.4
+chain 10 N 729 delta 2 y 1/108 sec 31.8 total 82.4
+chain 11 N 729 delta 2 y 1/54 sec 24.6 total 82.4
+chain 12 N 729 delta 2 y 1/27 sec 19.2 total 89.6
+chain 13 N 729 delta 2 y 2/27 sec 29.9 total 105.2
+chain 14 N 729 delta 2 y 4/27 sec 29.4 total 108.9
+chain 15 N 729 delta -5/4 y 1/108 sec 42.0 total 124.4
+chain 16 N 729 delta -5/4 y 1/54 sec 42.3 total 131.9
+chain 17 N 729 delta -5/4 y 1/27 sec 34.2 total 139.4
+chain 18 N 729 delta -5/4 y 2/27 sec 46.1 total 155.0
+chain 19 N 729 delta -5/4 y 4/27 sec 55.5 total 179.9
+chain 20 N 729 delta -5/3 y 1/108 sec 59.3 total 191.2
+chain 21 N 729 delta -5/3 y 1/54 sec 32.1 total 191.2
+chain 22 N 729 delta -5/3 y 1/27 sec 61.3 total 216.3
+chain 23 N 729 delta -5/3 y 2/27 sec 43.9 total 216.3
+chain 24 N 729 delta -5/3 y 4/27 sec 57.3 total 237.2
+chain 25 N 729 delta -2 y 1/108 sec 32.3 total 237.2
+chain 26 N 729 delta -2 y 1/54 sec 49.3 total 264.6
+chain 27 N 729 delta -2 y 1/27 sec 41.5 total 264.6
+chain 28 N 729 delta -2 y 2/27 sec 41.2 total 264.8
+chain 29 N 729 delta -2 y 4/27 sec 51.1 total 288.3
+finished 288.3

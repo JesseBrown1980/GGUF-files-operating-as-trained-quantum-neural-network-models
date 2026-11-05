@@ -1,0 +1,12 @@
+PARITY_BELOW|N=81|u=1|x=-1/4|s=16|K=700|E_even=-22.793996148|E_odd-E_even=6.380e-88|lower=even|B_even=0.525809348|B_odd-B_even=2.704e-86|A_odd-A_even=2.518e-85|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=1|x=-1/4|s=8|K=900|E_even=-20.887807436|E_odd-E_even=1.079e-135|lower=even|B_even=0.127845349|B_odd-B_even=6.805e-134|A_odd-A_even=8.772e-133|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=1|x=-1/4|s=4|K=1200|E_even=-20.409563789|E_odd-E_even=3.288e-184|lower=even|B_even=0.031736260|B_odd-B_even=1.603e-181|A_odd-A_even=5.381e-181|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=1/2|x=-1/4|s=16|K=700|E_even=-24.437804561|E_odd-E_even=5.072e-48|lower=even|B_even=-2.968446636|B_odd-B_even=1.868e-45|A_odd-A_even=1.232e-45|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=1/2|x=-1/4|s=8|K=900|E_even=-21.309207572|E_odd-E_even=1.303e-85|lower=even|B_even=-0.760202211|B_odd-B_even=2.983e-82|A_odd-A_even=9.520e-83|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=1/2|x=-1/4|s=4|K=1200|E_even=-20.515379899|E_odd-E_even=1.790e-131|lower=even|B_even=-0.189003865|B_odd-B_even=1.744e-127|A_odd-A_even=2.855e-128|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=3/4|x=-1/8|s=16|K=700|E_even=-13.752378883|E_odd-E_even=8.493e-57|lower=even|B_even=-0.733359582|B_odd-B_even=6.319e-54|A_odd-A_even=2.908e-54|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=3/4|x=-1/8|s=8|K=900|E_even=-11.036342347|E_odd-E_even=3.389e-101|lower=even|B_even=-0.190985027|B_odd-B_even=1.122e-97|A_odd-A_even=2.664e-98|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=3/4|x=-1/8|s=4|K=1200|E_even=-10.353083805|E_odd-E_even=7.227e-149|lower=even|B_even=-0.048021067|B_odd-B_even=9.770e-145|A_odd-A_even=1.173e-145|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=1|x=-1/8|s=16|K=700|E_even=-12.957088238|E_odd-E_even=4.543e-76|lower=even|B_even=0.320111890|B_odd-B_even=2.629e-73|A_odd-A_even=1.760e-73|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=1|x=-1/8|s=8|K=900|E_even=-10.834613972|E_odd-E_even=2.239e-123|lower=even|B_even=0.075786384|B_odd-B_even=5.856e-120|A_odd-A_even=1.811e-120|neg_at_last_shift=0,0|json=0
+PARITY_BELOW|N=81|u=1|x=-1/8|s=4|K=1200|E_even=-10.302499504|E_odd-E_even=8.864e-172|lower=even|B_even=0.018695101|B_odd-B_even=9.533e-168|A_odd-A_even=1.448e-168|neg_at_last_shift=0,0|json=0

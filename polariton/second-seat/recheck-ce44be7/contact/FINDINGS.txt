@@ -1,0 +1,447 @@
+FINDINGS: contact quench law recheck, seat opus55 for ACER-CLAUDE-FABLE5
+head under test: ce44be742d9d59d07bb8ec8a9ed6a559da4ec0bd (checked first with git rev-parse, printed that value)
+date 2026-11-05. Written in pieces as each task finished.
+tags: MEASURED (number from a named run in this folder) / DERIVED (algebra written here) / NAMED / CONJECTURE / CANNOT_SEE
+
+======================================================================
+F1. DERIVATION OF THE LAW, written BEFORE reading the README section
+    "The same move at contact", PREDICTION row POLARITON_QUENCH_CONVERSION
+    or any of the author's steps. Only the README model section was read.
+======================================================================
+Tag: DERIVED (steps 1-7). Numbers that check it are in F1b onward.
+
+Model read: H = x n + (u/N)[n0 n + n+ n-] + (1/N)(P + P^dag) - y[a0^dag(a+ + a-) + h.c.], n = n+ + n-,
+P = a+^dag a-^dag a0 a0, in units JN = 1. delta = x + u, u = 1.
+
+Step 1, number-conserving modes. Work on |n+, n-> with n0 = N - n. Define b+, b- as plain bosons on
+(n+, n-). Then exactly
+   P = b+^dag b-^dag sqrt((N-n)(N-n-1))        [n acts first on the ket]
+   a0^dag a+ = b+ sqrt(N-n+1),   a+^dag a0 = b+^dag sqrt(N-n)
+   diag = delta n - (u/N)(n+^2 + n-^2 + n+ n-).
+Could fail: only if the state reaches n comparable to N. That is the depletion bound, not an assumption
+about a0's phase; no c-number a0 is used anywhere.
+
+Step 2, expansion with s = y sqrt(N) fixed, N large:
+   H = H2 + (1/N) H1 + O(1/N^2)
+   H2 = delta n + (b+^dag b-^dag + b+ b-) - s Sum(b + b^dag)
+   H1 = -u(n+^2 + n-^2 + n+n-) - [b+^dag b-^dag (n + 1/2) + h.c.] + (s/2) Sum[b (n - 1) + b^dag n]
+Could fail: (i) when n/N is not small; (ii) when s grows with N faster than sqrt(N) y held at scale;
+(iii) after the time when the expansion's secular terms ~ t e^(2 gamma t)/N reach order 1.
+
+Step 3, s and a combinations: b_s = (b+ + b-)/sqrt2, b_a = (b+ - b-)/sqrt2, b = (q + i p)/sqrt2.
+   H2 = ((delta+1)/2) q_s^2 + ((delta-1)/2) p_s^2 - 2 s q_s + ((delta-1)/2) q_a^2 + ((delta+1)/2) p_a^2 + const.
+Equations: q_s' = (delta-1) p_s, p_s' = -(delta+1) q_s + 2s.
+   q_s'' = gamma^2 (q_s - q_eq), gamma^2 = 1 - delta^2, q_eq = 2s/(1+delta).
+From q_s(0) = p_s(0) = 0 in the mean:
+   qbar(t) = -q_eq (cosh(gamma t) - 1),   pbar(t) = 2 s sinh(gamma t)/gamma.
+Could fail: 1 + delta = 0 needs the limit (cosh - 1)/(1+delta) -> (1-delta)t^2/2 = t^2, kept finite.
+At delta = +1, gamma = 0, q_s is frozen: qbar = 0 at this order, so A1 and C1 both START at next order in 1/N.
+
+Step 4, A is a complex Gaussian at this order. A = a0^dag a+ + a-^dag a0 -> sqrt(N)(b+ + b-^dag)
+ = sqrt(N)(q_s + i p_a), and [q_s, p_a] = 0. So
+   <A> = sqrt(N) qbar, real.  A1 = 2|<A>|/N = 4|y|(cosh(gamma t) - 1)/(1+delta).     <- the law's A1
+
+Step 5, fluctuations, vacuum start. Same H2 quadratics, so
+   <q_s^2>_c = <p_a^2>_c = (1/2)[cosh^2 + ((1-delta)/(1+delta)) sinh^2]   (gamma t inside)
+   <p_s^2>_c = <q_a^2>_c = (1/2)[cosh^2 + ((1+delta)/(1-delta)) sinh^2]
+
+Step 6, the C1 operator. From Psi(x) = Sum a_m e^(imkx) (L = 1),
+   average over x of Psi^dag(x)Psi^dag(x+r)Psi(x+r)Psi(x)
+     = N(N-1) + 2 X cos kr + 2 n+n- cos 2kr,  X = n0 n + P + P^dag.
+So C1 = 2<X>/(N(N-1)), C2 = 2<n+n->/(N(N-1)) IF the engine normalises by N(N-1): to be checked in the engine.
+And A^dag A = n0 n + P + P^dag + n0 + n+ as an operator (order a0 a0^dag = n0 + 1, a- a-^dag = n- + 1), so
+   X = A^dag A - n0 - n+
+and hence, for any state, A1^2/(2 C1) = ((N-1)/N) |<A>|^2 / (<A^dag A> - <n0 + n+>).
+That is the stated identity. It needs no parity and no approximation; note [A, A^dag] = n- - n+.
+Leading order: X/N -> <n + b+^dag b-^dag + b+ b-> = <q_s^2 ...>:
+   n+ + n- = (q_s^2 + p_s^2 + q_a^2 + p_a^2)/2 - 1,   b+^dag b-^dag + b+b- = (q_s^2 - p_s^2 - q_a^2 + p_a^2)/2
+   sum = q_s^2 + p_a^2 - 1.    <- clean: X/N = |z|^2 - 1, z = q_s + i p_a = A/sqrt(N).
+   <X>/N = qbar^2 + 2<q_s^2>_c - 1 = qbar^2 + (2/(1+delta)) sinh^2.
+   C1 = 2<X>/N^2 = 4 sinh^2/((1+delta)N) + 8 y^2 (cosh-1)^2/(1+delta)^2 = 4 sinh^2/((1+delta)N) + A1^2/2.  <- the law's C1
+Could fail: drops 1/N relative. Those terms are what task 5 computes.
+
+Step 7, V^2 and D2.
+   V^2 = A1^2/(2 C1) = qbar^2/(qbar^2 + sigma^2), sigma^2 = (2/(1+delta)) sinh^2,
+   Y = qbar^2/sigma^2 = (2 N y^2/(1+delta)) tanh^2(gamma t/2), using (cosh-1)/sinh = tanh(gamma t/2).   <- the law's Y
+   <B> = <b-^dag b+> = |<b+>|^2 + <b-^dag b+>_c. <b-^dag b+>_c = 0 by the y=0 charge symmetry of the Gaussian part.
+   |<b+>|^2 = (qbar^2 + pbar^2)/2, so D2 = 2<B>/N = 2 y^2[(cosh-1)^2/(1+delta)^2 + sinh^2/gamma^2].  <- the law's D2
+
+Limits, DERIVED here, all forms kept finite:
+   delta = -1:  A1 = 4|y|t^2, C1 = 8 t^2/N + 8 y^2 t^4, Y = N y^2 t^2, D2 = 2y^2(t^4 + t^2).
+   delta = +1:  A1 = 0, sigma^2 = 0 at this order, C1 = 0, V^2 is 0/0 in the leading forms; Y -> 0 as the limit from inside the band; D2 = 2 y^2 t^2.
+   |delta| > 1: gamma = i w, w^2 = delta^2 - 1: cosh -> cos(wt), sinh^2 -> -sin^2(wt), tanh^2 -> -tan^2(wt/2)
+       delta > 1: Y = -(2Ny^2/(1+delta)) tan^2(wt/2) < 0, sigma^2 < 0 (a Gaussian with SUB-shot-noise in |z|^2): C1 < 0 for |Y| < 1, V^2 < 0 there;
+                  pole at Y = -1; V^2 > 1 for |Y| > 1.
+       delta < -1: 1+delta < 0, Y = (2Ny^2/|1+delta|) tan^2(wt/2) >= 0, V^2 in [0,1), reaching 1 at wt = pi; 0/0 at wt = 2 pi.
+
+Reading the law: z = A/sqrt(N) is a complex Gaussian with mean qbar and total excess variance sigma^2.
+V^2 = |<z>|^2/<|z|^2 - 1>. So the law is NOT a statement about amplitude alone; it is the ratio of the mean to the
+normal-ordered second moment of one complex variable, A itself, whatever the size of that variable.
+This is the handle task 4 uses.
+
+======================================================================
+F1b. THE OPERATOR IDENTITY, by exact matrices. Tag: MEASURED, run t1_identity.py, output t1_identity.out
+======================================================================
+Representation: homogeneous polynomials of degree N in (x0, x+, x-), a^dag = multiply, a = d/dx, monomial norm a!b!c!.
+All operators are INTEGER matrices there, so no root of an integer enters and expectations are exact (Gaussian) rationals.
+ - A^dag A - n0 - n+ == n0(n+ + n-) + P + P^dag, as integer matrices, N = 0..25: rows differing 0.
+ - [A, A^dag] = n- - n+, N = 0..25: rows differing 0.
+ - g2 from the definition Sum_{m+n=p+q}<a_m^dag a_n^dag a_p a_q> e^{ik(p-n)r}, harmonic by harmonic, divided by N(N-1):
+   constant term exactly 1, cos kr coefficient C1 = 2<X>/(N(N-1)), no sine part, on every state.
+ - The identity A1^2/(2 C1) = ((N-1)/N)|<A>|^2/(<A^dag A> - <n0 + n+>) on 112 random rational states, N in {2,3,4,5,6,8,12},
+   parity-even and parity-free, real and complex amplitudes, dense and sparse: 109 exact equalities of rationals. The other
+   3 are C1 = 0 with <A> = 0, all at N = 2, where both sides are 0/0 (listed by t1_nonexact.py). No state breaks it.
+ - The engine's own read (src/bin/polariton_three_mode.rs, conversion_chain: c1 = 2*(n0_pairs + 2 re_p)/(N(N-1))) is this normalisation.
+What could still be wrong: the check is of the identity, for all N <= 25 as matrices and 109 states; it is an operator identity so the
+matrix check is the proof at each N; the general-N statement rests on the algebra in F1 step 6.
+Consequence, MEASURED at N = 3 by exact search over random parity-even real states: V^2 = -0.00453 and V^2 = 1.2748 both occur.
+So the V^2 of a general state has NO ceiling at 1 and no floor at 0. The "ceiling" belongs to a Gaussian with sigma^2 >= 0 only.
+
+======================================================================
+F2-pre. PREDICTIONS FROZEN BEFORE READING (task 2 and task 3 grids)
+======================================================================
+File out/LAW-PREDICTIONS.hbp, 1616 rows, sha256 c6310e4a5e269c6bb4127a0afde1f1ed1a98df0bb815ff694bd01cdd4b236061, written by t2_predict.py
+before any row of these grids was run. Grids: band: delta = -1, -3/4, -1/2, 0, 1/2, 3/4, 1; N = 81 (y=s/9), 243 (y=s/16), 729 (y=s/27) with
+s = 1/4, 3/8, 1/2, 3/4, 1, 3/2, 2, 3, 4; N = 2187 (y=s/47) with s = 1/4, 1/2, 1, 2, 4; t = 1/2, 1, 2, 3. So y^2 N runs 1/16 to 16.
+outside: delta = 5/4, 5/3, 2, -5/4, -5/3, -2; N = 81, 243, 729, 2187; s = 1/4, 1/2, 1, 2, 4; t = 1/2, 1, 2, 3, 4, 6.
+What I expect from the derivation, stated before the read (CONJECTURE until read):
+ E1. On rows with predicted f << 1 each part deviates from the law by order (1/N) x a growing function of t; the deviation of V^2 smaller than that of A1 and C1 separately,
+     because at this order A1^2 and C1 share the depletion factor.
+ E2. delta = -1: the limit forms A1 = 4|y|t^2, C1 = 8t^2/N + 8y^2t^4, Y = Ny^2t^2 hold at large N where the classical drive stays small. No exponential growth, so f stays small to larger t. But the correction there goes as t^4/N.
+ E3. delta = +1: leading A1 and C1 are 0. Whatever reads there is next order: A1 ~ N^(-3/2) at fixed s, C1 ~ N^(-2). V^2 = A1^2/(2C1) should be O(1/N) in size and its sign is the sign of the leading C1: not fixed by the law. D2 = 2y^2t^2 holds.
+ E4. delta > 1: V^2 < 0 for |Y| < 1 and V^2 > 1 for |Y| > 1, a pole at Y = -1, with the pole smeared at finite N in a window that shrinks with N. delta < -1: V^2 in [0,1).
+ E5. Past saturation (t large at small N), V^2 leaves the law once the first recurrence of the depletion arrives. The first recurrence time grows like ln(N)/gamma.
+
+======================================================================
+F2. THE LAW READ ON ROWS THE RECEIPT DOES NOT HOLD. Tag: MEASURED unless marked.
+======================================================================
+The route (separate from the repo's engine, no shared code): cheb/src/main.rs (Rust 1.81, clippy -D warnings exit 0, float_used=0), an integer Chebyshev
+propagator. Amplitudes i64 at 2^62, real Chebyshev vectors on the half space p >= m with mirrored reads, spectrum shifted and bounded by Gershgorin in integers;
+coefficients J_k(Et) from Miller recurrence in Python big integers (chebdrv.py, sum rule off 2e-20). Read-out: F1 definitions, no use of the engine's.
+Third route for anchors: t2_anchor.py, exact Taylor series at 2^-682 in big integers, full space, N = 81.
+
+F2.1 Against the receipt (t2_compare_receipt.py, out/compare_receipt.hbp, out/compare_receipt.log): all 152 receipt rows at u=1 with (N, delta, y, t) in the row:
+   94 POLARITON_QUENCH_CONVERSION, 54 POLARITON_QUENCH_PIN, 4 POLARITON_TAYLOR_CONVERT. Largest offsets, conversion: A 1.66e-4 on 399 (rel 4.2e-7), B 1.49e-4 (rel 7.8e-7),
+   C1 4.9e-7 (rel 8.1e-7), C2 2.1e-7 (rel 1.5e-6), f 4.2e-7, jbar 1.5e-4, all at N=729, y=4/27, delta=0, t=3. Taylor rows: 1.6e-9, i.e. the receipt's ppb rounding.
+   Anchor, big-integer series at N=81, delta=0, y=4/9, t=3: V2=0.019491561718585, A=-1.82719404694, jbar=1.89384677953, f=0.04676164888. Receipt reads A=-1.827192917, jbar=1.893847081, off 1.1e-6 and 3.0e-7 (out/anchor_81_0_4o9_3.txt).
+   So the receipt's conversion rows stand at every digit the README quotes. What could still be wrong: the offset's attribution. The receipt row has norm_off -64e-9, energy_off -143e-9, and my route's on this row is at 1e-15 level, so the leapfrog's step is the likely source: NAMED, not separately run.
+   Also read on each of those 152 rows: identity_X_off, the identity V^2 = ((N-1)/N)|<A>|^2/(<A^dag A> - <n0+n+>) on the evolved states; column in out/compare_receipt.hbp.
+
+F2.2 The frozen grids: predictions out/LAW-PREDICTIONS.hbp (sha256 c6310e4a...b236061, F2-pre) then reads out/GRID-band-N{81,243,729}.hbp, out/GRID-outside-N{81,243,729}.hbp, reader t2_read.py, output out/t2_read_band.txt. 756 band rows, 540 outside rows.
+   Read/law on the band, delta = +1 apart, pooled over delta = -1,-3/4,-1/2,0,1/2,3/4:
+     N=81   f<=1/20  rows=61  V2 0.9889..1.0357  A1 0.9209..0.9946  C1 0.8491..0.9813  D2 0.9373..0.9956
+     N=243  f<=1/20  rows=92  V2 0.9957..1.0801  A1 0.9205..0.9982  C1 0.7845..0.9936  D2 0.8281..0.9985
+     N=729  f<=1/20  rows=121 V2 0.9859..1.1025  A1 0.8844..0.9994  C1 0.7094..0.9979  D2 0.7516..0.9995
+     N=243  1/20<f<=1/10 rows=17 V2 0.9578..1.0802
+     N=729  1/20<f<=1/10 rows=25 V2 0.9607..1.0970
+   Deviation against 1/N (read/law-1)*N at fixed (delta, s, t), N = 81, 243, 729, reader's TABLE2, e.g. delta=-1/2, s=1/4, t=1: V2 1.82, 1.88, 1.91; A1 -2.43, -2.58, -2.64; C1 -6.46, -6.96, -7.17: constant, so 1/N there.
+   At t=2 and growing with s these products still drift upward with N: the rows have not reached their 1/N range, the next order is (t^k/N)^2 size, see F5.
+   Where it leaves the law at predicted f <= 1/20, largest |V2/law - 1| at N=729: delta=-1 1.1025 (y2N=1/16, t=3, read 0.39689, law 0.36000, f_read 0.029); delta=-3/4 1.0275; delta=-1/2 1.0238; delta=0 1.0109; delta=1/2 1.0092; delta=3/4 0.9859.
+   So predicted f is a poor scope at delta = -1. At delta=-1, N=729, s=1/4, t=3: A1/law=0.884, C1/law=0.709, D2/law=0.752, with f_read 0.029. The series there is in t^4/N and t^6/N (F5), which reach order 1 at f small.
+   E1 (frozen expectation) met. E2 met, with the size given here. 
+   Limit forms at delta=-1 (A1 = 4|y|t^2, C1 = 8t^2/N + 8y^2t^4, Y = Ny^2t^2, D2 = 2y^2(t^4+t^2)) hold: N=729, t=1, s=1: V2 0.50250 against 0.5, A1/law 0.9939, C1/law 0.9829, D2/law 0.9897; t=1/2 all within 0.4%.
+   Limit forms at delta=+1: A1 = 0, C1 = 0 are leading order only. Read: <A> POSITIVE (sign_A=+ on every row: 108 of 108 rows), C1 NEGATIVE on every row with f small, V2 NEGATIVE. D2 = 2y^2t^2 holds: D2/law at N=729, t=1: 0.9978, 0.9966, 0.9792 at s = 1/4, 1, 4.
+     The exact leading forms, DERIVED in F5 and read here:   A1 = 2|y|t^4(1 + Ny^2/2)/N,   C1 = -2t^2[1 + 2t^2(1 + Ny^2)]/N^2,   V2 = -(y^2) t^6 (1 + Ny^2/2)^2/(1 + 2t^2(1 + Ny^2)), <A> > 0 at y > 0.
+     N=729, s=1, t=1: A1 read 1.5054e-4, form 1.5242e-4; C1 read -1.8467e-5, form -1.8817e-5; V2 read -6.14e-4, form -6.17e-4. s=1/4, t=1: V2 read -2.9e-5, form -2.9e-5.
+     C1 changes sign at larger s, t: N=729, s=4, t=2: C1 = -4.62e-5, V2 = -25.06, a pole sitting on the band edge. N=729, s=4, t=3: C1 = +0.01402, V2 = 1.137.
+     So at delta = +1 the law's limit "V^2 -> 0" is true as N -> infinity at fixed s, t, at rate 1/N and from below; at finite N the read has a pole. E3 met, sign is negative: my frozen E3 left the sign open.
+
+F2.3 D2 above the frozen 10%: no row of mine at f <= 1/20 for delta >= -3/4 breaks 10% at N=243; at N=729 D2/law reads 0.7516 at delta=-1, t=3.
+
+F2.4 Exact small-y (t4_small_y.py, out/SMALLY.hbp) is reported under F4.
+
+CORRECTION BESIDE F2.2 (per discipline section 7; the first text stands above): I wrote "<A> POSITIVE (108 of 108), C1 NEGATIVE on every row with f small, V2 NEGATIVE" before counting. Counted by t7_readme_check.py on the 108 delta=+1 grid rows:
+   <A> > 0 on 108 of 108. C1 < 0 and V2 < 0 on 96 of 108; on rows with f_read <= 1/10, 74 of 74. The 12 rows with C1 >= 0 all have f_read >= 0.183 and t >= 2 (listed in out/t7_readme_check.txt).
+   Also on the F2.1 attribution: the anchor and the Chebyshev route agree to 1e-17 on the N=81 recurrence row (V2 0.019491561718584775 and ...4776; C1 0.052213482895261856 and ...854; f 0.046761648877260404 and ...403). So the 1e-6 offset is in the receipt's leapfrog, as the row's own norm_off and energy_off show: MEASURED now, not NAMED.
+   Over the 152 rows my route's norm off is at most 8e-18, energy/N at most 4e-18, and the operator identity at most 1e-18 on the evolved states.
+
+F2.5 README contact section numbers, re-read from the receipt with t7_readme_check.py (out/t7_readme_check.txt). MEASURED_PASS on: all 30 table cells of V2 and law at N=729 to the 5 digits printed; 29 of 29 at 0.9905..1.0267; A1 21/21, D2 21/21, C1 17/21, the four misses at t=2; 58 of 58 signs on the 29 rows;
+   energy 810e-9 over 94 rows; 35 rows 0.9598..1.1532, A1 down to 0.0639, C1 down to 0.0041; N=81 0.0202..1.2735, the lowest at f=0.0468.
+   MEASURED_FAIL, small: "It reads 1.20 on one row at N = 81": four conversion rows read above 1, three at N=81 (1.0244, 1.0566, 1.1979) and one at N=243 (1.0146). Hold H4.
+   MEASURED_FAIL, small: "it reads 0.916 of its form at N = 729": the row is 0.91651 (C1 0.070946, law 0.077409), which rounds to 0.917. README's value comes from its rounded 0.0709/0.0774. Hold H5.
+   SCOPED: "Each deviation falls as 1/N" at delta=0, s=1/2, t=2: successive ratios for N x 3 read V2 2.19, 2.37, 2.75; A1 2.20, 2.57, 2.84; C1 1.99, 2.42, 2.76. They approach 3 from below and reach it only past N=2187. y^2N also differs by row: 0.2500, 0.2373, 0.2500, 0.2475. Hold H3.
+
+======================================================================
+F3. OUTSIDE THE BAND. Never frozen in the repo; my predictions were frozen in my own file first (F2-pre). Tag: MEASURED as read, on rows with no standing as a prediction of the repo.
+======================================================================
+Run: GRID-outside-N{81,243,729}.hbp, reader t3_read.py, output out/t3_read.txt; first correction t5_vs_grid.py, out/t5_vs_grid.txt.
+delta > 1. The continuation holds, sign and size, away from the pole. Sign test: V2<0 and C1<0 where |Y|<1, V2>1 and C1>0 where |Y|>1:
+    delta=5/4: N=81 15/16, 12/14; N=243 15/16, 14/14; N=729 15/16, 14/14
+    delta=5/3: N=81 16/16, 14/14; N=243 17/17, 13/13; N=729 16/16, 14/14
+    delta=2:   N=81 17/17, 12/13; N=243 17/17, 13/13; N=729 17/17, 13/13
+  Total at N >= 243: 97 of 99 in |Y|<1 ... the two off are next to the pole: delta=5/4, s=1/2, t=3: N=729 Y=-0.973, law -36.1, read +28.7; N=243 Y=-0.924, law -12.1, read +10.7.
+  Sizes at N=729: delta=2, s=1/2, t=2: law 1.1887, read 1.1887. delta=2, s=1, t=1: Y=-0.922, law -11.77, read -12.09. delta=2, s=2, t=3: Y=-0.974, law -36.81, read -33.06. delta=5/4, s=1, t=3: law 1.3457, read 1.3071. delta=5/4, s=4, t=4: law 1.0004, read 1.0002.
+  <A> > 0 at y > 0 on these rows, so the pattern's k peaks sit on the potential's minima outside the band above, against maxima inside it. Sign changes between delta<1 and delta>1, and at delta=+1 reads positive.
+  V2 > 1 persists as N grows: this is leading order, Var(z) < 1 is the sub-shot-noise of a squeezed pair, so "the shot term lets it pass 1 at finite N" belongs to inside the band. Inside the band V2 > 1 occurs on 8 grid rows at N=81, 3 at N=243, 0 at N=729.
+  C1 < 0 is real at leading order: e.g. delta=2, N=729, s=1, t=1: C1 law -1.395e-4, read -1.359e-4. g2 is then below 1 at r = 0 in its k harmonic.
+  What I expected (E4): met, including the smeared pole. Pole location: see F3b.
+delta < -1. Continuation holds on the first half period, and then the period pulls. N=729: delta=-5/4, t<=2: V2/law within 1.0010..1.0350 for s=1/4, 1/2, 1, 2, 4 (t=2 included). delta=-2, t<=1: 1.0013..1.0073; t=2: 0.9755..0.9945.
+  By t = 3 to 6, with f_read <= 1/5, it leaves: delta=-2, s=4, t=3: law 0.92115, read 0.00120, f_read 0.00017; delta=-5/4, s=1, t=6: law 0.92466, read 0.00153. delta=-2, s=2, t=4: A1/law 2.74, C1/law 4.53. So predicted small f is no scope for this side.
+  Read: the read A1 returns to its minimum before the law's 2 pi/w; see F3b.
+
+======================================================================
+F4. "V^2 HOLDS PAST EACH OF ITS PARTS": ATTACK. Tags per line.
+======================================================================
+F4.1 The 35 rows, split. MEASURED, t4_split.py and t4_counts.py on the receipt's integers, out/t4_split.txt, out/t4_counts.txt. README's counts stand: 35 rows, 0.9598..1.1532, A1 down to 0.0639, C1 down to 0.0041.
+   Uncompressed variable: Y_read = V2/(1 - V2) against Y.
+     Y <= 1 (law <= 1/2): 14 rows. V2/law 0.9598..1.0870, Y_read/Y 0.958..1.184, f_read 0.092..0.486, C1/law 0.290..0.795.
+        with f_read > 1/5: 7 rows, V2/law 0.9598..1.0870, Y_read/Y 0.958..1.184, f_read 0.241..0.486, C1/law 0.290..0.599.
+        Here the agreement is real and not forced: the ceiling sits at 1/law = 2.0 to 18.
+     Y > 1 (law > 1/2): 21 rows. V2/law 1.0065..1.1532, all 21 above 1. Y_read/Y 1.119..6.423, with one row at V2 > 1, so Y_read negative. (1-V2)/(1-law) -0.234..0.931.
+        The ceiling sits at 1/law = 1.038 to 1.908. Set V2 = 1 on all 21 and 9 of them still read inside 0.96..1.15. 7 of the 21 lie nearer to 1 than to the law.
+        So on these rows "V2 holds" carries little: N=729, delta=0, s=4, t=3 reads V2/law 1.032, Y_read/Y 6.42, (1-V2)/(1-law) 0.161.
+   The extreme of the README sentence is one row, N=243, delta=0, s=4, t=3: V2/law 1.0065, A1/law 0.064, C1/law 0.0041, f_read 0.247. It sits on the fall to the return. Same chain, exact trace (out/t4_trace_243.txt):
+        t=3: 1.007, t=3.25: 0.883, t=3.5: 0.472, t=3.75: 0.070, t=4: 0.004. All 35 rows stop at t <= 3.
+   Tag: MEASURED. What could still be wrong: nothing in the counting; the choice of Y_read is mine, and Y is the law's own variable.
+
+F4.2 Where it leaves, exact traces. MEASURED, t4_trace.py and t4_summary.py on the integer route, N=243 and 729 (and 81), delta = 0, 1/2, -1/2, -1; s = 1/8, 1/4, 1/2, 1, 2, 4; t = 1/4 to 12. out/TRACE-N*.hbp, out/t4_summary_*.txt.
+   V2/law at the first maximum of the read f, N=729, in that order of s:
+      delta=0:    0.901 0.930 1.041 1.135 1.080 1.032  (f_peak 0.458..0.706, C1/law 0.106..0.203, A1/law 0.314..0.468)
+      delta=1/2:  0.865 0.889 0.972 1.113 1.111 1.047  (f_peak 0.720..0.908)
+      delta=-1/2: 0.980 1.025 1.129 1.130 1.057 1.022  (f_peak 0.227..0.504)
+      delta=-1:   1.316 1.272 1.141 1.065 1.030 (s=4: see out/t4_summary_729.txt)  (f_peak 0.026..0.215)
+   N=243, same order: delta=0: 0.943 0.973 1.073 1.168 1.112 1.045. So at small Y the read at the peak falls as N grows, toward the limit in F4.3(b).
+   First leaving 5% at t >= 1, N=729, delta=0: s=1: t=2.5, V2/law 1.057, A1/law 0.840, C1/law 0.668, f 0.201. s=1/4: t=4.25, 0.930, 0.314, 0.106, f 0.461. s=4: t=4, 0.865, 0.021, 0.001, f 0.082.
+   So "A1 down to 0.06, C1 down to 0.004" holds only at large Y, on the fall, where the ceiling covers it. At small Y the 5% band ends at C1/law about 0.1 to 0.2, and at Y near 1 it ends on the upper side with the parts near 0.67 to 0.84.
+   After the first return: V2/law at the first minimum of f, N=729, delta=0: 8.49, 2.44, 1.09, 0.67, 0.39, 0.12 from s=1/8 to s=4. Largest and smallest V2/law over t <= 12 at N=729: 22.5 and 0.002.
+   Exact small-y series, t4_small_y.py, out/SMALLY.hbp, N=729, y=1/1728, delta=0, V2/Y: t=2 1.0048, t=3 1.0018, t=3.5 0.9778, t=4 0.9260, t=4.5 0.8478 (f peak), t=5 0.7637, t=5.5 0.7231, t=6 0.8314, t=6.5 1.43, t=7 4.18, t=7.5 18.7, t=8 95.8 (f 0.007).
+
+F4.3 Why it holds as far as it does. DERIVED and MEASURED.
+   (a) First order. From F5's closed forms, at large gamma t with e^(2 gamma t)/N small, Y the law's, eps = (5 - 2 delta) e^(2 gamma t)/(8 gamma^4 N):
+          A1/law = 1 - eps (1 + Y/2),   C1/law = 1 - 2 eps (1 + 2Y + Y^2/2)/(1 + Y),   V2/law = 1 + eps Y/(1 + Y).
+       The e^(2 gamma t)/N term of V2 carries Y/(1+Y); those of the parts stay at Y = 0. At y -> 0 and delta=0 it is absent: V2's coefficient of 1/N tends to (7/6) e^t, against (t: read, form) t=6: 457.9, 470.7; t=10: 25676.7, 25697.5, while C1's is -(5/4) e^(2t) (out/t4_counts.txt).
+       Machine check of the eps form at moderate t, out/t5_numbers.txt: delta=0, s=1, t=2: V2 dev 0.0315 against 0.0251, A1 -0.0718 against -0.0740, C1 -0.1752 against -0.1731. Read at N=729: V2/law-1 = 0.0267.
+   (b) Beyond first order, at small Y. In a classical-field reading z(t) = rho(t; zeta) e^(i arg zeta), with seed zeta = [z0 + i sqrt((1-d)/(1+d)) w0]/2 + m, a complex Gaussian of mean m = -s/(1+delta) and variance v = 1/(2(1+delta)):
+          V2/Y -> <rho |zeta|>^2 / (v <rho^2>)   in the y = 0 ensemble.
+       A Cauchy-Schwarz cosine^2 between final amplitude and seed amplitude: 1 while rho is proportional to |zeta|, stationary at first order in the deformation, pi/4 when rho is constant. That stationarity is the reason the parts can lose a large factor while V2 stays: the Gaussian identity <|zeta|^4> = 2 v^2 cancels the first order exactly.
+       Read, TW in integers (tw/src/main.rs, t4_cs.py, Rust 1.81, clippy clean, float_used=0, Gaussians are exact binomials of 65536 bits), N=59049, delta=0, s=1/8, 400000 samples at y, 100000 at y=0, out/t4_cs_59049_0_1o8.txt, statistical error on V2 about 1.8%:
+          t      f      V2/Y   cos^2 at y=0   A1/law  C1/law   cos(theta - arg zeta)
+          4.0  0.025   0.995   1.000          0.981   0.940    1.000
+          5.0  0.141   0.986   0.988          0.840   0.694    1.000
+          5.5  0.270   0.960   0.961          0.681   0.468    1.000
+          6.0  0.403   0.904   0.902          0.483   0.250    1.000
+          6.5  0.457   0.812   0.807          0.295   0.104    1.000   (f peak)
+          7.0  0.402   0.693   0.685          0.156   0.034    1.000
+          7.5  0.285   0.568   0.554          0.073   0.009    1.000
+          8.0  0.171   0.463   0.437          0.031   0.002    1.000
+       The formula holds within 1.5% through t=7, 6% by t=8. At N=729 the exact V2/Y over the same y=0 cosine^2 reads 1.116 at the peak (0.8478 over 0.760), against 1.006 at N=59049, so the formula reads as the large-N limit.
+       TW is validated on exact rows: N=729, delta=0, s=1: 0.3004, 0.5510, 0.6797 against exact 0.30032, 0.55140, 0.68060 at t=1,2,3.
+       What could still be wrong: TW drops orders in 1/N and the cosine^2 is sampled; at N=59049 I hold no exact row, since the block needed at f near 1/2 is beyond my budget here. So MEASURED in TW, CANNOT_SEE in the exact state at that N. At N=729 the exact read is above the formula by the factor given.
+
+F4.4 The author's conjecture (V2 reads the spread of the pattern's position, set while depletion is small, and the amplitude saturates later), tested.
+   Part true, MEASURED: the position is set early and stays. cos(theta - arg zeta) >= 0.995 from t=2 and >= 0.998 from t=2.5 to t=8.75 at N=59049; at N=6561, s=1/4: 0.987 at t=2, 1.000 to t=6.25. Depletion is 0.0044 at t=2 there. It follows the seed, read from t=0.
+      Phase coherence follows the seed's Gaussian: R1^2 = |<e^(i theta)>|^2 against the Rician of the law's Y, R(Y) = (pi/4) Y e^(-Y) [I0(Y/2) + I1(Y/2)]^2: N=6561, s=1/4: t=2 0.0536/0.0549, t=3 0.0770/0.0765, t=4 0.0875/0.0862, t=5 0.0929/0.0900. N=6561, s=1: t=2 0.5425/0.5504, t=3 0.6595/0.6561, t=4 0.7006/0.6925, t=5 0.7249/0.7055.
+   Part refuted, MEASURED: V2 is not that spread. N=59049, s=1/8: t=3: V2 0.0256, R1^2 0.0201 (ratio 1.27 = 4/pi, Gaussian amplitude); t=6.5, the peak: 0.0252, 0.0247 (equal, rho nearly constant, <rho>^2/<rho^2> = 0.973); t=8: 0.0145, 0.0269 (ratio 0.54). From t=6.5 to t=8.5 V2/law falls from 0.837 to 0.411 while cos(theta - arg zeta) stays at 1.000 to 0.999.
+      So V2 = R1^2 only near the peak of f. At Y of 1 or more the two are close by arithmetic: R(Y)/(Y/(1+Y)) reads 1.01 at Y=1, 1.07 at Y=2, 1.08 at Y=3, 1.06 at Y=6. At small Y it reads 0.87 at Y=1/4 and 0.785 as Y -> 0. That function is why the Y>1 rows all sit above the law. N=6561, s=1: V2 0.7241, R1^2 0.7129 at t=4.5, V2/law 1.103.
+   Tag on the sharpened statement "V2/Y = cosine^2 between rho and |zeta|, up to the f peak": MEASURED in TW at N=59049, DERIVED as the classical-field limit, NAMED as a statement about the exact state at large N.
+
+F4.5 What recurrences do. MEASURED, exact. The row N=81, delta=0, y sqrt N=4, t=3 sits at the first minimum of f (f=0.0468). Same chain, out/t4_trace_81.txt:
+      t:        1.5    2.0    2.5    2.75   3.0    3.25   3.5    4.0    4.75   5.5    6.25   7.75
+      V2:       0.995  1.024  0.890  0.332  0.0195 0.0095 0.061  0.402  0.911  0.358  0.0053 0.624
+      f:        0.831  0.606  0.197  0.086  0.047  0.069  0.150  0.459  0.718  0.358  0.285  0.639
+      A2/AdA:   0.969  0.980  0.445  -0.47  -0.749 -0.62  -0.44  0.105  0.817  -0.19  -0.87  0.337
+   V2 swings between near 1 and near 0, coherently, with the period of f (about 3.1 here). At each return the mean of A nearly vanishes while A does not: at t=3, |<A>|/N = 0.0226, sqrt(<A^dag A>)/N = 0.195, <A^2>/<A^dag A> = -0.749, so its weight is on the imaginary axis: rms Re 0.069, rms Im 0.182. The k pattern then sits at +-pi/2 from its first position with equal weight. <B> turns negative there (-0.122), which is where the law's "<B> positive" ends: 93 of 94 rows positive, this one negative.
+   The same at N=243, s near 4: t=3.75 V2 0.068, A2/AdA -0.826; t=4: 0.0037, -0.909; t=6.25: 0.912; t=8.25: 0.0014, -0.964. TW at N=6561, s=4: cos(theta - arg zeta) 1.000 at t=4, 0.931 at t=5.5, 0.662 at t=6, 0.218 at t=6.5, -0.034 at t=7. So the position leaves the seed at the return.
+   Small Y goes the other way: V2 rises well above the law at the return, since C1 collapses faster than A1^2. N=243, s=1/8: law 0.0286, V2 0.2126 at t=6.5, f 0.047; V2 about 0.42 at t=8.5. So at a return V2 is set by the return, on either side of the law.
+   First peak's time, read at small s, delta=0: 3.75, 4.25, 5.25, 6.5 at N=243, 729, 6561, 59049, against ln(N)/2 = 2.75, 3.30, 4.39, 5.49: t_peak near ln(N)/(2 gamma) + 1.
+   Tag: MEASURED on the exact rows named; the mechanism in words (Re A through zero, the weight left on the parity-odd quadrature P_d) DERIVED from z = X_c + i P_d and parity, and consistent with the rows.
+
+======================================================================
+F5. THE FIRST CORRECTION IN 1/N FOR C1 AND A1, AT GENERAL (delta, y). DERIVED, exact; checked by MEASURED rows.
+======================================================================
+Route: t5_firstcorr.py. Number-conserving expansion at fixed s = y sqrt(N), H = H2 + H1/N + O(1/N^2), H1 as in F1 step 2. Heisenberg operators to first order: z = a + c^dag, w = a - c^dag, z1(t) = Int_0^t [C(t-tau) zeta(tau) + i(1-delta) S(t-tau) xi(tau)] dtau,
+with zeta = i[H1, z], xi = i[H1, w] on the zeroth-order Gaussian operators; so every term is an equal-time Gaussian moment at tau times elementary functions, integrated exactly. Normal-ordered algebra and Wick in exact rationals over Q(gamma)[i]; no CAS; float_used=0.
+Closed forms: exact rational reconstruction in delta from 34 delta values, held-out exact at 6 more, 60 of 60 coefficient lines (t5_general.py, out/t5_general_u1.txt). As typed below: t5_closed.py compares them term by term with the machine at 12 delta, band and outside: 672 coefficients, 0 mismatches.
+
+Self-checks, all MEASURED:
+  - J1 of the README: machine n_1(s=0)/2 against the README form at 11 (delta, u) including both edges, 3 t each: 33 of 33 equal within 1e-40 (out/t5_eval_checks.txt). This J1 was the second seat's; here it comes from a separate derivation.
+  - w1 of the README at delta=0: 4 of 4 equal within 1e-40.
+  - First-order energy conservation <H2>_1 + <H1>_0 = 0: identically zero, 0 terms left, at delta = 0, +-1/2, +-3/4, +-1, +-5/4 and at (1/2, u=1/3).
+  - Hand check: y=0, small t: C1 = 4t^2/N - 2t^2/N^2 by direct two-level expansion; the machine's C10 -> -2t^2.
+  - The limit itself, truncated Fock block on the integer route (t5_limit.py, out/LIMIT.hbp, edge weight on each row): see the table below.
+
+THE RESULT. gamma^2 = 1 - delta^2, s^2 = N y^2, c_k = cosh(k gamma t), and gs_k = gamma t sinh(k gamma t):
+
+  <A> = N y [ w0 + (w10 + s^2 w11)/N ],  w0 = -2(c_1 - 1)/(1 + delta),  A1 = 2|<A>|/N.
+  C1 = C0/N + (C10 + s^2 C11 + s^4 C12)/N^2,  C0 = 4 sinh^2(gamma t)/(1 + delta) + 8 s^2 (c_1 - 1)^2/(1 + delta)^2.
+
+  with D3 = (1+d)^3 (1-d)^2, D4 = (1+d)^4 (1-d)^2, D5 = (1+d)^5 (1-d)^2, d = delta:
+
+  w10 D3 = (65/12 - 85d/6 + 12d^2 - 4d^3) c_1 + (5/4 - d/2) c_3 + (d - 11/3)(1-d) c_2 + (4d - 3)(1-d)^2 + (2d^3 - 4d^2 - 1) gs_1
+  w11 D4 = (-53/4 + 81d/2 - 44d^2 + 16d^3) c_1 + (5/4 - d/2) c_3 + (6d - 8)(1-d) c_2 + (20 - 34d + 16d^2)(1-d) + (17 - 46d + 34d^2 - 8d^3) gs_1
+
+  C10 D3 = (d - 5/2) c_4 + (3 + 10d - 7d^2)(1-d) c_2 + (-1/2 - 8d + 17d^2 - 7d^3) + (6 - 12d + 18d^2 - 6d^3) gs_2
+  C11 D4 = (4d - 10) c_4 + (42 - 60d + 24d^2) c_3 + (-40 + 140d/3 - 16d^2)(1-d) c_2 + (22 - 428d/3 + 632d^2/3 - 96d^3) c_1 + (-14 + 112d - 172d^2 + 80d^3)
+           + (-8 - 32d^2 + 16d^3) gs_1 + (-16 + 68d - 28d^2) gs_2
+  C12 D5 = (2d - 5) c_4 + (42 - 60d + 24d^2) c_3 + (-16 - 64d + 64d^2)(1-d) c_2 + (-234 + 700d - 728d^2 + 256d^3) c_1 + (213 - 594d + 576d^2 - 192d^3)
+           + (136 - 368d + 272d^2 - 64d^3) gs_1 + (-68 + 184d - 136d^2 + 32d^3) gs_2
+
+  These continue outside the band with gamma = i w (machine rows at delta = +-5/4, +-2 match).
+
+At delta = 0, u = 1, in full:
+  w10 = -t sinh t + (65/12) cosh t - (11/3) cosh 2t + (5/4) cosh 3t - 3                       [the README's w1, which is the s -> 0 part]
+  w11 = 17 t sinh t - (53/4) cosh t - 8 cosh 2t + (5/4) cosh 3t + 20                          [new; it matters on the conversion rows: s^2 runs to 16]
+  C10 = 6 t sinh 2t - (5/2) cosh 4t + 3 cosh 2t - 1/2
+  C11 = -8 t sinh t - 16 t sinh 2t - 10 cosh 4t + 42 cosh 3t - 40 cosh 2t + 22 cosh t - 14
+  C12 = 136 t sinh t - 68 t sinh 2t - 5 cosh 4t + 42 cosh 3t - 16 cosh 2t - 234 cosh t + 213
+
+At the band edges (polynomial in t; from the machine with gamma = 0):
+  delta = +1:  <A> = N y [ t^4 (1 + s^2/2) ]/N, so A1 = 2|y| t^4 (1 + s^2/2)/N, <A> same sign as y.  C1 = -2t^2 [1 + 2t^2 (1 + s^2)]/N^2.  V2 = -(s^2/N) t^6 (1 + s^2/2)^2/(1 + 2t^2(1 + s^2)).
+  delta = -1:  w0 = -2t^2, w1 = 3t^4 + (28/15)t^6 + s^2[(11/6)t^4 + (9/5)t^6 + (1/2)t^8].  C0 = 8t^2 + 8 s^2 t^4.  C1v = -2t^2 - 36t^4 - (112/5)t^6 + s^2[-(68/3)t^4 - (184/3)t^6 - (128/5)t^8] + s^4[-(44/3)t^6 - (72/5)t^8 - 4t^10].
+     So at delta=-1 the expansion's size is t^4/N with coefficients up to 36 (C1), and t^6 s^0/N in w1: that is why predicted f misleads there (F2.2).
+
+Also in out/t5_general_u1.txt: first corrections of <n+ + n-> and <B>, so f and D2.
+
+Large t: as F4.3(a). In words: every part's relative correction grows as e^(2 gamma t)/N, with coefficient (5 - 2 delta)/(8 gamma^4); only the Y/(1+Y) part of it reaches V2.
+
+THE 4 C1 MISSES. MEASURED, t5_vs_rows.py on the receipt's integers, out/t5_vs_rows.txt:
+   N=729,  delta=0,   s=1/4, t=2: read 0.070946, law 0.077409 (0.9165), law+first 0.070160, read/first 1.0112
+   N=729,  delta=1/2, s=1/4, t=2: read 0.026557, law 0.028533 (0.9307), law+first 0.026371, read/first 1.0071
+   N=729,  delta=1/2, s=1/2, t=2: read 0.029283, law 0.031885 (0.9184), law+first 0.029004, read/first 1.0096
+   N=2187, delta=0,   s=1,   t=2: read 0.048869, law 0.051690 (0.9454), law+first 0.048685, read/first 1.0038
+   All four met within 5% by law + first correction; the remainders fall as 1/N^2 (N=729 to 2187 at delta=0, s=1/2, t=2: 1.0157 to 1.0018, a factor 8.7).
+
+ALL RECEIPT ROWS, read over law + first. N >= 243, predicted f <= 1/20, 21 rows: worst |read/law - 1| A1 0.0404, C1 0.0835, V2 0.0099, D2 0.0722; worst |read/first - 1| A1 0.0035, C1 0.0112, V2 0.0041, D2 0.0090.
+   predicted f <= 1/10, 29 rows: read/law A1 0.0975, C1 0.1777, V2 0.0267, D2 0.1183; read/first A1 0.0216, C1 0.0632, V2 0.0183, D2 0.0328.
+   Past that the expansion fails as expected: N=243, delta=0, s=1/4, t=3: C1/(law+first) reads -0.279: C1's first correction has passed the law.
+MY GRID, t5_vs_grid.py, out/t5_vs_grid.txt, f <= 1/20, each delta, worst |read/law-1| then worst |read/(law+first)-1|, N=729:
+   delta=-3/4: A1 0.0418 to 0.0037, C1 0.1065 to 0.0166, V2 0.0275 to 0.0027 (V2 linearised), D2 0.0885 to 0.0125
+   delta=-1/2: A1 0.0445 to 0.0044, C1 0.1082 to 0.0180, V2 0.0238 to 0.0028, D2 0.0914 to 0.0136
+   delta=0:    A1 0.0410 to 0.0038, C1 0.0903 to 0.0131, V2 0.0109 to 0.0017, D2 0.0749 to 0.0096
+   delta=1/2:  A1 0.0469 to 0.0039, C1 0.0999 to 0.0140, V2 0.0092 to 0.0018, D2 0.0541 to 0.0053
+   delta=3/4:  A1 0.0632 to 0.0046, C1 0.1260 to 0.0175, V2 0.0141 to 0.0019, D2 0.0419 to 0.0033
+   delta=-1:   A1 0.1156 to 0.0341, C1 0.2906 to 0.2118, V2 0.1025 to 0.0200, D2 0.2484 to 0.1652: the worst row is t=3, where t^6/N and its square are large.
+   delta=+1 (no law term): read over first: N=729, s=1, t=1: A1 1.5054e-4 over 1.5242e-4, C1 -1.8467e-5 over -1.8817e-5, V2 -6.14e-4 over -6.17e-4. N=729, s=4, t=3 is past it, C1 has changed sign.
+   Outside the band, delta=2, N=729: A1 0.0239 to 0.0002, C1 0.2471 to 0.0180, D2 0.0170 to 0.0005. V2 linearised fails beside the pole, as a linearisation must.
+What could still be wrong: the expansion is at fixed s. It needs s fixed as N grows, and e^(2 gamma t)/N small. The closed forms in delta rest on rational reconstruction with held-out checks at exact rationals, 12 further delta as typed; the machine's own step (Heisenberg first order on Gaussian moments) is checked by energy conservation and by J1, w1, and by the limit table.
+The pinned rows: read over first at N=729, y=1/1024, delta=0, t=1,2,3: 1.0000, 1.0032, 1.1755 with the s^2 term, 1.0000, 1.0032, 1.1752 without. README writes 0.9998, 1.0031, 1.175, from the ppm-rounded A1 (0.002113 for 0.0021137). Hold H5.
+
+======================================================================
+F6. THE README'S READING OF THE PAPER (Open: Reading the paper's 2.6%). Arithmetic MEASURED; mapping to the experiment CONJECTURE, as the README tags it.
+======================================================================
+Source: arXiv:2407.02373 v1 TeX and figures as already fetched by the earlier lane, C:/tmp/opus55/polariton-derivations-20261104/paper/src (main.tex, supplementary.tex, figures/). I did not refetch; the Nature final text is CANNOT_SEE from here. Run: t6_paper.py, t6_spread.py, out/t6_paper.txt, out/t6_spread.txt.
+
+Arithmetic of the reading, all reproduced:
+   K = 0.5% -> rho = 0.00495, rho0 = 0.9901. A^2/(8 rho0 rho) = 0.01724, with rho0=1, rho=K 0.01690: README's 0.017 stands.
+   Paper K = A^2/4 = 0.000169 (0.02%); density 1 + A cos kx has K = A^2/16 = 4.225e-5: both stand. Factor 4: 0.0690 and 0.0676: README's 0.068 stands.
+   delta=0, tanh -> 1, Y = 2 s^2: 0.017 -> y sqrt N = 0.0930, 0.068 -> 0.1910; from 0.01724, 0.0690: 0.0937, 0.1924. README's 0.09, 0.19 stand.
+   The delta=0 choice carries a wide range: delta = -3/4, -1/2, 1/2, 3/4: y sqrt N = 0.035, 0.054, 0.163, 0.253 for 0.017 and 0.071, 0.109, 0.344, 0.572 for 0.068. At delta=-1: y sqrt N t = 0.093, 0.188. As delta -> 1 the reading needs V2 -> 1 at delta = 0.983, and past that it cannot read: at delta=+1 A1 is order N^(-3/2) (F5).
+
+What else the law then says, large t, from A = 2.6%, K = 0.5%, with what the paper's numbers do to each:
+   P1. Shot-to-shot spread of the position. Y = 0.0175 or 0.0741 give a nearly uniform phase: R1 = 0.117, 0.237, and std(cos theta) = 0.7005, 0.6797 (uniform 0.7071).
+       Paper, SI Fig S23, continuous pumping, threshold about 14 mW, 50 realisations, "Below this threshold the phase of the modulation is completely random ... and its standard deviation is about 0.7", which matches std(cos theta) = 1/sqrt2 (CONJECTURE that this is its phi).
+       Read by eye off the figure, +-0.03: 0.70, 0.33, 0.14, 0.07, 0.09 at 12.1, 15.0, 18.2, 21.6, 25.2 mW.
+       Through the law's phase distribution these read Y = 1.5, 3.6, 6.2, 5.1, so V2 = 0.60, 0.79, 0.86, 0.84, and y sqrt N = 0.87, 1.35, 1.76, 1.60 at delta=0.
+       MEASURED_FAIL for the reading if one y sqrt N governs both pumpings: the reading predicts 0.68 to 0.70, the figure reads 0.07 to 0.33. y sqrt N differs by 5 to 20 times. The paper's own remark is that its pulsed image averages over pulses and that it switched to continuous pumping "to avoid averaging". So the 2.6% and the 0.5% do not fix V2 alone: other reductions of A sit between them, or the two pumpings differ in h and N. Hold H6.
+       What could still be wrong: my eye on the figure; the meaning of phi; the CW state is a steady state with loss and pump, and the law is a closed quench. So this is a tension to carry, not a verdict on the law.
+   P2. Scaling with power. y sqrt N = h/(J sqrt N), so Y falls as 1/N at fixed h and J, and rises only through tanh^2(gamma t/2) and 1/(1+delta) while the gain opens. So the law predicts V2 rising and then falling with power. Paper: the spread "reduces monotonically till about x1.5 the threshold power and saturates or slightly decreases again", caption "seems to increase at a power of about x1.5": 0.07 to 0.09 from 21.6 to 25.2 mW, at my eye's error. And SI: "in the thermodynamic limit of very large pump power, the nonlinear coupling scales more favourably with n0 than the linear coupling". Direction agrees. Quantitative test: spread against n0 at fixed everything else: CANNOT_SEE from the text.
+   P3. g2. C1 = 4 rho (1 - delta) = 0.0198 (1 - delta), against A1^2/2 = 3.4e-4 (or 1.35e-3 with the factor 4). This is the model's sharpest falsifier and it does not depend on V2: g2(r) should carry a k harmonic near 2%(1 - delta) at K = 0.5%. The paper names g2 as a next step. Open.
+   P4. Second harmonic. D2 = A1^2/(4(1 - delta)) = 1.7e-4/(1 - delta), or 6.8e-4 with the factor 4. Below the paper's "few parts in a thousand", so its numbers cannot refute this yet. CANNOT_SEE any 2k_r read in Fig 1e.
+   P5. g1. Averaged over x, g1(r) = 1 - 2 rho + 2 rho cos kr, a fast oscillation of amplitude 2 rho = 0.99%, independent of V2. Paper: about 1.5%, in phase with the density. Same order, 1.5 times; it would read K = 0.76%. DERIVED here; how the paper's g1 averages is CANNOT_SEE from the text.
+   P6. Single-shot modulation sqrt(2 C1) = 0.199 sqrt(1 - delta). Fig S23 normalises each trace, so no absolute number in the text. CANNOT_SEE.
+   P7. Time. A closed quench inside the band runs through K = 0.5% and on to f about 0.46 or above within t near ln(N)/(2 gamma) + 1, and returns (F4.5). K = 0.5% over a pulse is a loss-and-pump number, outside this law's scope; at delta=-1 the README's band table gives f = 0.0069 at N=6561, the right size, where (1-delta) = 2 and V2 = 0.0085 or 0.034.
+   P8. Where the numbers sit. Fig 1d caption: "The amplitude of the modulation along the y=0 line is ~2.6%". So A is a line cut; the transverse rotation of 1.1 pi does not reduce it by averaging, though K may be read over more of the mode. If the 2.6% had been a transverse average with uniform weight, the factor would be 0.572 and (1-d)V2 = 0.053, 0.211.
+       Time-integration: if V2 is fixed and A1 follows sqrt(rho(t)), <A1>^2 <= 8(1-d)V2 <rho> by Cauchy-Schwarz, so A^2/(8<rho>) is a lower bound on (1-d)V2 and 0.09, 0.19 are lower bounds on y sqrt N under that assumption. DERIVED.
+       Fig S22b phase histograms are over y in one image: 197, 303, 500 uW, full circle to about 135 degrees. Spatial, so they do not read V2. As a Rician they would give Y = 0.6 to 2.0.
+   P9. Sign. The law puts the k peaks on the potential's maxima inside the band and on its minima at delta >= 1 (F3). SI "Phase rolling": the pattern's phase winds 2 pi for a rigid shift k_r^-1 of the waveguide, so it is locked to the grating, as y != 0 gives. The sign of h is CANNOT_SEE.
+
+======================================================================
+F4.6 TW AGAINST EXACT, the validation behind F4.3 to F4.5. MEASURED.
+======================================================================
+   N=81, delta=0, y sqrt N=4, 100000 samples (out/t4_tw_81_s4.txt), TW then exact V2: t=1 0.9171, 0.9176; t=2 1.0244, 1.0244; t=2.75 0.3276, 0.3316; t=3 0.0197, 0.0195; t=3.25 0.0099, 0.0095; t=4 0.4017, 0.4018; t=4.75 0.9102, 0.9114. f: t=3 0.0473, 0.0468.
+   N=729, delta=0, y sqrt N=1/4, 200000 samples (out/t4_tw_729_s1o4.txt), TW then exact V2: t=1 0.0270, 0.02604; t=2 0.0693, 0.06814; t=3 0.0958, 0.09457; t=4 0.1015, 0.1002; t=5 0.0891, 0.0879; t=6 0.0978, 0.0964. Offset about +1.3%, one common statistical shift, against an error near 1.4%.
+   So TW carries V2 through the first return at both N. <cos 2 theta> and <A^2>/<A^dag A> are different observables (the second is weighted by |A|^2): at N=81, t=3: -0.54 and -0.749.
+
+======================================================================
+F8. WHAT I COULD NOT CHECK. CANNOT_SEE, each with what would settle it.
+======================================================================
+ - N=2187 full-space grid rows beyond the receipt's: stopped by me. One chain took about 12 minutes under this machine's load (other lanes were running: 8 logical cores shared), so 35 chains was out of budget. The reader and predictions for it are in place: t2_run.py band 2187; the frozen rows are in out/LAW-PREDICTIONS.hbp. Outside grid N=2187 likewise. So N=81, 243, 729 are complete and 2187 is only the receipt's 4 rows, read by my route. Truncated-block rows reach N=531441 at t <= 2 (F5 table).
+ - Exact state at N >= 2187 past the f peak: CANNOT_SEE. The large-N statements in F4.3(b) and F4.4 rest on TW, validated at N=81 and 729.
+ - Whether the leapfrog alone sets the receipt's 1e-6 offset: its own norm and energy offsets and my two routes point there; I did not rerun the engine at a smaller step. A rerun of the engine at N=729 with dt/2 would settle it. It changes no quoted digit.
+ - The hosted run of this head: left alone, as instructed. The owning gate for "green" is that run; nothing here says green.
+ - The fabric, recall and owning seats: not asked in this lane; the task names worktree and folder as the scope. CANNOT_SEE, not FALSE.
+ - Paper: Nature final text, and arXiv versions after the earlier lane's copy. Fig S23's axis read by eye, and its phi's definition inferred from 0.7 at random phase. A numeric table from the authors would settle both.
+ - The hold H1 text quotes y sqrt N = 1/8 rows at N=243: y = 1/128, y^2 N = 0.0148, so s is 0.122 there.
+ - Closed forms at general u: the machine runs any rational u (J1 was checked at u=1/2 and 1 by it), but F5 types u = 1 only. Rerun t5_general.py with u to get them; H1 is linear in u, so two runs give all.
+
+CORRECTIONS BESIDE (the first text stands above):
+ - F4.2 says "Largest and smallest V2/law over t <= 12 at N=729: 22.5 and 0.002". With the last chain in (delta=-1, s=4), the smallest is 0.001. The delta=-1 row of the peak table is 1.316 1.272 1.141 1.065 1.030 1.013.
+ - F3 says "g2 is then below 1 at r = 0 in its k harmonic". Clearer: C1 < 0 means the k harmonic of g2 lowers g2 at r = 0. The sign test at N >= 243 totals 97 of 99 for |Y| < 1 and 81 of 81 for |Y| > 1.
+ - F3's "the same sign" claim is counted in out/t7b.txt: N >= 243, <A> opposite to y on 612 of 612 rows at delta < 1, same sign as y on 252 of 252 at delta >= 1.
+
+======================================================================
+F9. TEXT OFFERED FOR ITEMS THE README LISTS OPEN. These close OPEN items and correct no fault, so they sit here and carry no hold number. In README style, stating scope, values and open items.
+======================================================================
+For the "What missed" C1 row, in place of "Its first correction is OPEN" (with the table's pipes respected: none are used):
+   Its first correction is C₁ = C₀/N + (C₁₀ + Ny²C₁₁ + N²y⁴C₁₂)/N², where at δ = 0, u = 1, C₁₀ = 6t sinh 2t − (5/2)cosh 4t + 3cosh 2t − 1/2, C₁₁ = −8t sinh t − 16t sinh 2t − 10cosh 4t + 42cosh 3t − 40cosh 2t + 22cosh t − 14, and C₁₂ = 136t sinh t − 68t sinh 2t − 5cosh 4t + 42cosh 3t − 16cosh 2t − 234cosh t + 213. The four misses read 1.0112, 1.0071, 1.0096 and 1.0038 of law plus first correction
+For the Open bullet, when the general forms are filed with the repo:
+   - **The first correction at general (δ, y)** is derived in exact rationals, with J₁ and w₁ reproduced and first-order energy conservation identically zero; at f ≤ 1/20 and N = 729 it takes the worst offset of C₁ from 0.09 to 0.13 down to 0.013 to 0.018 across −3/4 ≤ δ ≤ 3/4. OPEN: the second correction, and the band edge δ = −1, where C₁ reads 1.21 of law plus first correction at t = 3 and N = 729.
+   The value 1.21: C1/(law+first) at delta=-1, N=729, s=1/4, t=3: read/law 0.7094, law+first 0.5854 of the law (w/ C1v = -34004, C0 = 112.5), consistent with |read/first - 1| = 0.2118 in out/t5_vs_grid.txt.
+
+======================================================================
+ADDED AFTER THE LAST RUNS. Each row belongs to the section named; the sections above stand as written.
+======================================================================
+F2.6 Where the law holds, range of V2/law over s = 1/4..4 at N=729 (out/t2_ranges.txt; every row in out/t2_table_band.txt). MEASURED.
+      delta     t=1/2          t=1            t=2            t=3
+      -1        1.001..1.002   1.004..1.006   1.013..1.030   0.944..1.102
+      -3/4      1.001..1.002   1.003..1.006   1.017..1.032   0.984..1.100
+      -1/2      1.001..1.002   1.003..1.006   1.018..1.034   1.006..1.104
+      0         1.001..1.003   1.002..1.007   1.008..1.034   1.018..1.096
+      1/2       1.001..1.004   1.000..1.009   0.997..1.033   0.989..1.079
+      3/4       1.002..1.006   0.999..1.013   0.986..1.044   0.961..1.073
+   Over the same rows C1/law runs down to 0.307 at t=2 (delta=-1) and to 0.008 at t=3 (delta=-1); A1/law to 0.558 and 0.089.
+   Against 1/N, read then limit from the first correction (out/t2_limits.txt): (read/law - 1) N at N = 81, 243, 729 -> limit. Samples:
+      delta=-1/2, s=1/4, t=1:  V2 1.82 1.88 1.91 -> 1.93;   A1 -2.43 -2.58 -2.64 -> -2.67;  C1 -6.46 -6.96 -7.17 -> -7.27
+      delta=-1,   s=1,   t=1:  V2 3.34 3.53 3.64 -> 3.69;   A1 -4.07 -4.24 -4.45 -> -4.50;  C1 -10.83 -11.78 -12.45 -> -12.69
+      delta=3/4,  s=1/4, t=2:  V2 -9.45 -10.26 -10.25 -> -10.16; A1 -22.45 -28.13 -30.90 -> -32.52; C1 -33.08 -44.62 -50.96 -> -54.88
+      delta=0,    s=1,   t=2:  V2 10.65 15.23 19.49 -> 22.98; A1 -26.87 -38.19 -46.70 -> -52.36; C1 -49.03 -80.56 -107.03 -> -127.71
+   So every deviation approaches 1/N with the limit F5 computes, and at t=2 N=729 is still 15 to 20% short of the limit.
+   N=2187, on a truncated block with its edge weight read (t2_trunc.py, out/TRUNC-N2187.hbp), 32 rows the receipt does not hold, s = 1/4, 1, delta = -1, +1 (t = 1,2,3), -3/4, -1/2, 3/4 (t = 1,2), edge weight at most 5.7e-14:
+      V2/law 0.9953..1.0384, N(V2/law-1) at delta=-1, s=1/4: 2.79, 21.70, 84.03 at t=1,2,3; with N=729's 74.6 at t=3. delta=+1, s=1, t=2: A1 4.579e-4, C1 -2.724e-5, V2 -0.00385, A1/first 0.984, C1/first 0.962.
+   So F8's line "2187 is only the receipt's 4 rows" is superseded for f small: full-space rows stay at the receipt's 4, truncated rows add these 32.
+
+F3b Outside the band, fine scans. MEASURED, t3_fine.py, out/t3_fine.txt, out/FINE-outside.hbp, t3_period.py, out/PERIOD.hbp, t3_count.py, out/t3_count.txt.
+   Pole of V^2 at delta>1, N=729: where C1 crosses 0, read, law, law+first correction:
+      delta=5/4, s=1/2: 2.982, 3.014, 2.981.   delta=5/4, s=1: 2.147, 2.172, 2.147.   delta=2, s=1: 1.021, 1.022, 1.021.   delta=2, s=2: 2.994, 2.994, 2.994.
+      So the pole is real, and its small shift from Y = -1 is the first correction, to three decimals. That also places the two rows off the sign test: they lie between the read pole and the law's.
+   delta>1, N=729, |1+Y| >= 1/4, t <= 3, 54 rows: V2/law 0.9709..1.0777. All t, 81 rows: 0.9035..1.3210, the largest on delta=5/4, s=1, t=6 (Y=-1.36, law 3.75, read 4.95).
+   Anchors by big-integer series, third route (out/anchor_81_1_1o9_2.txt, out/anchor_81_2_1o9_1.txt): N=81, delta=1, y=1/9, t=2: C1 = -0.00931684101684212, A1 = 0.04597017372674; N=81, delta=2, y=1/9, t=1: C1 = -0.000983413449467166, A1 = 0.172159586252062. My Chebyshev route on those rows: -0.009316841016842120, 0.045970173726740264; -0.000983413449467168, 0.172159586252062280. So C1 < 0 is exact in three routes' sense of two, 17 digits: the receipt holds no such row.
+   delta<-1: C1 < 0 on 0 of 270 rows; V2 < 0 on 0 of 270; V2 > 1 on 3 of 270, all delta=-5/3, 1.0050, 1.0027, 1.0015 at N=81, 243, 729, finite N. As the law says for that side. delta<-1, N=729, t<=1, 30 rows: V2/law 1.0010..1.0073, A1/law 0.9476..0.9994, C1/law 0.8940..0.9978.
+   Period at delta<-1: first minimum of A1 against the law's 2 pi/w. Read at growing N, truncated block, edge weight at most 6.4e-14:
+      delta=-5/4, s=1/4, law 8.3776: N=243 7.165, 729 7.769, 2187 8.131, 6561 8.287, 59049 8.367.  (1 - ratio) N = 35.2, 53.0, 64.4, 70.7, 73.8.
+      delta=-2,   s=1,   law 3.6276: N=243 3.413, 729 3.541, 2187 3.597, 6561 3.617, 59049 3.626.  (1 - ratio) N = 14.4, 17.4, 18.2, 18.7, 19.1.
+      So the period pull is a 1/N effect at fixed s: the continuation holds as N grows, and at finite N it pulls by 74/N and 19/N on these two rows, with t in the phase, so predicted small f is no scope at long t. At large s it is not small: N=729, delta=-5/4, s=4: minimum at t=3.75 against 8.38, f at the first maximum 0.257.
+   Tag on the whole of F3: MEASURED as read. The repo froze nothing outside the band; these rows have standing only against my own frozen file.
+
+F5b The limit table. MEASURED, t5_limit.py, out/LIMIT.hbp. N^2 (C1 - C0/N) over C1v and N(<A>/(N y) - w0) over w1, at N = 6561, 59049, 531441, truncated block with edge weight on each row. Remainders fall as 1/N:
+      delta=0,    s=1,   t=1: C1 0.99792 0.99977 0.99997; A 0.99861 0.99984 0.99998
+      delta=0,    s=1,   t=2: C1 0.97847 0.99755 0.99973; A 0.98627 0.99845 0.99984
+      delta=0,    s=1/2, t=2: C1 0.98428 0.99822 0.99980; A 0.98941 0.99881 0.99987
+      delta=1/2,  s=2,   t=1: C1 0.99672 0.99963 0.99996; A 0.99807 0.99979 0.99998
+      delta=-1/2, s=1/2, t=2: C1 0.98369 0.99816 0.99984; A 0.98942 0.99884 1.0002 (edge 2.4e-9 at the last)
+      delta=3/4,  s=1,   t=2: C1 0.98683 0.99852 0.99983; A 0.99237 0.99914 0.99991
+      delta=-3/4, s=1,   t=2: C1 0.97790 0.99768 1.00187; A 0.98637 0.999 1.007 (block too small at the last: edge 4e-7, so that entry is limited by the block)
+      delta=1,    s=1,   t=2: C1 0.98711 0.99855 0.99984; A 0.99454 0.99939 0.99993
+      delta=-1,   s=1,   t=2: C1 0.97982 0.99773 1.00001; A 0.98778 0.99864 1.00007 (edge 5e-8 at the last)
+      delta=5/4,  s=1,   t=2: C1 0.99970 0.99997 1.00000; A 0.99623 0.99958 0.99995
+      delta=-5/4, s=1,   t=2: C1 0.98231 0.99800 0.99978; A 0.98950 0.99882 0.99987
+      delta=2,    s=1,   t=2: C1 1.00253 1.00028 1.00003; A 0.99938 0.99993 0.99999
+   What could still be wrong: at N=531441 the amplitude's 2^-62 and the block's edge set a floor on N^2 (C1 - C0/N); the rows flagged sit on it.
+
+F5c Large-t form against exact coefficients: t5_eps.py, out/t5_eps.txt: V2, A1, C1 coefficient over eps form at gamma t near 10: 1.0001, 1.0000, 1.0000 at delta=0, s=1; 1.0004, 1.0005, 1.0005 at delta=1/2, s=2, gamma t=8.66; and 1.0000 at gamma t >= 10.6 on all six (delta, s) read, up to 0.9998. DERIVED then MEASURED.
+
+Note on tools: python appears in two print statements of t1_identity.py and t2_compare_receipt.py through float() for display of a difference only. Everything that computes the model or a read in this lane is integer or exact rational. A bare interpreter call slipped once with an empty heredoc and did nothing. __pycache__ removed.
+
+======================================================================
+LAST CORRECTIONS BESIDE (the earlier text stands above, as written; these carry what the last runs and counts changed)
+======================================================================
+ - F6 P1 and F8: the spread values were first read by eye off the rendered page: 0.70, 0.33, 0.14, 0.07, 0.09, "+-0.03". Then I pulled the figure's own raster and read the marker centres against its ticks (t6_figcrop.py, t6_figaxis.py, out/t6_figaxis.txt, out/figs23_image3.png, out/figs23_axis.png): 0.25 at x=96, 0.50 at x=184.5; markers at x = 246.65, 132.32, 70.34, 49.34, 53.65 for 12.1, 15.0, 18.2, 21.6, 25.2 mW.
+     So: 0.676, 0.353, 0.178, 0.118, 0.130, +-0.003 at the pixel. My eye was off by up to 0.05, and low on all three high-power points. This is what H9 uses.
+     Through the law's phase distribution: Y = 1.38, 2.99, 4.15, 3.85; V2 = 0.58, 0.75, 0.81, 0.79; y sqrt N at delta=0 = 0.83, 1.22, 1.44, 1.39 (out/t6_spread.txt). Against the reading's 0.093 to 0.192: 4 to 16 times.
+     The measured turn, 0.118 to 0.130 from 21.6 to 25.2 mW, is what the caption calls "seems to increase", and it is 4 times the pixel error. The law's direction agrees (P2).
+     phi's meaning stays inferred, CONJECTURE: 0.676 here below threshold and "about 0.7" in the SI text, against 1/sqrt2 = 0.707 for cos theta at random phase.
+ - F10 F2.6: "32 rows" is 24 rows (grep -c in out/TRUNC-N2187.hbp), 18 of them with a law value. "15 to 20% short of the limit": read from out/t2_limits.txt it is 5% to 17% short at t=2, N=729.
+ - F10 F3b: "So C1 < 0 is exact in three routes' sense of two, 17 digits: the receipt holds no such row" is wrong in its last clause and clumsy in its first. Corrected: C1 < 0 reads the same in my Chebyshev route and in the big-integer series, to 17 digits, on those two rows at y != 0. The receipt does hold rows with C1 < 0: POLARITON_QUENCH at delta=1 and delta=2 at y=0 and POLARITON_QUENCH_PIN at delta=1 at y=+-1/1024. At delta=2, y=0 the frozen form C1 = 4(1-delta) jbar/N is negative and was read. So the negative C1 outside the band at y=0 had standing already; what had none is the conversion, V2 and Y, at y != 0.
+ - New from this: the 12 C1 rows at delta=1 that the README's reader holds out, "where the predicted value is 0", now have a form: at y=0, u=1, C1 = -2t^2(1 + 2t^2)/N^2 + next order. Receipt at N=729: -12, -128, -534 ppm at t=1,2,3, form -11.3, -135.5, -643.5. N=6561: -24 at t=4 against -24.5; -96 at t=6 against -122; -200 at t=8 against -384, where t^4/N = 0.62. MEASURED against the receipt's integers.
+
+HOLD NUMBERS AS FILED in HOLDS.txt (earlier cross-references in F2.5 and F6 used draft numbers): H1 past the depletion range; H2 Open bullet; H3 approach; H4 above 1; H5 pinned digits; H6 0.916 to 0.917 (F2.5's "Hold H5"); H7 s^2 term in w1; H8 signs of <A> and <B>; H9 the paper's 2.6% (F6's "Hold H6").

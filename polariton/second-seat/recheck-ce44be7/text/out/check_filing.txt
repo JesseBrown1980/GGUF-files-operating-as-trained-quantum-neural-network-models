@@ -1,0 +1,27 @@
+SHA256SUMS bytes 9456 CR count 0
+lines 102 sample a2bfb55d3f9529207f65a3e46191933566f79c68cf67a4e0642a0d2d10880582  HOLDS-APPLIED.hbp
+ok 102 bad 0 missing 0
+files on disk in the folder 103
+on disk and not listed: ['SHA256SUMS']
+listed and not on disk: []
+files tracked at the commit under second-seat 16
+
+== REPORT.md against the task result
+task output bytes 19135 starts '{\n  "summary": "Second-seat attack on the three-mode polarit'
+top keys ['summary', 'agentCount', 'logs', 'result', 'workflowProgress', 'totalTokens', 'totalToolCalls']
+result type dict
+result keys ['head', 'failed', 'derivations', 'engine', 'text']
+REPORT bytes 14925 CR 0
+  derivations report part bytes 4227 result bytes 4227 equal True equal after unescape of report True count &gt; in report 0 &lt; 0 count > in result 2 < in result 1 count > in report 2 < in report 1
+  engine report part bytes 5359 result bytes 5359 equal True equal after unescape of report True count &gt; in report 0 &lt; 0 count > in result 0 < in result 0 count > in report 0 < in report 0
+  text report part bytes 4383 result bytes 4383 equal True equal after unescape of report True count &gt; in report 0 &lt; 0 count > in result 0 < in result 0 count > in report 0 < in report 0
+ header part "# The second seat on the polariton test, at `8dfa11a`\n\nThree lanes ran and none failed. Their reports follow verbatim, and each lane's findings, holds and row files are in the folders beside this one. Row files of 200000 bytes or more stay in the tools tar. Their scripts are held on this machine at `D:/safety-backups/opus55-polariton-attack-20261104-tools.tar.gz`, 745 files, SHA-256 `743c251d96f38"
+
+== token-shaped strings and the email address in the second-seat folder, counts only
+files scanned 103 counts {'github_pat': 0, 'hf_token': 0, 'anthropic_key': 0, 'openai_key': 0, 'google_key': 0, 'aws_key': 0, 'slack': 0, 'bearer': 0, 'jwt': 0, 'pem': 0, 'token_assign': 0} operator email 0 any email-shaped 0
+files with a hit, names only {}
+polariton/README.md {} email 0
+README.md {} email 0
+PR body {} email 0
+
+== local paths left in the folder

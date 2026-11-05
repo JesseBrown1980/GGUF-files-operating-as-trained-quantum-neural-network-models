@@ -1,0 +1,10 @@
+PERIOD|N=243|nmax=150|delta=-5/4|s=1/4|t_minA1=7.1650|law_2pi_over_w=8.3776|ratio=0.85526|(1-ratio)N=35.17|edge_weight_max_e18=0|json=0
+PERIOD|N=729|nmax=150|delta=-5/4|s=1/4|t_minA1=7.7690|law_2pi_over_w=8.3776|ratio=0.92735|(1-ratio)N=52.96|edge_weight_max_e18=0|json=0
+PERIOD|N=2187|nmax=150|delta=-5/4|s=1/4|t_minA1=8.1308|law_2pi_over_w=8.3776|ratio=0.97054|(1-ratio)N=64.44|edge_weight_max_e18=0|json=0
+PERIOD|N=6561|nmax=150|delta=-5/4|s=1/4|t_minA1=8.2873|law_2pi_over_w=8.3776|ratio=0.98922|(1-ratio)N=70.72|edge_weight_max_e18=183|json=0
+PERIOD|N=59049|nmax=150|delta=-5/4|s=1/4|t_minA1=8.3671|law_2pi_over_w=8.3776|ratio=0.99875|(1-ratio)N=73.77|edge_weight_max_e18=64177|json=0
+PERIOD|N=243|nmax=200|delta=-2|s=1|t_minA1=3.4127|law_2pi_over_w=3.6276|ratio=0.94075|(1-ratio)N=14.40|edge_weight_max_e18=0|json=0
+PERIOD|N=729|nmax=200|delta=-2|s=1|t_minA1=3.5411|law_2pi_over_w=3.6276|ratio=0.97616|(1-ratio)N=17.38|edge_weight_max_e18=0|json=0
+PERIOD|N=2187|nmax=200|delta=-2|s=1|t_minA1=3.5974|law_2pi_over_w=3.6276|ratio=0.99168|(1-ratio)N=18.19|edge_weight_max_e18=0|json=0
+PERIOD|N=6561|nmax=200|delta=-2|s=1|t_minA1=3.6172|law_2pi_over_w=3.6276|ratio=0.99714|(1-ratio)N=18.74|edge_weight_max_e18=0|json=0
+PERIOD|N=59049|nmax=200|delta=-2|s=1|t_minA1=3.6264|law_2pi_over_w=3.6276|ratio=0.99968|(1-ratio)N=19.07|edge_weight_max_e18=0|json=0

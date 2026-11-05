@@ -1,0 +1,19 @@
+MATHIEU_CHECK|q=1|slope_b=2^-16=417999.0381|slope_b=2^-24=417999.0381|my_vector=417996.3603|route_mathieu=417999.0381|json=0
+MATHIEU_CHECK|q=100001/100000|slope_b=2^-16=418001.9769|slope_b=2^-24=418001.9769|my_vector=418001.9769|route_mathieu=418001.9769|json=0
+MATHIEU_CHECK|q=99999/100000|slope_b=2^-16=417996.0993|slope_b=2^-24=417996.0993|my_vector=417996.0993|route_mathieu=417996.0993|json=0
+MATHIEU_CHECK|q=9/10|slope_b=2^-16=387310.8794|slope_b=2^-24=387310.8794|my_vector=387310.8794|route_mathieu=387310.8794|json=0
+MATHIEU_CHECK|q=11/10|slope_b=2^-16=446134.7520|slope_b=2^-24=446134.7520|my_vector=446134.7520|route_mathieu=446134.7520|json=0
+MATHIEU_CHECK|q=5/4|slope_b=2^-16=483899.6781|slope_b=2^-24=483899.6781|my_vector=483899.6781|route_mathieu=483899.6781|json=0
+MATHIEU_CHECK|q=3/4|slope_b=2^-16=336234.0824|slope_b=2^-24=336234.0825|my_vector=336234.0825|route_mathieu=336234.0825|json=0
+MATHIEU_CHECK|q=1/2|slope_b=2^-16=237404.8492|slope_b=2^-24=237404.8492|my_vector=237404.8492|route_mathieu=237404.8492|json=0
+MATHIEU_CHECK|q=2|slope_b=2^-16=612337.0338|slope_b=2^-24=612337.0338|my_vector=612337.0338|route_mathieu=612337.0338|json=0
+MATHIEU_CHECK|q=1/16|slope_b=2^-16=31223.3330|slope_b=2^-24=31223.3330|my_vector=31223.3330|route_mathieu=31223.3330|json=0
+MATHIEU_CHECK|q=1/4|slope_b=2^-16=123327.0244|slope_b=2^-24=123327.0244|my_vector=123327.0244|route_mathieu=123327.0245|json=0
+MATHIEU_CHECK|q=4|slope_b=2^-16=744149.3071|slope_b=2^-24=744149.3071|my_vector=744149.3071|route_mathieu=744149.3072|json=0
+MATHIEU_CHECK|q=16|slope_b=2^-16=874846.3393|slope_b=2^-24=874846.3393|my_vector=874846.3393|route_mathieu=874846.3393|json=0
+MATHIEU_CHECK|q=64|slope_b=2^-16=937483.1426|slope_b=2^-24=937483.1426|my_vector=937483.1426|route_mathieu=937483.1427|json=0
+MATHIEU_CHECK|q=9/625|slope_b=2^-16=7199.6734|slope_b=2^-24=7199.6734|my_vector=7199.6734|route_mathieu=7199.6734|json=0
+MATHIEU_CHECK|q=4/675|slope_b=2^-16=2962.9402|slope_b=2^-24=2962.9402|my_vector=2962.9402|route_mathieu=2962.9402|json=0
+# route's level at q - 2^-16, q + 2^-16 near q = 1, from tridiagonal_level with both widths
+ROUTE_LEVEL|value=65535/65536|lo=-0.455125847857535269|hi=-0.455125847857532492|mine=-0.455125847857533943|json=0
+ROUTE_LEVEL|value=65537/65536|lo=-0.455151360494142694|hi=-0.455151360494139916|mine=-0.455151360494141842|json=0

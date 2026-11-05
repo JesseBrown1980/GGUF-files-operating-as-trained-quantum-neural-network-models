@@ -1,0 +1,23 @@
+band delta=-1 N>=243 rows=72: <A> sign same as y on 0, opposite on 72 ; f_pred<=1/10 rows=45: same 0, opposite 45 ; <B> positive 45, negative 0
+band delta=-3/4 N>=243 rows=72: <A> sign same as y on 0, opposite on 72 ; f_pred<=1/10 rows=41: same 0, opposite 41 ; <B> positive 41, negative 0
+band delta=-1/2 N>=243 rows=72: <A> sign same as y on 0, opposite on 72 ; f_pred<=1/10 rows=40: same 0, opposite 40 ; <B> positive 40, negative 0
+band delta=0 N>=243 rows=72: <A> sign same as y on 0, opposite on 72 ; f_pred<=1/10 rows=39: same 0, opposite 39 ; <B> positive 39, negative 0
+band delta=1/2 N>=243 rows=72: <A> sign same as y on 0, opposite on 72 ; f_pred<=1/10 rows=42: same 0, opposite 42 ; <B> positive 42, negative 0
+band delta=3/4 N>=243 rows=72: <A> sign same as y on 0, opposite on 72 ; f_pred<=1/10 rows=48: same 0, opposite 48 ; <B> positive 48, negative 0
+band delta=1 N>=243 rows=72: <A> sign same as y on 72, opposite on 0 ; f_pred<=1/10 rows=56: same 56, opposite 0 ; <B> positive 56, negative 0
+outside delta=-2 N>=243 rows=60: <A> sign same as y on 0, opposite on 60 ; f_pred<=1/10 rows=54: same 0, opposite 54 ; <B> positive 51, negative 3
+outside delta=-5/3 N>=243 rows=60: <A> sign same as y on 0, opposite on 60 ; f_pred<=1/10 rows=50: same 0, opposite 50 ; <B> positive 48, negative 2
+outside delta=-5/4 N>=243 rows=60: <A> sign same as y on 0, opposite on 60 ; f_pred<=1/10 rows=36: same 0, opposite 36 ; <B> positive 34, negative 2
+outside delta=5/4 N>=243 rows=60: <A> sign same as y on 60, opposite on 0 ; f_pred<=1/10 rows=55: same 55, opposite 0 ; <B> positive 55, negative 0
+outside delta=5/3 N>=243 rows=60: <A> sign same as y on 60, opposite on 0 ; f_pred<=1/10 rows=60: same 60, opposite 0 ; <B> positive 60, negative 0
+outside delta=2 N>=243 rows=60: <A> sign same as y on 60, opposite on 0 ; f_pred<=1/10 rows=60: same 60, opposite 0 ; <B> positive 60, negative 0
+PIN t=1 A1 exact from A_ppb=0.00211353, A1_ppm field=2113, law=0.00212141 ; read/first(README w1) from A_ppb=1.00004 ; from A1_ppm=0.99979
+PIN t=2 A1 exact from A_ppb=0.01038876, A1_ppm field=10388, law=0.01078983 ; read/first(README w1) from A_ppb=1.00322 ; from A1_ppm=1.00315
+PIN t=3 A1 exact from A_ppb=0.02794116, A1_ppm field=27941, law=0.03542055 ; read/first(README w1) from A_ppb=1.17518 ; from A1_ppm=1.17517
+the s^2 term in w1 on conversion rows, delta=0:
+  N=729 s=1 t=1 read/law=0.9938 read/(law+full first)=1.0001 read/(law+README w1)=0.9975
+  N=729 s=1 t=2 read/law=0.9359 read/(law+full first)=1.0084 read/(law+README w1)=0.9752
+  N=729 s=2 t=1 read/law=0.9863 read/(law+full first)=1.0003 read/(law+README w1)=0.9900
+  N=729 s=2 t=2 read/law=0.8637 read/(law+full first)=1.0363 read/(law+README w1)=0.9000
+  N=729 s=4 t=1 read/law=0.9573 read/(law+full first)=1.0019 read/(law+README w1)=0.9609
+  N=729 s=4 t=2 read/law=0.6614 read/(law+full first)=1.4549 read/(law+README w1)=0.6892

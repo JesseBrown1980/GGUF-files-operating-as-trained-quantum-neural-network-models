@@ -1,0 +1,6 @@
+closed_ppb against own on 240 rows: largest relative off 4.703 e-9; rows off by over 1e-8: 30
+predicted_A1_ppm against own on 24 rows: largest off 0.95 ppm
+polariton/read_prediction.py float( hits 0 math float funcs 0 imports ['import sys', 'from fractions import Fraction as F', 'from math import isqrt']
+polariton/second_route.py float( hits 0 math float funcs 0 imports ['import sys', 'from fractions import Fraction as F', 'from math import factorial, isqrt']
+C1 over 4(1-d)jbar/N on 41 rows: range 0.9828 1.0286
+C1*N on ordered rows N>=19683: range -1444112 -637630 ppm

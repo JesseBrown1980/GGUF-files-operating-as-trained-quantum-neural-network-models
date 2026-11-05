@@ -1,0 +1,15 @@
+LEAP_STEP|N=6561|x=-1|t=1|2^-15_vs_2^-17|jbar=1379923404|1379923403|rel=7.25e-10|phase=858|858|C1=841|841|energy_off=0|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=-1|t=2|2^-15_vs_2^-17|jbar=13054094865|13054094855|rel=7.66e-10|phase=6147|6147|C1=7943|7943|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=-1|t=3|2^-15_vs_2^-17|jbar=94726714750|94726714652|rel=1.03e-09|phase=41218|41218|C1=56966|56966|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=-1|t=4|2^-15_vs_2^-17|jbar=524243338996|524243338527|rel=8.95e-10|phase=186415|186415|C1=299797|299797|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=-1|t=6|2^-15_vs_2^-17|jbar=1260511142858|1260511143627|rel=-6.10e-10|phase=326533|326533|C1=684946|684946|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=-1|t=8|2^-15_vs_2^-17|jbar=130577601243|130577601257|rel=-1.07e-10|phase=137694|137694|C1=75966|75966|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=0|t=1|2^-15_vs_2^-17|jbar=999482162|999482162|rel=0.00e+00|phase=-999314|-999314|C1=-1|-1|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=0|t=2|2^-15_vs_2^-17|jbar=3990646207|3990646205|rel=5.01e-10|phase=-997951|-997951|C1=-2|-2|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=0|t=3|2^-15_vs_2^-17|jbar=8930298751|8930298747|rel=4.48e-10|phase=-995721|-995721|C1=-8|-8|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=0|t=4|2^-15_vs_2^-17|jbar=15678717110|15678717104|rel=3.83e-10|phase=-992745|-992745|C1=-24|-24|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=0|t=6|2^-15_vs_2^-17|jbar=33063500034|33063500026|rel=2.42e-10|phase=-985788|-985788|C1=-96|-96|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=6561|x=0|t=8|2^-15_vs_2^-17|jbar=50593582693|50593582693|rel=0.00e+00|phase=-980642|-980642|C1=-200|-200|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=19683|x=-1|t=1|2^-17_vs_2^-18|jbar=1380706083|1380706083|rel=0.00e+00|phase=286|286|C1=280|280|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=19683|x=-1|t=2|2^-17_vs_2^-18|jbar=13120552380|13120552379|rel=7.62e-11|phase=2070|2070|C1=2664|2664|energy_off=-1|-1|norm_off=-1|-1|json=0
+LEAP_STEP|N=19683|x=-1|t=3|2^-17_vs_2^-18|jbar=98387836136|98387836132|rel=4.07e-11|phase=14778|14778|C1=19896|19896|energy_off=-1|-1|norm_off=-1|-1|json=0

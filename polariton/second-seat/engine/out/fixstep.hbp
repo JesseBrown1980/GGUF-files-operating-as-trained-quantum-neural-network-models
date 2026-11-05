@@ -1,0 +1,4 @@
+POLARITON_SECTOR|N=43046721|u=1/2|x=1/2|P=0|e_at_2^60=-26686610913|e_ppb=-24|f_ppb=4903|jbar_ppb=105535427678|gap_ppb=11037825|C1_ppm=-1|C1_times_N_ppm=-1992801|C2_ppm=0|fd_step=2^-28|json=0
+POLARITON_SECTOR|N=14348907|u=1/2|x=1/2|P=0|e_at_2^60=-79932102973|e_ppb=-70|f_ppb=10180|jbar_ppb=73040501799|gap_ppb=15916573|C1_ppm=-1|C1_times_N_ppm=-1989621|C2_ppm=0|fd_step=2^-27|json=0
+POLARITON_SECTOR|N=23887872|u=1/2|x=1/2|P=0|e_at_2^60=-48052501676|e_ppb=-42|f_ppb=7254|jbar_ppb=86647727966|gap_ppb=13430782|C1_ppm=-1|C1_times_N_ppm=-1991241|C2_ppm=0|fd_step=2^-27|json=0
+POLARITON_SECTOR|N=1594323|u=1/2|x=1/2|P=0|e_at_2^60=-715348213102|e_ppb=-621|f_ppb=43764|jbar_ppb=34887078201|gap_ppb=33087652|C1_ppm=-2|C1_times_N_ppm=-1985638|C2_ppm=0|fd_step=2^-26|json=0

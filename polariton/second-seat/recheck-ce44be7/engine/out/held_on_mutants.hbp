@@ -1,0 +1,13 @@
+HELD_BASE|rc=0|rows=1749|miss=49|json=0
+HELD_READ|id=R19_energy_off_zero|panic=none|rc=0|new_miss=4|families=control_no_bose_energy_moves|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=Q01_quench_energy_A_sign|panic=none|rc=0|new_miss=1|families=quench_pin_energy|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=Q03_jbar_over_N_not_per_N|panic=none|rc=0|new_miss=0|families=none|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=Q04_band_largest_constant|panic=none|rc=0|new_miss=1|families=band_column_is_the_rows|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=L08_tol_2^34|panic=none|rc=0|new_miss=2|families=lanczos_converged_POLARITON_PIN,lanczos_converged_POLARITON_PIN_WINDOW|held_route=full:rows=53:bad=0,convert:same_rows|err=|json=0
+HELD_READ|id=C12_energy_zero|panic=none|rc=0|new_miss=8|families=conversion_energy_rebuilt|held_route=full:same_rows,convert:rows=4:bad=0|err=|json=0
+HELD_READ|id=C05_f_not_per_N|panic=none|rc=0|new_miss=0|families=none|held_route=full:same_rows,convert:rows=4:bad=4|err=|json=0
+HELD_READ|id=C15_delta_quarter|panic=none|rc=0|new_miss=1|families=conversion_grid_as_frozen|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=TC3_one_point_only|panic=none|rc=0|new_miss=1|families=rows_POLARITON_TAYLOR_CONVERT|held_route=full:same_rows,convert:rows=1:bad=0|err=|json=0
+HELD_READ|id=R20_quench_c1_uses_big2|panic=none|rc=0|new_miss=0|families=none|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=W07_P2_sum_not_difference|panic=none|rc=0|new_miss=0|families=none|held_route=full:rows=53:bad=20,convert:same_rows|err=|json=0
+HELD_DONE

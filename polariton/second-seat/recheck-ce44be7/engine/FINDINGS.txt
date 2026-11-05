@@ -1,0 +1,443 @@
+FINDINGS, second seat, lane = recheck of the engine, reader and route at the fourth run. QNN repo, branch fable5-polariton-three-mode-20261104, PR #8, head ce44be742d9d59d07bb8ec8a9ed6a559da4ec0bd.
+Tags: MEASURED (a number from a named script here), DERIVED (by hand from the code or the model), NAMED, CONJECTURE, CANNOT_SEE. Paths are under C:/tmp/opus55/polariton-recheck-engine-20261105/.
+Head check: git -C C:/tmp/qnn-polariton-wt rev-parse HEAD printed ce44be742d9d59d07bb8ec8a9ed6a559da4ec0bd. Nothing in the worktree was changed: builds wrote to a target folder here, everything else to out/. No push, no comment.
+Rust 1.81.0 for every build. My readers are Python integers and exact rationals; they share no code with the engine or the reader. mutants_def.py and mutate_run.py reuse the 8dfa11a lane's tools.
+
+F5 (task step 5) The fourth run's binary is this head's source. MEASURED, tools/pe_diff.py, out/pe_diff_wt.hbp, out/pe_diff_clean.hbp.
+  Ran: cargo +1.81.0 build --release --locked --offline --bin polariton_three_mode twice, once from the worktree (target in my folder), once from a git archive of this head at another path.
+  Read: both are 447,488 bytes like C:/tmp/qnn-polariton-out/fourth/polariton_three_mode.exe (sha 5104e901..., which equals the sha of C:/tmp/qnn-target-20261104/release/polariton_three_mode.exe). Against each build the file differs in 24 bytes and no more: the 4-byte link time stamp in 4 places (low 2 bytes differ) and the 16-byte PDB GUID. .text, .data, .pdata, .reloc and the rest of .rdata are byte-equal. Fresh shas 0608e43e... (worktree) and 3f9d0bbd... (other path) differ from 5104e901... only by those fields, and the stamp 1793853005 is 2026-11-05 01:30 local, the file's own time.
+  Could still be wrong: a PE stamp and GUID carry no code, so nothing I can name. That the fourth run's stages were produced by this binary rests on run.sh and on F4's cmp of the stage rows.
+
+F1 (task step 1) The 24 code holds, each against the blob at this head. MEASURED, tools/holds_check.py, out/holds_check.hbp, then read by eye.
+  Every OLD was in the 8dfa11a blob once. Every NEW is at this head as written, except where a later change extended it; those are named here.
+  H1, H1b, H1c, H1d: applied byte for byte. o^2 at 2^90 by five limbs of 18 bits, floor exact. TOOK EFFECT: F1a below.
+  H1e: applied byte for byte. Lanczos beta^2 >> 30, the same 2^90. twisted_vector keeps its own b2 at 2^60, as it did: it only sets the Ritz vector, and the residual is computed after it.
+  H2: applied. m = 20 + power/2. MEASURED, tools/tag_compare.py: all 43 critical rows print fd_step = 20 + power/2 (2^-28 at 3^16, 2^-27 at 23,887,872, where power = 15), the other 177 P = 0 rows 2^-20.
+  H3, H3b, H3c: applied. TOP has the four N, reached at (1/2, 0) and (delta = 2, u = 1/2). The read gained 28 rows (e, f, gap, C2, C1N at four N and jbar, gap at four N), all MET.
+  H4, H4b, H4c, H4d, H4e: applied. The reader's closed forms are its own; the engine's closed_ppb, predicted_C1_ppm, predicted_A1_ppm and ratio_ppm now only reach the printed read= and predicted= columns of those rows. The else True is gone. R16, R17, R18: see the mutation table.
+  H5: applied, and extended with POLARITON_PIN_WINDOW 196 and POLARITON_QUENCH_CONVERSION 94 in the count list; the hand block is byte-equal.
+  H6: applied byte for byte; the literal line now sits under a comment from the older text, harmless.
+  H7, H7b: applied. H7c: extended by even=False after kappa_n. H7d: refactored into below_count, passing kappa_b and kappa_n. H7e: applied. Effect intact: 53 rows at N <= 3 read C2 against the route, R07 and R13 see F2a.
+  H8: applied byte for byte. H8b: applied with convert_compare between. H8c: applied, both lines, and convert_compare added above them.
+  Verdict on step 1 application: all 24 took effect as meant. REFUTED nothing here.
+  F1a What the holds did to the rows. MEASURED, out/tag_compare.hbp, third run against head by identity key:
+    byte-same: POLARITON_TAYLOR_POINT 6/6, CONTROL 4/4, REVERSAL 5/5, WAVEVECTOR 3/3, QUENCH 240/240, QUENCH_BAND 40/40, QUENCH_OTHER_U 8/8, QUENCH_PIN 54/54, SECTOR_EQUALS_FULL 2/2. So the holds moved no quench row.
+    moved: SECTOR 431 of 438 (e_at_2^60 by at most 2,748,959 units at N = 23,887,872, x = 3/2; jbar at most 503,635,437 ppb at N = 3^16, x = 1/2, from 106.039063115 to 105.535427678; gap at most 113,607 ppb); PIN 94 of 172, by the Lanczos path through H1e (E 0 ppb, A at most 16 ppb, B at most 726 ppb at N = 243, u = 0, x = 0, s = 1, cycles at most 13 more); SYMMETRY 2 of 2 (B 1 ppb).
+    So <B> at ppb on a pin row carries about 1e-6 of path dependence at u = 0, against a printed 1e-9. No row reads it that finely.
+  Could still be wrong: this reads effect at the rows run. F1b is the attack on the new paths.
+
+F3 (task step 3) Reader honesty. MEASURED unless marked. tools/read_compare.py, out/read_compare.hbp, out/read_diff.hbp, tools/frozen_table.py, out/frozen_table.hbp, tools/rows_audit.py, out/rows_audit.hbp, tools/reader_tests.py, out/reader_tests.hbp.
+  F3a Reproduction. The reader at this head on the filed receipt, on this machine, after CR removal (Python on Windows writes CRLF): byte-equal to polariton/READ.hbp, met 1422, miss 35.
+  F3b The frozen f(q) tables are typed right. Read out of the reader's source by the ast, with nothing run: FQ equals row 15's six values, INSIDE equals row 37's five points and thirty values. Then my own Mathieu read, from the ground vector by backward recursion at 2^400, no slope and no code shared with second_route.py: all 36 values equal to the frozen ppm, largest off 0.
+  F3c Tolerances at the frozen rows.
+    Row 37, POLARITON_WINDOW_INSIDE: D2 20%, A1/y 2% at N = 243, five points; D2 10%, A1/y 1% at N = 729, two points. Reader applies exactly these. want_d = 2 rho f and want_a = 2[1 + (u/8c0)(1 + f)] as written. D2 and A1/y read from B_ppb and A_ppb, not from the ppm columns. Sound.
+    Row 37, reader's own addition: window_inside_B_negative, 42 rows. Row 37 has no sign. All 42 meet, and so do A positive and B negative on every inside row at N >= 243. README line 82 says 'met 126 of 126, against D2 within 20% ... and A1/y within 2% and 1%': those tolerances are 84 reads, the other 42 are the sign.
+    Row 38, POLARITON_WINDOW_BELOW: P2 >= 98%, E = xN within 1e-6 at s = 0, A1/y 1% at s >= 1/2, D2/y^2 5% at s >= 4, as frozen. sign_<B>=sign(u-x-1) is frozen with no limit on s, and the reader reads it at s >= 4 only: 18 rows at s = 1/2, 1, 2 unread. Read here: all 18 have the frozen sign. Narrowing with no effect on a verdict. Hold H4.
+    Row 39, POLARITON_QUENCH_CONVERSION: J0, A1, C1, Y, V2, n_coh, D2, f as frozen; I checked each line against the row, and tanh^2(gamma t/2) = (cosh - 1)^2/sinh^2 by hand (DERIVED). f_want gates: <= 1/10 for V2, <= 1/20 for A1, C1, D2, computed from the predicted f as the row says, at N >= 243. Energy on all 94.
+    Row 39, narrowing: <A>_negative_at_y>0 and <B>_positive are frozen with no gate, and the reader reads them only inside the V2 gate: 58 of the 188 sign reads. Read here on all 94 rows: A negative 94 of 94; B positive 93 of 94. The exception is N = 81, delta = 0, y = 4/9, t = 3, B_ppb = -122153693, f_want = 74.6. So the gate hides 1 miss, at N = 81, on a row far outside the law's range. Hold H3 reads all 188: 187 met, 1 missed.
+    Row 15, row 18, row 19, row 20, row 21, row 22, row 23, row 24, row 26, row 28: read as at 8dfa11a, with the closed forms now the reader's own. jbar > 1/100 filter, delta = 0 floor and delta = 1 C1 skip stand, as README line 144 states.
+    Row 40 (route): 'the window rows at N=3,9 by exact inertia'. The route reads all 21 at N = 3 and s = 4 only at N = 9, 3 of 21. README line 171 states one pinned row per point. See F3g.
+  F3d Did the fourth run's reader change any older verdict? No. polariton/third-run/READ.hbp against polariton/READ.hbp: 918 old rows all present, verdict_changed 0, predicted_changed 0, read_changed 61, new rows 539 of which 4 missed (conversion_C1).
+    The head reader run on the third-run receipt reproduces all 918 old rows with read_changed 0 and verdict_changed 0. So the reader's change moved no old row at all; the 61 moves are the engine's. It adds 139 rows there, of which 92 miss, 84 of them no_row since that receipt has no window rows.
+    The 61 rows, with old and new, are in out/read_changed_61.txt and below at the end of this file. Sizes: critical_jbar_ratio_u=1/2_N=14348907_to_43046721 145090 to 144488, 4149 ppm; critical_gap_ratio there 69369 to 69347, 317 ppm; every other row at most 532 ppm, most under 10 ppm. None moved between met and missed.
+  F3e Exit behaviour. The reader exits 0 at 35 misses, and at any number of misses. It exits 1 only on a crash.
+    One tag removed: 0 exit and a rows_ miss for every tag it counts. POLARITON_PIN removed: exit 1, TypeError. POLARITON_TAYLOR_POINT, POLARITON_TAYLOR_CONVERT, POLARITON_QUENCH_OTHER_U removed: 0 exit, 1422 met, 35 missed, no row changes: the first two are the route's (compare returns 1 on an empty read), the third has no prediction.
+    Eight tags removed (the 8dfa11a test): met 1392, miss 41, exit 0, six rows_ misses named. At 8dfa11a that read 434 met, 1 missed. H5 of the earlier lane took effect.
+    One row deleted: a rows_ miss, in all 7 paths that stay up. A deleted POLARITON_QUENCH_PIN or POLARITON_PIN row crashes the reader, exit 1 (IndexError, TypeError).
+    One row deleted and another row of its tag written twice, so the tag's count stands: NO rows_ miss, exit 0, on POLARITON_QUENCH_CONVERSION, POLARITON_QUENCH, POLARITON_SECTOR (rotor and top rung), POLARITON_QUENCH_BAND, POLARITON_REVERSAL. On the two missed rows tried, the miss count falls to 34 with no row saying so. With the top critical row N = 3^16 deleted, the ratio rows move down one rung and all meet. So README line 144's 'counts rows per tag, so a missing row is a miss' holds for a plain deletion. REFUTED for a swap. In the workflow the receipt hash and the cmp of the stages catch it; the reader alone does not. Hold H5, tested in F3h.
+    Field removed from a row: KeyError, exit 1. A value pushed to a miss: met 1420, miss 37, exit 0.
+  F3f Can a miss fail the job? No, by design. The reader's exit is 0 at any count, and the step is reader > read.hbp then cmp read.hbp polariton/READ.hbp. So the job fails on a change from the filed read, a new miss or a new met alike, and never on a filed miss. The header of the reader says so ('a miss stays a miss'), the step name says 'the one on file'. Tested with the pin steps in F4.
+  F3g The 18 N = 9 window rows the route skips. See the end of this file for the run.
+  Could still be wrong: F3c is my reading of the frozen text; a reader of row 39 could take the N >= 243 scope to cover the signs. Then H3 is a choice and not a fault. The rows are what they are either way.
+
+F4 (task step 4) Filing. MEASURED through git show, so CRLF in the worktree cannot mislead. tools/filing_check.py, out/filing_check.hbp, tools/pin_steps.sh, out/pin_steps.hbp, out/sample_cmp.hbp.
+  Pins: RECEIPT.hbp, read_prediction.py, READ.hbp, second_route.py, SECOND-ROUTE.hbp each hash at this head's blob to the value in .github/workflows/polariton.yml, each blob with 0 CR. receipt_sha256 in PREDICTION.hbp row 42 equals the pin.
+  First 29 rows: sha 91d6a6e7..., equal to the pin and equal to the whole file at fce08f9 (29 rows, byte-equal).
+  PREDICTION.hbp growth: the file at fce08f9 (29 rows), 099b0c6 (32), 8dfa11a (33), 89a026a (41) is each a byte prefix of this head's (44). Since 89a026a it gained 3 rows, all POLARITON_ATTEMPT run=fourth. Since 8dfa11a it gained 11. So rows 36 to 41, the added predictions, stand as pushed at 89a026a: sha of those six rows f79daa9d... at both.
+  Receipt assembly: the stage outputs in C:/tmp/qnn-polariton-out/fourth/*.out in the workflow's order, with POLARITON_DONE lines dropped and the workflow's final line added, give 1269 rows with sha 347480a5..., byte-equal to the blob. Every .out has 0 CR and one POLARITON_DONE. READ.out, route.out, route-first-read.out are byte-equal to READ.hbp, SECOND-ROUTE.hbp, SECOND-ROUTE-FIRST-READ.hbp.
+  Third run: polariton/third-run/RECEIPT.hbp, READ.hbp, SECOND-ROUTE.hbp, TIMING-LOCAL-20261104.hbp are byte-equal to the 8dfa11a blobs of polariton/ of the same name.
+  First run: git diff 8dfa11a..head on polariton/first-run is empty, and its only commit is 099b0c6.
+  Fresh build, my clean copy of this head: taylor, control, reversal, wavevector, rotor: 10, 4, 5, 3, 218 rows, each a contiguous slice of RECEIPT.hbp in place, at rows 1, 11, 15, 20, 23. Each also byte-equal to the fourth run's .out.
+  Reader and route, my rerun on this machine, after CR removal: byte-equal to READ.hbp and to SECOND-ROUTE.hbp (hand, taylor, convert, sector to 243, full to 9, top from 59049, mathieu), 1305 s of route here. Rows: taylor 6, convert 4, sector 143 largest 1 unit, full 60, top 44 largest 24 ppm and 0 ppm, all bad = 0. This is a rerun of the author's route, so it shows reproduction and carries no second opinion.
+  fmt, clippy (debug and --release, -D warnings), build on 1.81 on my clean copy: exit 0. SCOPED to this machine; the owning gate is the hosted job, see the end of this file.
+  What the workflow catches, run on a copy with one edit each (the pin steps' own commands):
+    reader edited: fails at the reader pin.
+    a frozen row among the first 29 edited: fails at the 29-row hash.
+    an added prediction edited (row 39, V2 5 percent to 50; row 37, D2 20 percent to 40): every pin passes, and no later step reads those rows. The reader's tolerances are typed in the reader, so a read would not move. Fault: the prediction rows of 89a026a have no hash in the job. Hold H6.
+    Cargo.toml edited, overflow-checks = false: the job triggers, the pins pass. Built here that way, taylor, control, rotor print byte-equal rows, and the instrumented run shows no overflow on the rows run, so the cmp passes too (DERIVED for the stages not run). So the job does not see the profile. README line 185 says a step 4 times larger panics at its check; that check is this line. Hold H6.
+    .gitattributes edited: the job triggers, the pins pass, nothing reads it. A hosted checkout writes LF either way, DERIVED, so it costs nothing there; a Windows checkout would break the pins. Hold H6 pins it too.
+    Trigger paths: Cargo.toml, Cargo.lock, .gitattributes are in. rust-toolchain.toml is out, and every cargo command carries +1.81.0, so it cannot move the build.
+  Second-seat filing, a fault: polariton/second-seat/SHA256SUMS lists 102 files. 15 are tracked; 87 are absent from the commit: derivations/out/* (18) and engine/out/* (69). .gitignore line 2, 'out/', ignores them (git check-ignore names that line). They exist only in this worktree. So a clone cannot verify 85 percent of the sums, and the operator's standing word is that nothing stays local. Hold H7.
+  TIMING-LOCAL-20261104.hbp: 687 rows, a machine row plus each stage's .err with |stage=..|json=0 added; the file is not a plain concatenation, as filing_check reports, and sorted-field comparison was not run. It carries no claim beyond time. Sum of the stages' whole rows 5,788,883 ms = 96.5 min, against row 44's 97 and row 41's 240.
+  Could still be wrong: the Linux side of the cmp is the hosted job's. Mine is Windows, which earlier runs matched byte for byte.
+
+F1b (task step 1, the code outside the holds). Read line by line at this head: window_row, pin_chain_with, run_window, conversion_chain, run_conversion, the Taylor convert rows, even_block and its use, convert_point, compare_convert. DERIVED by hand from the code unless marked.
+  run_window. Rows: 7 per chain, N = 3, 9 at 3 points, N = 81, 243 at 9 points, N = 729 at 4 points, 196 in all, as the count list says. u, x, s, y = s/N as frozen; y prints unreduced (16/243), which F() reads. Each chain starts generic even at s = 16, warm-starts down, and starts again generic at s = 0.
+    Warm start tested: W10 (chain upward from s = 0) and W11 (generic start at every s) on N <= 243 in the mutation table: same branch, A at most 25 ppb, B at most 354 ppb in W10. So no row at N <= 243 sits on a level the warm start reached and a generic start does not. N = 729: CANNOT_SEE in this lane by this test.
+    window_row: charge_squared at 2^60 from the same floored weights as read(), divided by N^2, then ppm over the norm, truncated. So P2_over_N2_ppm is low by at most 2 ppm, and reads 1000000 at s = 0 on the plane-wave rows. Units right. Exact read at N = 3 with my own route copy: 21 of 21 within 1 ppm, largest 0.966 ppm, with a step of 2^-18 (out/held_route_full3.hbp). MY FIRST STEP WAS WRONG, retraction beside the claim: at 2^-14 one row, N = 3, u = 1, x = -1/4, y = 1/6, read 0.827551 against the engine's 0.827567. Steps 2^-18, 2^-22 read 0.827567302, 0.827567364. The engine stood, my difference was off.
+  conversion_chain. x = delta - 1, u = 1, from |N,0,0>, state carried across t with steps (t - now) << k, each advance opening and closing with a half kick. Fields in the order of the format string: u, x, y, delta, jbar, f, A, B, C1, C2, energy, norm. Signs and units: <A> = Re<a0^dag a+> + Re<a-^dag a0> and E has -2y<A>: right. E(0) = 0 from |N,0,0>, so the printed value is E(t) and needs no subtraction. C1, C2 as frozen. y = s/9, s/16, s/27, s/47 as frozen. s = 1/4, 1/2, 1, 2, 4; t as frozen; 94 rows.
+    Taylor convert rows: conversion_chain at k = 16 on 4 points at N = 9, 27. So convert_compare reads the read-out and not the production step. MEASURED, out/exact_conv81.hbp: see F1d.
+  even_block. T^t S T with T = |p,m> + |m,p> on p >= m, S = W(H - lam)W, W diagonal and even, so Sylvester gives the inertia of H - lam on the even space. kappa_b: W_i W_t <t|B|i> = norm (m + 1) by hand, as written. The block is used for <B> only, E and <A> stay on the whole space, so a row whose ground state is odd would still show on E. N = 3 doublet (3/4)(1 + 1/sqrt 73): I derived it by hand from the 2 by 2 blocks, 0.83778. Right.
+    convert_point: H on the unnormalised basis, weights n0! p! m!/N!, a-^dag a+ gives p |n0,p-1,m+1>', and so on: right. Series of 8N + 120 terms, guarded by its norm check.
+  read of y, t, N in the reader: F(r["y"]), int(r["t"]), int(r["N"]), and y = F(s)/n on window rows. Both fine at these rows. So a wrong printed y on a window row passes the reader (W06) and a wrong y grid on a conversion row passes it too (C14, in the table).
+  Could still be wrong in this block: my reading of the code is by hand, and the mutants in F2 are what test it. N = 729 and 2187 stay on filed rows there.
+  Truncation. ppb and ppm are floors toward minus infinity, and read() floors every product, biased negative. So a value that is exactly 0 prints 0 or -1: <B> reads -1 ppb on every s = 0 below-edge row (out/rows_audit.hbp), energy_off prints 0 or -1 on most rows with |E| under 1e-9, and the README's '<A> reads -1 ppb' at the tight residual is this floor. No sign read sits near it: the smallest size on a sign row the filed reader reads is 945,352 ppb (quench_pin_sign, N = 243, delta = 1, t = 1), then 3,512,690 ppb (window_below_B_sign), and hand_A, hand_B allow 10 ppb. With hold H4 the smallest is 54,884 ppb. So truncation touches no verdict.
+  F1d The production step with y on, against the exact unitary. MEASURED, tools/exact_conv81.py, out/exact_conv81.hbp. My own Taylor series of exp(-iHt) in the normalised Fock basis at 2^320, in integers, on all 30 rows at N = 81, step 2^-13, y up to 4/9 (y sqrt N = 4), terms up to 793, norm off under 1e-15. Largest off, read against exact: jbar 3,988e-9, <A> 3,598e-9, <B> 3,972e-9, C1 70e-9, C2 54e-9, all at delta = 0, y = 4/9, t = 2 (values there of order 10). V2 and D2 equal to the printed ppm within 1 ppm on all 30. So the leapfrog holds at its production step with the field on, at N = 81. The filed route reads 1e-9 at step 2^-16 on smaller N; this row sets the size at the production step. N = 243, 729: see the step test below.
+  F1c Overflow, wrap, panic at the rows run. MEASURED, tools/make_instrument.py, tools/run_inst.sh, out/inst/*.out, out/inst.log: a copy of the engine whose left shifts and narrowing casts count bits lost, at 16 sites (rescale, o^2 rem and quo << 18, ok << 30, sector_d shifts and cast, read << 64, build's num << bits and cast, element casts, apply cast, Lanczos casts, twisted z cast, row shifts).
+    Run: rotor, sector to 3^16 and 23,887,872, reversal, the heaviest window chain at N = 729 (u = 1, x = -1/4), the heaviest conversion chain at N = 729 (delta = 1/2, y = 4/27), and three chains at k + 2. Bits lost at every site: 0. Rows of those stages byte-in-receipt: rotor 218/218, sector 220/220, reversal 5/5, window 7/7, conversion 3/3.
+    A left shift is the one place overflow-checks does not look, so these were the sites to count. Margins, DERIVED: rem < N^4 = 2^101.4 at 3^16, and rem << 18 stays under 2^120; it would lose bits from N = 2^27.5, about 1.9e8. ok << 30: 2^84 << 30 = 2^114. read << 64 needs (p+1)(m+1)n0(n0-1) < 2^64, which holds to N about 185,000 and the rows stop at 19,683.
+    Panic: every one of the 11 stages' .err in the fourth run ends with its TIMING|whole row, so none panicked with checks on. N = 2187 conversion and the other window chains: bound by the same sizes, DERIVED, no count run.
+    So nothing wraps or panics at the rows run. Could still be wrong: a cast I did not list. I listed every 'as i64' and every '<<' in a read of the file, and the instrumented copy prints the same rows.
+  F1e The production step at N = 729. MEASURED, tools/step_read.py, out/step_read.hbp: the conversion chains delta = 1/2, y = 4/27; delta = 0, y = 4/27; delta = 1/2, y = 1/27 at 2^-14 against the filed 2^-12. Largest move on 9 rows: jbar 142,558e-9, <A> 155,171e-9, <B> 139,552e-9, C1 459e-9, C2 199e-9; V2 equal at the printed ppm on all 9, D2 within 1 ppm. The energy offset falls by 15.9, from -603 to -38 at delta = 1/2, y = 4/27, t = 1, as h^2. So the README's five digits of V2 and six of D2 stand against the step. The printed ppb of <A>, <B>, jbar at N = 729, y sqrt N = 4 do not: they carry about 1e-4.
+
+F3g The window rows the route skips at N = 9. MEASURED, tools/route_n9.py (a copy of second_route.py with that skip removed), out/route_n9_window.hbp: the other 18 of 21 window rows, E, <A>, <B> from exact inertia: rows = 18, bad = 0. E within 1e-9, <A> and <B> within 3.5e-6 at worst (N = 9, u = 1/4, x = -1/4, y = 2/9, <B> -0.520550080 against -0.520553526; the route's own step of 2^-14 is of that order, as at N = 3). So row 40's words hold on the rows, by my run; the filed route reads 3 of them. Hold H15 lets the filed route read them.
+
+F2-top The whole sector stage to 3^16 under seven mutants, with the real reader, sector_compare and top_compare. MEASURED, tools/top_run.py, out/top_run_final.hbp. X00 is the source with WORKERS = 4: all 220 rows byte-equal, new_miss 0, largest 1 unit, 24 ppm and 0 ppm.
+  X01 o^2 floored at 2^-60 (H1 undone): reader 0 new misses; sector route bad 0 of 143, 66 units; top route bad 4 of 44, 4,683 ppm on pairs, 370 ppm on gap. So the reader cannot see it and the top route can. H8 did what it was for.
+  X02 the old step 20 + 3 power/4 (H2 undone): reader 0; sector route bad 0; top route bad 0 of 44, at 183 ppm against the limit of 200. SURVIVED. It moves the takeover pairs at 3^16 from 105.535428 to 105.517888, against exact 105.537258, so the README table's 105.54 would read 105.52. Hold H16 brings the limit to 50 ppm, against the filed 24.
+  X03 o^2 quantised at 256 units of 2^-60: reader 6 new misses (jbar at x = 3/2 above 3^15, top ratios), sector route bad 9, top route bad 20.
+  X04 one limb fewer with the scale kept, a floor at 2^-72: reader 0, route bad 0, top 24 ppm; rows moved 58, at most one FD unit at 3^16 (105.535428 to 105.537933) and 14 ppb on a gap. So 2^-72 is already enough at these rows; 2^-90 has margin. Equivalent at the printed table.
+  X05 o^2 one unit of 2^-60 low: reader 0; sector route 120 units, bad 0; top route bad 6, 9,693 ppm. The 8dfa11a lane's CONJECTURE on S20 is now MEASURED.
+  X06 floor at 2^-80: reader 0, route bad 0, 15 rows moved, 24 ppm. Equivalent.
+  X07 floor at 2^-70: reader 0, route bad 0, 102 ppm, gap under 1 ppm. Under 200, dies at 50.
+
+F2 (task step 2) Mutation rerun on the final engine. MEASURED, tools/mutants_def.py, tools/mutants_more.py, tools/mutate_build.py, tools/mutate_build2.py, tools/mutate_run.py, tools/tally.py, out/mut/*/verdict.hbp and size.hbp. The table is at the end of this file.
+  How this read differs from the real one. The reader and the route are the files at this head, byte for byte, with nothing cut. Each mutant's lite-stage rows replace their partners in the whole filed receipt, so rows lite does not run keep their filed values. Lite: sector to 3^13 (3^14 up and 23,887,872 stay filed); quench at N = 81, 243, 729, 6561 (2187, 19683 stay filed); quench_pin at N = 81 as extra rows (243, 729 stay filed); pin to 243 (729 stays filed); reversal at N = 81, 243, 729 and a full N = 27 extra (full 243, sector 2187 stay filed); wavevector on a shorter grid; window to 243 (729 stays filed); conversion at N = 81 whole and N = 243 at s = 1/4, 1, 4, t = 1, 2 (the rest stays filed). Route lanes: taylor, convert, sector to 243, full to 3. The real route adds N = 9, top, hand, mathieu.
+  Base check: 1006 lite rows byte-equal to their filed partners, 29 lite-only rows (N = 81 quench_pin and equals_full, N = 27 reversal). The reader on the base reproduces every one of the 1457 filed reads but the three tag counts those extras move, rows_POLARITON_REVERSAL, _QUENCH_PIN, _SECTOR_EQUALS_FULL. So those three tags cannot show an absent row here. Route lanes at base: rows 6, 4, 143, 53, all bad = 0.
+  What follows from that: a kill is a real kill, since the rows read are rows a real run prints. A survivor may still die at a size lite did not rerun; I say so where I can see it. Three reads mix a lite row with a filed row (the 3^13 to 3^14 ratios at u = 1/2 and the N = 243 to 729 susceptibility); a move there can be an artefact, so they are counted apart as boundary and never as a kill.
+  Reported apart: reader_value = a read moved from MET to MISS on a number. reader_absent = 'no_row' or a tag count. route = a lane's bad > 0. A lane that still exits 0 on another row count is no kill: only the workflow's cmp sees it. panic = nonzero exit or a stage timeout of 900 s; a timeout is reported as what it is.
+  Group F (F01 to F11, T01, T03, T04, T05, R01 to R09, S09) was killed whole at 8dfa11a, so its stages ran in batches, cheapest first, stopping at the first batch with a reader value miss. So its family lists are a lower bound, and stages_run in each verdict names what ran. Every other group ran all its stages.
+  Moved match strings: o^2 mutants S01, S02, S03 now edit the one integer product; S09 moved to group F since root_bits no longer feeds the sector; S20 is one unit of 2^-60 on the 2^90 value; R20 is anchored to quench_rows; R10 to R15 run pin and window, R16 to R20 the quench stages; the rest apply as they did.
+  F2a Results. MEASURED, out/tally.txt, reproduced below.
+    The earlier 59: 52 killed, 49 by the reader on a value, 1 by the route alone (L04), 2 by a panic alone (T03, T04), 7 survived. At 8dfa11a: 47 killed, 12 survived.
+    Five more die than at 8dfa11a: R07 (route C2 at N <= 3, route convert, and the reader's conversion energy, since np_nm enters E: 708,763,828 e-9 at N = 81), R12, R13, R14 (hand rows, R13 also the route), and L04.
+    L04, a CORRECTION of my earlier finding: at 8dfa11a I called the generic start equivalent. At this head it is killed on a value by the route's full lane, 1 bad row of 53: N = 3, u = 1/4, x = -1/4, y = 0, where a generic start reads <B> = 0 against the even block's 0.837781. So the even start is now visible at the one exact doublet the route reads.
+    R16, R17, R18 survive and move no verdict: miss_to_met 0 and new misses 0, while predicted_A1, closed_ppb, ratio_ppm, predicted_C1 go wrong in the printed columns. So H4 took effect as meant. Those columns do still reach READ.hbp as read= and predicted=, so a reader of that file sees the engine's number beside the reader's verdict. Unheld: cmp on READ.hbp sees any move, and old rows stay byte-equal this way.
+    New on the code added since: 65 run, 36 killed: 22 by the reader on a value, 5 by the route alone (W06, C16, C20, TC1, TC2), 3 by a panic or timeout alone (P06, Z01, Z02), 6 by a missing row alone (W01, W02, W03, W12, W13, W14). 29 survived.
+    Timeouts: P01, P02, P06, Z01, Z02 hit the 900 s limit per stage on the Lanczos stages. P01, P02 also die on values. P06, Z01, Z02 have no value read, so what they would read is CANNOT_SEE; a timeout is no measurement. O01, O03, O04 crash the reader (ZeroDivisionError on a zero jbar in the ratio rows, exit 1) and the sector route reads 143 of 143 bad.
+    Panic: T03 (step 4 times larger) rc 101 at quench alone, T04 rc 101 at reversal, quench, wavevector. README line 185's claim stands, and it rests on overflow-checks = true, see H6.
+    Whole sector stage: F2-top above.
+  F2b Survivors, by what they move.
+    Hold kills them, tested on the mutant's own rows or the same edit on the whole receipt (out/held_on_mutants.hbp, out/hold_tests.hbp, out/hold_route_test.hbp, out/top_held.hbp):
+      Q03 gate column times N: 90 reads gone in lite, 147 on the whole receipt, with all 18 quench_jbar and quench_phase misses among them, 0 new misses, exit 0. THE ONE THAT MATTERS MOST: the same class as R16 to R18, and H4 left it. H12: 0 reads gone.
+      X02 H2 undone: 183 ppm, moves the table's 105.54 to 105.52. H16: bad 3 of 44. X07 at 102 ppm: bad 1.
+      W07, W08, W09 P2 read-out: up to 600,499, 1,000,000, 241,579 ppm. The frozen 98% lower bound cannot tell the difference from the sum, since p + m is near N on those rows, and nothing reads P2 on any other row. H8: bad 20, 20, 19 of 21 at N = 3.
+      L08 tolerance 16 times looser: residual to 14,867 e-12, <B> by 9,953 ppb. H11: 2 misses.
+      R19, energy_off 0 on quench_rows: on the filed rows 24 ppb on QUENCH, 7 on QUENCH_PIN, 1 on OTHER_U, 89,965,045 on CONTROL. The separate read the README calls open: H1, the control rows must leave 10^-4: 4 misses. Smallest change I could find; one line.
+      C12, the same on conversion_chain: at most 810 e-9 on the filed rows. H2: 15 misses on the whole receipt, 8 at lite.
+      Q01 energy sign on pinned quench rows: 2,275,749 e-9, unread. H13: 1 miss.
+      Q04 band column halved: 358,640 ppm. H17: 1 miss.
+      C05 f_ppb times N, unread: H9, route bad 4 of 4.
+      C15 delta grid: H14, 1 miss. TC3 Taylor rows: H5b, 1 miss.
+    Printed columns and labels, unheld, each below any read that matters: R16, R17, R18 (above); W04 (y sign on window rows: A flips, printed y flips, row 37 and 38 freeze no sign on A); C13 (norm_off printed 0: at most 64 ppb); C19 (s label); S22 (e_ppb 1e-6 high: under 0.2%, and no row reads e_ppb against e_at_2^60).
+    Self-reports, unheld: V02 (every_byte_returned printed 1), V03 (equals_full counts printed 0), L06 (residual printed 0), S21 (C1 times N printed as C1, so the frozen upper bound of 8 passes on 0, size N). The reader reads these on the engine's word. T02 shows the reversal flag does move when the retreat is broken. A read of them needs a second implementation; the smallest is a Python copy of the shears at N = 81, CONJECTURE that it is worth it. I measured no fault in the flags themselves.
+    1/N factors, unheld: S14 (C1, C2 without N/(N - 1): at N = 3 33%, at N = 19683 51 ppm against 2%); R20 (quench C1 over N^2: 12,345 ppm at N = 81, 150 ppm at N = 6561 against 5%). Rows at small N that nothing reads carry them. An exact C2, f read at N <= 243 in sector_compare would kill S14; nothing quoted rests on those rows.
+    Equivalent at the rows' digits, unheld: W10, W11 (warm start: A at most 25, 16 ppb, B at most 354, 478 ppb), C09, C10 (step 2 times finer, 8 times coarser: at most 17 ppm on C2, energy to 13,808 e-9), O02, O07 (2^-72 floor, one unit of 2^-90), P03 (zero pivot read as +1: the count is the same by continuity, 1 unit on e), P05 (lambda one unit), Z03 (H1e undone: B by at most 726 ppb).
+    Die at the top and survive lite: S20 = X05, P04 = X01 in the sector rows.
+    After all holds: 24 of the 36 stay, as listed; 2 of those fall to the top route, which lite does not run.
+  F2c How far each check reaches, MEASURED by these rows. Reader on o^2: a floor at 256 units of 2^-60 at the top, and it cannot see 1 unit (X01, X05). Top route: 1 unit (bad 6), and with H16 a floor at 2^-70. Sector route at N <= 243: 120 units against its frozen 4096, so 256 units at N = 243 (X03, bad 9). Route convert: step 2^-10 at N = 27 (TC1), C2, jbar, signs. Reader on conversions: C1 over N^2 at 1 row (C03), stale time at 1 row (C08), y sign at 5 rows. So the reader's part in several kills rests on one row: C03, S02, S06, S07, O05, T01, with the route beside it, and C08, C14, L05 on that row alone. Each is a real kill, with little margin on those three.
+
+F6 What survives and what is refuted, in one place.
+  Survives, each tested above: the 24 code holds applied and took effect. Fourth binary = this source. Receipt assembled from the stage outputs, pins right, first 29 rows frozen, added rows unchanged since 89a026a, third and first runs filed unchanged. Tables typed right and equal to my own Mathieu read. Reader tolerances as frozen at the frozen rows, with the two sign narrowings of F3c. No older verdict moved. No shift or cast loses bits at the rows run. V2 and D2 stand against the step at N = 81 (exact) and N = 729 (2^-14). Warm start at N <= 243.
+  Owning gate, gh read only: run 41981845809 at this head, the whole receipt, its read and the route, conclusion success, 06:39:12Z to 08:07:20Z, 88 minutes on Ubuntu; both rust-181 checks success. PR state OPEN. So all 11 stages reproduce on Linux byte for byte at this head.
+  Refuted:
+    README line 144, 'counts rows per tag, so a missing row is a miss': a swap keeps the count. Holds in the workflow through the hashes; refuted for the reader alone. H5, H18.
+    README line 82's '126 of 126 against' two tolerances: 84 reads of those, 42 of an added sign. H19.
+    My own L04 'equivalent' at 8dfa11a: corrected above, and my first P2 step at 2^-14, corrected in F1b.
+    The assumption that H4 finished the class of engine columns in verdicts: Q03. H12.
+    The route's 200 ppm as a guard on H2: X02. H16.
+  Filing faults: 87 of the 102 sums point at ignored files, H7. Added prediction rows and Cargo.toml carry no pin, H6.
+
+CANNOT_SEE
+  - Mutants at N = 729, 2187, 19683 and the top rungs, except the seven whole-sector ones: not rerun, for time. Survivors there may die there.
+  - Group F past its first reader miss: batches stopped there.
+  - What P06, Z01, Z02 would read: they timed out.
+  - Warm start and generic start at N = 729.
+  - The exact unitary at N = 243, 729: step test only. The exact read stops at N = 81.
+  - Linux rows under my mutants; Windows here. The hosted job read the unmutated head.
+  - Full held route end to end: each hold's lane was run alone (N <= 3, N = 9 rows, convert, hand, top), never one whole run of the held file. The re-pinned hashes follow from that run.
+  - The held read's filing: H1 to H5b, H11 to H14, H17 change READ.hbp from 1422/35 to 1675/36, and H8, H9, H10, H15, H16 change SECOND-ROUTE.hbp, so the pins in polariton.yml and the counts in the README and in row 42's successor move with them. No hold here touches the receipt or the engine.
+  - Fabric and recall: not asked. This lane is arithmetic on a repository's rows.
+  - The physics of the laws: the contact and window lanes.
+
+THE 61 ROWS WHOSE READ CHANGED, third run to this head, all MET before and after. row | old | new | result old | result new | |move| in ppm of old (-1 for a two-value read).
+C1N_N=59049_u=0_x=0|-792922|-792923|MET|MET|1
+C1N_N=177147_u=0_x=1/2|-1137647|-1137646|MET|MET|0
+C1N_N=531441_u=0_x=1/2|-1137632|-1137634|MET|MET|1
+C1N_N=1594323_u=0_x=1/2|-1137627|-1137633|MET|MET|5
+rotor_P=3_N=531441_u=0_x=-1/2|1500001|1500000|MET|MET|0
+C1N_N=19683_u=1/2_x=0|-1052418|-1052419|MET|MET|0
+C1N_N=1594323_u=1/2_x=1/4|-1352791|-1352787|MET|MET|2
+C1N_N=1594323_u=1_x=-1/4|-1146449|-1146448|MET|MET|0
+rotor_P=2_N=531441_u=1_x=-1/8|5000210|5000209|MET|MET|0
+jbar_N=19683_u=0_x=2|77336710|77336714|MET|MET|0
+gap_N=59049_u=0_x=2|3464207754|3464207755|MET|MET|0
+jbar_N=177147_u=0_x=2|77348739|77348780|MET|MET|0
+gap_N=531441_u=0_x=2|3464113365|3464113409|MET|MET|0
+jbar_N=1594323_u=0_x=2|77349948|77350310|MET|MET|4
+gap_N=1594323_u=0_x=2|3464105312|3464105546|MET|MET|0
+jbar_N=19683_u=1/2_x=3/2|77341516|77341512|MET|MET|0
+jbar_N=59049_u=1/2_x=3/2|77347357|77347343|MET|MET|0
+gap_N=59049_u=1/2_x=3/2|3464160883|3464160884|MET|MET|0
+gap_N=177147_u=1/2_x=3/2|3464121371|3464121372|MET|MET|0
+gap_N=531441_u=1/2_x=3/2|3464108157|3464108200|MET|MET|0
+gap_N=1594323_u=1/2_x=3/2|3464103576|3464103810|MET|MET|0
+gap_N=59049_u=1_x=1|3464114010|3464114011|MET|MET|0
+gap_N=177147_u=1_x=1|3464105746|3464105747|MET|MET|0
+gap_N=531441_u=1_x=1|3464102949|3464102992|MET|MET|0
+gap_N=1594323_u=1_x=1|3464101840|3464102074|MET|MET|0
+jbar_N=59049_u=0_x=3/2|170798795|170798809|MET|MET|0
+gap_N=59049_u=0_x=3/2|2236266363|2236266364|MET|MET|0
+jbar_N=177147_u=0_x=3/2|170813215|170813175|MET|MET|0
+jbar_N=531441_u=0_x=3/2|170817928|170818048|MET|MET|0
+gap_N=531441_u=0_x=3/2|2236089968|2236090024|MET|MET|0
+gap_N=1594323_u=0_x=3/2|2236074933|2236075326|MET|MET|0
+jbar_N=59049_u=1/2_x=1|170806462|170806448|MET|MET|0
+gap_N=177147_u=1/2_x=1|2236108219|2236108220|MET|MET|0
+gap_N=531441_u=1/2_x=1|2236081336|2236081392|MET|MET|0
+jbar_N=1594323_u=1/2_x=1|170819498|170819861|MET|MET|2
+gap_N=1594323_u=1/2_x=1|2236072056|2236072449|MET|MET|0
+jbar_N=19683_u=1_x=1/2|170801512|170801516|MET|MET|0
+gap_N=59049_u=1_x=1/2|2236111015|2236111016|MET|MET|0
+jbar_N=177147_u=1_x=1/2|170818330|170818290|MET|MET|0
+jbar_N=531441_u=1_x=1/2|170819740|170819619|MET|MET|0
+gap_N=531441_u=1_x=1/2|2236072703|2236072759|MET|MET|0
+gap_N=1594323_u=1_x=1/2|2236069178|2236069571|MET|MET|0
+critical_jbar_ratio_u=0_N=531441_to_1594323|145131|145130|MET|MET|6
+critical_jbar_ratio_u=1/2_N=1594323_to_4782969|144788|144779|MET|MET|62
+critical_jbar_ratio_u=1/2_N=4782969_to_14348907|144685|144608|MET|MET|532
+critical_gap_ratio_u=1/2_N=4782969_to_14348907|69356|69353|MET|MET|43
+critical_jbar_ratio_u=1/2_N=14348907_to_43046721|145090|144488|MET|MET|4149
+critical_gap_ratio_u=1/2_N=14348907_to_43046721|69369|69347|MET|MET|317
+critical_jbar_ratio_u=1_N=531441_to_1594323|144895|144894|MET|MET|6
+pin_B_negative_N=243_s=1/2|-472374521|-472374519|MET|MET|0
+pin_B_negative_N=243_s=2|-7403263301|-7403263299|MET|MET|0
+pin_B_negative_N=243_s=4|-23462710744|-23462710746|MET|MET|0
+pin_A_positive_N=729_s=1/2|550696251|550696249|MET|MET|0
+pin_A_positive_N=729_s=1|1104343883|1104343884|MET|MET|0
+pin_B_negative_N=729_s=2|-22621796328|-22621796307|MET|MET|0
+pin_A_positive_N=729_s=2|2231682791|2231682807|MET|MET|0
+pin_B_negative_N=729_s=4|-71201281892|-71201281890|MET|MET|0
+pin_A_positive_N=729_s=4|4595937716|4595937717|MET|MET|0
+pin_B_negative_N=729_s=8|-113106518824|-113106518922|MET|MET|0
+pin_A_positive_N=729_s=8|9420473131|9420473140|MET|MET|0
+symmetry_B_same|-23462711040,-23462711117|-23462711040,-23462711118|MET|MET|-1
+
+MUTATION TABLE AND COUNTS
+MUTANT TABLE. reader_value = new misses on a value; reader_absent = new misses because a row is gone or a tag count moved; route = a lane read bad rows; route_prints_other_rows_exit_0 = the lane still exits 0 on a different row count, which only the workflow's cmp of the filed route rows sees, so it does not count as a kill here; panic = a stage exited nonzero or timed out.
+S01_o2_no_bose                     S   killed reader_value=302 route=sector boundary=2 families=C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+S02_o2_n0n0                        S   killed reader_value=1 route=sector families=e
+S03_o2_minus_off_by_one            S   killed reader_value=116 route=sector boundary=2 families=e,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+S04_d_drop_npnm                    S   killed reader_value=154 route=sector miss_to_met=1 boundary=2 families=C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,rotor_P=1,rotor_P=2,rotor_P=3
+S05_d_double_npnm                  S   killed reader_value=148 route=sector boundary=2 families=C1N,C2,e,f,gap,rotor_P=1,rotor_P=2,rotor_P=3
+S06_d_n0minus1                     S   killed reader_value=1 route=sector families=e
+S07_d_x_sum_plus1                  S   killed reader_value=1 route=sector families=e
+S08_zero_pivot_uncounted           SL  killed reader_value=42 route=sector families=gap,jbar
+S09_roots_16_bits_each             F   killed reader_value=3 route=convert,full families=hand_C2,hand_E,hand_f
+S11_fd_f_double                    S   killed reader_value=100 boundary=1 families=C1N,f,jbar
+S12_fd_s_double                    S   killed reader_value=70 families=C1N,C2
+S13_gap_index2                     S   killed reader_value=65 boundary=1 families=gap
+S14_c1c2_no_N_over_Nm1             S   SURVIVED  
+S15_c2_half                        S   killed reader_value=35 families=C2
+S16_c1_wk_f3s                      S   killed reader_value=35 families=C1N
+S17_rotor_o2_no_charge             S   killed reader_value=84 route=sector families=rotor_P=1,rotor_P=2,rotor_P=3
+S18_rotor_d_n0                     S   killed reader_value=49 route=sector miss_to_met=1 families=plane_wave,rotor_P=1,rotor_P=2,rotor_P=3
+S19_fd_sum_plus1                   S   killed reader_value=30 families=jbar
+S20_o2_minus_one_unit_of_2^60      S   SURVIVED  
+F01_pair_sign                      F   killed reader_value=8 route=taylor,convert families=quench_pin_A1,quench_pin_at_edge
+F02_pair_bose_pp                   F   killed reader_value=2 route=taylor,convert families=quench_pin_A1
+F03_pair_n0n0                      F   killed reader_value=149 route=taylor,convert miss_to_met=1 families=energy
+F04_pair_reverse_nonherm           F   killed reader_value=4 route=taylor,convert families=quench_pin_A1
+F05_direct_drop_pm                 F   killed reader_value=156 route=taylor,convert miss_to_met=5 families=energy,quench_phase
+F06_direct_n0minus1                F   killed reader_value=155 route=taylor,convert miss_to_met=1 families=energy
+F07_x_on_plus_only                 F   killed reader_value=6 route=taylor,convert families=quench_pin_A1,quench_pin_at_edge
+F08_linear_sign                    F   killed reader_value=8 route=taylor,convert,full families=hand_dA_dh,hand_sign_A_follows_h,pin_A_positive
+F09_linear_up_nonherm              F   killed reader_value=15 route=taylor,convert,full boundary=1 families=conversion,hand_dA_dh,no_leading_order_A1,no_leading_order_D2,pin_A1,pin_D2
+F10_linear_down_nonherm            F   killed reader_value=2 route=taylor,convert families=quench_pin_A1
+F11_linear_minus_half              F   killed reader_value=4 route=taylor,convert families=quench_pin_A1
+T01_symplectic_euler               F   killed reader_value=1 route=convert families=energy
+T02_retreat_swapped                V   killed reader_value=4 families=reversal
+T03_step_4x_larger                 F   killed panic=quench:rc=101 
+T04_step_16x_larger                F   killed panic=reversal:rc=101,quench:rc=101,wavevector:rc=101 
+T05_first_kick_full                F   killed reader_value=8 route=convert families=energy
+R01_A_sign                         F   killed reader_value=8 route=taylor,convert,full families=hand_dA_dh,hand_sign_A_follows_h,pin_A_positive
+R02_A_second_term_zero             F   killed reader_value=4 route=taylor,convert families=quench_pin_A1
+R03_B_root_pm                      F   killed reader_value=2 route=convert,full families=disordered_D2
+R04_B_sign                         F   killed reader_value=6 route=convert,full boundary=1 families=pin_B_negative
+R05_P_root_n0n0                    F   killed reader_value=150 route=convert families=energy
+R06_P_sign                         F   killed reader_value=220 route=convert families=energy,quench_C1,quench_phase
+R07_npnm_pp                        F   killed reader_value=42 route=convert,full families=conversion_energy
+R08_n0pairs_plus1                  F   killed reader_value=155 route=convert families=energy
+R09_pairs_plus1                    F   killed reader_value=1 route=taylor,convert families=control_no_bose_must_miss
+R10_pin_a1_half                    L   killed reader_value=16 families=disordered_A1,no_leading_order_A1,pin_A1
+R11_pin_d2_half                    L   killed reader_value=11 families=conversion,disordered_D2,pin_D2
+R12_pin_c1_sign                    L   killed reader_value=1 families=hand_C1
+R13_pin_c2_denominator             L   killed reader_value=1 route=full families=hand_C2
+R14_pin_f_not_per_N                L   killed reader_value=1 families=hand_f
+R15_pin_energy_double              L   killed reader_value=5 route=full families=hand_E,window_below_E_at_zero
+R16_predicted_A1_is_read           Q   SURVIVED  
+R17_closed_is_read                 Q   SURVIVED  
+R18_predicted_C1_is_read           Q   SURVIVED  
+R19_energy_off_zero                Q   SURVIVED  
+R20_quench_c1_uses_big2            Q   SURVIVED  
+L01_tol_2^44                       L   killed reader_value=2 route=full families=zero_field_A,zero_field_B
+L02_second_ritz                    L   killed reader_value=93 route=full boundary=1 families=conversion,hand_B,hand_C1,hand_C2,hand_E,hand_dA_dh,hand_f,pin_A1,pin_B_negative,pin_D2,susceptibility_ratio,symmetry_A_flips,symmetry_B_same,symmetry_E_same,window_below_A1,window_below_D2,window_below_P2,window_inside_A1,window_inside_B_negative,window_inside_D2
+L03_one_cycle                      L   killed reader_value=51 route=full boundary=1 families=conversion,no_leading_order_A1,no_leading_order_D2,pin_A1,pin_B_negative,pin_D2,susceptibility_ratio,window_inside_A1,window_inside_B_negative,window_inside_D2
+L04_start_not_even                 L   killed route=full 
+W01_u_wrong_in_list                W   killed reader_absent=6 reads_lost=18 
+W02_x_wrong_in_list                W   killed reader_absent=6 reads_lost=18 
+W03_s_list_6_for_8                 W   killed reader_absent=9 reads_lost=31 
+W04_y_sign_window_only             W   SURVIVED  
+W05_y_half_window_only             W   killed reader_value=93 families=window_below_A1,window_below_D2,window_inside_A1,window_inside_D2
+W06_y_label_only                   W   killed route=full 
+W07_P2_sum_not_difference          W   SURVIVED  
+W08_P2_constant                    W   SURVIVED  
+W09_P2_abs_times_N                 W   SURVIVED  
+W10_chain_upward                   W   SURVIVED  
+W11_generic_start_each_row         L   SURVIVED  
+W12_drop_a_point                   W   killed reader_absent=9 reads_lost=19 
+W13_small_list_shorter             W   killed reader_absent=1 route_prints_other_rows_exit_0=full 
+W14_tag_lost                       W   killed reader_absent=63 route_prints_other_rows_exit_0=full reads_lost=166 
+C01_x_is_delta                     C   killed reader_value=22 families=conversion_A1,conversion_A_negative,conversion_C1,conversion_D2,conversion_V2
+C02_u_half                         C   killed reader_value=17 families=conversion_A1,conversion_C1,conversion_D2,conversion_V2
+C03_c1_big2                        C   killed reader_value=1 route=convert families=conversion_C1
+C04_c1_P_sign                      C   killed reader_value=7 route=convert families=conversion_C1,conversion_V2
+C05_f_not_per_N                    C   SURVIVED  
+C06_A_sign                         C   killed reader_value=5 route=convert families=conversion_A_negative
+C07_B_sign                         C   killed reader_value=5 route=convert families=conversion_B_positive
+C08_stale_time                     C   killed reader_value=1 families=conversion_V2
+C09_k_plus_1                       C   SURVIVED  
+C10_k_minus_3                      C   SURVIVED  
+C11_energy_A_sign                  C   killed reader_value=42 families=conversion_energy
+C12_energy_zero                    C   SURVIVED  
+C13_norm_off_zero                  C   SURVIVED  
+C14_root_243_is_15                 C   killed reader_value=1 reads_lost=39 families=conversion_C1
+C15_delta_quarter                  C   SURVIVED reads_lost=36 
+C16_jbar_double                    C   killed route=convert 
+C17_start_not_vacuum               C   killed reader_value=51 route=convert families=conversion_C1,conversion_V2,conversion_energy
+C18_y_sign                         C   killed reader_value=5 reads_lost=69 families=conversion_A_negative
+C19_s_label                        C   SURVIVED  
+C20_c2_big2                        C   killed route=convert 
+TC1_k_10                           C   killed route=convert 
+TC2_k_6                            C   killed route=convert 
+TC3_one_point_only                 C   SURVIVED route_prints_other_rows_exit_0=convert 
+O01_one_fewer_limb_scale_off       S   killed reader_crash route=sector 
+O02_one_fewer_limb_scale_kept      S   SURVIVED  
+O03_order_rem_before_quo           S   killed reader_crash route=sector 
+O04_order_shift_last               S   killed reader_crash route=sector 
+O05_den_N3_Nminus1                 S   killed reader_value=1 route=sector families=e
+O06_bose_plus_plus                 S   killed reader_value=84 route=sector families=rotor_P=1,rotor_P=2,rotor_P=3
+O07_quo_plus_1_unit_of_2^90        S   SURVIVED  
+P01_pivot_shift_29                 SL  killed reader_value=308 route=sector panic=pin:timeout,window:timeout boundary=2 families=C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+P02_pivot_shift_31                 SL  killed reader_value=299 route=sector panic=pin:timeout,window:timeout miss_to_met=1 boundary=2 families=C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+P03_zero_pivot_positive            SL  SURVIVED  
+P04_o2_floor_2^60_in_pivot         SL  SURVIVED  
+P05_lambda_one_unit                SL  SURVIVED  
+P06_first_pivot_not_counted        SL  killed panic=rotor:timeout,sector:timeout,pin:timeout,window:timeout 
+Z01_lanczos_o2_shift_31            L   killed panic=pin:timeout,window:timeout 
+Z02_lanczos_o2_shift_29            L   killed panic=pin:timeout,window:timeout 
+Z03_lanczos_o2_floor_2^60          L   SURVIVED  
+Q01_quench_energy_A_sign           Q   SURVIVED  
+Q03_jbar_over_N_not_per_N          Q   SURVIVED reads_lost=90 
+Q04_band_largest_constant          Q   SURVIVED  
+V02_reversal_flag_constant         V   SURVIVED  
+V03_equals_full_counts_zero        Q   SURVIVED  
+L05_tol_2^36                       L   killed reader_value=1 families=zero_field_B
+L08_tol_2^34                       L   SURVIVED  
+L06_residual_print_zero            L   SURVIVED  
+L07_cycle_cap_3                    L   killed reader_value=8 route=full families=window_inside_A1,window_inside_B_negative,window_inside_D2
+S21_C1N_not_times_N                S   SURVIVED  
+S22_e_ppb_shift_1e-6               S   SURVIVED  
+C21_conv_a_half                    C   killed reader_value=51 route=convert families=conversion_A1,conversion_V2,conversion_energy
+RATE|earlier_59|run=59|killed=52|reader_on_value=49|route_on_value_alone=1|panic_alone=2|absent_rows_alone=0|survived=7|json=0
+RATE|new|run=65|killed=36|reader_on_value=22|route_on_value_alone=5|panic_alone=3|absent_rows_alone=6|survived=29|json=0
+RATE|all|run=124|killed=88|reader_on_value=71|route_on_value_alone=6|panic_alone=5|absent_rows_alone=6|survived=36|json=0
+SURVIVORS, with the largest move of each field against the base rows:
+S14_c1c2_no_N_over_Nm1|rows_lost=0|rows_gained=0|SECTOR.C2_ppm:84569(333335ppm,N=3,253705->169136);SECTOR.C1_ppm:182590(333332ppm,N=3,-547771->-365181);SECTOR.C1_times_N_ppm:547770(333332ppm,N=3,-1643312->-1095542)
+S20_o2_minus_one_unit_of_2^60|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:232(116ppm,N=1594323,-1985638->-1985406);SECTOR.f_ppb:1(26ppm,N=1594323,37356->37357);SECTOR.jbar_ppb:510410(10ppm,N=1594323,47446179501->47446689911);SECTOR.e_at_2^60:562220(2ppm,N=1594323,-276215396908->-276214834688)
+R16_predicted_A1_is_read|rows_lost=0|rows_gained=0|QUENCH_PIN.predicted_A1_ppm:21036(593901ppm,N=81,35420->14384)
+R17_closed_is_read|rows_lost=0|rows_gained=0|QUENCH.ratio_ppm:1000000(1000000000000ppm,N=243,0->1000000);QUENCH_PIN.ratio_ppm:817389(4476121ppm,N=81,182611->1000000);QUENCH.closed_ppb:2221525222204398(999999ppm,N=243,2221527130126943->1907922545);QUENCH_PIN.closed_ppb:82031376081(817388ppm,N=81,100357818061->18326441980)
+R18_predicted_C1_is_read|rows_lost=0|rows_gained=0|QUENCH.predicted_C1_ppm:267627(373114ppm,N=81,717279->449652);QUENCH_PIN.predicted_C1_ppm:160358(310668ppm,N=81,516170->355812);QUENCH_OTHER_U.predicted_C1_ppm:51732(159620ppm,N=6561,324094->272362);CONTROL_NO_BOSE.predicted_C1_ppm:26(7323ppm,N=6561,3550->3576)
+R19_energy_off_zero|rows_lost=0|rows_gained=0|CONTROL_NO_BOSE.energy_off_1e-9:89965045(1000000ppm,N=6561,89965045->0);QUENCH.energy_off_1e-9:24(1000000ppm,N=729,-24->0);QUENCH_OTHER_U.energy_off_1e-9:1(1000000ppm,N=6561,-1->0);QUENCH_PIN.energy_off_1e-9:7(1000000ppm,N=81,-7->0)
+R20_quench_c1_uses_big2|rows_lost=0|rows_gained=0|QUENCH.C1_ppm:9896(12345ppm,N=81,801584->791688);QUENCH_PIN.C1_ppm:9896(12345ppm,N=81,801582->791686);QUENCH_OTHER_U.C1_ppm:41(150ppm,N=6561,272362->272321)
+W04_y_sign_window_only|rows_lost=144|rows_gained=144|no_field_moved_in_rows_with_a_partner
+W07_P2_sum_not_difference|rows_lost=0|rows_gained=0|PIN_WINDOW.P2_over_N2_ppm:600499(5404496ppm,N=3,111111->711610)
+W08_P2_constant|rows_lost=0|rows_gained=0|PIN_WINDOW.P2_over_N2_ppm:1000000(1000000000000ppm,N=3,0->1000000)
+W09_P2_abs_times_N|rows_lost=0|rows_gained=0|PIN_WINDOW.P2_over_N2_ppm:241579(1371812ppm,N=81,176102->417681)
+W10_chain_upward|rows_lost=0|rows_gained=0|PIN_WINDOW.A_ppb:25(0ppm,N=243,1141270980->1141270955);PIN_WINDOW.B_ppb:354(0ppm,N=243,-6277818524->-6277818170)
+W11_generic_start_each_row|rows_lost=0|rows_gained=0|PIN.A_ppb:10(0ppm,N=243,8017620054->8017620044);PIN.B_ppb:478(0ppm,N=243,-7403263299->-7403262821);PIN_WINDOW.A_ppb:16(0ppm,N=243,1141270980->1141270964);PIN_WINDOW.B_ppb:181(0ppm,N=243,-6277818524->-6277818705)
+C05_f_not_per_N|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.f_ppb:184650413723(242000000ppm,N=243,763018238->185413431961);TAYLOR_CONVERT.f_ppb:15915225026(26000000ppm,N=27,612124039->16527349065)
+C09_k_plus_1|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.norm_off_1e-9:48(750000ppm,N=81,-64->-16);QUENCH_CONVERSION.energy_off_1e-9:161(745370ppm,N=81,-216->-55);QUENCH_CONVERSION.A_ppb:2699(0ppm,N=81,-32543375079->-32543377778);QUENCH_CONVERSION.B_ppb:2979(0ppm,N=81,24223622282->24223625261)
+C10_k_minus_3|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.energy_off_1e-9:13592(62925925ppm,N=81,-216->-13808);QUENCH_CONVERSION.norm_off_1e-9:4013(62703125ppm,N=81,-64->-4077);QUENCH_CONVERSION.C2_ppb:3363(17ppm,N=81,188375572->188372209);QUENCH_CONVERSION.C1_ppb:4418(14ppm,N=81,315150647->315146229)
+C12_energy_zero|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.energy_off_1e-9:216(1000000ppm,N=81,-216->0);TAYLOR_CONVERT.energy_off_1e-9:1(1000000ppm,N=27,-1->0)
+C13_norm_off_zero|rows_lost=0|rows_gained=0|QUENCH_CONVERSION.norm_off_1e-9:64(1000000ppm,N=81,-64->0);TAYLOR_CONVERT.norm_off_1e-9:1(1000000ppm,N=27,-1->0)
+C15_delta_quarter|rows_lost=21|rows_gained=21|no_field_moved_in_rows_with_a_partner
+C19_s_label|rows_lost=42|rows_gained=42|no_field_moved_in_rows_with_a_partner
+TC3_one_point_only|rows_lost=3|rows_gained=0|no_field_moved_in_rows_with_a_partner
+O02_one_fewer_limb_scale_kept|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:371(187ppm,N=1594323,-1982992->-1983363);SECTOR.e_at_2^60:107(0ppm,N=1594323,-276215085060->-276215084953);SECTOR.gap_ppb:1(0ppm,N=1594323,2236072449->2236072448);SECTOR.jbar_ppb:23200(0ppm,N=1594323,47446179501->47446202701)
+O07_quo_plus_1_unit_of_2^90|rows_lost=0|rows_gained=0|no_field_moved_in_rows_with_a_partner
+P03_zero_pivot_positive|rows_lost=0|rows_gained=0|SECTOR.e_at_2^60:1(1000000ppm,N=19683,-1->0);SECTOR.e_ppb:1(1000000ppm,N=19683,-1->0)
+P04_o2_floor_2^60_in_pivot|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:232(116ppm,N=1594323,-1985638->-1985406);PIN.B_ppb:726(29ppm,N=243,24248558->24247832);SECTOR.f_ppb:1(26ppm,N=1594323,37356->37357);SECTOR.jbar_ppb:301606(6ppm,N=1594323,47446179501->47446481107)
+P05_lambda_one_unit|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:4(2ppm,N=59049,-1956622->-1956626);PIN.A_ppb:18(0ppm,N=243,16036264198->16036264216);PIN.B_ppb:1254(0ppm,N=243,6051324760->6051326014);PIN_WINDOW.A_ppb:3(0ppm,N=243,1063656195->1063656198)
+Z03_lanczos_o2_floor_2^60|rows_lost=0|rows_gained=0|PIN.B_ppb:726(29ppm,N=243,24248558->24247832);PIN.A_ppb:7(0ppm,N=243,1002180962->1002180955);PIN_WINDOW.A_ppb:8(0ppm,N=243,2137175503->2137175511);PIN_WINDOW.B_ppb:454(0ppm,N=243,-21817428400->-21817427946)
+Q01_quench_energy_A_sign|rows_lost=0|rows_gained=0|QUENCH_PIN.energy_off_1e-9:2275749(2275749000000ppm,N=81,-1->-2275750)
+Q03_jbar_over_N_not_per_N|rows_lost=0|rows_gained=0|CONTROL_NO_BOSE.jbar_over_N_ppm:5822717(6564506200ppm,N=6561,887->5823604);QUENCH_OTHER_U.jbar_over_N_ppm:531514627(6560046246ppm,N=6561,81023->531595650);QUENCH.jbar_over_N_ppm:2131858898(6560009902ppm,N=6561,324978->2132183876);QUENCH_PIN.jbar_over_N_ppm:20646809(80000034ppm,N=81,258085->20904894)
+Q04_band_largest_constant|rows_lost=0|rows_gained=0|QUENCH_BAND.largest_f_ppm:358640(500000ppm,N=81,717279->358639)
+V02_reversal_flag_constant|rows_lost=0|rows_gained=0|no_field_moved_in_rows_with_a_partner
+V03_equals_full_counts_zero|rows_lost=0|rows_gained=0|no_field_moved_in_rows_with_a_partner
+L08_tol_2^34|rows_lost=0|rows_gained=0|PIN.B_ppb:8704(358ppm,N=243,24248558->24239854);PIN_WINDOW.D2_ppm:1(306ppm,N=243,3266->3265);PIN_WINDOW.B_ppb:9953(25ppm,N=243,-396821555->-396811602);PIN.A_ppb:259(0ppm,N=243,1105042064->1105042323)
+L06_residual_print_zero|rows_lost=0|rows_gained=0|no_field_moved_in_rows_with_a_partner
+S21_C1N_not_times_N|rows_lost=0|rows_gained=0|SECTOR.C1_times_N_ppm:1989358(999998ppm,N=1594323,-1989360->-2)
+S22_e_ppb_shift_1e-6|rows_lost=0|rows_gained=0|SECTOR.e_ppb:1000(3ppm,N=3,-272165527->-272164527)
+NOT_RUN|0|
+
+HOLD TESTS
+HOLD_TEST|case=whole|reader=filed|rc=0|met=1422|miss=35|json=0
+HOLD_TEST|case=whole|reader=held|rc=0|met=1675|miss=36|json=0
+HOLD_TEST|case=R19_energy_zero_on_quench_rows|reader=filed|rc=0|new_miss=0|families=none|reads_gone=0|err=|json=0
+HOLD_TEST|case=R19_energy_zero_on_quench_rows|reader=held|rc=0|new_miss=4|families=control_no_bose_energy_moves|reads_gone=0|err=|json=0
+HOLD_TEST|case=C12_energy_zero_on_conversion_rows|reader=filed|rc=0|new_miss=0|families=none|reads_gone=0|err=|json=0
+HOLD_TEST|case=C12_energy_zero_on_conversion_rows|reader=held|rc=0|new_miss=15|families=conversion_energy_rebuilt|reads_gone=0|err=|json=0
+HOLD_TEST|case=energy_half_on_conversion_rows|reader=filed|rc=0|new_miss=0|families=none|reads_gone=0|err=|json=0
+HOLD_TEST|case=energy_half_on_conversion_rows|reader=held|rc=0|new_miss=7|families=conversion_energy_rebuilt|reads_gone=0|err=|json=0
+HOLD_TEST|case=energy_tenth_on_quench_rows|reader=filed|rc=0|new_miss=0|families=none|reads_gone=0|err=|json=0
+HOLD_TEST|case=energy_tenth_on_quench_rows|reader=held|rc=0|new_miss=1|families=control_no_bose_energy_moves|reads_gone=0|err=|json=0
+HOLD_TEST|case=swap_conversion_missed_row|reader=filed|rc=0|new_miss=0|families=none|reads_gone=7|err=|json=0
+HOLD_TEST|case=swap_conversion_missed_row|reader=held|rc=0|new_miss=2|families=conversion_grid_as_frozen,rows_POLARITON_QUENCH_CONVERSION|reads_gone=8|err=|json=0
+HOLD_TEST|case=swap_quench_missed_row|reader=filed|rc=0|new_miss=0|families=none|reads_gone=4|err=|json=0
+HOLD_TEST|case=swap_quench_missed_row|reader=held|rc=0|new_miss=1|families=rows_POLARITON_QUENCH|reads_gone=4|err=|json=0
+HOLD_TEST|case=swap_top_critical_row|reader=filed|rc=0|new_miss=0|families=none|reads_gone=2|err=|json=0
+HOLD_TEST|case=swap_top_critical_row|reader=held|rc=0|new_miss=1|families=rows_POLARITON_SECTOR|reads_gone=2|err=|json=0
+HOLD_TEST|case=swap_band_row|reader=filed|rc=0|new_miss=0|families=none|reads_gone=1|err=|json=0
+HOLD_TEST|case=swap_band_row|reader=held|rc=0|new_miss=1|families=rows_POLARITON_QUENCH_BAND|reads_gone=1|err=|json=0
+HOLD_TEST|case=swap_reversal_row|reader=filed|rc=0|new_miss=0|families=none|reads_gone=1|err=|json=0
+HOLD_TEST|case=swap_reversal_row|reader=held|rc=0|new_miss=1|families=rows_POLARITON_REVERSAL|reads_gone=1|err=|json=0
+HOLD_TEST|case=relabel_conversion_y|reader=filed|rc=0|new_miss=1|families=conversion_C1|reads_gone=7|err=|json=0
+HOLD_TEST|case=relabel_conversion_y|reader=held|rc=0|new_miss=3|families=conversion_C1,conversion_energy_rebuilt,conversion_grid_as_frozen|reads_gone=8|err=|json=0
+HOLD_TEST|case=Q03_gate_column_times_N|reader=filed|rc=0|new_miss=0|families=none|reads_gone=147|err=|json=0
+HOLD_TEST|case=Q03_gate_column_times_N|reader=held|rc=0|new_miss=0|families=none|reads_gone=0|err=|json=0
+HELD_BASE|rc=0|rows=1749|miss=49|json=0
+HELD_READ|id=R19_energy_off_zero|panic=none|rc=0|new_miss=4|families=control_no_bose_energy_moves|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=Q01_quench_energy_A_sign|panic=none|rc=0|new_miss=1|families=quench_pin_energy|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=Q03_jbar_over_N_not_per_N|panic=none|rc=0|new_miss=0|families=none|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=Q04_band_largest_constant|panic=none|rc=0|new_miss=1|families=band_column_is_the_rows|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=L08_tol_2^34|panic=none|rc=0|new_miss=2|families=lanczos_converged_POLARITON_PIN,lanczos_converged_POLARITON_PIN_WINDOW|held_route=full:rows=53:bad=0,convert:same_rows|err=|json=0
+HELD_READ|id=C12_energy_zero|panic=none|rc=0|new_miss=8|families=conversion_energy_rebuilt|held_route=full:same_rows,convert:rows=4:bad=0|err=|json=0
+HELD_READ|id=C05_f_not_per_N|panic=none|rc=0|new_miss=0|families=none|held_route=full:same_rows,convert:rows=4:bad=4|err=|json=0
+HELD_READ|id=C15_delta_quarter|panic=none|rc=0|new_miss=1|families=conversion_grid_as_frozen|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=TC3_one_point_only|panic=none|rc=0|new_miss=1|families=rows_POLARITON_TAYLOR_CONVERT|held_route=full:same_rows,convert:rows=1:bad=0|err=|json=0
+HELD_READ|id=R20_quench_c1_uses_big2|panic=none|rc=0|new_miss=0|families=none|held_route=full:same_rows,convert:same_rows|err=|json=0
+HELD_READ|id=W07_P2_sum_not_difference|panic=none|rc=0|new_miss=0|families=none|held_route=full:rows=53:bad=20,convert:same_rows|err=|json=0
+HELD_DONE
+TOP_HELD|id=filed|rc=0|SECOND_ROUTE_TOP_DONE|rows=44|bad=0|json=0|json=0
+TOP_HELD|id=X02_old_fd_step|rc=1|SECOND_ROUTE_TOP_DONE|rows=44|bad=3|json=0|json=0
+TOP_HELD|id=X07_o2_floor_2^70|rc=1|SECOND_ROUTE_TOP_DONE|rows=44|bad=1|json=0|json=0
+HELD_ROUTE|mutant=m_w07_p2_sum_not_difference|rows=21|SECOND_ROUTE_FULL_DONE|rows=21|bad=20|json=0
+FILED_ROUTE|mutant=m_w07_p2_sum_not_difference|SECOND_ROUTE_FULL_DONE|rows=21|bad=0|json=0
+HELD_ROUTE|mutant=m_w08_p2_constant|rows=21|SECOND_ROUTE_FULL_DONE|rows=21|bad=20|json=0
+FILED_ROUTE|mutant=m_w08_p2_constant|SECOND_ROUTE_FULL_DONE|rows=21|bad=0|json=0
+HELD_ROUTE|mutant=m_w09_p2_abs_times_n|rows=21|SECOND_ROUTE_FULL_DONE|rows=21|bad=19|json=0
+FILED_ROUTE|mutant=m_w09_p2_abs_times_n|SECOND_ROUTE_FULL_DONE|rows=21|bad=0|json=0
+HELD_ROUTE|mutant=m_c05_f_not_per_n|rows=4|SECOND_ROUTE_CONVERT_DONE|rows=4|bad=4|json=0
+FILED_ROUTE|mutant=m_c05_f_not_per_n|SECOND_ROUTE_CONVERT_DONE|rows=4|bad=0|json=0
+HOLD_ROUTE_DONE

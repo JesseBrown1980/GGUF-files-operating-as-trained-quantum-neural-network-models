@@ -1,0 +1,15 @@
+STAGE|taylor|rc=0|seconds=4|rows=11
+STAGE|control|rc=0|seconds=5|rows=5
+STAGE|reversal|rc=0|seconds=57|rows=6
+STAGE|wavevector|rc=0|seconds=27|rows=4
+STAGE|rotor|rc=0|seconds=10|rows=219
+READER|rc=0
+ROUTE|hand|rc=0|seconds=0
+ROUTE|taylor_compare|rc=0|seconds=5
+ROUTE|convert_compare|rc=0|seconds=72
+ROUTE|sector_compare|rc=0|seconds=5
+ROUTE|full_compare|rc=0|seconds=998
+ROUTE|top_compare|rc=0|seconds=222
+ROUTE|mathieu|rc=0|seconds=2
+ROUTE_ALL|seconds=1305
+SAMPLE_DONE

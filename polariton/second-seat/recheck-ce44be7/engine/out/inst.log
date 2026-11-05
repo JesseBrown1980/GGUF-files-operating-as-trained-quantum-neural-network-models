@@ -1,0 +1,7 @@
+INST|rotor|rc=0|seconds=49|rows=235|lost=
+INST|sector|rc=0|seconds=1484|rows=237|lost=
+INST|reversal|rc=0|seconds=178|rows=22|lost=
+INST|i_window729|rc=0|seconds=415|rows=24|lost=
+INST|i_conv729|rc=0|seconds=479|rows=20|lost=
+INST|i_step729|rc=0|seconds=1715|rows=26|lost=
+INST_DONE

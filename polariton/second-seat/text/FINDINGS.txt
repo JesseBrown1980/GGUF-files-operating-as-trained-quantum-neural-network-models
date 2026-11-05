@@ -1,0 +1,76 @@
+SECOND SEAT, TEXT LANE, QNN PR #8 AT 8dfa11a. Tags: MEASURED, DERIVED, NAMED, CONJECTURE, CANNOT_SEE.
+Scripts: scripts/check_numbers.py -> check_numbers.out; scripts/cmp_reads.py; scripts/verify_holds.py; session-dump.txt is my extract of the local session log; fix1only/ is the pivot-only rebuild; reader-ext/ is the extended reader.
+
+A. VERDICT BY ATTACK
+1. NUMBERS AGAINST ROWS. MEASURED: every table value in polariton/README.md matches the receipt except one.
+   REFUTED: "Pairs reach about 14% of N there" at delta=0, t=3, N=729. Row: jbar_over_N_ppm=91849 at y=1/1024, 91764 at y=0, so 9.2%. 13.8% is the closed form, 100.358/729. H14.
+   REFUTED, small: "against 0.196 at u = 1/2". Read 0.195339; 0.196343 is the predicted value. H26.
+   Note: the A1/y column comes from A_ppb (2.2028). The reader uses A1_ppm, which rounds to 2.2016 at yN=1/2. Both MET. No hold.
+   Confirmed: 887/31, 845/73, 12+6+12+1=31, chi 9.568 and 9.173, conversion -0.567, -0.129, -0.179%, rotor 0.625005, 2.500023, 5.625053, ladder table, quench table, control 0.621, 0.188, 0.041, 0.0078, route max 66 units, Taylor max 1e-9, plane wave -1/4 and -1/16 and 0.
+   f(q): my own tridiagonal inverse iteration reproduces all six frozen ppm values.
+   RETRACTION BESIDE: my first print showed twice the frozen values. That was my factor of 2 in <cos 2a> (Sum x_i x_{i+1} already counts both neighbours). Halved, it reads 9999, 39944, 156538, 490857.5, 776331.5, 889412.5.
+
+2. PREDICTION AND ORDER OF EVENTS. Claim survives.
+   MEASURED, GitHub activity API: branch created at fce08f9 at 22:16:20Z; f47d662 pushed 22:21:18Z; 099b0c6 23:30:29Z; 395219a 23:30:47Z; 8dfa11a 00:12:20Z.
+   MEASURED, session log: 22:10:20Z exact route, modes hand and mathieu only. 22:14:01Z PREDICTION text complete. Tool results in order: prediction written, commit and push done (22:16:31), engine file created (22:16:32). No compile until 22:18:34Z.
+   Nuance, MEASURED: the engine source was composed in the same model turn as the push, its block complete at 22:16:22Z, after the prediction text was fixed and before the push returned. The file did not exist on disk until after the push. The prediction could not have read the engine.
+   MEASURED: head -n 29 PREDICTION.hbp is byte-equal to the file at fce08f9, sha 91d6a6e7. Added since: 4 POLARITON_ATTEMPT rows only. predicted= strings are identical in first-run/READ and READ across all 918 rows. Same row names, same order, no row added. No tolerance in the reader is wider than its frozen row (compared by hand, family by family).
+   What ran between fce08f9 and the receipt, MEASURED from the log:
+     22:18:34 clippy failed on an unused variable; 22:18:50 fix, clippy, build, then taylor, exact-route Taylor compare, reversal, on the engine before its commit; 22:21:18 first whole run, finished 23:13, 3130 s; 23:14:33 reader written, in the same turn as the first look at outputs, whose result came back after it, so it was composed before those rows were seen; 23:15:13 dead code removed from reader, and compare_full limited to s=4 at N>3, and the Taylor A sign check tightened; 23:15:21 first read 845/73; 23:16:27 debug of e=0; 23:17:39 pivot fix; 23:18:47 second run; 23:26 exact-route look; 23:26:58 root patch; 23:27-23:29 second run stopped, wrapper and exe killed; 23:29:47 build, rotor, route on 63 rows (max 8 units), Taylor; 23:30:31 third run, 1989 s; 00:03:57 read 887/31.
+   Attempt record: true for all three runs. MEASURED gaps: it omits the pre-commit taylor and reversal stages, and the read-out root change (20 to 32 fractional bits in read()), which is in git diff f47d662 099b0c6. H22, H24, H25.
+   Commit title of 84778fb says "before the receipt", and that commit's workflow already pins the receipt hash, so the receipt existed. History stands; noted only.
+   Frozen rows left unread, MEASURED:
+     POLARITON_TIME has no READ row. Read: 33 min third run, 52 min first, against 120. Met, unreported.
+     Ordered and disordered tolerances "at N>=19683" are read only to 3^13. 23,887,872 is named in 0 READ rows, 43,046,721 in 2 ratio rows.
+     I applied the frozen tolerances to those rows: 28 of 28 MET, reader-ext/READ-top.hbp, 915/31. H8 or H9-H11.
+     C1 at delta=1 (12 rows, predicted 0) is held out with no floor, while the phase at delta=0 gets a floor and shows as miss. Largest read -200 ppm. H31.
+     The reader's jbar filter uses the read value in place of the closed form. Tested: on these rows the two choices select the same 53 rows, so no effect.
+   Quench rows at N=19683 exist for delta -1/2, 0, 1/2, 1, 2 only. delta=-1, the worst miss family, stops at N=6561. H13.
+
+3. OVER AND UNDERCLAIM.
+   "Yes to the central test": EARNED at u=1/2, x=0, ground state, N=243 and 729. D2 within 0.94% at six fields at N=729 against a frozen 10%. OVERCLAIMED as an unscoped sentence in the status line and in root README.
+   "Equal overlaps" plus README line 15 (DERIVED, I rederived it: contact gives U=J after a constant) contradicts u=1/2. HIGH. H1, H2, H6, H7.
+   MEASURED: pinned ground-state rows exist at (u,x) = (0,0), (0,1/4), (1/2,0), (1/2,1/2), (1/2,3/2), with no row at u=1.
+   "With no fit": HOLDS in the strict sense. No number was fitted, c0, rho and f(q) were frozen first, and their sources were independently read (rotor rows, f rows, my f(q)). u=1/2 is a model choice made before any run, in frozen row POLARITON_PLANE_WAVE, and it is disclosed only at line 59. Wording in H1. Moves over tone: none here; this is scope.
+   HARMONIC, HIGH, MEASURED by reading arXiv v1: the paper reads its modulation at k_r ("The magnitude of the k = k_r component"), SI S1 says a 2k_r peak arises when |0> is absent, "in contrast with results discussed in the main text". The central result is D2 at 2k. A1 at yN=16 reads 0.0522, D2 0.3553. H3, H7.
+   DERIVED, tag CONJECTURE as a statement about the paper: plain Hopfield count gives n+^2 and n+n- coefficients of -0.955 and -1.169 (X^2 = 0.54, 0.4) or -0.814 and -1.080 (X = 0.54, 0.4), in units of J. So the paper's overlaps do not lead to u=1/2 by this count, and they break the one-parameter form. Ignores spatial overlaps, which the paper says differ. H16.
+   N AND THE RUNG. polariton/README.md line 45 says N counts bosons and gives N/2+1. Root README says neither, and two paragraphs above it uses 23,887,872 and 43,046,721 for HTTP-0 channels and addresses. A new reader can conflate them. HIGH. H4, H5, H8. Sizes DERIVED: 11,943,937; 21,523,361; full space at N=729: 266,815.
+   UNDERSOLD: C2 stays 0.0801 to 0.0798 while D2 grows to 0.3553 (H28). The paper states the same linear term "alone does not fix the phase", which matches the u=0 row (H26). Hosted cross-OS byte match (H34). Pivot attribution now measured (H23).
+   PAPER, MEASURED, read at arXiv v1, 12 pages images: 2.6% OK; K=0.5% OK; 250 and 430 uW OK; Hopfield 0.54 for |0>, 0.4 for |+-1> OK; 0.04 per um at k_r about 2.3 OK, which is 1.74%, and "2%" is the text's rounding. Nature 639, 337-341 per arXiv page.
+   The paper measured density, g1 by off-axis holography, spectra. g2(x-x') is named as a future signature. It did not vary a pinning field. H3.
+   "Closed system" leaves out: off-resonant 100 fs pump at 80 MHz, exciton reservoir and Rayleigh scattering populating +-1 before OPO onset, BEC lifetime of a few hundred ps, about 30 um extent, about 8e6 pulses averaged, TE0/TE1 8x8 structure, first excited mode above 0.8 mW. H17, H18.
+   K factor: the paper says K scales as A^2/4, expected 0.02%; the README's form gives A^2/16 (I rederived 4 sqrt(K) cos). Conjecture number moves from 0.017 to 0.068 with the paper's factor. H15.
+
+4. MISSES. Counts and reasons match READ row by row, with three corrections.
+   Row 1 quotes 0.79 and leaves out the furthest, 0.328 at delta=-1, t=8, N=6561, with pairs at 0.32% of N. H13.
+   t^4/N: tagged CONJECTURE, properly. Rows push against it: dev*N/t^4 from t=2 to t=8 reads 0.96 to 0.39 (delta=1, N=19683) and 3.8 to 1.1 (delta=-1, N=6561). Local exponent 3.1 and 3.6. 1/N at fixed t: confirmed, 5.72, 2.01, 0.68%. H13.
+   14% in row 3 refuted, H14.
+   42 FROM THE ZERO PIVOT: CONFIRMED, stronger than stated. Row by row: 42 flips, 0 newly missed, 30 gap and 12 jbar, 31 in both. NEW RUN: f47d662 plus only the count_below fix (fix1only/), rotor and sector rerun, first-run rows for the other stages: 887/31, same MET and MISS as READ.hbp on all 918. So the pivot alone accounts for all 42.
+   "All 143 rows" from the 32-bit roots: REFUTED as attribution. Same rebuild: 137 of 143 outside 4096 units, median 1.5e-12, max 9.3e-12. In the first run 33 rows were 1e-9 or further off, up to 0.06, from the pivot. H24.
+   "On the disordered rows": first-run e=0 at P=0 on 85 rows, critical points included. H23.
+   No miss is explained away: each stays MISS and the frozen criterion is named as the fault where it is.
+
+5. WORKFLOW. MEASURED via gh: run 41939586670 at 8dfa11a, all steps success, 21m28s. Step 7 took 16m52s; /usr/bin/time exists on the runner, and the step ran under it. Exact route on the runner's python took 4m21s. 240 min fits. PR body's "about an hour" is stale, H35.
+   Rust 1.81 clippy and fmt step success; repo rust-181 pass twice. No dependencies, so --offline works.
+   Engine uses std only, no f32/f64 hits by grep, fixed worker counts in code. Receipt first written on Windows, now matched on Ubuntu.
+   Step names: "The receipt is the one the README reads" overstates, since the README holds no hash. H21.
+   Catches: changed receipt yes, changed engine yes. Changed reader together with READ.hbp: NO, passes every step, and tolerances live in the reader with no tie to PREDICTION.hbp. Same for second_route.py with SECOND-ROUTE.hbp. H21.
+   Paths omit Cargo.toml, Cargo.lock, .gitattributes. H20.
+
+6. OPERATOR'S RULE. Sentences stating what a result is not, or what stays out: "neither touched a tolerance" H22; "no dependence on α ... absent" H26; "with no fit" and "no pump and no loss" reworded in H1, H2, H6, H7. PR body "rather than the ground state's 2k" and "with no tolerance moved" left for the seat's choice; each carries a measured statement.
+
+7. LINKS. MEASURED: all relative targets exist at 8dfa11a by git cat-file; nature.com 200, arxiv 200, raw README and PREDICTION 200. The PR body links name the branch, so they break if the branch goes; merge-time matter. Reader problems: P has two meanings, rho0 and jbar undefined, H30; quench section never says u=1, H17.
+
+B. CANNOT_SEE
+   - Nature published text and its supplement: fetched status 200 only, I read arXiv v1. Numbers may differ.
+   - Whether u near 1, or the extended model, reproduces 2k or k pinning: no row.
+   - Cause of the last-step turn in the takeover ratio (1.4469 to 1.4509) and the x=3/2 drift: read as measured, cause CONJECTURE, 622 units at 3^16. A higher-precision run would settle it.
+   - Second run's partial output: overwritten by the third, so its stop stage rests on the log alone.
+   - asolaria-fabric and recall were not asked; this lane rests on git, gh, the rows and the paper. Fabric boundary stated, not a finding.
+
+C. FALSIFIERS
+   - H14: a receipt row at delta=0, t=3, N=729 with j/N near 0.14.
+   - H24: rerun fix1only sector and second_route sector_compare; 143 of 143 outside 4096 would refute me.
+   - 42: fix1only/read1.hbp differing from READ.hbp in any MET or MISS.
+   - H3: a passage of the paper reading the supersolid modulation at 2k_r.
+   - H4: root README text stating sector size, or the HTTP-0 numbers moving out of the adjacent section.

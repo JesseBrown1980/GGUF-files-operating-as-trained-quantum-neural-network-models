@@ -1,0 +1,31 @@
+N=9 pin rows: off in units of 1e-9, first run, third run, this head
+ u 1/2 x 0 s 1/2 | first A 189.1 B 31.8 E -0.9 | third A -0.9 B -0.2 E -0.9 | head A -1.9 B -0.2 E -0.9
+ u 1/2 x 0 s 1 | first A 244.5 B 89.8 E 0.0 | third A -0.5 B -0.2 E -1.0 | head A -0.5 B -0.2 E -1.0
+ u 1/2 x 0 s 2 | first A -16.7 B 108.7 E -0.3 | third A -0.7 B -0.3 E -0.3 | head A -0.7 B -0.3 E -0.3
+ u 1/2 x 0 s 4 | first A -367.5 B -144.8 E -0.3 | third A -0.5 B -0.8 E -0.3 | head A -0.5 B -0.8 E -0.3
+ u 1/2 x 0 s 8 | first A -622.4 B -274.1 E -0.4 | third A -0.4 B -0.1 E -0.4 | head A -0.4 B -0.1 E -0.4
+ u 1/2 x 0 s 16 | first A -688.2 B -306.7 E 0.4 | third A -1.2 B -0.7 E -0.6 | head A -1.2 B -0.7 E -0.6
+ u 0 x 0 s 1/2 | first A 173.6 B 49.6 E -0.8 | third A -0.4 B -0.4 E -0.8 | head A -0.4 B -0.4 E -0.8
+ u 0 x 0 s 1 | first A 186.2 B 118.3 E -0.7 | third A -0.8 B -0.7 E -0.7 | head A -0.8 B -0.7 E -0.7
+ u 0 x 0 s 2 | first A -99.3 B 53.5 E -0.2 | third A -0.3 B -0.5 E -0.2 | head A -0.3 B -0.5 E -0.2
+ u 0 x 0 s 4 | first A -346.4 B -231.2 E 0.0 | third A -0.4 B -0.2 E -1.0 | head A -0.4 B -0.2 E -1.0
+ u 0 x 0 s 8 | first A -655.1 B -297.7 E -0.2 | third A -1.1 B -0.7 E -0.2 | head A -1.1 B -0.7 E -0.2
+ u 0 x 0 s 16 | first A -697.9 B -313.2 E -0.1 | third A -0.9 B -0.2 E -0.1 | head A -0.9 B -0.2 E -0.1
+ u 1/2 x 1/2 s 1/2 | first A 85.8 B 3.5 E -0.1 | third A -0.2 B -0.5 E -0.1 | head A -0.2 B -0.5 E -0.1
+ u 1/2 x 1/2 s 1 | first A 142.9 B 14.4 E -0.9 | third A -0.1 B -0.6 E -0.9 | head A -0.1 B -0.6 E -0.9
+ u 1/2 x 1/2 s 2 | first A 117.4 B 35.8 E -0.3 | third A -0.6 B -1.2 E -0.3 | head A -0.6 B -0.2 E -0.3
+ u 1/2 x 1/2 s 4 | first A -245.5 B -50.2 E -0.8 | third A -0.5 B -0.2 E -0.8 | head A -0.5 B -0.2 E -0.8
+ u 1/2 x 1/2 s 8 | first A -564.9 B -236.9 E -0.4 | third A -0.9 B -0.9 E -0.4 | head A -0.9 B -0.9 E -0.4
+ u 1/2 x 1/2 s 16 | first A -665.6 B -281.0 E 0.1 | third A -0.6 B -1.0 E -0.9 | head A -0.6 B -1.0 E -0.9
+ u 1/2 x 3/2 s 1/2 | first A 24.1 B -0.2 E -0.5 | third A -0.9 B -0.2 E -0.5 | head A -0.9 B -0.2 E -0.5
+ u 1/2 x 3/2 s 1 | first A 44.7 B 2.2 E -0.3 | third A -0.3 B -0.8 E -0.3 | head A -0.3 B -0.8 E -0.3
+ u 1/2 x 3/2 s 2 | first A 60.0 B 6.9 E -0.7 | third A -1.0 B -0.1 E -0.7 | head A -1.0 B -0.1 E -0.7
+ u 1/2 x 3/2 s 4 | first A -36.4 B -2.1 E -0.9 | third A -0.4 B -0.1 E -0.9 | head A -0.4 B -0.1 E -0.9
+ u 1/2 x 3/2 s 8 | first A -376.1 B -122.6 E 0.1 | third A -0.1 B -0.6 E -0.9 | head A -0.1 B -0.6 E -0.9
+ u 1/2 x 3/2 s 16 | first A -604.4 B -239.6 E -0.4 | third A -0.4 B -0.6 E -0.4 | head A -0.4 B -0.6 E -0.4
+largest |off A| in 1e-9 {'first': '697.9', 'third': '1.2', 'head': '1.9'}
+N=2, even and odd lowest, four hand rows
+ y 0 E_even -0.500000000 E_odd 0.250000000 even below odd True A 0.000000000 B -0.000000000
+ y 1/64 E_even -0.500217344 E_odd 0.248061900 even below odd True A 0.013931151 B -0.000289141
+ y -1/64 E_even -0.500217344 E_odd 0.248061900 even below odd True A -0.013931151 B -0.000289141
+ y 1/1024 E_even -0.500000848 E_odd 0.249992371 even below odd True A 0.000868066 B -0.000001130

@@ -1,0 +1,10 @@
+DOCTORED|doublet_as_read|even_block_flags=0|whole_space_flags=1|json=0
+DOCTORED|doublet_B=0_pure_P=+1_state|even_block_flags=1|whole_space_flags=0|json=0
+DOCTORED|doublet_B=-even_the_odd_member|even_block_flags=1|whole_space_flags=1|json=0
+DOCTORED|doublet_B_half_a_broken_read|even_block_flags=1|whole_space_flags=1|json=0
+DOCTORED|plane_wave_doublet_as_read|even_block_flags=0|whole_space_flags=0|json=0
+DOCTORED|plane_wave_doublet_B=1e-3|even_block_flags=1|whole_space_flags=1|json=0
+DOCTORED|pinned_row_as_read_N3_s1|even_block_flags=0|whole_space_flags=0|json=0
+DOCTORED|pinned_row_B_times_1.001|even_block_flags=1|whole_space_flags=1|json=0
+DOCTORED|pinned_row_B_negated|even_block_flags=1|whole_space_flags=1|json=0
+DOCTORED|engine_on_the_odd_level_N3|even_block_flags=1|whole_space_flags=1|json=0

@@ -1,0 +1,11 @@
+PIVOTS|N=3|u=1/2|x=3/2|count_below_calls=244|exact_zero_pivots=2|abs_pivot_below_2^20=109|largest_abs_pivot_over_2^40=5417642|json=0
+PIVOTS|N=3|u=0|x=1|count_below_calls=250|exact_zero_pivots=2|abs_pivot_below_2^20=114|largest_abs_pivot_over_2^40=1876271|json=0
+PIVOTS|N=27|u=1/2|x=3/2|count_below_calls=238|exact_zero_pivots=1|abs_pivot_below_2^20=0|largest_abs_pivot_over_2^40=14993382|json=0
+PIVOTS|N=27|u=1/2|x=0|count_below_calls=252|exact_zero_pivots=0|abs_pivot_below_2^20=23|largest_abs_pivot_over_2^40=5695338|json=0
+PIVOTS|N=243|u=1/2|x=3/2|count_below_calls=232|exact_zero_pivots=1|abs_pivot_below_2^20=0|largest_abs_pivot_over_2^40=15684005|json=0
+PIVOTS|N=243|u=1/2|x=1/2|count_below_calls=224|exact_zero_pivots=1|abs_pivot_below_2^20=0|largest_abs_pivot_over_2^40=15085926|json=0
+PIVOTS|N=2187|u=1/2|x=3/2|count_below_calls=229|exact_zero_pivots=1|abs_pivot_below_2^20=0|largest_abs_pivot_over_2^40=2099069|json=0
+PIVOTS|N=59049|u=1/2|x=3/2|count_below_calls=225|exact_zero_pivots=1|abs_pivot_below_2^20=0|largest_abs_pivot_over_2^40=15561394|json=0
+PIVOTS|N=59049|u=0|x=1|count_below_calls=208|exact_zero_pivots=1|abs_pivot_below_2^20=0|largest_abs_pivot_over_2^40=15985171|json=0
+PIVOTS|N=43046721|u=1/2|x=3/2|count_below_calls=215|exact_zero_pivots=1|abs_pivot_below_2^20=0|largest_abs_pivot_over_2^40=16776487|json=0
+PIVOTS|N=43046721|u=1/2|x=1/2|count_below_calls=188|exact_zero_pivots=1|abs_pivot_below_2^20=0|largest_abs_pivot_over_2^40=16776977|json=0

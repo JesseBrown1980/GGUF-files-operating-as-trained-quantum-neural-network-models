@@ -1,0 +1,14 @@
+# A coherent state, density harmonics by discrete Fourier
+COHERENT|rho=0.2|theta=1.0472|A1^2=1.44|16rho0rho_cos2=1.44|json=0
+COHERENT|rho=0.1|theta=2.0944|A1^2=0.32|16rho0rho_cos2=0.32|json=0
+COHERENT|rho=0.005|theta=1.0|A1^2=0.0609959713124|16rho0rho_cos2=0.0609959713124|json=0
+# B K for density 1+A cos kx with flat phase
+BRAGG|A=0.026|K=4.2258928e-5|A^2/16=4.225e-5|A^2/4=0.000169|K_over_(A^2/16)=1.0002113|json=0
+BRAGG|A=0.01|K=6.2501953e-6|A^2/16=6.25e-6|A^2/4=2.5e-5|K_over_(A^2/16)=1.0000313|json=0
+NOTE|K=(n1+n-1)/(2n0)=rho/rho0=1/200|rho=0.004950|rho0=0.990099|(1-delta)V^2=A^2/(8 rho0 rho)=0.017240|with_rho0=1:0.016900|paper_K=A^2/4_gives:0.000169_and_implied_V^2(1-delta)/2=0.033800|json=0
+NOTE|if_0.5_percent_were_taken_as_K_with_density_formula:_V_lower_bound_at_delta=-1:(V^2=0.008620,V=0.0928)|json=0
+# D u=0, exact: rotate (c2,d1) on a rational circle at fixed c1, d2, with a0^2 held rational
+U0_FLAT|c1=1/50|d2=1/70|r=2/5|points_on_circle=6|distinct_values=1|json=0
+U_HALF_NOT_FLAT|points_on_circle=6|distinct_values=6|json=0
+OVERLAP|reading=fractions_0.54_0.40|X1^2/X0^2=0.7407|n+n-_coupling_u1=0.7407|-n^2_coupling_u2=0.9546|mean_field_u_eff=(4/3)(u2-u1/4)=1.0259|json=0
+OVERLAP|reading=amplitudes_0.54_0.40|X1^2/X0^2=0.5487|n+n-_coupling_u1=0.5487|-n^2_coupling_u2=0.8144|mean_field_u_eff=(4/3)(u2-u1/4)=0.9030|json=0

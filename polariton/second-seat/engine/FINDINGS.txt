@@ -1,0 +1,182 @@
+FINDINGS, second seat, lane = engine, reader, exact route. Target: QNN repo, branch fable5-polariton-three-mode-20261104, 8dfa11a, PR #8.
+Tags: MEASURED (a number from a named script here), DERIVED (by hand from the code or the model), NAMED, CONJECTURE, CANNOT_SEE. Paths are under C:/tmp/opus55/polariton-engine-20261104/.
+Nothing in C:/tmp/qnn-polariton-wt was changed. No push, no comment.
+
+F1 HIGH. The sector engine carries an o^2 floor that grows as N^2. MEASURED, tools/highprec_sector.py, out/highprec1.hbp, out/highprec2.hbp.
+  sector_o2 stores o^2 at 2^60 as an i64 floor. o2[0] = 2^60/N^2 = 622.18 at N = 3^16, 5.6e3 at 3^15, 2e13 at N = 243, so the floor removes up to 1/622 of the first element, and the same fraction of the next ones.
+  Separate method: exact rational o^2 and d carried at 2^320 on a block of j (6000 and 12000 agree; 50000 around the peak on ordered rows), Sturm in big integers, 170 bits.
+  Row                       exact            engine at 8dfa11a   engine off
+  N=3^16 u=1/2 x=1/2 jbar   105.537257829    106.039063115       +4755 ppm
+  N=3^16 u=1/2 x=1/2 gap    0.011037825      0.011041917         +371 ppm
+  N=23887872 x=1/2 jbar     86.648165869     86.797897338        +1728 ppm
+  N=23887872 x=1/2 gap      0.013430782      0.013432754         +147 ppm
+  N=3^15 x=1/2 jbar         73.040804615     73.084768264        +602 ppm
+  N=3^14 x=1/2 jbar         50.509247063     50.512768996        +70 ppm
+  N=3^13 x=1/2 jbar         34.887062281     34.887356606        +8 ppm
+  N=3^16 x=3/2 jbar         0.077350265      0.077322760         -356 ppm
+  N=3^16 x=3/2 gap          3.464101696      3.464215303         +33 ppm
+  N=23887872 x=3/2 jbar     0.077350261      0.077338747         -149 ppm
+  N=3^16 x=0 (ordered)      jbar, gap equal to all printed digits. The floor touches rows whose state sits at low j.
+  Cause, MEASURED: the same exact Sturm run with the engine's own floored o2 reproduces the engine's gap to 0.06 ppm or better on every row and jbar to about 1 FD unit.
+  So the README's 1.4509 is the floor. Exact top step: 105.53726/73.04080 = 1.44491; gap 0.69348. Steps below: 1.44779, 1.44608, falling toward 3^(1/3) = 1.44225. The critical rows stay MET at 5%.
+  Rows stay inside their frozen tolerances, so no MET/MISS flips (out/eval_holds.hbp, flips_against_8dfa11a_read=[]). The README table prints digits that are wrong.
+  second_route sector_compare stops at N = 243, where o2[0] is about 2e13 units, so it has no view of this.
+  Fix tested (H1, H2), holdcopy/: o^2 at 2^90 by long division, i128, with step 2^-(20+power/2) at the takeover. Fmt and clippy 1.81 -D warnings exit 0 on a one-bin package (SCOPED, the repo's CI has not run it).
+    Levels at N <= 243: within 1 unit on 143 rows (receipt: 66). N=3^16: gap exact to the printed digit, jbar 105.535428 (-17 ppm), disordered jbar +24 ppm. top_compare: 44 rows, bad=0, against bad=4 on the receipt at the same limits (200 ppm, 10 ppm).
+    Held engine sector, rotor, taylor merged over the receipt: read 934 met, 31 missed under the held reader, no flip. Held pin stage N <= 243: largest change <B> 726 ppb, E 0 ppb, A1, D2, C2 0 ppm.
+
+F2 Finite differences. DERIVED and MEASURED. One unit of up-down moves jbar by N 2^(m-2) 2^-60.
+  Takeover at N=3^16, m=32: 0.04 pairs, 380 ppm, while jbar prints to 1e-9. Disordered at N=3^16, m=20: 1.0e-5, 130 ppm. C2 at disordered and takeover rows: k_up-k_down is under one unit, so those C2 digits are noise, unread and harmless.
+  FD truncation at the takeover: h = 2^-32 against a width N^(-2/3) = 8e-6, ratio squared 8e-10. The floor and quantisation dominate.
+
+F3 Sturm count. DERIVED and MEASURED, out/pivots.hbp, tools/make_pivot.py.
+  Exact zero pivots still occur: 1 per row, at d[0] - 0, on the first bisection that lands on lambda = 0 (2 per row at N = 3). They are counted, and the level then equals exact (F1 with the engine's o2).
+  Overflow: largest |pivot| about 2^64 at N = 3^16; (o2 << 60)/q reaches 2^114 at |q| = 1, inside i128. sector_d: terms at most 2^112 before dividing. d <= about 2 x 2^60, so its cast to i64 holds. Whole stage ran on Linux under overflow-checks = true at N = 3^16, 340 s, 1.44 GB resident.
+  Reading of limits, DERIVED: read() shifts x << 64 in a u128, where x reaches N^4/64; that silently drops bits from N about 185,000. Rows stop at 19683. twisted_vector's cast to i64 is unchecked; the residual is computed afterward, so a wrapped vector costs a cycle and cannot pass.
+  o2 at 2^60 reaches 0 only at N > 2^30.
+
+F4 Lanczos and parity. MEASURED.
+  Residuals: all 174 rows at most 925 e-12 (tolerance 931), cycles at most 93 of 600. None hits the cap.
+  The even start stays byte-even: even_vector_byte_even=1 on all rows checked (out/parity_*.hbp).
+  Exact parity-resolved inertia, my own rational congruent form (tools/parity_inertia.py): N = 2, 3, 9 all rows, N = 27 19 of 28 rows before the 560 s timeout, 79 rows, ground_is_even=1 on all 79.
+  Lanczos on an odd basis built from the engine's own rows (attack/src/bin/parity.rs): N = 81 and 243 all 56 rows, N = 729 u=1/2 x=0 s=16,8,4,2,1 and u=0 x=0 s=16,8 (timeout took the rest, s=1/2 and 0 CANNOT_SEE; at y = 0 the even and odd spaces share each P != 0 level, so P = 0 is exact by U(1), DERIVED). Odd above even on every row.
+  Near-degenerate doublet at u=1/2, x=0, yN=16: odd above even by 141,061, 12,014, 3,059 e-12 at N = 81, 243, 729, against c0/N = 7.7e-3, 2.6e-3, 8.6e-4. At N = 729 the split is 3 times the residual tolerance. It is the two wells at alpha = +-pi/2, DERIVED from the Mathieu doublet a0 < b1. H is frustrated for y != 0, so Perron-Frobenius gives no parity; the check above is what settles it.
+  y = 0 rows: the pin energy equals N e of the sector engine within 1.07e-9 on all 24 rows with a partner, and C2, f equal to the printed digit. The row from the generic start is the ground state. Mutant L04, start not even, reads the same.
+  Residual meaning for D2: tolerance 2^-30 with lower gap c0/N gives a vector error up to 1e-6 at N = 729, DERIVED. MEASURED by rerun at residual near 1e-11 (out/tight_243.hbp, out/tight_729.hbp): D2, A1, C2, E unchanged at the printed ppm and ppb; <B> moves at most 7e-7 of 7.4. The -30 ppb on the README's zero-field line is solver residue: -1 at the tight residual.
+
+F5 Leapfrog. MEASURED. The attack did not break it.
+  Reversibility: the shears are inverted in exact reverse order, DERIVED. Mutant T02 (order swapped) is killed by the reversal rows.
+  Exact Taylor series in big integers, separate code (tools/exact_quench.py): N = 81, seven deltas, six times, 42 rows at the production step 2^-13: relative jbar error at most 2.25e-7, phase equal to the 6 printed digits (out/exact_quench_81.hbp).
+  Step tests: N = 6561 2^-15 vs 2^-17, largest relative change 1.03e-9; N = 19683 2^-17 vs 2^-18, 7.6e-11 (out/leap_step.hbp). N = 27: 2^-11 vs 2^-16, 2e-8 and smaller.
+  Half-step: the read is synchronised, and the leapfrog conserves v^2 + (1 - w^2 h^2/4) u^2, so a bias enters as (w h/2)^2 in the energy actually populated, where w is of order 1 to 10 against 1/h of order 1e5. Norm off at most 12e-9 on 294 rows, largest energy off 24e-9 (tolerance 1e-4).
+  2^k >= 4N at N = 19683: k = 17, norm of H about 1.5N for the rows run there, h ||H|| = 0.23, stable, and the error above. Mutant T03, step 4 times larger, overflows and panics at delta = -2, N = 6561, so the margin is about a factor of 2.7 at the worst N against the stability limit 2 on the widest row.
+  The energy tolerance is 4000 times the largest value. It still killed T01 (symplectic Euler) on one row and T05 on 8 rows, by a small margin. taylor_compare's 1e-3 passes T01.
+
+F6 Mutation. MEASURED, tools/mutants_def.py, tools/mutate_run.py, out/mutants.hbp, out/mut/*/verdict.hbp.
+  59 mutants in my copy. 47 killed, 12 survived. By check: reader 43; exact route alone 2 (R15 full; F09 taylor and panic); panic alone 2 (T03, T04). See the table at the end of this file.
+  Scope, stated: lite stages (sector to 3^13, quench N = 81, 243, 729, 6561, quench_pin N = 81, pin to 243, reversal to 729 and full 27, wavevector on a shorter grid), reader with its N lists cut to those, route = taylor, sector to 81, full to 3. Base rows of that lite run are all byte-in-receipt.
+  Survivors:
+   R16, R17, R18: predicted_A1, closed_ppb, predicted_C1 taken from the measured value. R16 turns 8 misses to met, R17 turns 9. The reader reads the prediction out of the engine's mouth. Values at this head are right: my recomputation agrees on 252 closed forms (worst 4.7e-9) and 24 A1 forms. CONFIRMED structural, not a wrong number.
+   R19: energy_off printed as 0. No separate read of the energy exists.
+   R07: <n+ n-> read as <n+ n+>. C2 is read only at y = 0 where n+ = n-.
+   R12, R13, R14: C1, C2 denominator, f on pin rows. Nothing reads them; the hand rows hold the numbers and are unread.
+   R20, S14: the (N-1)/N in C1, C2. A 1/N effect under the tolerance.
+   S20: o^2 one unit lower. Lite stops at 3^13; see F1 for the top. S10 (o^2 quantised at 256 units), whole sector stage: critical rows catch it (34 misses, out/s10) and the route at 243 has bad=9; disordered jbar read 0.0641 at 3^16 (17% low) with no row watching it.
+   L04: equivalent, the ground state is even.
+  With the holds: R12, R13, R14 die on hand rows, R07 and R13 on the route's C2, R16 to R18 can no longer change a verdict. Left: R19, R20, S14, S20 in lite (S20 falls to top_compare by size, CONJECTURE, not run), L04.
+
+F7 Reader against PREDICTION.hbp. MEASURED, tools/reader_audit.py, out/reader_audit.hbp, out/misc.hbp. Reader and route reproduce byte for byte on this machine after CRLF removal: READ.hbp all, SECOND-ROUTE.hbp all rows (route_full 7m15s). The 29 prediction rows hash to 91d6a6e7..., equal to fce08f9.
+  Unread:
+   - POLARITON_SECTOR_ORDERED, _DISORDERED at the four N above 3^13: 28 readings. All meet (TOP_ROW lines). The README table quotes them.
+   - POLARITON_HAND on the engine: C1, C2, f, sign, slope in s=hand rows. E, A, B reach the route at N = 2.
+   - POLARITON_TIME: no read. Stages sum to 33.1 min here, hosted job 21m28s.
+   - POLARITON_SUSCEPTIBILITY critical: declared read_only, no row.
+   - POLARITON_QUENCH_OTHER_U: 8 rows, no prediction, no read.
+   - POLARITON_PIN_NO_LEADING_ORDER A1/y at s = 8, 16: the frozen row has no s limit, the reader stops at 4. They read 2.0015.
+   - C1 and f on every pin row; C2 on pin rows other than y = 0; norm_off everywhere; energy_off on quench_pin; the N < 243 pin chains; the critical pin chain.
+  Read differently:
+   - POLARITON_PLANE_WAVE: only below/above; the values e(P=N) = -1/4 and 0 are unread, and read -0.250000001 and -1e-9.
+   - Phase at delta = 0: floor max(|delta|, 1/50), the reader's own. README states it.
+   - jbar > 1/100 filter on phase and C1: not frozen. Affects 0 rows here.
+   - C1 skipped at delta = 1: 12 rows, a percent of 0. Largest reads 200 ppm.
+   - else True on a zero predicted C1: 0 rows use it.
+   - s=4 sign of <A> at y < 0 goes through symmetry rows only.
+   - Silent skips: R.get(...) on an absent tag, if len(sym) == 2, if e0 and top, if all(series), if s is not None. MEASURED: a receipt with 8 tags removed reads 434 met, 1 missed, rc = 0; with all rotor rows removed 801 met, 30 missed, and the e_rises miss is gone. The workflow's cmp covers CI; the reader alone reports a clean smaller count.
+  Vacuous or duplicated:
+   - quench_pin_zero_A 18 rows: at y = 0 the line never leaves n+ = n-, exactly 0 by construction.
+   - zero_field_A, _B: a convergence read, exact by U(1).
+   - conversion, 6 rows: sqrt(2C2) reads 0.40022, 1.00056 times 2rho, so it reads the D2 rows again. MEASURED, CONVERSION_TEST: D2/(f 2rho) is closer to 1 than D2/(f sqrt(2C2)) on all nine rows at N = 81, 243, 729. The bold sentence 'the correlation sets the modulation' has no row that separates it from mean-field 2rho.
+   - pin_A1 at 5%: a constant 2.29 meets all 12 (window 2.259 to 2.312). The f dependence lives in the fourth digit, under no tolerance.
+   - abs(C1)N <= 8: reads 0.64 to 1.44, so a factor of 5.5 or more slack; it still killed S11, S12, S16.
+   - disordered_D2 at N = 729, s = 8: one ppm is 3.7% of the value.
+  Order: read_prediction.py was first committed at 099b0c6, 20:30:33, after the first run's engine f47d662; so was first-run/READ.hbp. The prediction rows are frozen at fce08f9. Whether the floor and filters were written before the first read is CANNOT_SEE from git.
+
+F8 second_route.py. DERIVED and MEASURED.
+  Separate arithmetic: exact rationals, no shared code. The congruent form is right: I rederived each element, W_i W_t <t|H|i> = norm (p+1)(m+1) for P, norm (p+1) for the linear term, norm (m+1) for B, with the sign and symmetric put; and my own parity_inertia.py agrees on 79 rows.
+  Shared with the engine: the model text and the element list, written by one author. A wrong H shared by both would pass. I rederived H from the contact integral on three plane waves: J = g, U = g after a constant, so u = 1 as the README says (DERIVED).
+  Reads the receipt only for parameters and for the comparison, and exact_circuit-style reuse of receipt numbers does not occur, with one exception: hand() types c0^2, c1^2 and c0c1 as literals, then checks arithmetic on them (H6).
+  sector_compare reads e_at_2^60 only, at N <= 243: f, jbar, gap, C1, C2 have no exact read on any N. Mutants S11 to S16, S19 pass the route and die on the reader's tolerances.
+  full_compare at N = 9 reads one pinned row per point (a change after fce08f9, disclosed in code). Taylor tolerance 1e-3 (frozen) passes first-order integrators. compare_taylor tightened after fce08f9 from |a| to signed, which is the stricter one.
+  mathieu is not in the workflow. Run by hand it returns 9999, 39944, 156537, 490857, 776331, 889412, the frozen table exactly.
+  Scope of 'exact route sector rows bad=0': N <= 243.
+
+F9 Reproduction. MEASURED.
+  Windows, clean git archive of 8dfa11a, cargo +1.81.0, locked, offline: taylor, control, wavevector, rotor, each byte-equal to its slice of RECEIPT.hbp in place.
+  Windows, WORKERS = 4 instead of 5: 208 sector rows to 3^13, 218 rotor, 204 quench, 146 pin, all byte-in-receipt. So no dependence on the scheduling seen.
+  Linux, WSL2 kernel 6.18.33.2, cargo +1.81.0: taylor, control, wavevector, rotor, reversal, and the whole sector stage to 43,046,721, all rows byte-in-receipt (out/wsl_*.rows).
+  Owning gate, gh pr checks 8 at head 8dfa11a: the receipt job pass 21m28s, rust-181 pass, state OPEN, mergeable. pin, quench, quench_pin on Linux: seen only through that job's cmp.
+
+F10 Things I left behind outside the workspace, by mistake, with no deletion attempted as the task forbids it.
+  C:/c/tmp/opus55/polariton-engine-20261104/ (111 MB, target_attack and target_extra): MSYS_NO_PATHCONV=1 with CARGO_TARGET_DIR=/c/tmp/... made cargo write there. Early fix readings came from stale binaries because of this; the numbers above are from the rebuilt ones, and each was re-measured.
+  WSL /wsl_.err, /wsl_.out, /wsl_.rows: a $VAR inside wsl -lc arrived empty, the documented gotcha. Please remove those when convenient.
+
+CANNOT_SEE
+  - Held engine's pin at N = 729, quench_pin, and the whole-receipt cmp under the holds: not run, the receipt must be regenerated (33 min here).
+  - N = 27 inertia on 9 rows and N = 729 odd basis on the low-s rows: timeouts.
+  - Fabric and recall: not asked in this lane; this is a read of a repository and its arithmetic.
+  - Whether the reader's floors were written before the first read.
+  - The extended-model claims of the README: outside this lane.
+
+MUTANT TABLE (59). killed, by_reader, by_route, panic, new reader misses, miss to met, reader families
+F01_pair_sign                killed=1 reader=1 route=taylor,full  panic=none             new_miss=267  to_met=0   conversion,disordered_A1,disordered_D2,energy,no_leading_order_A1,no_leading_order_D2,pin_A1,pin_B_negative,pin_D2,quench_C1,quench_phase,quench_pin_A1,quench_pin_at_edge,susceptibility_scale,zero_field_A
+F02_pair_bose_pp             killed=1 reader=1 route=taylor,full  panic=none             new_miss=34   to_met=0   conversion,disordered_A1,disordered_D2,no_leading_order_A1,no_leading_order_D2,pin_A1,pin_D2,quench_pin_A1,susceptibility_ratio,susceptibility_scale,zero_field_A,zero_field_C2
+F03_pair_n0n0                killed=1 reader=1 route=taylor,full  panic=none             new_miss=149  to_met=1   energy
+F04_pair_reverse_nonherm     killed=1 reader=1 route=taylor       panic=pin:rc=99        new_miss=165  to_met=0   energy,quench_pin_A1
+F05_direct_drop_pm           killed=1 reader=1 route=taylor,full  panic=none             new_miss=180  to_met=5   conversion,energy,pin_A1,pin_B_negative,pin_D2,quench_phase,susceptibility_ratio,susceptibility_scale,zero_field_C2
+F06_direct_n0minus1          killed=1 reader=1 route=taylor,full  panic=none             new_miss=155  to_met=1   energy
+F07_x_on_plus_only           killed=1 reader=1 route=taylor,full  panic=none             new_miss=14   to_met=0   disordered_A1,disordered_D2,quench_pin_A1,quench_pin_at_edge
+F08_linear_sign              killed=1 reader=1 route=taylor,full  panic=none             new_miss=6    to_met=0   pin_A_positive
+F09_linear_up_nonherm        killed=1 reader=0 route=taylor       panic=pin:rc=99        new_miss=0    to_met=0   none
+F10_linear_down_nonherm      killed=1 reader=1 route=taylor       panic=pin:rc=99        new_miss=2    to_met=0   quench_pin_A1
+F11_linear_minus_half        killed=1 reader=1 route=taylor,full  panic=none             new_miss=36   to_met=0   conversion,disordered_A1,disordered_D2,no_leading_order_A1,no_leading_order_D2,pin_A1,pin_D2,quench_pin_A1,susceptibility_scale
+L01_tol_2^44                 killed=1 reader=1 route=full         panic=none             new_miss=2    to_met=0   zero_field_A,zero_field_B
+L02_second_ritz              killed=1 reader=1 route=full         panic=none             new_miss=19   to_met=0   conversion,pin_A1,pin_B_negative,pin_D2,susceptibility_ratio,susceptibility_scale,symmetry_A_flips,symmetry_B_same,symmetry_E_same
+L03_one_cycle                killed=1 reader=1 route=full         panic=none             new_miss=19   to_met=0   conversion,no_leading_order_A1,no_leading_order_D2,pin_A1,pin_B_negative,pin_D2,susceptibility_ratio,susceptibility_scale
+L04_start_not_even           killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+R01_A_sign                   killed=1 reader=1 route=taylor,full  panic=none             new_miss=6    to_met=0   pin_A_positive
+R02_A_second_term_zero       killed=1 reader=1 route=taylor,full  panic=none             new_miss=20   to_met=0   disordered_A1,no_leading_order_A1,pin_A1,quench_pin_A1
+R03_B_root_pm                killed=1 reader=1 route=full         panic=none             new_miss=2    to_met=0   disordered_D2
+R04_B_sign                   killed=1 reader=1 route=full         panic=none             new_miss=6    to_met=0   pin_B_negative
+R05_P_root_n0n0              killed=1 reader=1 route=none         panic=none             new_miss=150  to_met=0   energy
+R06_P_sign                   killed=1 reader=1 route=none         panic=none             new_miss=220  to_met=0   energy,quench_C1,quench_phase
+R07_npnm_pp                  killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+R08_n0pairs_plus1            killed=1 reader=1 route=none         panic=none             new_miss=155  to_met=0   energy
+R09_pairs_plus1              killed=1 reader=1 route=taylor       panic=none             new_miss=213  to_met=3   control_no_bose_must_miss,energy,quench_C1,quench_jbar,quench_phase
+R10_pin_a1_half              killed=1 reader=1 route=none         panic=none             new_miss=16   to_met=0   disordered_A1,no_leading_order_A1,pin_A1
+R11_pin_d2_half              killed=1 reader=1 route=none         panic=none             new_miss=11   to_met=0   conversion,disordered_D2,pin_D2
+R12_pin_c1_sign              killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+R13_pin_c2_denominator       killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+R14_pin_f_not_per_N          killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+R15_pin_energy_double        killed=1 reader=0 route=full         panic=none             new_miss=0    to_met=0   none
+R16_predicted_A1_is_read     killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=8   none
+R17_closed_is_read           killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=9   none
+R18_predicted_C1_is_read     killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+R19_energy_off_zero          killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+R20_quench_c1_uses_big2      killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+S01_o2_no_bose               killed=1 reader=1 route=sector       panic=none             new_miss=308  to_met=0   C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+S02_o2_n0n0                  killed=1 reader=1 route=sector       panic=none             new_miss=1    to_met=0   e
+S03_o2_minus_off_by_one      killed=1 reader=1 route=sector       panic=none             new_miss=116  to_met=0   e,jbar,rotor_P=1,rotor_P=2,rotor_P=3
+S04_d_drop_npnm              killed=1 reader=1 route=sector       panic=none             new_miss=154  to_met=1   C1N,C2,critical_gap_ratio,critical_jbar_ratio,e,f,gap,rotor_P=1,rotor_P=2,rotor_P=3
+S05_d_double_npnm            killed=1 reader=1 route=sector       panic=none             new_miss=148  to_met=0   C1N,C2,e,f,gap,rotor_P=1,rotor_P=2,rotor_P=3
+S06_d_n0minus1               killed=1 reader=1 route=sector       panic=none             new_miss=1    to_met=0   e
+S07_d_x_sum_plus1            killed=1 reader=1 route=sector       panic=none             new_miss=1    to_met=0   e
+S08_zero_pivot_uncounted     killed=1 reader=1 route=sector       panic=none             new_miss=42   to_met=0   gap,jbar
+S09_roots_16_bits_each       killed=1 reader=1 route=sector       panic=none             new_miss=80   to_met=0   rotor_P=1,rotor_P=2,rotor_P=3
+S11_fd_f_double              killed=1 reader=1 route=none         panic=none             new_miss=100  to_met=0   C1N,f,jbar
+S12_fd_s_double              killed=1 reader=1 route=none         panic=none             new_miss=70   to_met=0   C1N,C2
+S13_gap_index2               killed=1 reader=1 route=none         panic=none             new_miss=65   to_met=0   gap
+S14_c1c2_no_N_over_Nm1       killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+S15_c2_half                  killed=1 reader=1 route=none         panic=none             new_miss=35   to_met=0   C2
+S16_c1_wk_f3s                killed=1 reader=1 route=none         panic=none             new_miss=35   to_met=0   C1N
+S17_rotor_o2_no_charge       killed=1 reader=1 route=sector       panic=none             new_miss=84   to_met=0   rotor_P=1,rotor_P=2,rotor_P=3
+S18_rotor_d_n0               killed=1 reader=1 route=sector       panic=none             new_miss=49   to_met=1   plane_wave,rotor_P=1,rotor_P=2,rotor_P=3
+S19_fd_sum_plus1             killed=1 reader=1 route=none         panic=none             new_miss=30   to_met=0   jbar
+S20_o2_minus_one_unit        killed=0 reader=0 route=none         panic=none             new_miss=0    to_met=0   none
+T01_symplectic_euler         killed=1 reader=1 route=none         panic=none             new_miss=1    to_met=0   energy
+T02_retreat_swapped          killed=1 reader=1 route=none         panic=none             new_miss=4    to_met=0   reversal
+T03_step_4x_larger           killed=1 reader=0 route=none         panic=quench:rc=101    new_miss=0    to_met=0   none
+T04_step_16x_larger          killed=1 reader=0 route=none         panic=reversal:rc=101  new_miss=0    to_met=0   none
+T05_first_kick_full          killed=1 reader=1 route=none         panic=none             new_miss=8    to_met=0   energy
+KILL_RATES|F=11/11|L=3/4|R=11/20|S=17/19|T=5/5|all=47/59|by_reader=43|json=0
+KILLS_BY_READER_FAMILY|energy=11|pin_A1=8|conversion=7|pin_D2=7|quench_pin_A1=7|e=7|rotor_P=1=7|rotor_P=2=7|rotor_P=3=7|disordered_A1=6|disordered_D2=6|no_leading_order_A1=6|susceptibility_scale=6|C1N=6|pin_B_negative=5|C2=5|gap=5|jbar=5|no_leading_order_D2=4|quench_phase=4|susceptibility_ratio=4|f=4|quench_C1=3|zero_field_A=3|quench_pin_at_edge=2|zero_field_C2=2|pin_A_positive=2|critical_gap_ratio=2|critical_jbar_ratio=2|zero_field_B=1|symmetry_A_flips=1|symmetry_B_same=1|symmetry_E_same=1|control_no_bose_must_miss=1|quench_jbar=1|plane_wave=1|reversal=1
+KILLS_BY_ROUTE|taylor=14|full=16|sector=11
