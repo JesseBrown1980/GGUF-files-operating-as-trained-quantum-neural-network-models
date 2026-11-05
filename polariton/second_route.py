@@ -60,7 +60,7 @@ def basis(n):
     return [(p, m) for p in range(n + 1) for m in range(n + 1 - p)]
 
 
-def congruent_matrix(n, x, u, y, lam, kappa_b=F(0), kappa_n=F(0)):
+def congruent_matrix(n, x, u, y, lam, kappa_b=F(0), kappa_n=F(0), kappa_c=F(0)):
     """W(H - lam)W with W = diag(sqrt(n0! p! m!)), which is rational and has the inertia of H - lam."""
     states = basis(n)
     index = {s: i for i, s in enumerate(states)}
@@ -77,7 +77,7 @@ def congruent_matrix(n, x, u, y, lam, kappa_b=F(0), kappa_n=F(0)):
     for (p, m), i in index.items():
         n0 = n - p - m
         norm = factorial(n0) * factorial(p) * factorial(m)
-        put(i, i, norm * (x * (p + m) + u * pn * (n0 * (p + m) + p * m) + kappa_n * p * m - lam))
+        put(i, i, norm * (x * (p + m) + u * pn * (n0 * (p + m) + p * m) + kappa_n * p * m + kappa_c * (p - m) * (p - m) - lam))
         if n0 >= 2:
             put(i, index[(p + 1, m + 1)], pn * norm * (p + 1) * (m + 1))
         if n0 >= 1:
@@ -121,11 +121,11 @@ def even_block(rows, n):
     return out
 
 
-def full_ground(n, x, u, y, kappa_b=F(0), width=F(1, 1 << 44), kappa_n=F(0), even=False):
+def full_ground(n, x, u, y, kappa_b=F(0), width=F(1, 1 << 44), kappa_n=F(0), even=False, kappa_c=F(0)):
     """The lowest level of the whole symmetric space, or of its parity-even block. The block's level is smooth in kappa_b where the whole space has an exact doublet."""
     lo, hi = F(-4 * n * n - 8), F(4 * n * n + 8)
     def below_count(lam):
-        rows = congruent_matrix(n, x, u, y, lam, kappa_b, kappa_n)
+        rows = congruent_matrix(n, x, u, y, lam, kappa_b, kappa_n, kappa_c)
         return inertia_negative(even_block(rows, n) if even else rows)
     while hi - lo > width:
         mid = (lo + hi) / 2 + F(1, 1 << 90)
@@ -254,7 +254,7 @@ def compare_full(path, n_max):
         n = int(row["N"])
         if n > n_max:
             continue
-        if n > 3 and row["s"] != "4":  # Nine polaritons cost minutes a row, so one pinned row per point.
+        if n > 3 and row["s"] != "4" and not line.startswith("POLARITON_PIN_WINDOW|"):  # Nine polaritons cost minutes a row, so one pinned row per point of the pin stage, and all the window rows, as POLARITON_CONVERSION_ROUTE says.
             continue
         x, u, y = F(row["x"]), F(row["u"]), F(row["y"])
         e = full_ground(n, x, u, y)
@@ -270,6 +270,13 @@ def compare_full(path, n_max):
             read_c2 = F(int(row["C2_ppm"]), 10 ** 6)
             good = good and abs(c2 - read_c2) < F(1, 10 ** 5)
             print("SECOND_ROUTE_FULL_C2|N=%d|u=%s|x=%s|y=%s|exact_C2=%s|rust_C2=%s|json=0" % (n, u, x, y, decimal(c2), decimal(read_c2)))
+            if "P2_over_N2_ppm" in row:
+                # <(n+ - n-)^2>/N^2 from the level's slope in kappa_c. The operator is even under the exchange, so an exact doublet moves as one. It moves the level by up to N^2 kappa_c, so the step is finer than for C2.
+                fine = F(1, 1 << 18)
+                p2 = (full_ground(n, x, u, y, F(0), F(1, 1 << 52), kappa_c=fine) - full_ground(n, x, u, y, F(0), F(1, 1 << 52), kappa_c=-fine)) / (2 * fine) / (n * n)
+                read_p2 = F(int(row["P2_over_N2_ppm"]), 10 ** 6)
+                good = good and abs(p2 - read_p2) < F(1, 10 ** 5)
+                print("SECOND_ROUTE_FULL_P2|N=%d|u=%s|x=%s|y=%s|exact_P2=%s|rust_P2=%s|json=0" % (n, u, x, y, decimal(p2), decimal(read_p2)))
         bad += not good
         count += 1
         print("SECOND_ROUTE_FULL|N=%d|u=%s|x=%s|y=%s|exact_E=%s|rust_E=%s|exact_A=%s|rust_A=%s|exact_B=%s|rust_B=%s|json=0" % (n, u, x, y, decimal(e), decimal(read_e), decimal(a), decimal(read_a), decimal(b), decimal(read_b)))
@@ -326,7 +333,7 @@ def compare_top(path, n_min):
         gap = F(e1 - e0, one) * n
         read_jbar = F(int(row["jbar_ppb"]), 10 ** 9)
         off_jbar, off_gap = abs(read_jbar / jbar - 1) * 10 ** 6, abs(gap_read / gap - 1) * 10 ** 6
-        good = off_jbar <= 200 and off_gap <= 10
+        good = off_jbar <= 50 and off_gap <= 10
         bad += not good
         total += 1
         print("SECOND_ROUTE_TOP|N=%d|u=%s|x=%s|exact_jbar=%s|rust_jbar=%s|off_ppm=%d|exact_gap=%s|rust_gap=%s|off_ppm=%d|json=0" % (n, u, x, decimal(jbar), decimal(read_jbar), off_jbar, decimal(gap), decimal(gap_read), off_gap))
@@ -478,8 +485,8 @@ def compare_convert(path):
         n = int(row["N"])
         x, u, y, t = F(row["x"]), F(row["u"]), F(row["y"]), F(row["t"])
         norm, pair, a_value, b_value, c1, c2 = convert_point(n, x, u, y, t, 8 * n + 120)
-        read = [F(int(row[name]), 10 ** 9) for name in ("jbar_ppb", "A_ppb", "B_ppb", "C1_ppb", "C2_ppb")]
-        exact = [pair, a_value, b_value, c1, c2]
+        read = [F(int(row[name]), 10 ** 9) for name in ("jbar_ppb", "A_ppb", "B_ppb", "C1_ppb", "C2_ppb", "f_ppb")]
+        exact = [pair, a_value, b_value, c1, c2, 2 * pair / n]
         off = max(abs(p - q) for p, q in zip(read, exact))
         good = abs(norm - 1) < F(1, 10 ** 12) and off < limit
         bad += not good

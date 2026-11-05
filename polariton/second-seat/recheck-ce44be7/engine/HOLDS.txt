@@ -1,0 +1,313 @@
+HOLD H1 | file=polariton/read_prediction.py | severity=medium
+OLD<<<
+    report("control_no_bose_must_miss_t=%s" % r["t"], not within(F(int(r["jbar_ppb"]), 10 ** 9), closed_jbar(F(r["delta"]), int(r["t"])), F(2, 100)), r["ratio_ppm"], "off_1000000_by_more_than_20000")
+>>>
+NEW<<<
+    report("control_no_bose_must_miss_t=%s" % r["t"], not within(F(int(r["jbar_ppb"]), 10 ** 9), closed_jbar(F(r["delta"]), int(r["t"])), F(2, 100)), r["ratio_ppm"], "off_1000000_by_more_than_20000")
+    # The energy read's own control: these rows evolve with the Bose factor removed while the row reads the true H, so the printed offset leaves the 10^-4 of the quench rows.
+    report("control_no_bose_energy_moves_t=%s" % r["t"], abs(int(r["energy_off_1e-9"])) > 10 ** 5, r["energy_off_1e-9"], "abs_above_100000e-9")
+>>>
+REASON: The smallest change that kills R19. The filed reader reads energy_off only against an upper limit, so 0 passes: R19 on the whole receipt, 0 new misses. The four control rows print 510610, 7354976, 32642719, 89965045 e-9; with this read R19 is 4 new misses on a value, and a printed tenth is 1 (out/hold_tests.hbp). Adds 4 rows, all met.
+
+HOLD H2 | file=polariton/read_prediction.py | severity=medium
+OLD<<<
+    report("conversion_energy_" + tag, abs(int(r["energy_off_1e-9"])) <= 10 ** 5, r["energy_off_1e-9"], "abs_at_most_100000e-9")
+>>>
+NEW<<<
+    report("conversion_energy_" + tag, abs(int(r["energy_off_1e-9"])) <= 10 ** 5, r["energy_off_1e-9"], "abs_at_most_100000e-9")
+    # At u = 1 the energy is 2x jbar + ((N - 1)/2)(C1 + C2) - 2y<A>, from the row's other fields. Each field is floored at 10^-9, which sets the bound.
+    rebuilt = 2 * F(r["x"]) * F(int(r["jbar_ppb"]), 10 ** 9) + F(n - 1, 2) * (c1 + F(int(r["C2_ppb"]), 10 ** 9)) - 2 * y * F(int(r["A_ppb"]), 10 ** 9)
+    report("conversion_energy_rebuilt_" + tag, abs(rebuilt - F(int(r["energy_off_1e-9"]), 10 ** 9)) <= (2 * abs(F(r["x"])) + n + 1 + 2 * abs(y)) / 10 ** 9, r["energy_off_1e-9"], micro(rebuilt * 1000))
+>>>
+REASON: conversion_chain has its own energy line, so H1 leaves C12 (offset printed 0 on conversion rows) alive; filed reader and route 0 new misses. Rebuilt on all 94 filed rows: within the bound, largest 0.895 of it; with the offset zeroed 15 rows miss on a value, halved 7 (out/hold_tests.hbp).
+
+HOLD H3 | file=polariton/read_prediction.py | severity=medium
+OLD<<<
+    if n >= 243 and f_want <= F(1, 10):
+        report("conversion_V2_" + tag, within(v2, v2_want, F(5, 100)), micro(v2), micro(v2_want))
+        report("conversion_A_negative_" + tag, int(r["A_ppb"]) < 0, r["A_ppb"], "negative")
+        report("conversion_B_positive_" + tag, int(r["B_ppb"]) > 0, r["B_ppb"], "positive")
+>>>
+NEW<<<
+    report("conversion_A_negative_" + tag, int(r["A_ppb"]) < 0, r["A_ppb"], "negative")
+    report("conversion_B_positive_" + tag, int(r["B_ppb"]) > 0, r["B_ppb"], "positive")
+    if n >= 243 and f_want <= F(1, 10):
+        report("conversion_V2_" + tag, within(v2, v2_want, F(5, 100)), micro(v2), micro(v2_want))
+>>>
+REASON: Row 39 freezes <A>_negative_at_y>0 and <B>_positive with no gate, and the reader reads them only inside the V2 gate, 58 of 188 reads. Read on all 94: A negative 94, B positive 93; the other is N = 81, delta = 0, y = 4/9, t = 3, B_ppb = -122153693, predicted f 74.6 (out/rows_audit.hbp). Adds 130 rows, 1 missed. A reader who takes row 39's N >= 243 to scope the signs reads 128 of 128 at N >= 243 instead.
+
+HOLD H4 | file=polariton/read_prediction.py | severity=low
+OLD<<<
+            if F(s) >= 4:
+                d2y = F(abs(int(r["B_ppb"])) * 2, n * 10 ** 9) / (y * y)
+                report("window_below_D2_" + label, within(d2y, want_d, F(5, 100)), micro(d2y), micro(want_d))
+                report("window_below_B_sign_" + label, int(r["B_ppb"]) * sign > 0, r["B_ppb"], "sign_%d" % sign)
+>>>
+NEW<<<
+            report("window_below_B_sign_" + label, int(r["B_ppb"]) * sign > 0, r["B_ppb"], "sign_%d" % sign)
+            if F(s) >= 4:
+                d2y = F(abs(int(r["B_ppb"])) * 2, n * 10 ** 9) / (y * y)
+                report("window_below_D2_" + label, within(d2y, want_d, F(5, 100)), micro(d2y), micro(want_d))
+>>>
+REASON: Row 38 freezes sign_<B>=sign(u-x-1) with no limit on s, and the reader reads it at s >= 4 only. The 18 rows at s = 1/2, 1, 2 read the frozen sign (out/rows_audit.hbp), so this adds 18 met rows and moves no verdict.
+
+HOLD H5 | file=polariton/read_prediction.py | severity=medium
+OLD<<<
+    report("rows_" + tag, len(R.get(tag, [])) == count, len(R.get(tag, [])), str(count))
+>>>
+NEW<<<
+    # Counted by what names a row, so a row replaced by a copy of another counts as missing.
+    distinct = {tuple(r.get(k) for k in ("N", "u", "x", "y", "s", "delta", "t", "P", "full")) for r in R.get(tag, [])}
+    report("rows_" + tag, len(R.get(tag, [])) == count and len(distinct) == count, len(distinct), str(count))
+>>>
+REASON: One row replaced by a copy of another of its tag keeps the count: a missed conversion or quench row then vanishes, miss 35 to 34, exit 0, no row says so, and the top critical row at 3^16 goes with the ratios moving down a rung (out/reader_tests.hbp). With this read all five swaps tried are a rows_ miss (out/hold_tests.hbp); the filed receipt reads the same.
+
+HOLD H5b | file=polariton/read_prediction.py | severity=low
+OLD<<<
+for tag, count in (("POLARITON_REVERSAL", 5), ("POLARITON_CONTROL_NO_BOSE", 4),
+>>>
+NEW<<<
+for tag, count in (("POLARITON_TAYLOR_POINT", 6), ("POLARITON_TAYLOR_CONVERT", 4), ("POLARITON_REVERSAL", 5), ("POLARITON_CONTROL_NO_BOSE", 4),
+>>>
+REASON: TC3 (one Taylor convert row of 4) survives: the route's lane exits 0 on rows = 1 and the reader's count list leaves those two tags out. Only the workflow's cmp sees it. These counts are 6 and 4 on the filed receipt.
+
+HOLD H6 | file=.github/workflows/polariton.yml | severity=medium
+OLD<<<
+      - name: The 29 prediction rows hash to their value at fce08f9
+        run: test "$(head -n 29 polariton/PREDICTION.hbp | sha256sum | cut -d' ' -f1)" = "91d6a6e706c606be959cd8deb590f973a315fc923cf7589095aff8e489371f4e"
+>>>
+NEW<<<
+      - name: The 29 prediction rows hash to their value at fce08f9
+        run: test "$(head -n 29 polariton/PREDICTION.hbp | sha256sum | cut -d' ' -f1)" = "91d6a6e706c606be959cd8deb590f973a315fc923cf7589095aff8e489371f4e"
+      - name: The added prediction rows hash to their value at 89a026a, and the build's settings are the pinned ones
+        run: |
+          set -euo pipefail
+          test "$(sed -n 36,41p polariton/PREDICTION.hbp | sha256sum | cut -d' ' -f1)" = "f79daa9d83d970b73edeb447226c6920aefcb3b8a918e131704b109a5c5d5761"
+          test "$(sha256sum Cargo.toml | cut -d' ' -f1)" = "ca4bec9c2df84724821c75765e991354bd277d1ce8eb3e64183e520094208e55"
+          test "$(sha256sum .gitattributes | cut -d' ' -f1)" = "708128c3ba9bdf8c82d8b92f28e8f79ea3a42b304a7061269b0ae2743eb7aef9"
+>>>
+REASON: Run on copies with the job's own pin commands: row 39 V2 5 to 50 percent, row 37 D2 20 to 40 percent, Cargo.toml overflow-checks = false and .gitattributes edited all pass every pin (out/pin_steps.hbp). Built with overflow-checks = false, taylor, control, rotor print byte-equal rows. Shas are of the blobs at this head.
+
+HOLD H7 | file=.gitignore | severity=medium
+OLD<<<
+out/
+>>>
+NEW<<<
+out/
+!polariton/second-seat/*/out/
+>>>
+REASON: polariton/second-seat/SHA256SUMS lists 102 files and 87 are outside the commit, derivations/out/* (18) and engine/out/* (69), ignored at .gitignore line 2 (git check-ignore), 1.1 MB, all 102 verifying only in this worktree; the operator's standing word is that nothing stays local. Tested in a scratch repo: those folders become addable and a plain out/ stays ignored. Then git add them.
+
+HOLD H8 | file=polariton/second_route.py | severity=medium
+OLD<<<
+def congruent_matrix(n, x, u, y, lam, kappa_b=F(0), kappa_n=F(0)):
+>>>
+NEW<<<
+def congruent_matrix(n, x, u, y, lam, kappa_b=F(0), kappa_n=F(0), kappa_c=F(0)):
+>>>
+REASON: P2_over_N2_ppm has no exact read and is read only as a lower bound on below-edge rows; W07 (sum for difference), W08 (constant 1), W09 (|P| N) survive, moving it by 600,499, 1,000,000, 241,579 ppm. Part 1 of 5.
+
+HOLD H8b | file=polariton/second_route.py | severity=medium
+OLD<<<
+        put(i, i, norm * (x * (p + m) + u * pn * (n0 * (p + m) + p * m) + kappa_n * p * m - lam))
+>>>
+NEW<<<
+        put(i, i, norm * (x * (p + m) + u * pn * (n0 * (p + m) + p * m) + kappa_n * p * m + kappa_c * (p - m) * (p - m) - lam))
+>>>
+REASON: Part 2 of 5 of H8.
+
+HOLD H8c | file=polariton/second_route.py | severity=medium
+OLD<<<
+def full_ground(n, x, u, y, kappa_b=F(0), width=F(1, 1 << 44), kappa_n=F(0), even=False):
+>>>
+NEW<<<
+def full_ground(n, x, u, y, kappa_b=F(0), width=F(1, 1 << 44), kappa_n=F(0), even=False, kappa_c=F(0)):
+>>>
+REASON: Part 3 of 5 of H8.
+
+HOLD H8d | file=polariton/second_route.py | severity=medium
+OLD<<<
+        rows = congruent_matrix(n, x, u, y, lam, kappa_b, kappa_n)
+>>>
+NEW<<<
+        rows = congruent_matrix(n, x, u, y, lam, kappa_b, kappa_n, kappa_c)
+>>>
+REASON: Part 4 of 5 of H8.
+
+HOLD H8e | file=polariton/second_route.py | severity=medium
+OLD<<<
+            print("SECOND_ROUTE_FULL_C2|N=%d|u=%s|x=%s|y=%s|exact_C2=%s|rust_C2=%s|json=0" % (n, u, x, y, decimal(c2), decimal(read_c2)))
+>>>
+NEW<<<
+            print("SECOND_ROUTE_FULL_C2|N=%d|u=%s|x=%s|y=%s|exact_C2=%s|rust_C2=%s|json=0" % (n, u, x, y, decimal(c2), decimal(read_c2)))
+            if "P2_over_N2_ppm" in row:
+                # <(n+ - n-)^2>/N^2 from the level's slope in kappa_c. The operator is even under the exchange, so an exact doublet moves as one. It moves the level by up to N^2 kappa_c, so the step is finer than for C2.
+                fine = F(1, 1 << 18)
+                p2 = (full_ground(n, x, u, y, F(0), F(1, 1 << 52), kappa_c=fine) - full_ground(n, x, u, y, F(0), F(1, 1 << 52), kappa_c=-fine)) / (2 * fine) / (n * n)
+                read_p2 = F(int(row["P2_over_N2_ppm"]), 10 ** 6)
+                good = good and abs(p2 - read_p2) < F(1, 10 ** 5)
+                print("SECOND_ROUTE_FULL_P2|N=%d|u=%s|x=%s|y=%s|exact_P2=%s|rust_P2=%s|json=0" % (n, u, x, y, decimal(p2), decimal(read_p2)))
+>>>
+REASON: Part 5 of 5 of H8. Filed rows at N = 3: 21 of 21 within 1 ppm, bad = 0. On the mutants' own rows, filed route bad = 0 and this route bad = 20, 20, 19 of 21 (out/hold_route_test.hbp, out/held_route_full3.hbp).
+
+HOLD H9 | file=polariton/second_route.py | severity=low
+OLD<<<
+        read = [F(int(row[name]), 10 ** 9) for name in ("jbar_ppb", "A_ppb", "B_ppb", "C1_ppb", "C2_ppb")]
+        exact = [pair, a_value, b_value, c1, c2]
+>>>
+NEW<<<
+        read = [F(int(row[name]), 10 ** 9) for name in ("jbar_ppb", "A_ppb", "B_ppb", "C1_ppb", "C2_ppb", "f_ppb")]
+        exact = [pair, a_value, b_value, c1, c2, 2 * pair / n]
+>>>
+REASON: f_ppb on conversion rows has no read anywhere, and the README quotes f = 0.047 from it. C05 (f times N) survives; this route reads bad = 4 of 4 on its rows, filed bad = 0 (out/hold_route_test.hbp).
+
+HOLD H10 | file=.github/workflows/polariton.yml | severity=low
+OLD<<<
+          python3 -I -X utf8 polariton/second_route.py mathieu 1/50 2/25 8/25 32/25 128/25 512/25 >> route.hbp
+>>>
+NEW<<<
+          python3 -I -X utf8 polariton/second_route.py mathieu 1/50 2/25 8/25 32/25 128/25 512/25 1/16 1/4 1 4 16 64 9/625 36/625 144/625 576/625 2304/625 9216/625 3/289 12/289 48/289 192/289 768/289 3072/289 1/675 4/675 16/675 64/675 256/675 1024/675 1/450 2/225 8/225 32/225 128/225 512/225 >> route.hbp
+>>>
+REASON: Row 37's 30 f(q) values come from the Mathieu route and the job reruns only row 15's six. Run here they read the 30 frozen values exactly, in 17 s (out/route_mathieu_window.hbp); my own read from the ground vector agrees (out/frozen_table.hbp). SECOND-ROUTE.hbp gains 30 rows.
+
+HOLD H11 | file=polariton/read_prediction.py | severity=medium
+OLD<<<
+# A row the prediction names and the receipt lacks is a miss.
+>>>
+NEW<<<
+# Every Lanczos row reached its tolerance, 2^-30 = 931e-12.
+for tag in ("POLARITON_PIN", "POLARITON_PIN_WINDOW", "POLARITON_SYMMETRY"):
+    top = max((int(r["residual_1e-12"]) for r in R.get(tag, [])), default=0)
+    report("lanczos_converged_" + tag, top <= 931, top, "at_most_931")
+
+# A row the prediction names and the receipt lacks is a miss.
+>>>
+REASON: Nothing reads the residual, while the README quotes it. L08 (tolerance 16 times looser) survives reader and route with residuals to 14,867 e-12 and <B> moved by up to 9,953 ppb; L05 (64 times) dies on one zero_field_B row alone. With this read L08 is 2 misses on a value; the filed rows read at most 918, 899, 349 e-12 (out/held_on_mutants.hbp).
+
+HOLD H12 | file=polariton/read_prediction.py | severity=high
+OLD<<<
+    if n < 6561 or int(r["jbar_over_N_ppm"]) > 10000:
+>>>
+NEW<<<
+    if n < 6561 or F(int(r["jbar_ppb"]), 10 ** 9) / n > F(1, 100):
+>>>
+REASON: The quench gate still takes the engine's own column, the class H4 removed at 8dfa11a. Q03 prints it times N: on the whole receipt 147 reads vanish, with all 18 quench_jbar and quench_phase misses among them, 0 new misses, exit 0, tag counts met; with this line 0 reads vanish, and the filed receipt reads the same (out/hold_tests.hbp).
+
+HOLD H13 | file=polariton/read_prediction.py | severity=low
+OLD<<<
+for r in R.get("POLARITON_SECTOR_EQUALS_FULL", []):
+>>>
+NEW<<<
+pin_energy = max((abs(int(r["energy_off_1e-9"])) for r in qp), default=0)
+report("quench_pin_energy", pin_energy <= 10 ** 5, pin_energy, "abs_at_most_100000e-9")
+for r in R.get("POLARITON_SECTOR_EQUALS_FULL", []):
+>>>
+REASON: energy_off on the 54 pinned quench rows has no read. Q01 (the -2y<A> term with its sign flipped) moves it by 2,275,749 e-9 at N = 81 and survives. The filed rows read at most 16 e-9, so this row is met.
+
+HOLD H14 | file=polariton/read_prediction.py | severity=low
+OLD<<<
+# POLARITON_HAND, on the engine's own rows at N = 2. The levels -2 and 4 are in units of H with JN = 4, so E = -1/2 here.
+>>>
+NEW<<<
+# The frozen grid of POLARITON_QUENCH_CONVERSION, since the loop above reads whatever rows are there.
+grid = {(n, d, s / root, t) for n, root in ((81, 9), (243, 16), (729, 27)) for d in (F(0), F(1, 2)) for s in (F(1, 4), F(1, 2), F(1), F(2), F(4)) for t in (1, 2, 3)} | {(2187, F(0), s / 47, t) for s in (F(1, 2), F(1)) for t in (1, 2)}
+have = {(int(r["N"]), F(r["delta"]), F(r["y"]), int(r["t"])) for r in R.get("POLARITON_QUENCH_CONVERSION", [])}
+report("conversion_grid_as_frozen", have == grid, len(have & grid), str(len(grid)))
+
+# POLARITON_HAND, on the engine's own rows at N = 2. The levels -2 and 4 are in units of H with JN = 4, so E = -1/2 here.
+>>>
+REASON: C15 (delta = 1/4 for 1/2) survives, since the law holds at the printed delta, and C14 (y = s/15 at N = 243) dies on one C1 row only. The tag count stands in both. Filed grid: 94 of 94.
+
+HOLD H15 | file=polariton/second_route.py | severity=low
+OLD<<<
+        if n > 3 and row["s"] != "4":  # Nine polaritons cost minutes a row, so one pinned row per point.
+>>>
+NEW<<<
+        if n > 3 and row["s"] != "4" and not line.startswith("POLARITON_PIN_WINDOW|"):  # Nine polaritons cost minutes a row, so one pinned row per point of the pin stage, and all the window rows, as POLARITON_CONVERSION_ROUTE says.
+>>>
+REASON: Row 40 says the window rows at N = 3, 9 and the route reads 3 of 21 at N = 9. My run of the other 18: bad = 0, E within 1e-9, <A>, <B> within 3.5e-6 (out/route_n9_window.hbp). SECOND-ROUTE.hbp gains 18 rows.
+
+HOLD H16 | file=polariton/second_route.py | severity=medium
+OLD<<<
+        good = off_jbar <= 200 and off_gap <= 10
+>>>
+NEW<<<
+        good = off_jbar <= 50 and off_gap <= 10
+>>>
+REASON: X02 (H2 undone) passes the reader and the top route at 183 ppm, moving the takeover pairs at 3^16 from 105.535428 to 105.517888 against exact 105.537258, so the table's 105.54 would read 105.52. The filed rows read 24 ppm at most (out/top_run_final.hbp).
+
+HOLD H16b | file=polariton/README.md | severity=medium
+OLD<<<
+with largest offsets of 24 ppm and under 1 ppm, against limits of 200 ppm and 10 ppm.
+>>>
+NEW<<<
+with largest offsets of 24 ppm and under 1 ppm, against limits of 50 ppm and 10 ppm.
+>>>
+REASON: Goes with H16.
+
+HOLD H17 | file=polariton/read_prediction.py | severity=low
+OLD<<<
+# The quench with pinning.
+>>>
+NEW<<<
+# The band column against the rows it comes from, since the table above it quotes the column.
+band_off = max((abs(int(r["largest_f_ppm"]) - max((2 * int(s["jbar_ppb"]) // (1000 * int(r["N"])) for s in R.get("POLARITON_QUENCH", []) if s["N"] == r["N"] and s["delta"] == r["delta"]), default=0)) for r in R.get("POLARITON_QUENCH_BAND", [])), default=0)
+report("band_column_is_the_rows", band_off <= 2, band_off, "at_most_2_ppm")
+
+# The quench with pinning.
+>>>
+REASON: Q04 (largest_f_ppm halved) survives its one-sided limits, and the README's table prints this column: 0.2117, 0.3842, 0.6500 would read half that. With this read Q04 is 1 miss on a value; the filed column equals the rows, off 0 ppm (out/held_on_mutants.hbp).
+
+HOLD H18 | file=polariton/README.md | severity=medium
+OLD<<<
+After the second seat's holds, the reader computes its own closed forms and counts rows per tag, so a missing row is a miss.
+>>>
+NEW<<<
+After the second seat's holds, the reader computes its own closed forms and counts the distinct rows per tag, so a missing row is a miss, also when another row of its tag is written twice in its place.
+>>>
+REASON: As filed, a plain deletion is a miss and a swap keeps the count on 6 read paths (out/reader_tests.hbp). Goes with H5.
+
+HOLD H19 | file=polariton/README.md | severity=low
+OLD<<<
+The read met 126 of 126, against D₂ within 20% at N = 243 and 10% at N = 729, and A₁/y within 2% and 1%.
+>>>
+NEW<<<
+The read met 84 of 84 against D₂ within 20% at N = 243 and 10% at N = 729, and A₁/y within 2% and 1%, and ⟨B⟩ reads negative on all 42 of those rows, a read the reader adds to this one.
+>>>
+REASON: 126 = 42 D2 + 42 A1 + 42 window_inside_B_negative in READ.hbp; row 37 freezes no sign.
+
+HOLD H20 | file=polariton/README.md | severity=low
+OLD<<<
+The signs met 58 of 58, and energy stayed within 810 × 10⁻⁹ on all 94 rows.
+>>>
+NEW<<<
+⟨A⟩ reads negative on all 94 rows and ⟨B⟩ positive on 93, the other being N = 81, δ = 0, y√N = 4, t = 3, where predicted f is 74.6 and ⟨B⟩ reads −0.122. Energy stayed within 810 × 10⁻⁹ on all 94 rows.
+>>>
+REASON: Row 39's signs carry no gate; 58 is the V2 gate's count. Goes with H3, and the sentence holds without it (out/rows_audit.hbp).
+
+HOLD H21 | file=polariton/README.md | severity=low
+OLD<<<
+with one pinned row per point at N = 9.
+>>>
+NEW<<<
+with one pinned row per point of the pin stage at N = 9, and all 21 window rows there.
+>>>
+REASON: Goes with H15. The next count in that sentence, 60 rows, becomes 78.
+
+HOLD H22 | file=polariton/README.md | severity=low
+OLD<<<
+Three of the 12 survivors showed the reader trusting the engine's closed forms, and it now computes them. Hand rows and the route's C₂ now reach four more. One sets the printed energy offset to 0, and a separate read of that offset is OPEN. The other four sit below the tolerances at lite size or are equivalent. A mutation rerun on this head is OPEN.
+>>>
+NEW<<<
+At `ce44be7` the same 59 ran through the filed reader and route over the filed receipt, with the lite stages' rows replaced: 52 killed, 49 by the reader on a value, 1 by the route alone at the N = 3 doublet, 2 by a panic alone. The 7 left: 3 move only printed columns the reader now computes for itself, 1 sets the printed energy offset to 0, now read through the control rows, 2 are 1/N factors under the tolerances, and 1 is one unit of 2⁻⁶⁰ on the squared off-diagonal, which the top route reads at 9,693 ppm. Of 65 more on the code added since, 36 are killed, 22 by the reader on a value, 5 by the route alone, 3 by a panic or a timeout, 6 by a missing row alone, and the 29 left are sized in the recheck's table.
+>>>
+REASON: The rerun is done: out/tally.txt, out/top_run_final.hbp. Goes with H1. L04, called equivalent at 8dfa11a, now dies on the route at N = 3, u = 1/4, x = -1/4, y = 0, where a generic start reads <B> = 0 against the even block's 0.837781.
+
+HOLD H23 | file=polariton/README.md | severity=low
+OLD<<<
+The hosted run of this receipt is OPEN.
+>>>
+NEW<<<
+At `ce44be7`, [run 41981845809](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/41981845809) did all three in 88 minutes, on this receipt.
+>>>
+REASON: gh run list, read only: run 41981845809 at this head, conclusion success, 06:39:12Z to 08:07:20Z. Any hold here that moves a pinned file calls for a new run, and this sentence then names that one.

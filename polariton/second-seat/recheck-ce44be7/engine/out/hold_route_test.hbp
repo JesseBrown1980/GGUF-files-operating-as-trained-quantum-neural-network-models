@@ -1,0 +1,9 @@
+HELD_ROUTE|mutant=m_w07_p2_sum_not_difference|rows=21|SECOND_ROUTE_FULL_DONE|rows=21|bad=20|json=0
+FILED_ROUTE|mutant=m_w07_p2_sum_not_difference|SECOND_ROUTE_FULL_DONE|rows=21|bad=0|json=0
+HELD_ROUTE|mutant=m_w08_p2_constant|rows=21|SECOND_ROUTE_FULL_DONE|rows=21|bad=20|json=0
+FILED_ROUTE|mutant=m_w08_p2_constant|SECOND_ROUTE_FULL_DONE|rows=21|bad=0|json=0
+HELD_ROUTE|mutant=m_w09_p2_abs_times_n|rows=21|SECOND_ROUTE_FULL_DONE|rows=21|bad=19|json=0
+FILED_ROUTE|mutant=m_w09_p2_abs_times_n|SECOND_ROUTE_FULL_DONE|rows=21|bad=0|json=0
+HELD_ROUTE|mutant=m_c05_f_not_per_n|rows=4|SECOND_ROUTE_CONVERT_DONE|rows=4|bad=4|json=0
+FILED_ROUTE|mutant=m_c05_f_not_per_n|SECOND_ROUTE_CONVERT_DONE|rows=4|bad=0|json=0
+HOLD_ROUTE_DONE

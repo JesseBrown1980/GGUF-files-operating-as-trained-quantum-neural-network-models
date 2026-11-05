@@ -1,0 +1,4 @@
+SECTOR_OFF_UNITS|rows=143|largest=1
+TOP|rows=44|largest_jbar_ppm=24|largest_gap_ppm=0
+FULL_BY_N|{'3': 49, '9': 7, '2': 4}
+CONVERT|rows=4|['1', '1', '1', '1']

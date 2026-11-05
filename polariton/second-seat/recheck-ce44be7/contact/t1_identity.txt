@@ -1,0 +1,14 @@
+IDENTITY_MATRIX|statement=A^dag A - n0 - n+ == n0(n+ + n-) + P + P^dag|integer_matrices_in_monomial_basis|json=0
+IDENTITY_MATRIX|N=0..25|rows_differing=0|json=0
+COMMUTATOR|[A,A^dag]=n- - n+|N=0..25|rows_differing=0|json=0
+STATE|parity_real#0|N=3|h0/N(N-1)=1|h0im=0|C1_sin=0|imAd A=0|identity_exact=True|V2_id=0.0326206885385|C1=0.0742472100733|C2=0.552116280249|json=0
+STATE|parity_complex#0|N=3|h0/N(N-1)=1|h0im=0|C1_sin=0|imAd A=0|identity_exact=True|V2_id=-0.0199712967649|C1=-0.0751351326628|C2=0.108608357939|json=0
+STATE|noparity_real#0|N=3|h0/N(N-1)=1|h0im=0|C1_sin=0|imAd A=0|identity_exact=True|V2_id=0.0731702053842|C1=0.134252768484|C2=0.0602814090852|json=0
+STATE|noparity_complex#0|N=3|h0/N(N-1)=1|h0im=0|C1_sin=0|imAd A=0|identity_exact=True|V2_id=0.226640413137|C1=0.267131646062|C2=0.0574837616622|json=0
+STATE|parity_real#0|N=6|h0/N(N-1)=1|h0im=0|C1_sin=0|imAd A=0|identity_exact=True|V2_id=0.000860522504284|C1=0.291314739354|C2=0.0301917970687|json=0
+STATE|parity_complex#0|N=6|h0/N(N-1)=1|h0im=0|C1_sin=0|imAd A=0|identity_exact=True|V2_id=0.180105409167|C1=0.152342107092|C2=0.0786750402856|json=0
+STATE|noparity_real#0|N=6|h0/N(N-1)=1|h0im=0|C1_sin=0|imAd A=0|identity_exact=True|V2_id=0.00518814841944|C1=0.373675693502|C2=0.0464072302465|json=0
+STATE|noparity_complex#0|N=6|h0/N(N-1)=1|h0im=0|C1_sin=0|imAd A=0|identity_exact=True|V2_id=0.0974273407128|C1=0.0444894120002|C2=0.0114522141393|json=0
+STATE_SUMMARY|states=112|identity_exact=109|json=0
+START|N=5|fock|C1=0|0|json=0
+WITNESS|V2_negative_exists=(3, -0.004530922062144572)|V2_above_1_exists=(3, 1.2747967479674798)|searched=random_parity_real_N=3..6|json=0

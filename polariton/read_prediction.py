@@ -200,7 +200,7 @@ if len(sym) == 2:
 # The quench.
 for r in R.get("POLARITON_QUENCH", []):
     n = int(r["N"])
-    if n < 6561 or int(r["jbar_over_N_ppm"]) > 10000:
+    if n < 6561 or F(int(r["jbar_ppb"]), 10 ** 9) / n > F(1, 100):
         continue
     tag = "N=%d_delta=%s_t=%s" % (n, r["delta"], r["t"])
     delta = F(r["delta"])
@@ -223,6 +223,10 @@ for r in R.get("POLARITON_QUENCH_BAND", []):
     else:
         report("band_outside_delta=%s" % delta, value <= 1000, value, "at_most_1000")
 
+# The band column against the rows it comes from, since the table above it quotes the column.
+band_off = max((abs(int(r["largest_f_ppm"]) - max((2 * int(s["jbar_ppb"]) // (1000 * int(r["N"])) for s in R.get("POLARITON_QUENCH", []) if s["N"] == r["N"] and s["delta"] == r["delta"]), default=0)) for r in R.get("POLARITON_QUENCH_BAND", [])), default=0)
+report("band_column_is_the_rows", band_off <= 2, band_off, "at_most_2_ppm")
+
 # The quench with pinning.
 qp = R.get("POLARITON_QUENCH_PIN", [])
 for r in qp:
@@ -243,6 +247,8 @@ for r in qp:
         report("quench_pin_sign_N=%s_delta=%s_t=%s" % (r["N"], r["delta"], r["t"]), int(r["A_ppb"]) * int(other["A_ppb"]) < 0 or (int(r["A_ppb"]) == 0 and int(other["A_ppb"]) == 0), r["A_ppb"] + "," + other["A_ppb"], "opposite")
     if y == 0:
         report("quench_pin_zero_A_N=%s_delta=%s_t=%s" % (r["N"], r["delta"], r["t"]), int(r["A_ppb"]) == 0, r["A_ppb"], "0")
+pin_energy = max((abs(int(r["energy_off_1e-9"])) for r in qp), default=0)
+report("quench_pin_energy", pin_energy <= 10 ** 5, pin_energy, "abs_at_most_100000e-9")
 for r in R.get("POLARITON_SECTOR_EQUALS_FULL", []):
     report("sector_equals_full_N=%s" % r["N"], r["off_line_nonzero"] == "0" and r["on_line_different"] == "0", r["off_line_nonzero"] + "," + r["on_line_different"], "0,0")
 for r in R.get("POLARITON_REVERSAL", []):
@@ -252,6 +258,8 @@ for r in R.get("POLARITON_WAVEVECTOR", []):
     report("wavevector_u=%s" % u, abs(F(r["argmax_x"]) + u) <= F(1, 16), r["argmax_x"], str(-u))
 for r in R.get("POLARITON_CONTROL_NO_BOSE", []):
     report("control_no_bose_must_miss_t=%s" % r["t"], not within(F(int(r["jbar_ppb"]), 10 ** 9), closed_jbar(F(r["delta"]), int(r["t"])), F(2, 100)), r["ratio_ppm"], "off_1000000_by_more_than_20000")
+    # The energy read's own control: these rows evolve with the Bose factor removed while the row reads the true H, so the printed offset leaves the 10^-4 of the quench rows.
+    report("control_no_bose_energy_moves_t=%s" % r["t"], abs(int(r["energy_off_1e-9"])) > 10 ** 5, r["energy_off_1e-9"], "abs_above_100000e-9")
 
 # POLARITON_WINDOW_INSIDE and POLARITON_WINDOW_BELOW, added at 89a026a.
 def window(n, u, x, s):
@@ -313,10 +321,10 @@ for u, x in (("1", "-1/4"), ("1", "-1/8"), ("1/2", "-1/4"), ("3/4", "-1/8")):
             y = F(s) / n
             a1y = F(abs(int(r["A_ppb"])) * 2, n * 10 ** 9) / y
             report("window_below_A1_" + label, within(a1y, want_a, F(1, 100)), micro(a1y), micro(want_a))
+            report("window_below_B_sign_" + label, int(r["B_ppb"]) * sign > 0, r["B_ppb"], "sign_%d" % sign)
             if F(s) >= 4:
                 d2y = F(abs(int(r["B_ppb"])) * 2, n * 10 ** 9) / (y * y)
                 report("window_below_D2_" + label, within(d2y, want_d, F(5, 100)), micro(d2y), micro(want_d))
-                report("window_below_B_sign_" + label, int(r["B_ppb"]) * sign > 0, r["B_ppb"], "sign_%d" % sign)
 
 # POLARITON_QUENCH_CONVERSION, added at 89a026a.
 for r in R.get("POLARITON_QUENCH_CONVERSION", []):
@@ -339,14 +347,22 @@ for r in R.get("POLARITON_QUENCH_CONVERSION", []):
     v2 = a1 * a1 / (2 * c1)
     tag = "N=%d_delta=%s_y=%s_t=%d" % (n, delta, y, t)
     report("conversion_energy_" + tag, abs(int(r["energy_off_1e-9"])) <= 10 ** 5, r["energy_off_1e-9"], "abs_at_most_100000e-9")
+    # At u = 1 the energy is 2x jbar + ((N - 1)/2)(C1 + C2) - 2y<A>, from the row's other fields. Each field is floored at 10^-9, which sets the bound.
+    rebuilt = 2 * F(r["x"]) * F(int(r["jbar_ppb"]), 10 ** 9) + F(n - 1, 2) * (c1 + F(int(r["C2_ppb"]), 10 ** 9)) - 2 * y * F(int(r["A_ppb"]), 10 ** 9)
+    report("conversion_energy_rebuilt_" + tag, abs(rebuilt - F(int(r["energy_off_1e-9"]), 10 ** 9)) <= (2 * abs(F(r["x"])) + n + 1 + 2 * abs(y)) / 10 ** 9, r["energy_off_1e-9"], micro(rebuilt * 1000))
+    report("conversion_A_negative_" + tag, int(r["A_ppb"]) < 0, r["A_ppb"], "negative")
+    report("conversion_B_positive_" + tag, int(r["B_ppb"]) > 0, r["B_ppb"], "positive")
     if n >= 243 and f_want <= F(1, 10):
         report("conversion_V2_" + tag, within(v2, v2_want, F(5, 100)), micro(v2), micro(v2_want))
-        report("conversion_A_negative_" + tag, int(r["A_ppb"]) < 0, r["A_ppb"], "negative")
-        report("conversion_B_positive_" + tag, int(r["B_ppb"]) > 0, r["B_ppb"], "positive")
     if n >= 243 and f_want <= F(1, 20):
         report("conversion_A1_" + tag, within(a1, a1_want, F(5, 100)), micro(a1), micro(a1_want))
         report("conversion_C1_" + tag, within(c1, c1_want, F(5, 100)), micro(c1), micro(c1_want))
         report("conversion_D2_" + tag, within(d2, d2_want, F(10, 100)), micro(d2), micro(d2_want))
+
+# The frozen grid of POLARITON_QUENCH_CONVERSION, since the loop above reads whatever rows are there.
+grid = {(n, d, s / root, t) for n, root in ((81, 9), (243, 16), (729, 27)) for d in (F(0), F(1, 2)) for s in (F(1, 4), F(1, 2), F(1), F(2), F(4)) for t in (1, 2, 3)} | {(2187, F(0), s / 47, t) for s in (F(1, 2), F(1)) for t in (1, 2)}
+have = {(int(r["N"]), F(r["delta"]), F(r["y"]), int(r["t"])) for r in R.get("POLARITON_QUENCH_CONVERSION", [])}
+report("conversion_grid_as_frozen", have == grid, len(have & grid), str(len(grid)))
 
 # POLARITON_HAND, on the engine's own rows at N = 2. The levels -2 and 4 are in units of H with JN = 4, so E = -1/2 here.
 hand = {r["y"]: r for r in R.get("POLARITON_PIN", []) if r["s"] == "hand"}
@@ -366,8 +382,15 @@ if "1/1024" in hand:
 if "1/64" in hand and "-1/64" in hand:
     report("hand_sign_A_follows_h", int(hand["1/64"]["A_ppb"]) > 0 > int(hand["-1/64"]["A_ppb"]), hand["1/64"]["A_ppb"] + "," + hand["-1/64"]["A_ppb"], "opposite")
 
+# Every Lanczos row reached its tolerance, 2^-30 = 931e-12.
+for tag in ("POLARITON_PIN", "POLARITON_PIN_WINDOW", "POLARITON_SYMMETRY"):
+    top = max((int(r["residual_1e-12"]) for r in R.get(tag, [])), default=0)
+    report("lanczos_converged_" + tag, top <= 931, top, "at_most_931")
+
 # A row the prediction names and the receipt lacks is a miss.
-for tag, count in (("POLARITON_REVERSAL", 5), ("POLARITON_CONTROL_NO_BOSE", 4), ("POLARITON_SYMMETRY", 2), ("POLARITON_WAVEVECTOR", 3), ("POLARITON_QUENCH", 240), ("POLARITON_QUENCH_BAND", 40), ("POLARITON_QUENCH_PIN", 54), ("POLARITON_SECTOR_EQUALS_FULL", 2), ("POLARITON_SECTOR", 438), ("POLARITON_PIN", 172), ("POLARITON_PIN_WINDOW", 196), ("POLARITON_QUENCH_CONVERSION", 94)):
-    report("rows_" + tag, len(R.get(tag, [])) == count, len(R.get(tag, [])), str(count))
+for tag, count in (("POLARITON_TAYLOR_POINT", 6), ("POLARITON_TAYLOR_CONVERT", 4), ("POLARITON_REVERSAL", 5), ("POLARITON_CONTROL_NO_BOSE", 4), ("POLARITON_SYMMETRY", 2), ("POLARITON_WAVEVECTOR", 3), ("POLARITON_QUENCH", 240), ("POLARITON_QUENCH_BAND", 40), ("POLARITON_QUENCH_PIN", 54), ("POLARITON_SECTOR_EQUALS_FULL", 2), ("POLARITON_SECTOR", 438), ("POLARITON_PIN", 172), ("POLARITON_PIN_WINDOW", 196), ("POLARITON_QUENCH_CONVERSION", 94)):
+    # Counted by what names a row, so a row replaced by a copy of another counts as missing.
+    distinct = {tuple(r.get(k) for k in ("N", "u", "x", "y", "s", "delta", "t", "P", "full")) for r in R.get(tag, [])}
+    report("rows_" + tag, len(R.get(tag, [])) == count and len(distinct) == count, len(distinct), str(count))
 
 print("POLARITON_READ_DONE|met=%d|miss=%d|json=0" % (met, miss))

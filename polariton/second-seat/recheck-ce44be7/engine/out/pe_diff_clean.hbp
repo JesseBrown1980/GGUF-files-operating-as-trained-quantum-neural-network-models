@@ -1,0 +1,16 @@
+PE_DIFF|size_a=447488|size_b=447488|json=0
+PE_STAMP|a=1793853005|b=1793861139|json=0
+PE_SECTION|name=.text|raw_ptr=1024|raw_size=331776|va=4096|vsize=331343|json=0
+PE_SECTION|name=.rdata|raw_ptr=332800|raw_size=96768|va=335872|vsize=96404|json=0
+PE_SECTION|name=.data|raw_ptr=429568|raw_size=512|va=434176|vsize=800|json=0
+PE_SECTION|name=.pdata|raw_ptr=430080|raw_size=14848|va=438272|vsize=14448|json=0
+PE_SECTION|name=.reloc|raw_ptr=444928|raw_size=2560|va=454656|vsize=2148|json=0
+PE_SAME_SECTIONS|1|json=0
+PE_DIFF_TOTAL|bytes_different=24|runs=5|json=0
+PE_RUN|off=248|len=2|in=headers|a=4d06|b=1326|a_text=b'PE\x00\x00d\x86\x05\x00M\x06\xecj\x00\x00\x00\x00\x00\x00'|b_text=b'PE\x00\x00d\x86\x05\x00\x13&\xecj\x00\x00\x00\x00\x00\x00'|json=0
+PE_RUN|off=373844|len=2|in=.rdata|a=4d06|b=1326|a_text=b'\x01\x00\x00\x00\x00\x00\x00\x00M\x06\xecj\x00\x00\x00\x00\x02\x00'|b_text=b'\x01\x00\x00\x00\x00\x00\x00\x00\x13&\xecj\x00\x00\x00\x00\x02\x00'|json=0
+PE_RUN|off=373872|len=2|in=.rdata|a=4d06|b=1326|a_text=b'\xf4\xb5\x05\x00\x00\x00\x00\x00M\x06\xecj\x00\x00\x00\x00\x0c\x00'|b_text=b'\xf4\xb5\x05\x00\x00\x00\x00\x00\x13&\xecj\x00\x00\x00\x00\x0c\x00'|json=0
+PE_RUN|off=373900|len=2|in=.rdata|a=4d06|b=1326|a_text=b'(\xb6\x05\x00\x00\x00\x00\x00M\x06\xecj\x00\x00\x00\x00\r\x00'|b_text=b'(\xb6\x05\x00\x00\x00\x00\x00\x13&\xecj\x00\x00\x00\x00\r\x00'|json=0
+PE_RUN|off=374264|len=16|in=.rdata|a=3ab1cef51777084c877f77a199e71713|b=7e941044e5b5c443903b3ed733927df5|a_text=b'6\x00\x00\x00RSDS:\xb1\xce\xf5\x17w\x08L\x87\x7fw\xa1\x99\xe7\x17\x13\x01\x00\x00\x00pola'|b_text=b'6\x00\x00\x00RSDS~\x94\x10D\xe5\xb5\xc4C\x90;>\xd73\x92}\xf5\x01\x00\x00\x00pola'|json=0
+PE_PDB|file=a|off=374284|text=polariton_three_mode.pdb|json=0
+PE_PDB|file=b|off=374284|text=polariton_three_mode.pdb|json=0

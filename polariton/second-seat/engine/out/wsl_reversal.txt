@@ -1,0 +1,6 @@
+POLARITON_REVERSAL|N=243|full=1|y=1/1024|steps=49152|state_moved=1|every_byte_returned=1|json=0
+POLARITON_REVERSAL|N=81|full=0|y=0|steps=24576|state_moved=1|every_byte_returned=1|json=0
+POLARITON_REVERSAL|N=243|full=0|y=0|steps=49152|state_moved=1|every_byte_returned=1|json=0
+POLARITON_REVERSAL|N=729|full=0|y=0|steps=12288|state_moved=1|every_byte_returned=1|json=0
+POLARITON_REVERSAL|N=2187|full=0|y=0|steps=49152|state_moved=1|every_byte_returned=1|json=0
+POLARITON_DONE|json=0

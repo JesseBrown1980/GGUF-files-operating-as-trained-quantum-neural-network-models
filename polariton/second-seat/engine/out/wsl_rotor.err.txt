@@ -1,0 +1,2 @@
+TIMING|whole|ms=10860
+STAGE|rotor|seconds=10.86|maxrss_kb=29328

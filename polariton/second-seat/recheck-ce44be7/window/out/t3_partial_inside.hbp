@@ -1,0 +1,13 @@
+PARTIAL_INSIDE|N=3|P=1_grid_points=424|above_the_edge=63|above_with_rho0>0_and_c0>0=63|u_values_above=['1/16', '1/4', '1/8', '3/16', '3/8', '5/16', '7/16']|highest=(Fraction(1, 16), Fraction(-5, 32))|json=0
+PARTIAL_INSIDE|N=5|P=1_grid_points=294|above_the_edge=55|above_with_rho0>0_and_c0>0=55|u_values_above=['1/16', '1/4', '1/8', '3/16', '3/8', '5/16']|highest=(Fraction(1, 16), Fraction(-7, 32))|json=0
+PARTIAL_INSIDE|N=7|P=1_grid_points=225|above_the_edge=48|above_with_rho0>0_and_c0>0=48|u_values_above=['1/16', '1/4', '1/8', '3/16', '3/8', '5/16']|highest=(Fraction(1, 8), Fraction(-1, 4))|json=0
+PARTIAL_INSIDE|N=9|P=1_grid_points=183|above_the_edge=40|above_with_rho0>0_and_c0>0=40|u_values_above=['1/16', '1/4', '1/8', '3/16', '3/8', '5/16']|highest=(Fraction(1, 4), Fraction(-9, 32))|json=0
+PARTIAL_INSIDE|N=11|P=1_grid_points=158|above_the_edge=34|above_with_rho0>0_and_c0>0=34|u_values_above=['1/16', '1/4', '1/8', '3/16', '5/16']|highest=(Fraction(1, 4), Fraction(-5, 16))|json=0
+PARTIAL_INSIDE|N=13|P=1_grid_points=140|above_the_edge=28|above_with_rho0>0_and_c0>0=28|u_values_above=['1/16', '1/4', '1/8', '3/16', '5/16']|highest=(Fraction(1, 4), Fraction(-11, 32))|json=0
+PARTIAL_INSIDE|N=15|P=1_grid_points=126|above_the_edge=23|above_with_rho0>0_and_c0>0=23|u_values_above=['1/16', '1/4', '1/8', '3/16']|highest=(Fraction(1, 4), Fraction(-3, 8))|json=0
+PARTIAL_INSIDE|N=17|P=1_grid_points=118|above_the_edge=21|above_with_rho0>0_and_c0>0=21|u_values_above=['1/16', '1/4', '1/8', '3/16']|highest=(Fraction(3, 16), Fraction(-13, 32))|json=0
+PARTIAL_INSIDE|N=19|P=1_grid_points=110|above_the_edge=17|above_with_rho0>0_and_c0>0=17|u_values_above=['1/16', '1/8', '3/16']|highest=(Fraction(3, 16), Fraction(-7, 16))|json=0
+PARTIAL_INSIDE|N=21|P=1_grid_points=105|above_the_edge=15|above_with_rho0>0_and_c0>0=15|u_values_above=['1/16', '1/8', '3/16']|highest=(Fraction(1, 8), Fraction(-15, 32))|json=0
+PARTIAL_INSIDE|N=23|P=1_grid_points=100|above_the_edge=14|above_with_rho0>0_and_c0>0=14|u_values_above=['1/16', '1/8', '3/16']|highest=(Fraction(3, 16), Fraction(-15, 32))|json=0
+PARTIAL_INSIDE|N=25|P=1_grid_points=97|above_the_edge=12|above_with_rho0>0_and_c0>0=12|u_values_above=['1/16', '1/8', '3/16']|highest=(Fraction(1, 8), Fraction(-1, 2))|json=0
+PARTIAL_INSIDE|N=27|P=1_grid_points=95|above_the_edge=11|above_with_rho0>0_and_c0>0=11|u_values_above=['1/16', '1/8', '3/16']|highest=(Fraction(3, 16), Fraction(-1, 2))|json=0

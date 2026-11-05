@@ -1,0 +1,16 @@
+N=81 delta=-5/4 rows=30 C1<0 on 0, V2<0 on 0, V2>1 on 0, law V2 in [0,1) on 30 ; max V2 0.9831
+N=81 delta=-5/3 rows=30 C1<0 on 0, V2<0 on 0, V2>1 on 1, law V2 in [0,1) on 30 ; max V2 1.0050
+N=81 delta=-2 rows=30 C1<0 on 0, V2<0 on 0, V2>1 on 0, law V2 in [0,1) on 30 ; max V2 0.9985
+N=243 delta=-5/4 rows=30 C1<0 on 0, V2<0 on 0, V2>1 on 0, law V2 in [0,1) on 30 ; max V2 0.9955
+N=243 delta=-5/3 rows=30 C1<0 on 0, V2<0 on 0, V2>1 on 1, law V2 in [0,1) on 30 ; max V2 1.0027
+N=243 delta=-2 rows=30 C1<0 on 0, V2<0 on 0, V2>1 on 0, law V2 in [0,1) on 30 ; max V2 0.9949
+N=729 delta=-5/4 rows=30 C1<0 on 0, V2<0 on 0, V2>1 on 0, law V2 in [0,1) on 30 ; max V2 0.9994
+N=729 delta=-5/3 rows=30 C1<0 on 0, V2<0 on 0, V2>1 on 1, law V2 in [0,1) on 30 ; max V2 1.0015
+N=729 delta=-2 rows=30 C1<0 on 0, V2<0 on 0, V2>1 on 0, law V2 in [0,1) on 30 ; max V2 0.9899
+delta<-1, N=729, t<=1: rows=30 V2/law 1.0010..1.0073 A1/law 0.9476..0.9994 C1/law 0.8940..0.9978
+delta>1, N=729, |1+Y|>=1/4: rows=81 V2/law 0.9035..1.3210 A1/law 0.8325..1.0593 D2/law 0.8682..1.0030
+delta>1, N=729, |1+Y|>=1/4, t<=3: rows=54 V2/law 0.9709..1.0777
+  worst: delta=5/4 s=1/4 t=6 Y=-0.0852 law=-0.0932 read=-0.0869
+  worst: delta=5/4 s=1/4 t=3 Y=-0.2433 law=-0.3215 read=-0.3464
+  worst: delta=5/4 s=1/2 t=6 Y=-0.3409 law=-0.5173 read=-0.4674
+  worst: delta=5/4 s=1 t=6 Y=-1.3637 law=3.7493 read=4.9527

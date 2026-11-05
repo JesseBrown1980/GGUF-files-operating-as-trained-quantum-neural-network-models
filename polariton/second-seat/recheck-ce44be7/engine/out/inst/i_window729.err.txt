@@ -1,0 +1,8 @@
+TIMING|pin_N=729|u=1|x=-1/4|s=16/1|cycles=1|ms=3262
+TIMING|pin_N=729|u=1|x=-1/4|s=8/1|cycles=3|ms=36197
+TIMING|pin_N=729|u=1|x=-1/4|s=4/1|cycles=2|ms=27708
+TIMING|pin_N=729|u=1|x=-1/4|s=2/1|cycles=19|ms=261751
+TIMING|pin_N=729|u=1|x=-1/4|s=1/1|cycles=2|ms=24763
+TIMING|pin_N=729|u=1|x=-1/4|s=1/2|cycles=2|ms=26303
+TIMING|pin_N=729|u=1|x=-1/4|s=0/1|cycles=1|ms=12198
+TIMING|whole|ms=412588

@@ -1,0 +1,3 @@
+W1_FIT|delta=0|u=1/1|w1=-t*sinh(t) + 65*cosh(t)/12 - 11*cosh(2*t)/3 + 5*cosh(3*t)/4 - 3|heldout_ok=9|heldout_bad=0|w0_t2=-1|json=0
+W1_FIT|delta=0|u=1/2|w1=-2*t*sinh(t) + 73*cosh(t)/24 - 19*cosh(2*t)/6 + 13*cosh(3*t)/8 - 3/2|heldout_ok=9|heldout_bad=0|w0_t2=-1|json=0
+W1_FIT|delta=0|u=0/1|w1=-3*t*sinh(t) + 2*cosh(t)/3 - 8*cosh(2*t)/3 + 2*cosh(3*t)|heldout_ok=9|heldout_bad=0|w0_t2=-1|json=0

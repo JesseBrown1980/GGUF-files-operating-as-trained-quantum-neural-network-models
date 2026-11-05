@@ -1,0 +1,38 @@
+rho=0.004950 rho0=0.990099
+(1-d)V2 from A^2 = 8 rho0 rho (1-d) V2: 0.01724; with rho0=1, rho=K: 0.01690; README 0.017
+paper K = A^2/4 gives 0.0001690; a density 1 + A cos kx has K = A^2/16 = 0.00004225
+with the paper factor (A^2/4 against A^2/16, a factor 4): 0.06896 ; with rho0=1 0.06760; README 0.068
+y sqrt N at delta=0, tanh->1: for 0.017 0.0930 ; for 0.068 0.1910 ; README 0.09, 0.19
+exact values with (1-d)V2 = 0.01724, 0.06896: 0.0937, 0.1924
+delta dependence: (1-d)V2 = c, V2 = c/(1-d), Y = 2 s^2/(1+d)
+  delta=-1 : V2=0.0085 s*t=0.0926 | V2=0.0340 s*t=0.1876
+  delta=-3/4 : V2=0.0097 s=0.0350 | V2=0.0389 s=0.0711
+  delta=-1/2 : V2=0.0113 s=0.0535 | V2=0.0453 s=0.1090
+  delta=-1/4 : V2=0.0136 s=0.0719 | V2=0.0544 s=0.1469
+  delta=0 : V2=0.0170 s=0.0930 | V2=0.0680 s=0.1910
+  delta=1/4 : V2=0.0227 s=0.1204 | V2=0.0907 s=0.2496
+  delta=1/2 : V2=0.0340 s=0.1625 | V2=0.1360 s=0.3436
+  delta=3/4 : V2=0.0680 s=0.2527 | V2=0.2720 s=0.5718
+
+WHAT ELSE THE LAW SAYS, large t, from A = 2.6%, K = 0.5%:
+ reading A1=A: (1-d)V2=0.0172
+   C1 = 4 rho (1-d) = 0.01980 x (1-d), against A1^2/2 = 0.000338
+   D2 = A1^2/(4(1-d)) = 0.000169 /(1-d)
+   single-shot harmonic sqrt(2 C1) = 0.1990 x sqrt(1-d)
+   phase coherence of the position R1^2 ~ (pi/4) Y at small Y, at delta=0: Y=0.0175, R1^2=0.0137, R1=0.1169
+ reading A1=2A (paper factor): (1-d)V2=0.0690
+   C1 = 4 rho (1-d) = 0.01980 x (1-d), against A1^2/2 = 0.001352
+   D2 = A1^2/(4(1-d)) = 0.000676 /(1-d)
+   single-shot harmonic sqrt(2 C1) = 0.1990 x sqrt(1-d)
+   phase coherence of the position R1^2 ~ (pi/4) Y at small Y, at delta=0: Y=0.0741, R1^2=0.0561, R1=0.2368
+ g1(r) averaged over x = (1 - 2 rho) + 2 rho cos kr: fast oscillation amplitude 2 rho = 0.00990 ; the paper reads about 1.5%, which would be K about 0.00761
+
+PHASE WIDTH: the paper SI, Fig S22b: phase distribution at fixed k_r narrows to about 135 degrees at 500 uW, "mostly distributed over the first quadrant".
+ if uniform over 135 deg: R1 = 0.7842, R1^2 = 0.6150
+ wrapped normal, 135 deg as FWHM: sigma=1.001 rad, R1=0.6062, R1^2=0.3674
+ wrapped normal, 135 deg as 4 sigma: sigma=0.589 rad, R1=0.8407, R1^2=0.7068
+ read through the Rician of the law: uniform 135: R1^2=0.6150 -> Y=1.430, V2_law=0.588, y sqrt N at delta=0 = 0.845, implied A1 = sqrt(8 rho0 rho V2) = 0.1519
+ read through the Rician of the law: FWHM 135: R1^2=0.3674 -> Y=0.625, V2_law=0.385, y sqrt N at delta=0 = 0.559, implied A1 = sqrt(8 rho0 rho V2) = 0.1228
+ read through the Rician of the law: 4 sigma 135: R1^2=0.7068 -> Y=1.956, V2_law=0.662, y sqrt N at delta=0 = 0.989, implied A1 = sqrt(8 rho0 rho V2) = 0.1611
+ transverse rotation 1.1 pi, if the 2.6% is a transverse average with uniform weight: factor 0.5716 on A, so A1 before it = 0.0455, (1-d)V2 = 0.0528, and with the paper factor 0.2110; y sqrt N at delta=0 0.167, 0.366
+ time-integration: if V^2 is fixed and A1 follows sqrt(rho(t)), <A1>^2 <= 8(1-d)V2 <rho> by Cauchy-Schwarz, so A^2/(8<rho>) is a lower bound on (1-d)V2 under that assumption.

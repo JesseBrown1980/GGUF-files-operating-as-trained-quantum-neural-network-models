@@ -1,0 +1,172 @@
+NARROW RECHECK, TEXT LANE. Second seat (opus55) for ACER-CLAUDE-FABLE5, on OP-JESSE's machine.
+Target: polariton/README.md, the root README section "Three-mode polariton test", and the body of PR #8, against the rows at ce44be742d9d59d07bb8ec8a9ed6a559da4ec0bd.
+Tags: MEASURED (a number from a named script here), DERIVED (by hand here), NAMED (stated, no run of mine), CONJECTURE, CANNOT_SEE. Every script is in this folder, every output in out/.
+Head check: git -C C:/tmp/qnn-polariton-wt rev-parse HEAD printed ce44be742d9d59d07bb8ec8a9ed6a559da4ec0bd, before and after. gh pr view 8: headRefOid the same, state OPEN. git status --short --ignored at the end shows only the two out/ folders of finding 3.2, which were there at the start. Nothing in the worktree was changed.
+Live body read by gh at the start of this lane, saved as out/pr8_body.md.
+
+=== 1. EVERY NUMBER AGAINST A ROW OR MY OWN CALCULATION ===
+
+What I ran.
+ inventory.py -> out/inventory.txt: every number with its sentence, 259 sentences, 1,208 tokens (README 1,070, root 29, body 109).
+ lib.py: my own row loader and closed law, integer series at 2^256; shares no code with the engine, reader or route.
+ check_a.py (status, central table, zero field, conversion, susceptibility, u = 0, residuals), check_b.py (contact section, every table cell), check_c.py (window tables, edges, plane wave, Hopfield count), check_d.py (ladder, ratios, route rows), check_e.py (quench, misses, engine record), check_f.py, check_g.py, check_signs.py, check_time.py, check_moved.py, check_moved2.py.
+ Own exact reads: own_sector.py (143 levels, 2^220, own Sturm), own_top.py (top rungs including x = 0), own_exact.py (operator identity, J1, w1, exact rationals), own_exact2.py (4 conversion and 6 Taylor rows, normalized Fock at 2^600; N = 2, N = 3; constants of -lap + r^4; N(ratio - 1) chains), own_n9.py (24 rows at N = 9, dense, 2^400), own_q81.py (42 quench rows at N = 81), tight/ (head engine, one row at a tighter residual, Rust 1.81).
+ coverage.py -> out/coverage.txt: tokens with a decimal point or 4+ digits that appear in none of my outputs. 23 tokens, all then read by hand against rows in other units (0.0798 = C2_ppm 79803; 4,755 = 4754.8; 105.535428 = 105.535427678; 141,061 and 12,014 = parity rows, and so on). Unmatched after that: 0.
+
+LEDGER by line of polariton/README.md. OK means the number equals the row or my calculation at the printed digits. All MEASURED unless tagged.
+ L1-3   dates and quotes. "Start the new run as well" and the GPT-6 sentence: NAMED, in the session extract and the body, with no row. CANNOT_SEE the original messages from this lane.
+ L5     1,422 and 35: OK. Own count of READ.hbp, READ_DONE, and rerun of read_prediction.py byte-equal to READ.hbp (out/my_read.hbp). Rust 1.81: cargo +1.81.0 clippy --locked --offline --bin polariton_three_mode -- -D warnings exit 0, fmt --check exit 0, 0 f32/f64 tokens (SCOPED: my run; the owning gate is the hosted job, see 3.6).
+ L7     N = 243, 729: OK; D2 ratios 0.9721..0.9946 at N = 243, 0.9908..0.9993 at N = 729 against a frozen 10%.
+ L8     2.7%: OK (2.673%), scope fault F4.1. 59 of 63, 4 at t = 2: OK.
+ L9     0.00009 (D2_ppm 86, from B 0.000087): OK. 0.437: own Mathieu 0.4374. A1/y = 2/(u - x): OK on the table rows.
+ L12    0.04/2.3 = 1.74%: OK, with the paper's other line, F4.8. 8e6, 2.6%, 250, 430: read in arXiv source and PDF text (paper folder of the derivations lane).
+ L16-22 dimension 266,815: OK. u = 1, g2 form, density form: DERIVED by hand here, and A^dag A identity below.
+ L26    rho 1/5, -30 ppb, -1 ppb, 8e-10 (801), 0.0801, 136.29 (136.290148): OK. 26 and 7: counts OK, 33 rows with a sector row. "within 1 ppb": MISMATCH, N = 3, u = 0, x = 0 reads 1.072 ppb. H27.
+ L28    c0 = 5/8, q = (2/25)(yN)^2, A1/y form: DERIVED by hand, equal to frozen row 15.
+ L30-37 every cell of the central table: OK. Table D2 cells are D2_ppm, floored. Own Mathieu f(q): 0.009999, 0.039944, 0.156538, 0.490858, 0.776332, 0.889413, within 1 ppm of the frozen table on all 36 frozen values (largest 0.94 ppm).
+ L39    0.6% (0.567, 0.129, 0.178), 1.9% (1.812, 0.702, 1.730), 0.40022, nine rows (9 of 9 rho closer), 0.0801, 0.0798: OK. Causal clause: F4.5.
+ L40    sign and symmetry: OK on 18 of 18 rows, y to -y OK.
+ L41    9.57 and 9.17 (9.568, 9.173), 2/9 (0.2222 to 0.2226 and 0.2204 at N = 81, s = 16): OK. -6.72: own chains -6.741, -6.724, -6.719 at N = 729, 2187, 6561: OK. 0.95%: MISMATCH by truncation, from B_ppb 0.925%. H28.
+ L42    0.0010, 0.1953, 2.00, B positive: OK. 4e-5: own chains give 40.49e-6 at x = 3/4, so 4.1e-5. H29. Own chains reproduce the second seat's a(2187), a(6561) at all seven x to six digits.
+ L50-53 algebra DERIVED here: V^2 = Y/(1 + Y) from A1 and C1; A = sqrt(N)(X_c + iP_d) by hand.
+ L55    four rows and three rows: F4.3.
+ L59-68 all 60 table cells at N = 729: OK, by my own law (check_b.py), 0 mismatches. The table names no N. Ratios: 0.9891 to 1.0960; 10 of 30 cells off by more than 2.7%.
+ L70    29, 21, 21, 17 of 21, 0.9905, 1.0267, 58, 810, 94: OK. A1 range 0.9596..0.9985, D2 0.9278..0.9981, C1 0.9165..0.9964.
+ L71    all twelve ratios: OK (with y = 1/18, 1/32, 1/54, 1/94). "Each deviation falls as 1/N": stronger than rows. H23.
+ L72    35, 0.96, 1.15, 0.06, 0.004, 0.02, 1.27, 0.047: OK. Of the 35 rows 13 have law >= 0.8; on the 14 with law < 0.5 the ratio is 0.9598..1.0870, so the hold is not only saturation.
+ L73    identity: MEASURED, A^dag A = n0(n+ + n-) + n0 + n+ + P + P^dag on 1,586 Fock elements, N = 2..14, 0 mismatches, and DERIVED by hand. 1.20 and 1.015: OK, with three rows above 1 at N = 81. H31.
+ L74    four rows: my exact series read 1.553, 1.453, 1.472, 1.178 e-9. "1 x 10^-9" is the route's %d truncation. H32.
+ L78    -1/4, -1/16, 0, -1/10: OK. 0.8 to 1.2: own count 0.955, 1.169 (fractions), 0.814, 1.080 (amplitudes): OK.
+ L80    edges DERIVED by hand and -1, -0.4243, -0.1910, -0.0522, 0: OK. 18 points: own scan over every P at N = 243, 18 of 18 lowest P as the edge says.
+ L82    126 of 126: OK, 36 at N = 729 and 90 at N = 243. H7.
+ L84-90 all cells: OK, 0 mismatches. Frozen f values within 0.94 ppm of my Mathieu on 30 values.
+ L92    0.930, 0.976, 0.987, 0.996: OK.
+ L94    120 of 120: OK, 40 at N = 729 and 80 at N = 243. H8. First- and second-order forms DERIVED by hand here, equal to the text.
+ L96-101 all cells: OK.
+ L103   0.00009, 0.437, 1.605, 3.875, 0.99965, 0.0005 (N = 243), 0.511: OK. "still reaches the rotor as 1/N": own chains at (1, -1/4) ratio 0.96132, 0.98687, 0.99560; at (1/2, -1/4) 0.99239, 0.99745, 0.99915 at N = 729, 2187, 6561: OK.
+ L107   -2, 4, 2/3, 1/3, g2, 8/3, 2/9: DERIVED by hand and own_exact2.py: OK. Engine y = 1/1024: A_ppb 868065 x 256 = 0.222225.
+ L109   -1/3 - sqrt73/12, -0.951009, 0.837781, 0.837780860 (B_ppb row): OK by hand and own_exact2.py.
+ L113   sizes, 2^60, 2^-90 (code), step in each row (fd_step on 220 of 220): OK. "220 rows": POLARITON_SECTOR has 438 rows, 220 at P = 0. Route scope and READ scope: H10.
+ L117-123 every cell: OK.
+ L125   tolerances: own read on 39 ordered rows at N >= 19683: worst e 0.185%, f 0.037%, gap 0.030%, C2 0.019%, rotor 0.114%. 0.625005, 2.500023, 5.625053: OK.
+ L126   both sequences: OK, all fourteen digits groups.
+ L127   7.18495, 0.162869: own oscillator basis, 90 states, E0 2.34482907, E1 9.52978138, 7.184952, <r^2>/4 0.162869. 0.99962, 105.977: OK. 0.44: read off, as tagged.
+ L131-135 band table: OK, 7 of 7.
+ L137   J1: own exact Taylor coefficients of pairs, in 1/N, through t^16: 0 mismatches at (1/3,1), (-1/5,1/2), (2/3,3/4), (0,1/4), (3/2,1), and the band-edge form at (1,1), (-1,1), (1,1/2), (-1,1/4). These are points the second seat did not use. Large-t limit DERIVED by hand.
+ L138   C1 over 4(1-delta)jbar/N on 41 rows: 0.9828..1.0286. C1*N on ordered rows N >= 19683: -1.44 to -0.64. OK.
+ L139   0.002113, 0.002121, negative on 12 of 12: OK. Position DERIVED by hand from W = -2y cos kx.
+ L140   x = -u on 3 of 3: OK. Supplement form read at supplementary.tex line 41: OK.
+ L144   12 rows, 200 ppm, 2.29 passes 12 of 12: OK. Order sentence: MISMATCH, F2.5, H20.
+ L148   0.33, 0.32%, 0.79, 5.7, 2.0, 0.7, 2/5, 14/5, 0.35 to 1.37 (0.349, 1.374): OK.
+ L149   5%, 0.5259, 0.5244, 0.0151, 0.0148, 0.015, 4 of 6: OK.
+ L150   0.0279, 0.0354, 9.2%, 13.8%, 0.9998, 1.0031, 1.175: OK. w1: own exact series through t^12, 0 mismatches.
+ L151   0.0709, 0.0774, 0.0489, 0.0517, 0.916, 0.945: OK as the largest at each N. The other two at N = 729 read 0.9307 and 0.9184.
+ L152   rows -100012819, -92670785, -49557110, 15951321, -1: OK.
+ L156   845, 73, 887, 31: OK.
+ L158   85, 0.06, 42, 30, 12, row for row: OK (78 disordered, 7 critical; 0.060368; read1 equals third run on all 918).
+ L159   9.3e-12, 1.5e-12, 137 of 143, 143 of 143: OK (fix1only, tracked at head).
+ L160   "about 5 x 10^-8": REFUTED. See below. H19.
+ L161   622 (2^60/N^2 = 622.18), 4,755, 371, 356, 24, under 1: OK, own read below.
+ L169   within 1 unit: own exact, 142 rows under 1, largest 1.004 units (N = 3, u = 1, x = 1/2). No hold; the route's bracket is that size.
+ L170   numbers OK; scope H11.
+ L171   60 rows (N = 2: 4, N = 3: 49, N = 9: 7), 9.18e-10 (918), 1 of 60: OK. Route's own exact_A and exact_B carry its finite-difference error, up to 161e-9 and 1482e-9 at this head, inside its 1e-5 limit.
+ L172   about 1e-9: own read, pairs up to 1.05e-9, A up to 0.61e-9: OK.
+ L173   rows: OK.
+ L174   "N = 2, 3, 9 and 19 of 28 rows at N = 27": REFUTED. See below. H18. Doublet numbers: rows on disk at 8dfa11a, not at head; even levels at head equal them at ppb.
+ L175   0.62, 0.19, 0.04, 0.008: OK.
+ L177   21 minutes: gh, 00:12:26Z to 00:33:58Z, success at 8dfa11a: OK. Workflow steps read: OK.
+ L183   47, 59, 43, 2, 2, 12, 3, 4, 1, 4: OK against the mutant table in engine/FINDINGS.txt, at 8dfa11a as stated.
+ L184   clocks: F2.6, H35. First 29 rows: sha 91d6a6e7 at head and fce08f9. Rows 30-44 are attempts and added rows: OK.
+ L185   2.25e-7: own series on this head's 42 rows, relative 2.245e-7. OK. H36 names it relative. Step 4 times larger: at 8dfa11a; the quench rows are byte-equal since.
+ L189   0.741, 1.026, 2 - 1/a, 4 - 4u2 + u1: DERIVED by hand, OK.
+ L190   0.017 (0.0169), 0.02%, 0.004%, 4.226e-5 (4.2259), 0.068 (0.0676), 0.09 and 0.19 (0.093, 0.190): OK.
+ L191   0.195, 0.0126, 0.0800, 0.0046: OK.
+ L194   531,441, 266,815, 2187: OK.
+ Root README: 0.3553, 0.3558, 266,815, 2.7%, 29, 11,943,937, 21,523,361, 1,422, 35, 143: OK. Scope H12, H13, H14.
+ PR body: both tables, every cell: OK. 29 of 29, 0.9905, 1.0267, 21 of 21, 17 of 21, 8.4% (8.35), 5.5% (5.46), 1.4449, 0.6935, 12 + 6 + 12 + 4 + 1 = 35, 845, 73, 887, 31, 4,755, 143, 44, 60, 47 of 59, 21 minutes, 126, 120: OK. "about three times the work": TIMING whole rows, third 33.1 min, fourth 96.5 min, 2.92: OK. Row 44's 97: OK.
+
+NUMBERS THAT REST ON NO ROW AT THIS HEAD. Finding 3.2: the second seat's out/ folders are not in the commit. So at this head these stand only as sentences in FINDINGS.txt. Each is recomputed here where I could.
+ -1 ppb at residual 1e-11 (engine/out/tight_729.hbp). Recomputed with the head engine (tight/): A_ppb = -1, B_ppb = -1, residual 13e-12, 87 cycles. MEASURED, equal.
+ -6.72 (derivations/out/d4_response.hbp). Recomputed. MEASURED, equal. Also -3.13, -17.34, -44.5, -38.0 at four other points.
+ 1/omega within 4e-5 (d5_u0.hbp). Recomputed. 4.05e-5.
+ 18 points (d3_window.hbp). Recomputed, every P rather than a grid. 18 of 18.
+ 7.18495, 0.162869 (d6_critical.hbp). Recomputed. Equal.
+ J1 through t^14 (d7_*). Extended to t^16 at nine new (delta, u).
+ w1 (d7_w1fit*). Recomputed through t^12. Equal.
+ 2.25e-7 (exact_quench_81.hbp). Recomputed on this head's rows. 2.245e-7.
+ N = 243 window grid, plane-wave grid (d4_grid_*.hbp). The engine's own window rows at this head agree with what FINDINGS quotes (0.815..0.860, 0.918..0.937).
+ Parity at N = 81, 243, 729 and the doublets 141,061, 12,014, 3,059 (parity_*.hbp). NOT recomputed: CANNOT_SEE at this head, by time. They were read at 8dfa11a. Between the third and fourth run energy_ppb moved 0 on all 172 pin rows, and E_even at yN = 16 matches this head's rows at ppb (N = 81, 243, 729). The odd levels need an odd-basis solve at this head. Odd above even on 147 of 147 filed rows.
+ Mutants, 47 of 59 (mutants.hbp). At 8dfa11a by the text's own scope; the table is in engine/FINDINGS.txt, tracked. A rerun is OPEN.
+ Could the engine change have moved a second-seat number? check_moved.py: POLARITON_QUENCH, QUENCH_PIN, QUENCH_BAND, REVERSAL, WAVEVECTOR, CONTROL, TAYLOR, OTHER_U, SECTOR_EQUALS_FULL byte-equal, third run to this head. POLARITON_PIN: energy, A1, D2, C1, C2, f unchanged on 172 of 172; A_ppb moved at most 16, B_ppb at most 726, residual and cycles moved. So no second-seat number quoted in the text moved at its printed digits.
+
+TOP RUNGS, OWN READ, outside the route's rows. own_top.py, exact o^2 and d, 2^220, own Sturm. x = 0 on 120,001 states around the peak.
+ N = 43,046,721, x = 0: e -0.100000005861, f 0.399999986466, gap 1.095445086. Rows: -100000006 ppb, 399999986 ppb, 1095445086 ppb.
+ N = 23,887,872, x = 0: e -0.100000010561, f 0.399999975612, gap 1.095445063. Rows: -100000011, 399999975, 1095445063.
+ N = 43,046,721, x = 1/2: pairs 105.537257830 (blocks 6,000 and 12,000 equal), read off -17.34 ppm; gap 0.011037826, off -0.09 ppm. x = 3/2: pairs 0.077350265, off +24.02 ppm, gap off -0.0001 ppm.
+ N = 23,887,872: x = 1/2 pairs 86.648165869, off -5.05 ppm; x = 3/2 pairs 0.077350262, off -8.43 ppm.
+ Survives. Could still be wrong: the block truncates the state; a tail larger than I estimate at +-18 sigma would move f in a far digit. Doubling the low-k block moved nothing; I did not double the block at x = 0.
+
+REFUTED, WITH ROWS.
+ R1. L160, "<A> at N = 9 sat about 5 x 10^-8 from exact". Own exact eigenvector, 24 rows at N = 9: first-run A_ppb is off by 16.7e-9 to 697.9e-9, median 244.5e-9. The exact vector read through roots floored at 20 bits gives 16.4e-9 to 697.1e-9, and the same sign on every row, within 1.0e-9 of the first run. So the attribution to the read-out survives and the size does not. At 32 bits the read-out alone is at most 0.18e-9. Third run and head are within 1.9e-9. RETRACTION BESIDE: my text lane wrote the 5e-8 in its H24 with no row behind it; it stays on file there, and this is the correction.
+ R2. L174, "at N = 2, 3, 9 and 19 of 28 rows at N = 27". engine/out/parity_inertia.hbp holds 79 rows: N = 3: 28, N = 9: 28, N = 27: 23, N = 2: 0. The tool walks the receipt in order and the 560 s timeout came before the hand rows. The total 79 is right; the split is not. N = 2 is now read by me (own_n9.py): even below odd on all 4 hand rows, gaps about 0.75. L174's "5 pinned rows at N = 729, u = 1/2, x = 0" is true and leaves out two rows at u = 0, x = 0 (parity_729.hbp has 7; REPORT says 7). RETRACTION BESIDE: my engine lane's F4 and H12 carried this split.
+
+=== 2. EVERY HOLD'S DISPOSITION ===
+
+Ran check_holds.py and check_disp.py. MEASURED.
+ F2.1 80 hold blocks (derivations 13, engine 32, text 35), 80 rows in HOLDS-APPLIED.hbp, one to one, no block without a row and no row without a block. Each row's where matches its block's file.
+ F2.2 Every README-bound or body-bound hold has its substance at this head, by phrase search, 49 entries, all PRESENT, with new digits allowed for. Body-bound text H5, H6, H7, H35: PRESENT in the live body. Dropped without a row saying so: none.
+ Merged text that lost a measured fact, each with a row saying only "merged" or "applied":
+ F2.3 Derivations H2: "So the u = 1 rows at x = -1/4 and -1/8 read the P = 0 branch." Absent. L125's "ordered points" includes them, read as the pair state's values in the sector, and a reader takes them for ground states. H33.
+ F2.4 Text H15 and derivations H8 both kept "with V the visibility after averaging over pulses". Absent from L190, where V^2 now reads only by the law's definition. H25.
+ F2.5 Engine H13 and text H31 merged into a false order. L144 says the reader was "first committed at 099b0c6, after the first run finished and before its first read". git show --stat 099b0c6 adds read_prediction.py and first-run/READ.hbp in one commit, so the commit follows the read. Session log (text/FINDINGS.txt): written 23:14:33Z, first read 23:15:21Z, commit 23:30:33Z. "Written before its first read" survives, on the session log; git alone cannot see it. Also stale: "the predictions it reads were frozen at fce08f9" leaves out 89a026a, and the reads of the added rows were first committed at ce44be7 with those rows (89a026a: 0 hits in the reader for the added tags, 0 in the engine). I compared rows 37-39 to the reader's limits by hand: equal. H20.
+ F2.6 Text FINDINGS' same-turn nuance on the engine source, in REPORT.md and absent from L184. H35, H50, H51.
+ F2.7 Derivations H13: "at 9 points" absent, and "0.9%" became "about the 0.95%", which is further from the row. H28.
+ F2.8 Text H13: "delta = -1 has its rows up to N = 6561" absent. MEASURED: N = 19683 holds delta -1/2, 0, 1/2, 1, 2. H34. The exponent sentences went with the conjecture they served, which the exact form replaced; that loss is right.
+ F2.9 Derivations H3: "the x = 0 rows agree at 180 bits" absent, so the text gives no exact read of the table's x = 0 lines. H10.
+ F2.10 Derivations F8 flagged the paper's two lines on k_r in FINDINGS with no hold. H38.
+ Weakened or strengthened statements:
+ F2.11 Engine H10's row says applied, but its removal of "so the correlation at zero field sets the modulation" did not happen, because text H28 kept the sentence. The bullet now holds both the clause and the rows that cannot separate it. H21, H22.
+ F2.12 Text H1, H6's "no fitted number" became "zero free parameters", which is stronger than its source, while L42 keeps "zero fitted numbers". u and x are chosen. H40-H43.
+ F2.13 Derivations H1 said "for every x < 0" and L9 says "at the Delta < 0 points read". That narrowing is right, and L80 carries the mean-field statement.
+ No statement in the merge moved a miss, a tolerance or a count.
+
+=== 3. FILING ===
+
+ F3.1 SHA256SUMS: 102 lines, 102 of 102 match the files on disk, 0 missing, 0 CR. MEASURED, check_filing.py.
+ F3.2 HIGH. The commit does not hold what that list lists. .gitignore has out/, so polariton/second-seat/derivations/out/ (18 files) and engine/out/ (69 files) are ignored. 87 of 102 listed files, 936,914 bytes, are absent from ce44be7. git ls-tree: 16 files under second-seat. GitHub contents API on polariton/second-seat/engine/out at this head: 404. git status at the start showed them as ignored, so a clean status hid it. REPORT.md's "each lane's findings, holds and row files are in the folders beside this one" is false at the head for those. All 29 out/ paths the FINDINGS cite are outside the tree. 0 CR and 0 NUL in the 87, so .gitattributes' eol rule will not change their hashes. Tested in a scratch repo: !polariton/second-seat/*/out/ re-includes them and leaves out/, src/out/ and target/ ignored. H1.
+ F3.3 REPORT.md against the task result: json.load(...)["result"] has keys head, failed, derivations, engine, text. Each of the three parts is byte-equal to the REPORT section after stripping: 4,227, 5,359, 4,383 bytes. No &gt; or &lt; in the REPORT at all, and the 2 > and 1 < of the derivations part stand as they are. So verbatim, with no escape used.
+ F3.4 Token-shaped strings in the second-seat folder, 103 files scanned on disk, 11 patterns: 0. The operator's email address: 0. Any email-shaped string: 0. Paths under C:/Users: 0. Same patterns on the three texts: 0.
+ F3.5 Tools tar: D:/safety-backups/opus55-polariton-attack-20261104-tools.tar.gz, SHA-256 743c251d..., equal to REPORT.md; 745 members, all regular files by tar -tzv type column.
+ F3.6 Links. polariton/README.md: 14 relative links, all resolve in the tree at this head. Root section: 2, both resolve. Body: 5 blob or tree links on the branch name, all resolve at this head; they follow the branch. External: arXiv 200; run 41939586670 200 (gh: success, 8dfa11a); nature.com 303 to curl from here, a redirect, so CANNOT_SEE the final page in this lane. Owning gate for this head, read only, not touched: gh pr checks 8 shows the receipt job pending and rust-181 pass twice.
+ F3.7 Fabric health answered (uptime 232,679 s). Recall q=polariton returned count=0. That is an index that has not yet taken this repo, count=0 is not absence, and this lane rests on git, gh, rows and own runs. Owning seats and HELM were not asked. CANNOT_SEE, not FALSE.
+
+=== 4. READERS' FAULTS ===
+
+ F4.1 The status alone. Read alone it is accurate on each measured statement, with four places a new reader goes wrong: (a) "all 29 rows read" reads as all rows; the receipt has 94, 64 at N >= 243, and the next table has cells up to 1.096. H2, H12. (b) "the same move" joins two different results. H3, H4, H12, H17. (c) "zero free parameters". H40-H43. (d) no owning-gate status in the status. H37.
+ F4.2 U = J/2 against U = J. The README status and the root are clear. The body has "(contact interactions give U = J)" and gives no number for the U = J ground state, and its title has no U. H9, H52.
+ F4.3 "Every row in this table was unseen". Survives, narrowly. The table's 30 cells are at N = 729, y >= 1/108, and the conversion stage is absent at 89a026a (0 hits for run_conversion), so they could not have been rows before it. But the table names no N, POLARITON_ADDED says three rows where the sentence says four, and the third run's receipt already held all 12 rows at y = 1/1024 with delta = 0, 1/2, carrying A1 and C1. On those 12 the law reads 0.944 to 1.012, within 2% at N = 729 (1.001, 1.005, 1.002, 1.000, 0.995, 0.980), so the seen rows pointed at the law. "Unseen" cannot be measured from git for what a model read: CANNOT_SEE beyond the file record. H5, H6.
+ F4.4 Order of derivation for the plane-wave forms, and for the window. Stated at L94 and L82, and a reader still takes the count as the unseen read: 80 of 120 and 90 of 126 are at N = 243. The second seat's grid held all 90 inside values and yN = 1/2, 4, 16 of the 80 below. The 20% limit was written with 0.815 on file; the lowest reads 0.8145. The body has none of this under its bold "frozen first". H7, H8, H9.
+ F4.5 "So the correlation at zero field sets the modulation." sqrt(2C2) = 0.40022 and 2rho = 0.4, and 2rho is closer on 9 of 9 rows. The rows read one number and carry no cause. What they read: the modulation reaches that size while C2 holds. H21, H22. Undersold beside it: D2^2/2C2 reads f(q)^2, 0.79107 against 0.79105 at N = 729, yN = 16. H26.
+ F4.6 "V^2" against the paper's visibility. The paper has both senses: phase fluctuations "reduce the visibility of the density modulation" (main text), which is V = A1/sqrt(2C1) here, and the symbol V(x) = (I_u - I_l)/(I_u + I_l) for fringes, proportional to g1. H25.
+ F4.7 y*sqrt(N). Exact at N = 81 and 729. 0.974 s at N = 243, 0.995 s at N = 2187, unstated except "about 1" in one cell. Each law value is at the row's own y, so no ratio is wrong; the labels are. H5, H23.
+ F4.8 k_r. L12's 1.7% takes the Methods line, about 2.3 um^-1. The main text writes 1/k_r = 2.3 um, which gives 9.2%. The Methods value fits the dispersion geometry (DERIVED: a pattern over 30 sites in 2w = 60 um gives a spacing near 2 um, against 2pi/2.3 = 2.73 um and 2pi/0.43 = 14.5 um). Its Fig. 1b would settle it: CANNOT_SEE. H38, H39.
+ F4.9 The word "law". Row 39 ends tag=CONJECTURE_until_read, the form is leading order in 1/N, and C1 misses 4 of 21 by that order. Under the book's triad a named law stays a law once asked; what is missing is its order and tag. H24, H12, H17.
+ F4.10 N counts bosons: stated at the root, L113 and the body. No fault left.
+ F4.11 Exact route coverage. Root, L113, L170 and the body read as all top rungs; top_compare covers delta >= 1 only, 44 of 76 P = 0 rows at N >= 59,049. The table's three x = 0 lines rest on the engine, the reader, the second seat's row at 8dfa11a and now my own read, all equal. H10, H11, H14, H16.
+ F4.12 "at three points of the model". Energy and pair fraction are predicted and read at x = 0 only. H13, H15.
+ F4.13 READ.hbp's 1,422 counts checks of unequal weight: 334 energy rows, 18 exact-by-construction zero rows, 13 row-count rows, 161 sign rows. The engine lane listed the vacuous ones. Stated here as a measured count with no hold: each is a row a broken engine could miss, except the 18.
+ Stronger than rows, all listed above: H2, H10-H16, H21-H24, H40-H43, H50-H52. Undersold: V^2 past its range in the status (H2, H49); 0.92% (H28); D2^2/2C2 (H26); own read of x = 0 at the top (H10); own J1 at nine more points and outside the band (delta = 3/2), L137 could say so once this folder is filed; N*dev 125, 132, 134 against 135.4 (H34).
+
+=== 5. SENTENCES THAT STATE WHAT A RESULT IS NOT ===
+
+ scan_neg.py -> out/scan_neg.txt, every sentence with a negative or exclusion word. The earlier passes removed most. Measured counts stay: "refuted no formula", "no lane failed and no formula refuted", "no row moved between met and missed", "zero mismatch".
+ Left, with positive text proposed: L78 "outside this one-parameter form" H44; L107 "never found at one point" H45; root "a separate quantity from ..." H46; L190 "is unread" H47. L10 "OPEN" is the operator's word. L42's "unfixed" is the paper's statement. Body "stays unmerged until both read" is process.
+
+=== WHAT COULD STILL BE WRONG IN THIS LANE ===
+
+ - lib.py's Law and my reader share the frozen formula text with the author; a wrong formula in the row would match. The formulas were rederived by hand only where marked DERIVED.
+ - My Mathieu and Sturm are the same mathematics as the route's. The code is separate; a shared mathematical slip is not excluded by that.
+ - The session-log times come through text/FINDINGS.txt, not from a log I read in this lane. The GitHub times I read myself.
+ - own_top.py does not double the block at x = 0.
+ - Parity at N >= 81 at this head, the mutants at this head, the hosted run of this head, Nature's final text and figures, and what any model actually read before writing a form: CANNOT_SEE here, each for the reason above.
+ Falsifiers. R1: an exact N = 9 read where first-run A_ppb sits within 1e-7 on most rows. R2: a PARITY_INERTIA row at N = 2 in the filed file. F3.2: polariton/second-seat/engine/out at ce44be7 on GitHub returning 200. F2.5: a commit holding read_prediction.py without first-run/READ.hbp before 099b0c6. F4.11: a SECOND_ROUTE_TOP row with u + x < 1.

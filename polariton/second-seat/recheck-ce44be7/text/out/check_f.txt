@@ -1,0 +1,88 @@
+== line 160: first-run full route rows at N=9
+  1/2 0 4/9 A off 360.0 e-9 B off 156.0 E off 1.0
+  0 0 4/9 A off 385.0 e-9 B off 179.0 E off 0.0
+  1/2 1/2 4/9 A off 240.0 e-9 B off 50.0 E off 1.0
+  1/2 3/2 4/9 A off 33.0 e-9 B off 2.0 E off 1.0
+ first-run rows by N {'2': 4, '3': 28, '9': 4}
+ third 1/2 0 4/9 A off 7.0 B off 12.0
+ third 0 0 4/9 A off 39.0 B off 52.0
+ third 1/2 1/2 4/9 A off 5.0 B off 0.0
+ third 1/2 3/2 4/9 A off 3.0 B off 0.0
+ now: largest off E, A, B on 60 rows, e-9 2.0 161.0 1482.0
+
+== first read of the route
+ DONE SECOND_ROUTE_FULL_DONE|rows=60|bad=1|json=0 rows 60 has HAND_N3 False
+ marked SECOND_ROUTE_FULL|N=3|u=1/4|x=-1/4|y=0|exact_E=-1.045333645|rust_E=-1.045333646|exact_A=0.000000000|rust_A=-0.000000001|exact_B=0.000000000|rust_B=0.837780860|json=0
+
+== the visible share at 2k in the central rows, D2^2/2C2, against f(q)^2
+ N 243 yN 1/2 D2^2/2C2 0.00009 f^2 0.00010 ratio 0.9417
+ N 243 yN 1 D2^2/2C2 0.00150 f^2 0.00160 ratio 0.9419
+ N 243 yN 2 D2^2/2C2 0.02313 f^2 0.02450 ratio 0.9441
+ N 243 yN 4 D2^2/2C2 0.23265 f^2 0.24094 ratio 0.9656
+ N 243 yN 8 D2^2/2C2 0.59873 f^2 0.60269 ratio 0.9934
+ N 243 yN 16 D2^2/2C2 0.78927 f^2 0.79105 ratio 0.9977
+ N 729 yN 1/2 D2^2/2C2 0.00010 f^2 0.00010 ratio 0.9805
+ N 729 yN 1 D2^2/2C2 0.00156 f^2 0.00160 ratio 0.9806
+ N 729 yN 2 D2^2/2C2 0.02405 f^2 0.02450 ratio 0.9814
+ N 729 yN 4 D2^2/2C2 0.23826 f^2 0.24094 ratio 0.9889
+ N 729 yN 8 D2^2/2C2 0.60164 f^2 0.60269 ratio 0.9983
+ N 729 yN 16 D2^2/2C2 0.79107 f^2 0.79105 ratio 1.0000
+
+== the V2 at y=1/1024 rows, read against the law
+ N 243 delta 0 t 1 V2 read 0.000099 law 0.000099 ratio 1.004 f pred 0.011 A1 ratio 0.989 C1 ratio 0.974
+ N 243 delta 0 t 2 V2 read 0.000272 law 0.000269 ratio 1.012 f pred 0.108 A1 ratio 0.903 C1 ratio 0.805
+ N 243 delta 0 t 3 V2 read 0.000378 law 0.000380 ratio 0.997 f pred 0.826 A1 ratio 0.605 C1 ratio 0.367
+ N 243 delta 1/2 t 1 V2 read 0.000051 law 0.000051 ratio 1.000 f pred 0.011 A1 ratio 0.986 C1 ratio 0.972
+ N 243 delta 1/2 t 2 V2 read 0.000149 law 0.000151 ratio 0.986 f pred 0.082 A1 ratio 0.906 C1 ratio 0.832
+ N 243 delta 1/2 t 3 V2 read 0.000216 law 0.000229 ratio 0.944 f pred 0.490 A1 ratio 0.667 C1 ratio 0.472
+ N 729 delta 0 t 1 V2 read 0.000297 law 0.000297 ratio 1.001 f pred 0.004 A1 ratio 0.996 C1 ratio 0.991
+ N 729 delta 0 t 2 V2 read 0.000810 law 0.000806 ratio 1.005 f pred 0.036 A1 ratio 0.963 C1 ratio 0.922
+ N 729 delta 0 t 3 V2 read 0.001141 law 0.001138 ratio 1.002 f pred 0.276 A1 ratio 0.789 C1 ratio 0.621
+ N 729 delta 1/2 t 1 V2 read 0.000154 law 0.000154 ratio 1.000 f pred 0.004 A1 ratio 0.995 C1 ratio 0.990
+ N 729 delta 1/2 t 2 V2 read 0.000451 law 0.000453 ratio 0.995 f pred 0.027 A1 ratio 0.965 C1 ratio 0.935
+ N 729 delta 1/2 t 3 V2 read 0.000674 law 0.000687 ratio 0.980 f pred 0.163 A1 ratio 0.837 C1 ratio 0.715
+
+== line 190
+ K direct 4.2259 e-5 A^2/16 4.2250 e-5 A^2/4 % 0.0169 K % 0.00423
+ (1-d)V2 with K=0.5%: 0.0169  with rho0 = 1/(1+2K), rho = K rho0: 0.0172  four times: 0.0676
+ V2 0.0169 Y 0.0172 y sqrtN 0.093
+ V2 0.0676 Y 0.0725 y sqrtN 0.190
+ 0.04/2.3 % 1.74  0.04/(1/2.3) % 9.2
+
+== own chains: D2/y^2 over the rotor at y -> 0
+ u 1/2 x 0 N, ratio, N(ratio-1) [(729, '0.99075', '-6.74'), (2187, '0.99693', '-6.72'), (6561, '0.99898', '-6.72')]
+ u 1 x -1/4 N, ratio, N(ratio-1) [(729, '0.96132', '-28.20'), (2187, '0.98687', '-28.71'), (6561, '0.99560', '-28.88')]
+ u 1/2 x -1/4 N, ratio, N(ratio-1) [(729, '0.99239', '-5.55'), (2187, '0.99745', '-5.57'), (6561, '0.99915', '-5.58')]
+ u 1 x -1/8 N, ratio, N(ratio-1) [(729, '0.94905', '-37.14'), (2187, '0.98272', '-37.79'), (6561, '0.99421', '-38.00')]
+ u 1/4 x -1/4 N, ratio, N(ratio-1) [(729, '0.99568', '-3.15'), (2187, '0.99857', '-3.13'), (6561, '0.99952', '-3.13')]
+ u 3/4 x 0 N, ratio, N(ratio-1) [(729, '0.97635', '-17.24'), (2187, '0.99208', '-17.32'), (6561, '0.99736', '-17.34')]
+ u 3/4 x 1/8 N, ratio, N(ratio-1) [(729, '0.93878', '-44.63'), (2187, '0.97964', '-44.53'), (6561, '0.99322', '-44.50')]
+== u = 0: a = (D2/y^2) 16 c0^2/(rho N), own chains, extrapolated from N = 2187, 6561 as 1/N
+ x -3/4 a(2187) 1.076500 a(6561) 1.071514 extrapolated 1.069020 1/omega 1.069045 off 24.50 e-6
+ x -1/2 a(2187) 0.819225 a(6561) 0.817405 extrapolated 0.816495 1/omega 0.816497 off 1.79 e-6
+ x -1/4 a(2187) 0.733845 a(6561) 0.731479 extrapolated 0.730296 1/omega 0.730297 off 0.29 e-6
+ x 0 a(2187) 0.714765 a(6561) 0.709660 extrapolated 0.707107 1/omega 0.707107 off 0.16 e-6
+ x 1/4 a(2187) 0.751835 a(6561) 0.737477 extrapolated 0.730297 1/omega 0.730297 off 0.53 e-6
+ x 1/2 a(2187) 0.902750 a(6561) 0.845248 extrapolated 0.816497 1/omega 0.816497 off 0.18 e-6
+ x 3/4 a(2187) 1.877706 a(6561) 1.338572 extrapolated 1.069004 1/omega 1.069045 off 40.49 e-6
+
+== own P scan at N = 243: lowest sector over every P, 18 points
+ u 1/2 x 0 edge -0.1910 lowest P 0 E/N -0.10105 expected P 0 OK
+ u 1/2 x 1/4 edge -0.1910 lowest P 0 E/N -0.02688 expected P 0 OK
+ u 1/2 x -1/8 edge -0.1910 lowest P 0 E/N -0.15704 expected P 0 OK
+ u 1/2 x -1/4 edge -0.1910 lowest P 243 E/N -0.25000 expected P 243 OK
+ u 1/2 x -3/8 edge -0.1910 lowest P 243 E/N -0.37500 expected P 243 OK
+ u 1/2 x -1/2 edge -0.1910 lowest P 243 E/N -0.50000 expected P 243 OK
+ u 1/2 x -5/8 edge -0.1910 lowest P 243 E/N -0.62500 expected P 243 OK
+ u 1/4 x -1/4 edge -0.4243 lowest P 0 E/N -0.30799 expected P 0 OK
+ u 1/4 x -3/8 edge -0.4243 lowest P 0 E/N -0.38970 expected P 0 OK
+ u 1/4 x -1/2 edge -0.4243 lowest P 243 E/N -0.50000 expected P 243 OK
+ u 3/4 x 0 edge -0.0522 lowest P 0 E/N -0.03752 expected P 0 OK
+ u 3/4 x -1/8 edge -0.0522 lowest P 243 E/N -0.12500 expected P 243 OK
+ u 3/4 x -1/4 edge -0.0522 lowest P 243 E/N -0.25000 expected P 243 OK
+ u 1 x -1/8 edge 0.0000 lowest P 243 E/N -0.12500 expected P 243 OK
+ u 1 x -1/4 edge 0.0000 lowest P 243 E/N -0.25000 expected P 243 OK
+ u 1 x -3/8 edge 0.0000 lowest P 243 E/N -0.37500 expected P 243 OK
+ u 0 x -1/2 edge -1.0000 lowest P 0 E/N -0.56256 expected P 0 OK
+ u 0 x -3/4 edge -1.0000 lowest P 0 E/N -0.76603 expected P 0 OK
+ agree 18 of 18

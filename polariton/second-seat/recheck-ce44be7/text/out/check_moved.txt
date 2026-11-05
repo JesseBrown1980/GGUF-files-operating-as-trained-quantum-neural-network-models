@@ -1,0 +1,22 @@
+POLARITON_SECTOR third 438 fourth 438 byte-equal 7 only third 0 only fourth 0
+   moved by N {3: 11, 9: 16, 27: 37, 81: 37, 243: 37, 729: 37, 2187: 37, 6561: 37, 19683: 43, 59049: 37, 177147: 37, 531441: 37, 1594323: 16, 4782969: 3, 14348907: 3, 23887872: 3, 43046721: 3}
+   moved at N<=243 138
+POLARITON_PIN third 172 fourth 172 byte-equal 78 only third 0 only fourth 0
+   POLARITON_PIN|N=3|u=1/2|x=0|y=8/3|s=8|energy_ppb=-10522967439|A_ppb=2116906020|B_ppb=734919223|A1_ppm=1411270|D2_ppm=489946|C1_ppm=967806|C2_ppm=105161|f_ppm=493494|resid
+   POLARITON_PIN|N=3|u=1/2|x=0|y=8/3|s=8|energy_ppb=-10522967439|A_ppb=2116906020|B_ppb=734919223|A1_ppm=1411270|D2_ppm=489946|C1_ppm=967806|C2_ppm=105161|f_ppm=493494|resid
+   POLARITON_PIN|N=3|u=1/2|x=0|y=4/3|s=4|energy_ppb=-4891781277|A_ppb=2100314220|B_ppb=701341830|A1_ppm=1400209|D2_ppm=467561|C1_ppm=923390|C2_ppm=82093|f_ppm=484115|residua
+   POLARITON_PIN|N=3|u=1/2|x=0|y=4/3|s=4|energy_ppb=-4891781277|A_ppb=2100314220|B_ppb=701341830|A1_ppm=1400209|D2_ppm=467561|C1_ppm=923390|C2_ppm=82093|f_ppm=484115|residua
+   POLARITON_PIN|N=3|u=0|x=0|y=8/3|s=8|energy_ppb=-10831177702|A_ppb=2117868170|B_ppb=745820947|A1_ppm=1411912|D2_ppm=497213|C1_ppm=975224|C2_ppm=110137|f_ppm=499398|residua
+   POLARITON_PIN|N=3|u=0|x=0|y=8/3|s=8|energy_ppb=-10831177702|A_ppb=2117868170|B_ppb=745820947|A1_ppm=1411912|D2_ppm=497213|C1_ppm=975224|C2_ppm=110137|f_ppm=499398|residua
+   POLARITON_PIN|N=3|u=0|x=0|y=4/3|s=4|energy_ppb=-5193793215|A_ppb=2105868214|B_ppb=730725730|A1_ppm=1403912|D2_ppm=487150|C1_ppm=943820|C2_ppm=92976|f_ppm=496966|residual_
+   POLARITON_PIN|N=3|u=0|x=0|y=4/3|s=4|energy_ppb=-5193793215|A_ppb=2105868214|B_ppb=730725730|A1_ppm=1403912|D2_ppm=487150|C1_ppm=943820|C2_ppm=92976|f_ppm=496966|residual_
+POLARITON_QUENCH third 240 fourth 240 byte-equal 240 only third 0 only fourth 0
+POLARITON_QUENCH_PIN third 54 fourth 54 byte-equal 54 only third 0 only fourth 0
+POLARITON_QUENCH_BAND third 40 fourth 40 byte-equal 40 only third 0 only fourth 0
+POLARITON_REVERSAL third 5 fourth 5 byte-equal 5 only third 0 only fourth 0
+POLARITON_WAVEVECTOR third 3 fourth 3 byte-equal 3 only third 0 only fourth 0
+POLARITON_CONTROL_NO_BOSE third 4 fourth 4 byte-equal 4 only third 0 only fourth 0
+POLARITON_TAYLOR_POINT third 6 fourth 6 byte-equal 6 only third 0 only fourth 0
+POLARITON_SYMMETRY third 2 fourth 2 byte-equal 0 only third 0 only fourth 0
+POLARITON_QUENCH_OTHER_U third 8 fourth 8 byte-equal 8 only third 0 only fourth 0
+POLARITON_SECTOR_EQUALS_FULL third 2 fourth 2 byte-equal 2 only third 0 only fourth 0

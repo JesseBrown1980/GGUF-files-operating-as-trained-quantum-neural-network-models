@@ -1,0 +1,62 @@
+files in the tree 394
+  polariton/README.md 'the prediction' PREDICTION.hbp -> polariton/PREDICTION.hbp file
+  polariton/README.md '1,422 rows are met and 35 missed' READ.hbp -> polariton/READ.hbp file
+  polariton/README.md 'Its report is filed' second-seat/REPORT.md -> polariton/second-seat/REPORT.md file
+  polariton/README.md '`READ.hbp`' READ.hbp -> polariton/READ.hbp file
+  polariton/README.md '`READ.hbp`' READ.hbp -> polariton/READ.hbp file
+  polariton/README.md '`read_prediction.py`' read_prediction.py -> polariton/read_prediction.py file
+  polariton/README.md 'The first run' first-run/ -> polariton/first-run dir
+  polariton/README.md 'the third' third-run/ -> polariton/third-run dir
+  polariton/README.md '`second_route.py`' second_route.py -> polariton/second_route.py file
+  polariton/README.md '`SECOND-ROUTE.hbp`' SECOND-ROUTE.hbp -> polariton/SECOND-ROUTE.hbp file
+  polariton/README.md 'that first read' SECOND-ROUTE-FIRST-READ.hbp -> polariton/SECOND-ROUTE-FIRST-READ.hbp file
+  polariton/README.md 'the workflow' ../.github/workflows/polariton.yml -> .github/workflows/polariton.yml file
+  polariton/README.md 'Three lanes attacked `8dfa11a`' second-seat/REPORT.md -> polariton/second-seat/REPORT.md file
+  polariton/README.md '`HOLDS-APPLIED.hbp`' second-seat/HOLDS-APPLIED.hbp -> polariton/second-seat/HOLDS-APPLIED.hbp file
+  README.md section 'The test' polariton/README.md -> polariton/README.md file
+  README.md section "the second seat's attack" polariton/second-seat/REPORT.md -> polariton/second-seat/REPORT.md file
+  body 'The folder' blob ref fable5-polariton-three-mode-20261104 polariton/README.md file
+  body 'The first run' tree ref fable5-polariton-three-mode-20261104 polariton/first-run dir
+  body 'the third' tree ref fable5-polariton-three-mode-20261104 polariton/third-run dir
+  body 'that read' blob ref fable5-polariton-three-mode-20261104 polariton/SECOND-ROUTE-FIRST-READ.hbp file
+  body 'The second seat at `8dfa11a`.' blob ref fable5-polariton-three-mode-20261104 polariton/second-seat/REPORT.md file
+external ['https://arxiv.org/abs/2407.02373', 'https://claude.com/claude-code', 'https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/41939586670', 'https://www.nature.com/articles/s41586-025-08616-9']
+
+== SHA256SUMS entries against the tree
+listed 102 in the commit 15 absent from the commit 87
+absent by folder Counter({'engine/out': 69, 'derivations/out': 18})
+bytes absent 936914
+largest absent [(173417, 'engine/out/trunc.hbp'), (93798, 'engine/out/hold_read.hbp'), (89646, 'engine/out/read.hbp'), (44493, 'engine/out/wsl_sector.txt'), (44493, 'engine/out/hold_sector.txt')]
+ignored per git status: !! polariton/second-seat/derivations/out/ ; !! polariton/second-seat/engine/out/
+
+== Names the texts and findings cite under out/, at this head
+cited out/ paths in the FINDINGS files 29
+   derivations out/d1_d2.hbp not_in_tree on_disk
+   derivations out/d3_window.hbp not_in_tree on_disk
+   derivations out/d4_grid_fail.hbp not_in_tree on_disk
+   derivations out/d4_grid_pass.hbp not_in_tree on_disk
+   derivations out/d4_response.hbp not_in_tree on_disk
+   derivations out/d5_scan.hbp not_in_tree on_disk
+   derivations out/d5_u0.hbp not_in_tree on_disk
+   derivations out/d6_critical.hbp not_in_tree on_disk
+   derivations out/d6_dis.hbp not_in_tree on_disk
+   derivations out/d6_emul.hbp not_in_tree on_disk
+   derivations out/d6_top.hbp not_in_tree on_disk
+   derivations out/d7_compare.hbp not_in_tree on_disk
+   derivations out/d7_derive.out not_in_tree not_on_disk
+   derivations out/d8_checks.hbp not_in_tree on_disk
+   engine out/eval_holds.hbp not_in_tree on_disk
+   engine out/exact_quench_81.hbp not_in_tree on_disk
+   engine out/highprec1.hbp not_in_tree on_disk
+   engine out/highprec2.hbp not_in_tree on_disk
+   engine out/leap_step.hbp not_in_tree on_disk
+   engine out/misc.hbp not_in_tree on_disk
+   engine out/mut/*/verdict.hbp not_in_tree not_on_disk
+   engine out/mutants.hbp not_in_tree on_disk
+   engine out/parity_*.hbp not_in_tree not_on_disk
+   engine out/pivots.hbp not_in_tree on_disk
+   engine out/reader_audit.hbp not_in_tree on_disk
+   engine out/s10 not_in_tree not_on_disk
+   engine out/tight_243.hbp not_in_tree on_disk
+   engine out/tight_729.hbp not_in_tree on_disk
+   engine out/wsl_*.rows not_in_tree not_on_disk

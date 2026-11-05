@@ -1,0 +1,60 @@
+PRESENT text H1 
+ABSENT  text H1 lost? ['Contact interactions give U = J, and the pinned ground state there is OPEN', 'no fitted number']
+PRESENT text H2 
+PRESENT text H3 
+PRESENT text H4 
+PRESENT text H5 
+PRESENT text H6 
+PRESENT text H7 
+PRESENT text H8 
+PRESENT text H9-11 
+PRESENT text H12 
+PRESENT text H13 
+ABSENT  text H13 lost? ['δ = −1 has its rows up to N = 6561', 'local exponent', 'Deviation·N/t⁴']
+PRESENT text H14 
+PRESENT text H15 
+ABSENT  text H15 lost? ['with V the visibility after averaging over pulses']
+PRESENT text H16 
+PRESENT text H17 
+PRESENT text H18 
+PRESENT text H19 
+PRESENT text H20 
+PRESENT text H21 
+PRESENT text H22 
+PRESENT text H23 
+PRESENT text H24 
+PRESENT text H25 
+PRESENT text H26 
+PRESENT text H27 
+PRESENT text H28 
+PRESENT text H29 
+PRESENT text H30 
+PRESENT text H31 
+PRESENT text H32 
+PRESENT text H33 
+PRESENT text H34 
+PRESENT text H35 
+PRESENT derivations H1 
+PRESENT derivations H2 
+ABSENT  derivations H2 lost? ['So the u = 1 rows at x = −1/4 and −1/8 read the P = 0 branch']
+PRESENT derivations H3 
+ABSENT  derivations H3 lost? ['x = 0 rows agree']
+PRESENT derivations H4 
+PRESENT derivations H5 
+PRESENT derivations H6 
+PRESENT derivations H7 
+PRESENT derivations H8 
+PRESENT derivations H9 
+PRESENT derivations H10 
+PRESENT derivations H11 
+PRESENT derivations H13 
+ABSENT  derivations H13 lost? ['at 9 points']
+PRESENT engine H9 
+PRESENT engine H9b 
+PRESENT engine H9c 
+PRESENT engine H10 
+PRESENT engine H10: its removal of the clause 
+PRESENT engine H11 
+PRESENT engine H12 
+PRESENT engine H13 
+PRESENT engine H14 

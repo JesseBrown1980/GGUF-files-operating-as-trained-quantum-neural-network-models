@@ -1,0 +1,6 @@
+W1_FIT|delta=0|u=1/1|w1=-825*t**2*cosh(t)/128 + 259*t*sinh(t)/16 + 55*t*sinh(3*t)/768 - 29195*cosh(t)/1024 + 8803*cosh(3*t)/9216 + 248/9|heldout_ok=0|heldout_bad=8|w0_t2=-1|json=0
+W1_FIT|delta=0|u=1/2|w1=-1425*t**2*cosh(t)/256 + 411*t*sinh(t)/32 + 95*t*sinh(3*t)/1536 - 53779*cosh(t)/2048 + 25259*cosh(3*t)/18432 + 224/9|heldout_ok=0|heldout_bad=8|w0_t2=-1|json=0
+W1_FIT|delta=0|u=0/1|w1=-75*t**2*cosh(t)/16 + 19*t*sinh(t)/2 + 5*t*sinh(3*t)/96 - 3073*cosh(t)/128 + 2057*cosh(3*t)/1152 + 200/9|heldout_ok=0|heldout_bad=8|w0_t2=-1|json=0
+W1_FIT|delta=1|u=1/1|w1=t**4|heldout_ok=7|heldout_bad=0|w0_t2=0|json=0
+W1_FIT|delta=1|u=1/2|w1=5*t**4/2 + t**2/2|heldout_ok=7|heldout_bad=0|w0_t2=0|json=0
+W1_FIT|delta=-1|u=1/1|w1=28*t**6/15 + 3*t**4|heldout_ok=7|heldout_bad=0|w0_t2=-2|json=0

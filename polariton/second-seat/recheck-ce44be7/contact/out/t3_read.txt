@@ -1,0 +1,337 @@
+rows 540
+TABLE_A: delta<-1: V2 read and law, ratio; all rows at N=729 with f_pred<=1/5, per delta; then worst ratio by N
+delta=-2 N=81 f<=1/20 rows=18 V2/law=0.0265..3.6476 A1/law=0.0554..5.9818 C1/law=0.1160..17.0910 D2/law=0.0193..10.9311
+delta=-2 N=81 1/20<f<=1/5 rows=6 V2/law=0.0610..1.0348 A1/law=0.0739..0.9404 C1/law=0.0240..0.8711 D2/law=0.0019..0.9306
+delta=-2 N=81 f>1/5 rows=6 V2/law=0.0040..1.0797 A1/law=0.0035..1.3785 C1/law=0.0030..1.7600 D2/law=0.0008..1.5952
+delta=-2 N=243 f<=1/20 rows=23 V2/law=0.0055..2.2582 A1/law=0.0174..5.3909 C1/law=0.0551..22.5593 D2/law=0.0109..9.4703
+delta=-2 N=243 1/20<f<=1/5 rows=4 V2/law=0.0222..1.0136 A1/law=0.0235..0.9565 C1/law=0.0249..0.9026 D2/law=0.0029..0.9325
+delta=-2 N=243 f>1/5 rows=3 V2/law=0.8843..1.0110 A1/law=0.2095..0.8621 C1/law=0.0497..0.7352 D2/law=0.0994..0.8056
+delta=-2 N=729 f<=1/20 rows=27 V2/law=0.0013..1.6587 A1/law=0.0040..5.7308 C1/law=0.0123..26.0636 D2/law=0.0022..10.3110
+delta=-2 N=729 1/20<f<=1/5 rows=3 V2/law=0.0062..1.0043 A1/law=0.0054..0.9476 C1/law=0.0048..0.8940 D2/law=0.0008..0.9243
+delta=-5/3 N=81 f<=1/20 rows=14 V2/law=0.0323..2.5320 A1/law=0.0535..1.3266 C1/law=0.0887..0.9792 D2/law=0.0729..1.5277
+delta=-5/3 N=81 1/20<f<=1/5 rows=7 V2/law=0.2927..1.2719 A1/law=0.1743..1.8328 C1/law=0.1037..2.6410 D2/law=0.0531..2.4569
+delta=-5/3 N=81 f>1/5 rows=9 V2/law=0.0077..1.0263 A1/law=0.0086..0.6649 C1/law=0.0022..0.4308 D2/law=0.0030..0.5612
+delta=-5/3 N=243 f<=1/20 rows=19 V2/law=0.0062..1.4130 A1/law=0.0249..1.3906 C1/law=0.1000..1.5687 D2/law=0.0604..1.7005
+delta=-5/3 N=243 1/20<f<=1/5 rows=5 V2/law=0.7710..1.0793 A1/law=0.5294..1.9367 C1/law=0.3461..3.4751 D2/law=0.3521..2.6898
+delta=-5/3 N=243 f>1/5 rows=6 V2/law=0.2400..1.0127 A1/law=0.0317..0.8671 C1/law=0.0042..0.7423 D2/law=0.0086..0.8155
+delta=-5/3 N=729 f<=1/20 rows=24 V2/law=0.0002..1.1496 A1/law=0.0028..1.3708 C1/law=0.0383..1.7751 D2/law=0.0190..1.6917
+delta=-5/3 N=729 1/20<f<=1/5 rows=4 V2/law=0.8912..1.0064 A1/law=0.2601..0.9494 C1/law=0.0712..0.8971 D2/law=0.1395..0.9285
+delta=-5/3 N=729 f>1/5 rows=2 V2/law=0.3489..0.9983 A1/law=0.0474..0.5399 C1/law=0.0065..0.2920 D2/law=0.0128..0.3605
+delta=-5/4 N=81 f<=1/20 rows=6 V2/law=1.0091..1.0408 A1/law=0.9672..0.9946 C1/law=0.8989..0.9803 D2/law=0.9360..0.9901
+delta=-5/4 N=81 1/20<f<=1/5 rows=8 V2/law=0.0173..1.3567 A1/law=0.0323..0.9495 C1/law=0.0605..0.8707 D2/law=0.0359..0.9380
+delta=-5/4 N=81 f>1/5 rows=16 V2/law=0.0032..1.1110 A1/law=0.0062..0.8836 C1/law=0.0026..0.7490 D2/law=0.0026..0.8324
+delta=-5/4 N=243 f<=1/20 rows=13 V2/law=0.2694..1.2310 A1/law=0.2961..0.9982 C1/law=0.3253..0.9933 D2/law=0.0269..0.9967
+delta=-5/4 N=243 1/20<f<=1/5 rows=5 V2/law=0.0054..1.0975 A1/law=0.0175..0.9589 C1/law=0.0566..0.9051 D2/law=0.0576..0.9391
+delta=-5/4 N=243 f>1/5 rows=12 V2/law=0.0002..1.0333 A1/law=0.0005..0.8736 C1/law=0.0009..0.7522 D2/law=0.0004..0.8310
+delta=-5/4 N=729 f<=1/20 rows=18 V2/law=0.2696..1.0934 A1/law=0.2358..0.9994 C1/law=0.2063..0.9978 D2/law=0.0289..0.9989
+delta=-5/4 N=729 1/20<f<=1/5 rows=5 V2/law=0.0017..1.0258 A1/law=0.0065..0.9520 C1/law=0.0254..0.9013 D2/law=0.0224..0.9349
+delta=-5/4 N=729 f>1/5 rows=7 V2/law=0.1318..1.0084 A1/law=0.0136..0.5469 C1/law=0.0014..0.2966 D2/law=0.0008..0.3604
+delta=5/4 N=81 f<=1/20 rows=14 V2/law=-0.0772..1.8461 A1/law=0.8011..1.0761 C1/law=-14.7789..1.1142 D2/law=0.8451..1.0188
+delta=5/4 N=81 1/20<f<=1/5 rows=9 V2/law=-1.1786..16.4125 A1/law=0.7500..1.0946 C1/law=-0.4773..1.3459 D2/law=0.7575..1.0620
+delta=5/4 N=81 f>1/5 rows=7 V2/law=0.8253..1.2322 A1/law=0.5680..1.1655 C1/law=0.3242..1.6460 D2/law=0.4510..1.2642
+delta=5/4 N=243 f<=1/20 rows=22 V2/law=-0.8840..6.4800 A1/law=0.9010..1.0370 C1/law=-1.1943..1.1518 D2/law=0.9158..0.9991
+delta=5/4 N=243 1/20<f<=1/5 rows=5 V2/law=0.9221..1.1004 A1/law=0.8319..1.0719 C1/law=0.6289..1.2452 D2/law=0.8678..1.0532
+delta=5/4 N=243 f>1/5 rows=3 V2/law=0.9650..1.0335 A1/law=0.6504..1.1271 C1/law=0.4094..1.3164 D2/law=0.7469..0.8404
+delta=5/4 N=729 f<=1/20 rows=27 V2/law=-0.7944..1.3210 A1/law=0.9350..1.0275 C1/law=-1.2841..1.0841 D2/law=0.9437..0.9997
+delta=5/4 N=729 1/20<f<=1/5 rows=3 V2/law=0.9847..1.0166 A1/law=0.8325..1.0593 C1/law=0.6818..1.1394 D2/law=0.8682..0.9324
+delta=5/3 N=81 f<=1/20 rows=20 V2/law=0.0425..1.9928 A1/law=0.9026..1.0402 C1/law=0.5102..25.4855 D2/law=0.9100..1.0071
+delta=5/3 N=81 1/20<f<=1/5 rows=6 V2/law=0.9050..1.0526 A1/law=0.7834..1.0497 C1/law=0.5831..1.1805 D2/law=0.7669..1.0089
+delta=5/3 N=81 f>1/5 rows=4 V2/law=0.9649..0.9959 A1/law=0.8858..1.0653 C1/law=0.7880..1.1761 D2/law=0.9072..1.0231
+delta=5/3 N=243 f<=1/20 rows=25 V2/law=0.8864..3.1450 A1/law=0.9589..1.0214 C1/law=0.0048..1.1231 D2/law=0.9625..1.0021
+delta=5/3 N=243 1/20<f<=1/5 rows=5 V2/law=0.9848..1.0267 A1/law=0.9044..1.0407 C1/law=0.7967..1.0997 D2/law=0.9057..1.0020
+delta=5/3 N=729 f<=1/20 rows=30 V2/law=0.2522..1.0668 A1/law=0.9610..1.0175 C1/law=0.9156..4.0071 D2/law=0.9621..1.0008
+delta=2 N=81 f<=1/20 rows=22 V2/law=0.5393..1.2804 A1/law=0.9712..1.0540 C1/law=0.7831..1.7492 D2/law=0.9745..1.0108
+delta=2 N=81 1/20<f<=1/5 rows=7 V2/law=0.3125..1.0632 A1/law=0.8563..1.2698 C1/law=0.6897..5.1600 D2/law=0.8637..1.1724
+delta=2 N=81 f>1/5 rows=1 V2/law=0.9982..0.9982 A1/law=0.8590..0.8590 C1/law=0.7393..0.7393 D2/law=0.9284..0.9284
+delta=2 N=243 f<=1/20 rows=27 V2/law=0.5336..1.0488 A1/law=0.9592..1.0692 C1/law=0.9071..2.1422 D2/law=0.9617..1.0462
+delta=2 N=243 1/20<f<=1/5 rows=3 V2/law=0.9950..0.9988 A1/law=0.9614..0.9902 C1/law=0.9253..0.9855 D2/law=0.9827..1.0082
+delta=2 N=729 f<=1/20 rows=30 V2/law=0.8407..1.0269 A1/law=0.9855..1.0239 C1/law=0.9671..1.2471 D2/law=0.9864..1.0170
+
+TABLE_B: delta>1 at N=729 and N=243: Y, law V2, read V2, law C1, read C1 per row, f
+delta=5/4 N=243 s=1/4 t=1/2 Y=-0.0019 V2_law=-0.0019 V2_read=-0.0019 C1_law=-0.0009796 C1_read=-0.0009897 A1_law=0.00193 A1_read=0.00194 f_read=0.00207 sign_A=+
+delta=5/4 N=243 s=1/4 t=1 Y=-0.0082 V2_law=-0.0082 V2_read=-0.0083 C1_law=-0.0033714 C1_read=-0.0034173 A1_law=0.00745 A1_read=0.00754 f_read=0.00712 sign_A=+
+delta=5/4 N=243 s=1/4 t=2 Y=-0.0458 V2_law=-0.0480 V2_read=-0.0511 C1_law=-0.0069462 C1_read=-0.0068949 A1_law=0.02581 A1_read=0.02655 f_read=0.01486 sign_A=+
+delta=5/4 N=243 s=1/4 t=3 Y=-0.2309 V2_law=-0.3002 V2_read=-0.3717 C1_law=-0.0034063 C1_read=-0.0028982 A1_law=0.04523 A1_read=0.04642 f_read=0.00848 sign_A=+
+delta=5/4 N=243 s=1/4 t=4 Y=-10.4862 V2_law=1.1054 V2_read=1.0306 C1_law=0.0013821 C1_read=0.0015049 A1_law=0.05528 A1_read=0.05570 f_read=0.00048 sign_A=+
+delta=5/4 N=243 s=1/4 t=6 Y=-0.0809 V2_law=-0.0880 V2_read=-0.0726 C1_law=-0.0064253 C1_read=-0.0066701 A1_law=0.03363 A1_read=0.03111 f_read=0.01470 sign_A=+
+delta=5/4 N=243 s=1/2 t=1/2 Y=-0.0076 V2_law=-0.0077 V2_read=-0.0076 C1_law=-0.0009740 C1_read=-0.0009843 A1_law=0.00386 A1_read=0.00387 f_read=0.00242 sign_A=+
+delta=5/4 N=243 s=1/2 t=1 Y=-0.0327 V2_law=-0.0338 V2_read=-0.0342 C1_law=-0.0032881 C1_read=-0.0033339 A1_law=0.01491 A1_read=0.01509 f_read=0.00834 sign_A=+
+delta=5/4 N=243 s=1/2 t=2 Y=-0.1831 V2_law=-0.2241 V2_read=-0.2433 C1_law=-0.0059467 C1_read=-0.0058154 A1_law=0.05163 A1_read=0.05319 f_read=0.01754 sign_A=+
+delta=5/4 N=243 s=1/2 t=3 Y=-0.9237 V2_law=-12.1001 V2_read=10.6962 C1_law=-0.0003381 C1_read=0.0004038 A1_law=0.09045 A1_read=0.09294 f_read=0.01056 sign_A=+
+delta=5/4 N=243 s=1/2 t=4 Y=-41.9449 V2_law=1.0244 V2_read=1.0072 C1_law=0.0059655 C1_read=0.0061579 A1_law=0.11056 A1_read=0.11137 f_read=0.00165 sign_A=+
+delta=5/4 N=243 s=1/2 t=6 Y=-0.3236 V2_law=-0.4785 V2_read=-0.3663 C1_law=-0.0047285 C1_read=-0.0052289 A1_law=0.06727 A1_read=0.06190 f_read=0.01747 sign_A=+
+delta=5/4 N=243 s=1 t=1/2 Y=-0.0304 V2_law=-0.0313 V2_read=-0.0312 C1_law=-0.0009517 C1_read=-0.0009628 A1_law=0.00772 A1_read=0.00776 f_read=0.00382 sign_A=+
+delta=5/4 N=243 s=1 t=1 Y=-0.1307 V2_law=-0.1504 V2_read=-0.1530 C1_law=-0.0029548 C1_read=-0.0029972 A1_law=0.02981 A1_read=0.03028 f_read=0.01319 sign_A=+
+delta=5/4 N=243 s=1 t=2 Y=-0.7323 V2_law=-2.7351 V2_read=-4.0153 C1_law=-0.0019489 C1_read=-0.0014276 A1_law=0.10325 A1_read=0.10707 f_read=0.02818 sign_A=+
+delta=5/4 N=243 s=1 t=3 Y=-3.6947 V2_law=1.3711 V2_read=1.2679 C1_law=0.0119348 C1_read=0.0137460 A1_law=0.18091 A1_read=0.18670 f_read=0.01871 sign_A=+
+delta=5/4 N=243 s=1 t=4 Y=-167.7797 V2_law=1.0060 V2_read=1.0016 C1_law=0.0242992 C1_read=0.0247319 A1_law=0.22111 A1_read=0.22259 f_read=0.00635 sign_A=+
+delta=5/4 N=243 s=1 t=6 Y=-1.2945 V2_law=4.3958 V2_read=28.4847 C1_law=0.0020587 C1_read=0.0002579 A1_law=0.13453 A1_read=0.12122 f_read=0.02836 sign_A=+
+delta=5/4 N=243 s=2 t=1/2 Y=-0.1215 V2_law=-0.1383 V2_read=-0.1384 C1_law=-0.0008622 C1_read=-0.0008756 A1_law=0.01544 A1_read=0.01557 f_read=0.00939 sign_A=+
+delta=5/4 N=243 s=2 t=1 Y=-0.5229 V2_law=-1.0961 V2_read=-1.1702 C1_law=-0.0016217 C1_read=-0.0016054 A1_law=0.05962 A1_read=0.06130 f_read=0.03238 sign_A=+
+delta=5/4 N=243 s=2 t=2 Y=-2.9291 V2_law=1.5184 V2_read=1.4001 C1_law=0.0140424 C1_read=0.0171504 A1_law=0.20650 A1_read=0.21914 f_read=0.06913 sign_A=+
+delta=5/4 N=243 s=2 t=3 Y=-14.7786 V2_law=1.0726 V2_read=1.0418 C1_law=0.0610265 C1_read=0.0688911 A1_law=0.36182 A1_read=0.37886 f_read=0.04932 sign_A=+
+delta=5/4 N=243 s=2 t=4 Y=-671.1189 V2_law=1.0015 V2_read=1.0007 C1_law=0.0976338 C1_read=0.0982477 A1_law=0.44222 A1_read=0.44344 f_read=0.02539 sign_A=+
+delta=5/4 N=243 s=2 t=6 Y=-5.1779 V2_law=1.2394 V2_read=1.3638 C1_law=0.0292073 C1_read=0.0183681 A1_law=0.26907 A1_read=0.22383 f_read=0.06917 sign_A=+
+delta=5/4 N=243 s=4 t=1/2 Y=-0.4860 V2_law=-0.9454 V2_read=-0.9723 C1_law=-0.0005045 C1_read=-0.0005128 A1_law=0.03089 A1_read=0.03158 f_read=0.03148 sign_A=+
+delta=5/4 N=243 s=4 t=1 Y=-2.0917 V2_law=1.9160 V2_read=1.7681 C1_law=0.0037110 C1_read=0.0046208 A1_law=0.11925 A1_read=0.12783 f_read=0.10617 sign_A=+
+delta=5/4 N=243 s=4 t=2 Y=-11.7163 V2_law=1.0933 V2_read=1.0551 C1_law=0.0780075 C1_read=0.1026889 A1_law=0.41301 A1_read=0.46550 f_read=0.21250 sign_A=+
+delta=5/4 N=243 s=4 t=3 Y=-59.1145 V2_law=1.0172 V2_read=1.0037 C1_law=0.2573931 C1_read=0.3004694 A1_law=0.72363 A1_read=0.77663 f_read=0.15377 sign_A=+
+delta=5/4 N=243 s=4 t=4 Y=-2684.4756 V2_law=1.0004 V2_read=1.0005 C1_law=0.3909723 C1_read=0.3742017 A1_law=0.88444 A1_read=0.86532 f_read=0.10826 sign_A=+
+delta=5/4 N=243 s=4 t=6 Y=-20.7117 V2_law=1.0507 V2_read=1.0859 C1_law=0.1378019 C1_read=0.0564099 A1_law=0.53813 A1_read=0.35002 f_read=0.19688 sign_A=+
+delta=5/4 N=729 s=1/4 t=1/2 Y=-0.0020 V2_law=-0.0020 V2_read=-0.0020 C1_law=-0.0003265 C1_read=-0.0003276 A1_law=0.00114 A1_read=0.00115 f_read=0.00069 sign_A=+
+delta=5/4 N=729 s=1/4 t=1 Y=-0.0086 V2_law=-0.0087 V2_read=-0.0087 C1_law=-0.0011233 C1_read=-0.0011285 A1_law=0.00442 A1_read=0.00443 f_read=0.00240 sign_A=+
+delta=5/4 N=729 s=1/4 t=2 Y=-0.0482 V2_law=-0.0507 V2_read=-0.0518 C1_law=-0.0023095 C1_read=-0.0023042 A1_law=0.01530 A1_read=0.01545 f_read=0.00511 sign_A=+
+delta=5/4 N=729 s=1/4 t=3 Y=-0.2433 V2_law=-0.3215 V2_read=-0.3464 C1_law=-0.0011172 C1_read=-0.0010564 A1_law=0.02680 A1_read=0.02705 f_read=0.00309 sign_A=+
+delta=5/4 N=729 s=1/4 t=4 Y=-11.0472 V2_law=1.0995 V2_read=1.0663 C1_law=0.0004879 C1_read=0.0005061 A1_law=0.03276 A1_read=0.03285 f_read=0.00021 sign_A=+
+delta=5/4 N=729 s=1/4 t=6 Y=-0.0852 V2_law=-0.0932 V2_read=-0.0869 C1_law=-0.0021317 C1_read=-0.0021676 A1_law=0.01993 A1_read=0.01941 f_read=0.00499 sign_A=+
+delta=5/4 N=729 s=1/2 t=1/2 Y=-0.0080 V2_law=-0.0081 V2_read=-0.0081 C1_law=-0.0003245 C1_read=-0.0003257 A1_law=0.00229 A1_read=0.00229 f_read=0.00082 sign_A=+
+delta=5/4 N=729 s=1/2 t=1 Y=-0.0344 V2_law=-0.0357 V2_read=-0.0358 C1_law=-0.0010941 C1_read=-0.0010993 A1_law=0.00883 A1_read=0.00887 f_read=0.00283 sign_A=+
+delta=5/4 N=729 s=1/2 t=2 Y=-0.1929 V2_law=-0.2389 V2_read=-0.2459 C1_law=-0.0019585 C1_read=-0.0019436 A1_law=0.03059 A1_read=0.03092 f_read=0.00609 sign_A=+
+delta=5/4 N=729 s=1/2 t=3 Y=-0.9731 V2_law=-36.1454 V2_read=28.7123 C1_law=-0.0000397 C1_read=0.0000510 A1_law=0.05360 A1_read=0.05414 f_read=0.00387 sign_A=+
+delta=5/4 N=729 s=1/2 t=4 Y=-44.1889 V2_law=1.0232 V2_read=1.0153 C1_law=0.0020975 C1_read=0.0021261 A1_law=0.06551 A1_read=0.06570 f_read=0.00062 sign_A=+
+delta=5/4 N=729 s=1/2 t=6 Y=-0.3409 V2_law=-0.5173 V2_read=-0.4674 C1_law=-0.0015358 C1_read=-0.0016062 A1_law=0.03986 A1_read=0.03875 f_read=0.00600 sign_A=+
+delta=5/4 N=729 s=1 t=1/2 Y=-0.0320 V2_law=-0.0331 V2_read=-0.0330 C1_law=-0.0003167 C1_read=-0.0003179 A1_law=0.00458 A1_read=0.00458 f_read=0.00131 sign_A=+
+delta=5/4 N=729 s=1 t=1 Y=-0.1377 V2_law=-0.1597 V2_read=-0.1607 C1_law=-0.0009770 C1_read=-0.0009819 A1_law=0.01767 A1_read=0.01776 f_read=0.00455 sign_A=+
+delta=5/4 N=729 s=1 t=2 Y=-0.7714 V2_law=-3.3753 V2_read=-3.9051 C1_law=-0.0005546 C1_read=-0.0004922 A1_law=0.06119 A1_read=0.06200 f_read=0.00999 sign_A=+
+delta=5/4 N=729 s=1 t=3 Y=-3.8923 V2_law=1.3457 V2_read=1.3071 C1_law=0.0042701 C1_read=0.0045026 A1_law=0.10720 A1_read=0.10849 f_read=0.00700 sign_A=+
+delta=5/4 N=729 s=1 t=4 Y=-176.7556 V2_law=1.0057 V2_read=1.0033 C1_law=0.0085356 C1_read=0.0086048 A1_law=0.13103 A1_read=0.13140 f_read=0.00228 sign_A=+
+delta=5/4 N=729 s=1 t=6 Y=-1.3637 V2_law=3.7493 V2_read=4.9527 C1_law=0.0008476 C1_read=0.0005968 A1_law=0.07972 A1_read=0.07689 f_read=0.01002 sign_A=+
+delta=5/4 N=729 s=2 t=1/2 Y=-0.1280 V2_law=-0.1468 V2_read=-0.1468 C1_law=-0.0002853 C1_read=-0.0002868 A1_law=0.00915 A1_read=0.00918 f_read=0.00328 sign_A=+
+delta=5/4 N=729 s=2 t=1 Y=-0.5509 V2_law=-1.2267 V2_read=-1.2561 C1_law=-0.0005089 C1_read=-0.0005069 A1_law=0.03533 A1_read=0.03569 f_read=0.01140 sign_A=+
+delta=5/4 N=729 s=2 t=2 Y=-3.0858 V2_law=1.4794 V2_read=1.4364 C1_law=0.0050610 C1_read=0.0054603 A1_law=0.12237 A1_read=0.12525 f_read=0.02535 sign_A=+
+delta=5/4 N=729 s=2 t=3 Y=-15.5693 V2_law=1.0686 V2_read=1.0558 C1_law=0.0215094 C1_read=0.0226350 A1_law=0.21441 A1_read=0.21862 f_read=0.01912 sign_A=+
+delta=5/4 N=729 s=2 t=4 Y=-707.0224 V2_law=1.0014 V2_read=1.0005 C1_law=0.0342883 C1_read=0.0344866 A1_law=0.26206 A1_read=0.26270 f_read=0.00888 sign_A=+
+delta=5/4 N=729 s=2 t=6 Y=-5.4549 V2_law=1.2245 V2_read=1.2684 C1_law=0.0103813 C1_read=0.0087614 A1_law=0.15945 A1_read=0.14909 f_read=0.02580 sign_A=+
+delta=5/4 N=729 s=4 t=1/2 Y=-0.5120 V2_law=-1.0490 V2_read=-1.0595 C1_law=-0.0001597 C1_read=-0.0001606 A1_law=0.01830 A1_read=0.01845 f_read=0.01111 sign_A=+
+delta=5/4 N=729 s=4 t=1 Y=-2.2036 V2_law=1.8308 V2_read=1.7829 C1_law=0.0013638 C1_read=0.0014785 A1_law=0.07067 A1_read=0.07261 f_read=0.03843 sign_A=+
+delta=5/4 N=729 s=4 t=2 Y=-12.3431 V2_law=1.0882 V2_read=1.0715 C1_law=0.0275234 C1_read=0.0313611 A1_law=0.24474 A1_read=0.25925 f_read=0.08341 sign_A=+
+delta=5/4 N=729 s=4 t=3 Y=-62.2770 V2_law=1.0163 V2_read=1.0088 C1_law=0.0904667 C1_read=0.0991669 A1_law=0.42882 A1_read=0.44730 f_read=0.06286 sign_A=+
+delta=5/4 N=729 s=4 t=4 Y=-2828.0895 V2_law=1.0004 V2_read=1.0002 C1_law=0.1372988 C1_read=0.1367594 A1_law=0.52411 A1_read=0.52304 f_read=0.03554 sign_A=+
+delta=5/4 N=729 s=4 t=6 Y=-21.8197 V2_law=1.0480 V2_read=1.0654 C1_law=0.0485160 C1_read=0.0330803 A1_law=0.31889 A1_read=0.26549 f_read=0.08369 sign_A=+
+delta=5/3 N=243 s=1/4 t=1/2 Y=-0.0053 V2_law=-0.0054 V2_read=-0.0054 C1_law=-0.0023478 C1_read=-0.0023549 A1_law=0.00502 A1_read=0.00502 f_read=0.00187 sign_A=+
+delta=5/3 N=243 s=1/4 t=1 Y=-0.0275 V2_law=-0.0283 V2_read=-0.0284 C1_law=-0.0056706 C1_read=-0.0056770 A1_law=0.01792 A1_read=0.01797 f_read=0.00463 sign_A=+
+delta=5/3 N=243 s=1/4 t=2 Y=-0.7596 V2_law=-3.1593 V2_read=-3.7198 C1_law=-0.0003103 C1_read=-0.0002651 A1_law=0.04428 A1_read=0.04441 f_read=0.00123 sign_A=+
+delta=5/3 N=243 s=1/4 t=3 Y=-0.2124 V2_law=-0.2697 V2_read=-0.2630 C1_law=-0.0027844 C1_read=-0.0028450 A1_law=0.03876 A1_read=0.03869 f_read=0.00302 sign_A=+
+delta=5/3 N=243 s=1/4 t=4 Y=-0.0118 V2_law=-0.0119 V2_read=-0.0117 C1_law=-0.0040353 C1_read=-0.0039511 A1_law=0.00980 A1_read=0.00960 f_read=0.00316 sign_A=+
+delta=5/3 N=243 s=1/4 t=6 Y=-0.0596 V2_law=-0.0634 V2_read=-0.0657 C1_law=-0.0056818 C1_read=-0.0056288 A1_law=0.02685 A1_read=0.02720 f_read=0.00481 sign_A=+
+delta=5/3 N=243 s=1/2 t=1/2 Y=-0.0213 V2_law=-0.0218 V2_read=-0.0218 C1_law=-0.0023100 C1_read=-0.0023167 A1_law=0.01004 A1_read=0.01005 f_read=0.00219 sign_A=+
+delta=5/3 N=243 s=1/2 t=1 Y=-0.1102 V2_law=-0.1238 V2_read=-0.1245 C1_law=-0.0051887 C1_read=-0.0051879 A1_law=0.03585 A1_read=0.03594 f_read=0.00552 sign_A=+
+delta=5/3 N=243 s=1/2 t=2 Y=-3.0383 V2_law=1.4906 V2_read=1.4599 C1_law=0.0026309 C1_read=0.0027008 A1_law=0.08856 A1_read=0.08880 f_read=0.00214 sign_A=+
+delta=5/3 N=243 s=1/2 t=3 Y=-0.8497 V2_law=-5.6552 V2_read=-5.0128 C1_law=-0.0005312 C1_read=-0.0005966 A1_law=0.07751 A1_read=0.07734 f_read=0.00405 sign_A=+
+delta=5/3 N=243 s=1/2 t=4 Y=-0.0471 V2_law=-0.0494 V2_read=-0.0483 C1_law=-0.0038912 C1_read=-0.0038061 A1_law=0.01960 A1_read=0.01918 f_read=0.00372 sign_A=+
+delta=5/3 N=243 s=1/2 t=6 Y=-0.2386 V2_law=-0.3134 V2_read=-0.3285 C1_law=-0.0046006 C1_read=-0.0045070 A1_law=0.05370 A1_read=0.05442 f_read=0.00588 sign_A=+
+delta=5/3 N=243 s=1 t=1/2 Y=-0.0854 V2_law=-0.0933 V2_read=-0.0933 C1_law=-0.0021589 C1_read=-0.0021637 A1_law=0.02007 A1_read=0.02009 f_read=0.00349 sign_A=+
+delta=5/3 N=243 s=1 t=1 Y=-0.4408 V2_law=-0.7881 V2_read=-0.7993 C1_law=-0.0032611 C1_read=-0.0032317 A1_law=0.07170 A1_read=0.07188 f_read=0.00909 sign_A=+
+delta=5/3 N=243 s=1 t=2 Y=-12.1532 V2_law=1.0897 V2_read=1.0829 C1_law=0.0143958 C1_read=0.0145386 A1_law=0.17712 A1_read=0.17745 f_read=0.00576 sign_A=+
+delta=5/3 N=243 s=1 t=3 Y=-3.3990 V2_law=1.4168 V2_read=1.4262 C1_law=0.0084815 C1_read=0.0083622 A1_law=0.15503 A1_read=0.15444 f_read=0.00819 sign_A=+
+delta=5/3 N=243 s=1 t=4 Y=-0.1882 V2_law=-0.2319 V2_read=-0.2258 C1_law=-0.0033148 C1_read=-0.0032322 A1_law=0.03921 A1_read=0.03821 f_read=0.00596 sign_A=+
+delta=5/3 N=243 s=1 t=6 Y=-0.9544 V2_law=-20.9089 V2_read=-65.7578 C1_law=-0.0002758 C1_read=-0.0000013 A1_law=0.10739 A1_read=0.10902 f_read=0.01014 sign_A=+
+delta=5/3 N=243 s=2 t=1/2 Y=-0.3414 V2_law=-0.5184 V2_read=-0.5205 C1_law=-0.0015545 C1_read=-0.0015515 A1_law=0.04015 A1_read=0.04019 f_read=0.00865 sign_A=+
+delta=5/3 N=243 s=2 t=1 Y=-1.7630 V2_law=2.3105 V2_read=2.2503 C1_law=0.0044495 C1_read=0.0045904 A1_law=0.14339 A1_read=0.14374 f_read=0.02324 sign_A=+
+delta=5/3 N=243 s=2 t=2 Y=-48.6129 V2_law=1.0210 V2_read=1.0174 C1_law=0.0614554 C1_read=0.0614665 A1_law=0.35425 A1_read=0.35365 f_read=0.02023 sign_A=+
+delta=5/3 N=243 s=2 t=3 Y=-13.5958 V2_law=1.0794 V2_read=1.0794 C1_law=0.0445325 C1_read=0.0436471 A1_law=0.31006 A1_read=0.30697 f_read=0.02468 sign_A=+
+delta=5/3 N=243 s=2 t=4 Y=-0.7529 V2_law=-3.0463 V2_read=-2.7458 C1_law=-0.0010092 C1_read=-0.0010295 A1_law=0.07841 A1_read=0.07519 f_read=0.01475 sign_A=+
+delta=5/3 N=243 s=2 t=6 Y=-3.8174 V2_law=1.3549 V2_read=1.3153 C1_law=0.0170233 C1_read=0.0182940 A1_law=0.21478 A1_read=0.21937 f_read=0.02710 sign_A=+
+delta=5/3 N=243 s=4 t=1/2 Y=-1.3656 V2_law=3.7349 V2_read=3.5907 C1_law=0.0008630 C1_read=0.0009005 A1_law=0.08029 A1_read=0.08042 f_read=0.02913 sign_A=+
+delta=5/3 N=243 s=4 t=1 Y=-7.0522 V2_law=1.1652 V2_read=1.1522 C1_law=0.0352918 C1_read=0.0357526 A1_law=0.28679 A1_read=0.28703 f_read=0.07840 sign_A=+
+delta=5/3 N=243 s=4 t=2 Y=-194.4515 V2_law=1.0052 V2_read=1.0025 C1_law=0.2496936 C1_read=0.2415568 A1_law=0.70850 A1_read=0.69593 f_read=0.07820 sign_A=+
+delta=5/3 N=243 s=4 t=3 Y=-54.3834 V2_law=1.0187 V2_read=1.0174 C1_law=0.1887367 C1_read=0.1761585 A1_law=0.62012 A1_read=0.59870 f_read=0.08976 sign_A=+
+delta=5/3 N=243 s=4 t=4 Y=-3.0114 V2_law=1.4972 V2_read=1.5372 C1_law=0.0082135 C1_read=0.0065438 A1_law=0.15682 A1_read=0.14184 f_read=0.04736 sign_A=+
+delta=5/3 N=243 s=4 t=6 Y=-15.2697 V2_law=1.0701 V2_read=1.0538 C1_law=0.0862198 C1_read=0.0948182 A1_law=0.42956 A1_read=0.44703 f_read=0.09327 sign_A=+
+delta=5/3 N=729 s=1/4 t=1/2 Y=-0.0056 V2_law=-0.0057 V2_read=-0.0056 C1_law=-0.0007824 C1_read=-0.0007832 A1_law=0.00297 A1_read=0.00297 f_read=0.00063 sign_A=+
+delta=5/3 N=729 s=1/4 t=1 Y=-0.0290 V2_law=-0.0299 V2_read=-0.0299 C1_law=-0.0018873 C1_read=-0.0018880 A1_law=0.01062 A1_read=0.01063 f_read=0.00156 sign_A=+
+delta=5/3 N=729 s=1/4 t=2 Y=-0.8002 V2_law=-4.0053 V2_read=-4.2727 C1_law=-0.0000860 C1_read=-0.0000807 A1_law=0.02624 A1_read=0.02627 f_read=0.00042 sign_A=+
+delta=5/3 N=729 s=1/4 t=3 Y=-0.2238 V2_law=-0.2883 V2_read=-0.2858 C1_law=-0.0009148 C1_read=-0.0009217 A1_law=0.02297 A1_read=0.02295 f_read=0.00101 sign_A=+
+delta=5/3 N=729 s=1/4 t=4 Y=-0.0124 V2_law=-0.0125 V2_read=-0.0125 C1_law=-0.0013443 C1_read=-0.0013347 A1_law=0.00581 A1_read=0.00577 f_read=0.00108 sign_A=+
+delta=5/3 N=729 s=1/4 t=6 Y=-0.0628 V2_law=-0.0671 V2_read=-0.0679 C1_law=-0.0018875 C1_read=-0.0018816 A1_law=0.01591 A1_read=0.01598 f_read=0.00163 sign_A=+
+delta=5/3 N=729 s=1/2 t=1/2 Y=-0.0225 V2_law=-0.0230 V2_read=-0.0230 C1_law=-0.0007691 C1_read=-0.0007698 A1_law=0.00595 A1_read=0.00595 f_read=0.00074 sign_A=+
+delta=5/3 N=729 s=1/2 t=1 Y=-0.1161 V2_law=-0.1313 V2_read=-0.1316 C1_law=-0.0017181 C1_read=-0.0017180 A1_law=0.02124 A1_read=0.02126 f_read=0.00187 sign_A=+
+delta=5/3 N=729 s=1/2 t=2 Y=-3.2008 V2_law=1.4544 V2_read=1.4446 C1_law=0.0009469 C1_read=0.0009551 A1_law=0.05248 A1_read=0.05253 f_read=0.00074 sign_A=+
+delta=5/3 N=729 s=1/2 t=3 Y=-0.8952 V2_law=-8.5420 V2_read=-8.0347 C1_law=-0.0001235 C1_read=-0.0001311 A1_law=0.04593 A1_read=0.04590 f_read=0.00137 sign_A=+
+delta=5/3 N=729 s=1/2 t=4 Y=-0.0496 V2_law=-0.0522 V2_read=-0.0518 C1_law=-0.0012936 C1_read=-0.0012839 A1_law=0.01162 A1_read=0.01153 f_read=0.00128 sign_A=+
+delta=5/3 N=729 s=1/2 t=6 Y=-0.2514 V2_law=-0.3357 V2_read=-0.3413 C1_law=-0.0015078 C1_read=-0.0014970 A1_law=0.03182 A1_read=0.03197 f_read=0.00200 sign_A=+
+delta=5/3 N=729 s=1 t=1/2 Y=-0.0899 V2_law=-0.0988 V2_read=-0.0988 C1_law=-0.0007160 C1_read=-0.0007166 A1_law=0.01190 A1_read=0.01190 f_read=0.00120 sign_A=+
+delta=5/3 N=729 s=1 t=1 Y=-0.4643 V2_law=-0.8669 V2_read=-0.8713 C1_law=-0.0010412 C1_read=-0.0010377 A1_law=0.04249 A1_read=0.04252 f_read=0.00313 sign_A=+
+delta=5/3 N=729 s=1 t=2 Y=-12.8034 V2_law=1.0847 V2_read=1.0825 C1_law=0.0050783 C1_read=0.0050952 A1_law=0.10496 A1_read=0.10503 f_read=0.00202 sign_A=+
+delta=5/3 N=729 s=1 t=3 Y=-3.5808 V2_law=1.3875 V2_read=1.3905 C1_law=0.0030415 C1_read=0.0030267 A1_law=0.09187 A1_read=0.09175 f_read=0.00282 sign_A=+
+delta=5/3 N=729 s=1 t=4 Y=-0.1983 V2_law=-0.2473 V2_read=-0.2450 C1_law=-0.0010912 C1_read=-0.0010818 A1_law=0.02323 A1_read=0.02302 f_read=0.00209 sign_A=+
+delta=5/3 N=729 s=1 t=6 Y=-1.0054 V2_law=185.7544 V2_read=46.8496 C1_law=0.0000109 C1_read=0.0000437 A1_law=0.06364 A1_read=0.06398 f_read=0.00351 sign_A=+
+delta=5/3 N=729 s=2 t=1/2 Y=-0.3597 V2_law=-0.5617 V2_read=-0.5626 C1_law=-0.0005038 C1_read=-0.0005034 A1_law=0.02379 A1_read=0.02380 f_read=0.00302 sign_A=+
+delta=5/3 N=729 s=2 t=1 Y=-1.8574 V2_law=2.1664 V2_read=2.1482 C1_law=0.0016665 C1_read=0.0016835 A1_law=0.08497 A1_read=0.08505 f_read=0.00815 sign_A=+
+delta=5/3 N=729 s=2 t=2 Y=-51.2136 V2_law=1.0199 V2_read=1.0186 C1_law=0.0216040 C1_read=0.0216075 A1_law=0.20993 A1_read=0.20981 f_read=0.00711 sign_A=+
+delta=5/3 N=729 s=2 t=3 Y=-14.3232 V2_law=1.0751 V2_read=1.0752 C1_law=0.0157014 C1_read=0.0155873 A1_law=0.18374 A1_read=0.18308 f_read=0.00863 sign_A=+
+delta=5/3 N=729 s=2 t=4 Y=-0.7931 V2_law=-3.8342 V2_read=-3.6615 C1_law=-0.0002816 C1_read=-0.0002859 A1_law=0.04647 A1_read=0.04576 f_read=0.00528 sign_A=+
+delta=5/3 N=729 s=2 t=6 Y=-4.0217 V2_law=1.3309 V2_read=1.3173 C1_law=0.0060858 C1_read=0.0062463 A1_law=0.12728 A1_read=0.12828 f_read=0.00953 sign_A=+
+delta=5/3 N=729 s=4 t=1/2 Y=-1.4387 V2_law=3.2795 V2_read=3.2411 C1_law=0.0003452 C1_read=0.0003497 A1_law=0.04758 A1_read=0.04761 f_read=0.01027 sign_A=+
+delta=5/3 N=729 s=4 t=1 Y=-7.4295 V2_law=1.1555 V2_read=1.1511 C1_law=0.0124973 C1_read=0.0125648 A1_law=0.16995 A1_read=0.17008 f_read=0.02806 sign_A=+
+delta=5/3 N=729 s=4 t=2 Y=-204.8542 V2_law=1.0049 V2_read=1.0039 C1_law=0.0877069 C1_read=0.0868425 A1_law=0.41985 A1_read=0.41757 f_read=0.02746 sign_A=+
+delta=5/3 N=729 s=4 t=3 Y=-57.2928 V2_law=1.0178 V2_read=1.0174 C1_law=0.0663409 C1_read=0.0647131 A1_law=0.36748 A1_read=0.36288 f_read=0.03177 sign_A=+
+delta=5/3 N=729 s=4 t=4 Y=-3.1726 V2_law=1.4603 V2_read=1.4730 C1_law=0.0029571 C1_read=0.0027074 A1_law=0.09293 A1_read=0.08931 f_read=0.01769 sign_A=+
+delta=5/3 N=729 s=4 t=6 Y=-16.0866 V2_law=1.0663 V2_read=1.0601 C1_law=0.0303852 C1_read=0.0316434 A1_law=0.25456 A1_read=0.25901 f_read=0.03340 sign_A=+
+delta=2 N=243 s=1/4 t=1/2 Y=-0.0085 V2_law=-0.0085 V2_read=-0.0085 C1_law=-0.0031571 C1_read=-0.0031630 A1_law=0.00734 A1_read=0.00734 f_read=0.00169 sign_A=+
+delta=2 N=243 s=1/4 t=1 Y=-0.0547 V2_law=-0.0578 V2_read=-0.0580 C1_law=-0.0050532 C1_read=-0.0050549 A1_law=0.02418 A1_read=0.02421 f_read=0.00289 sign_A=+
+delta=2 N=243 s=1/4 t=2 Y=-1.4947 V2_law=3.0214 V2_read=3.0762 C1_law=0.0002727 C1_read=0.0002685 A1_law=0.04059 A1_read=0.04064 f_read=0.00050 sign_A=+
+delta=2 N=243 s=1/4 t=3 Y=-0.0144 V2_law=-0.0147 V2_read=-0.0146 C1_law=-0.0042379 C1_read=-0.0042265 A1_law=0.01114 A1_read=0.01113 f_read=0.00227 sign_A=+
+delta=2 N=243 s=1/4 t=4 Y=-0.0044 V2_law=-0.0044 V2_read=-0.0044 C1_law=-0.0019745 C1_read=-0.0020003 A1_law=0.00419 A1_read=0.00420 f_read=0.00106 sign_A=+
+delta=2 N=243 s=1/4 t=6 Y=-0.1433 V2_law=-0.1672 V2_read=-0.1653 C1_law=-0.0031878 C1_read=-0.0032245 A1_law=0.03265 A1_read=0.03265 f_read=0.00211 sign_A=+
+delta=2 N=243 s=1/2 t=1/2 Y=-0.0338 V2_law=-0.0350 V2_read=-0.0350 C1_law=-0.0030763 C1_read=-0.0030814 A1_law=0.01467 A1_read=0.01468 f_read=0.00199 sign_A=+
+delta=2 N=243 s=1/2 t=1 Y=-0.2187 V2_law=-0.2800 V2_read=-0.2809 C1_law=-0.0041763 C1_read=-0.0041707 A1_law=0.04836 A1_read=0.04841 f_read=0.00358 sign_A=+
+delta=2 N=243 s=1/2 t=2 Y=-5.9788 V2_law=1.2009 V2_read=1.2009 C1_law=0.0027443 C1_read=0.0027496 A1_law=0.08119 A1_read=0.08127 f_read=0.00117 sign_A=+
+delta=2 N=243 s=1/2 t=3 Y=-0.0578 V2_law=-0.0613 V2_read=-0.0612 C1_law=-0.0040516 C1_read=-0.0040388 A1_law=0.02229 A1_read=0.02224 f_read=0.00270 sign_A=+
+delta=2 N=243 s=1/2 t=4 Y=-0.0177 V2_law=-0.0180 V2_read=-0.0179 C1_law=-0.0019483 C1_read=-0.0019742 A1_law=0.00837 A1_read=0.00841 f_read=0.00124 sign_A=+
+delta=2 N=243 s=1/2 t=6 Y=-0.5731 V2_law=-1.3425 V2_read=-1.3138 C1_law=-0.0015884 C1_read=-0.0016215 A1_law=0.06531 A1_read=0.06528 f_read=0.00284 sign_A=+
+delta=2 N=243 s=1 t=1/2 Y=-0.1352 V2_law=-0.1564 V2_read=-0.1564 C1_law=-0.0027534 C1_read=-0.0027552 A1_law=0.02935 A1_read=0.02935 f_read=0.00320 sign_A=+
+delta=2 N=243 s=1 t=1 Y=-0.8749 V2_law=-6.9925 V2_read=-7.3338 C1_law=-0.0006688 C1_read=-0.0006384 A1_law=0.09671 A1_read=0.09677 f_read=0.00634 sign_A=+
+delta=2 N=243 s=1 t=2 Y=-23.9154 V2_law=1.0436 V2_read=1.0421 C1_law=0.0126309 C1_read=0.0126451 A1_law=0.16237 A1_read=0.16234 f_read=0.00385 sign_A=+
+delta=2 N=243 s=1 t=3 Y=-0.2310 V2_law=-0.3004 V2_read=-0.2995 C1_law=-0.0033066 C1_read=-0.0032913 A1_law=0.04457 A1_read=0.04440 f_read=0.00440 sign_A=+
+delta=2 N=243 s=1 t=4 Y=-0.0707 V2_law=-0.0760 V2_read=-0.0762 C1_law=-0.0018431 C1_read=-0.0018686 A1_law=0.01674 A1_read=0.01687 f_read=0.00198 sign_A=+
+delta=2 N=243 s=1 t=6 Y=-2.2924 V2_law=1.7738 V2_read=1.7831 C1_law=0.0048088 C1_read=0.0047628 A1_law=0.13061 A1_read=0.13033 f_read=0.00576 sign_A=+
+delta=2 N=243 s=2 t=1/2 Y=-0.5409 V2_law=-1.1783 V2_read=-1.1856 C1_law=-0.0014617 C1_read=-0.0014519 A1_law=0.05869 A1_read=0.05868 f_read=0.00803 sign_A=+
+delta=2 N=243 s=2 t=1 Y=-3.4995 V2_law=1.4001 V2_read=1.3900 C1_law=0.0133613 C1_read=0.0134204 A1_law=0.19343 A1_read=0.19315 f_read=0.01736 sign_A=+
+delta=2 N=243 s=2 t=2 Y=-95.6614 V2_law=1.0106 V2_read=1.0088 C1_law=0.0521770 C1_read=0.0517636 A1_law=0.32474 A1_read=0.32317 f_read=0.01457 sign_A=+
+delta=2 N=243 s=2 t=3 Y=-0.9241 V2_law=-12.1774 V2_read=-10.9850 C1_law=-0.0003263 C1_read=-0.0003539 A1_law=0.08915 A1_read=0.08818 f_read=0.01115 sign_A=+
+delta=2 N=243 s=2 t=4 Y=-0.2827 V2_law=-0.3941 V2_read=-0.4066 C1_law=-0.0014227 C1_read=-0.0014325 A1_law=0.03349 A1_read=0.03413 f_read=0.00497 sign_A=+
+delta=2 N=243 s=2 t=6 Y=-9.1696 V2_law=1.1224 V2_read=1.1219 C1_law=0.0303979 C1_read=0.0298556 A1_law=0.26122 A1_read=0.25883 f_read=0.01739 sign_A=+
+delta=2 N=243 s=4 t=1/2 Y=-2.1637 V2_law=1.8594 V2_read=1.8364 C1_law=0.0037051 C1_read=0.0037339 A1_law=0.11738 A1_read=0.11711 f_read=0.02721 sign_A=+
+delta=2 N=243 s=4 t=1 Y=-13.9981 V2_law=1.0769 V2_read=1.0715 C1_law=0.0694818 C1_read=0.0684743 A1_law=0.38685 A1_read=0.38307 f_read=0.06067 sign_A=+
+delta=2 N=243 s=4 t=2 Y=-382.6457 V2_law=1.0026 V2_read=1.0009 C1_law=0.2103616 C1_read=0.2005813 A1_law=0.64948 A1_read=0.63366 f_read=0.05770 sign_A=+
+delta=2 N=243 s=4 t=3 Y=-3.6964 V2_law=1.3709 V2_read=1.3905 C1_law=0.0115946 C1_read=0.0105170 A1_law=0.17830 A1_read=0.17102 f_read=0.03713 sign_A=+
+delta=2 N=243 s=4 t=4 Y=-1.1307 V2_law=8.6513 V2_read=4.6167 C1_law=0.0002592 C1_read=0.0005553 A1_law=0.06697 A1_read=0.07160 f_read=0.01754 sign_A=+
+delta=2 N=243 s=4 t=6 Y=-36.6783 V2_law=1.0280 V2_read=1.0268 C1_law=0.1327540 C1_read=0.1228430 A1_law=0.52245 A1_read=0.50226 f_read=0.06334 sign_A=+
+delta=2 N=729 s=1/4 t=1/2 Y=-0.0089 V2_law=-0.0090 V2_read=-0.0090 C1_law=-0.0010519 C1_read=-0.0010525 A1_law=0.00435 A1_read=0.00435 f_read=0.00057 sign_A=+
+delta=2 N=729 s=1/4 t=1 Y=-0.0576 V2_law=-0.0611 V2_read=-0.0612 C1_law=-0.0016792 C1_read=-0.0016794 A1_law=0.01433 A1_read=0.01433 f_read=0.00097 sign_A=+
+delta=2 N=729 s=1/4 t=2 Y=-1.5747 V2_law=2.7401 V2_read=2.7546 C1_law=0.0001056 C1_read=0.0001051 A1_law=0.02405 A1_read=0.02407 f_read=0.00017 sign_A=+
+delta=2 N=729 s=1/4 t=3 Y=-0.0152 V2_law=-0.0154 V2_read=-0.0154 C1_law=-0.0014115 C1_read=-0.0014102 A1_law=0.00660 A1_read=0.00660 f_read=0.00076 sign_A=+
+delta=2 N=729 s=1/4 t=4 Y=-0.0047 V2_law=-0.0047 V2_read=-0.0047 C1_law=-0.0006580 C1_read=-0.0006610 A1_law=0.00248 A1_read=0.00248 f_read=0.00035 sign_A=+
+delta=2 N=729 s=1/4 t=6 Y=-0.1509 V2_law=-0.1778 V2_read=-0.1770 C1_law=-0.0010531 C1_read=-0.0010573 A1_law=0.01935 A1_read=0.01935 f_read=0.00071 sign_A=+
+delta=2 N=729 s=1/2 t=1/2 Y=-0.0356 V2_law=-0.0369 V2_read=-0.0369 C1_law=-0.0010235 C1_read=-0.0010241 A1_law=0.00869 A1_read=0.00870 f_read=0.00067 sign_A=+
+delta=2 N=729 s=1/2 t=1 Y=-0.2304 V2_law=-0.2994 V2_read=-0.2998 C1_law=-0.0013713 C1_read=-0.0013706 A1_law=0.02866 A1_read=0.02867 f_read=0.00121 sign_A=+
+delta=2 N=729 s=1/2 t=2 Y=-6.2987 V2_law=1.1887 V2_read=1.1887 C1_law=0.0009735 C1_read=0.0009742 A1_law=0.04811 A1_read=0.04813 f_read=0.00040 sign_A=+
+delta=2 N=729 s=1/2 t=3 Y=-0.0608 V2_law=-0.0648 V2_read=-0.0648 C1_law=-0.0013461 C1_read=-0.0013446 A1_law=0.01321 A1_read=0.01320 f_read=0.00091 sign_A=+
+delta=2 N=729 s=1/2 t=4 Y=-0.0186 V2_law=-0.0190 V2_read=-0.0189 C1_law=-0.0006488 C1_read=-0.0006518 A1_law=0.00496 A1_read=0.00497 f_read=0.00042 sign_A=+
+delta=2 N=729 s=1/2 t=6 Y=-0.6038 V2_law=-1.5237 V2_read=-1.5112 C1_law=-0.0004915 C1_read=-0.0004953 A1_law=0.03870 A1_read=0.03869 f_read=0.00096 sign_A=+
+delta=2 N=729 s=1 t=1/2 Y=-0.1425 V2_law=-0.1661 V2_read=-0.1661 C1_law=-0.0009101 C1_read=-0.0009103 A1_law=0.01739 A1_read=0.01739 f_read=0.00110 sign_A=+
+delta=2 N=729 s=1 t=1 Y=-0.9217 V2_law=-11.7693 V2_read=-12.0862 C1_law=-0.0001395 C1_read=-0.0001359 A1_law=0.05731 A1_read=0.05732 f_read=0.00219 sign_A=+
+delta=2 N=729 s=1 t=2 Y=-25.1948 V2_law=1.0413 V2_read=1.0408 C1_law=0.0044454 C1_read=0.0044468 A1_law=0.09622 A1_read=0.09621 f_read=0.00134 sign_A=+
+delta=2 N=729 s=1 t=3 Y=-0.2434 V2_law=-0.3217 V2_read=-0.3213 C1_law=-0.0010845 C1_read=-0.0010827 A1_law=0.02641 A1_read=0.02638 f_read=0.00152 sign_A=+
+delta=2 N=729 s=1 t=4 Y=-0.0744 V2_law=-0.0804 V2_read=-0.0805 C1_law=-0.0006119 C1_read=-0.0006149 A1_law=0.00992 A1_read=0.00995 f_read=0.00068 sign_A=+
+delta=2 N=729 s=1 t=6 Y=-2.4150 V2_law=1.7067 V2_read=1.7097 C1_law=0.0017550 C1_read=0.0017491 A1_law=0.07740 A1_read=0.07734 f_read=0.00199 sign_A=+
+delta=2 N=729 s=2 t=1/2 Y=-0.5699 V2_law=-1.3248 V2_read=-1.3280 C1_law=-0.0004565 C1_read=-0.0004554 A1_law=0.03478 A1_read=0.03478 f_read=0.00280 sign_A=+
+delta=2 N=729 s=2 t=1 Y=-3.6867 V2_law=1.3722 V2_read=1.3689 C1_law=0.0047874 C1_read=0.0047942 A1_law=0.11462 A1_read=0.11457 f_read=0.00608 sign_A=+
+delta=2 N=729 s=2 t=2 Y=-100.7791 V2_law=1.0100 V2_read=1.0094 C1_law=0.0183326 C1_read=0.0182807 A1_law=0.19244 A1_read=0.19211 f_read=0.00510 sign_A=+
+delta=2 N=729 s=2 t=3 Y=-0.9736 V2_law=-36.8079 V2_read=-33.0569 C1_law=-0.0000379 C1_read=-0.0000419 A1_law=0.05283 A1_read=0.05262 f_read=0.00391 sign_A=+
+delta=2 N=729 s=2 t=4 Y=-0.2978 V2_law=-0.4241 V2_read=-0.4287 C1_law=-0.0004642 C1_read=-0.0004657 A1_law=0.01984 A1_read=0.01998 f_read=0.00171 sign_A=+
+delta=2 N=729 s=2 t=6 Y=-9.6601 V2_law=1.1155 V2_read=1.1154 C1_law=0.0107410 C1_read=0.0106712 A1_law=0.15480 A1_read=0.15429 f_read=0.00609 sign_A=+
+delta=2 N=729 s=4 t=1/2 Y=-2.2794 V2_law=1.7816 V2_read=1.7745 C1_law=0.0013579 C1_read=0.0013612 A1_law=0.06956 A1_read=0.06950 f_read=0.00959 sign_A=+
+delta=2 N=729 s=4 t=1 Y=-14.7470 V2_law=1.0727 V2_read=1.0709 C1_law=0.0244950 C1_read=0.0243785 A1_law=0.22925 A1_read=0.22850 f_read=0.02155 sign_A=+
+delta=2 N=729 s=4 t=2 Y=-403.1164 V2_law=1.0025 V2_read=1.0019 C1_law=0.0738817 C1_read=0.0727028 A1_law=0.38488 A1_read=0.38168 f_read=0.02014 sign_A=+
+delta=2 N=729 s=4 t=3 Y=-3.8942 V2_law=1.3455 V2_read=1.3512 C1_law=0.0041483 C1_read=0.0040119 A1_law=0.10566 A1_read=0.10412 f_read=0.01337 sign_A=+
+delta=2 N=729 s=4 t=4 Y=-1.1912 V2_law=6.2305 V2_read=5.2379 C1_law=0.0001264 C1_read=0.0001576 A1_law=0.03969 A1_read=0.04064 f_read=0.00593 sign_A=+
+delta=2 N=729 s=4 t=6 Y=-38.6405 V2_law=1.0266 V2_read=1.0262 C1_law=0.0466850 C1_read=0.0454627 A1_law=0.30960 A1_read=0.30547 f_read=0.02242 sign_A=+
+
+TABLE_C: sign tests delta>1. Law: C1<0 and V2<0 for |Y|<1; V2>1 for |Y|>1.
+delta=5/4 N=81 |Y|<1 rows=16 C1<0&V2<0 met=15 ; |Y|>1 rows=14 C1>0&V2>1 met=12
+delta=5/4 N=243 |Y|<1 rows=16 C1<0&V2<0 met=15 ; |Y|>1 rows=14 C1>0&V2>1 met=14
+delta=5/4 N=729 |Y|<1 rows=16 C1<0&V2<0 met=15 ; |Y|>1 rows=14 C1>0&V2>1 met=14
+delta=5/3 N=81 |Y|<1 rows=16 C1<0&V2<0 met=16 ; |Y|>1 rows=14 C1>0&V2>1 met=14
+delta=5/3 N=243 |Y|<1 rows=17 C1<0&V2<0 met=17 ; |Y|>1 rows=13 C1>0&V2>1 met=13
+delta=5/3 N=729 |Y|<1 rows=16 C1<0&V2<0 met=16 ; |Y|>1 rows=14 C1>0&V2>1 met=14
+delta=2 N=81 |Y|<1 rows=17 C1<0&V2<0 met=17 ; |Y|>1 rows=13 C1>0&V2>1 met=12
+delta=2 N=243 |Y|<1 rows=17 C1<0&V2<0 met=17 ; |Y|>1 rows=13 C1>0&V2>1 met=13
+delta=2 N=729 |Y|<1 rows=17 C1<0&V2<0 met=17 ; |Y|>1 rows=13 C1>0&V2>1 met=13
+
+TABLE_D: rows off the sign prediction at N=729, 243
+  OFF delta=5/4 N=243 s=1/2 t=3 Y=-0.9237 V2_law=-12.1001 V2_read=10.6962 C1_law=-0.0003381 C1_read=0.0004038 f_read=0.01056
+  OFF delta=5/4 N=729 s=1/2 t=3 Y=-0.9731 V2_law=-36.1454 V2_read=28.7123 C1_law=-0.0000397 C1_read=0.0000510 f_read=0.00387
+
+TABLE_E: delta<-1 per row at N=729: Y, V2 law, read, ratio
+delta=-5/4 N=729 s=1/4 t=1/2 Y=0.0180 V2_law=0.01768 V2_read=0.01770 ratio=1.0010 A1/law=0.9994 C1/law=0.9978 f_read=0.00071
+delta=-5/4 N=729 s=1/4 t=1 Y=0.0775 V2_law=0.07190 V2_read=0.07223 ratio=1.0045 A1/law=0.9966 C1/law=0.9888 f_read=0.00258
+delta=-5/4 N=729 s=1/4 t=2 Y=0.4339 V2_law=0.30262 V2_read=0.31322 ratio=1.0350 A1/law=0.9756 C1/law=0.9197 f_read=0.00695
+delta=-5/4 N=729 s=1/4 t=3 Y=2.1894 V2_law=0.68646 V2_read=0.75059 ratio=1.0934 A1/law=0.9277 C1/law=0.7870 f_read=0.00833
+delta=-5/4 N=729 s=1/4 t=4 Y=99.4250 V2_law=0.99004 V2_read=0.98768 ratio=0.9976 A1/law=0.8611 C1/law=0.7433 f_read=0.00829
+delta=-5/4 N=729 s=1/4 t=6 Y=0.7671 V2_law=0.43410 V2_read=0.24698 ratio=0.5689 A1/law=0.6178 C1/law=0.6708 f_read=0.00598
+delta=-5/4 N=729 s=1/2 t=1/2 Y=0.0720 V2_law=0.06716 V2_read=0.06723 ratio=1.0011 A1/law=0.9993 C1/law=0.9975 f_read=0.00087
+delta=-5/4 N=729 s=1/2 t=1 Y=0.3099 V2_law=0.23657 V2_read=0.23770 ratio=1.0048 A1/law=0.9961 C1/law=0.9874 f_read=0.00358
+delta=-5/4 N=729 s=1/2 t=2 Y=1.7357 V2_law=0.63447 V2_read=0.65328 ratio=1.0297 A1/law=0.9675 C1/law=0.9090 f_read=0.01428
+delta=-5/4 N=729 s=1/2 t=3 Y=8.7577 V2_law=0.89752 V2_read=0.94453 ratio=1.0524 A1/law=0.8820 C1/law=0.7392 f_read=0.02484
+delta=-5/4 N=729 s=1/2 t=4 Y=397.7001 V2_law=0.99749 V2_read=0.97146 ratio=0.9739 A1/law=0.7256 C1/law=0.5406 f_read=0.02450
+delta=-5/4 N=729 s=1/2 t=6 Y=3.0684 V2_law=0.75420 V2_read=0.20335 ratio=0.2696 A1/law=0.2358 C1/law=0.2063 f_read=0.00461
+delta=-5/4 N=729 s=1 t=1/2 Y=0.2880 V2_law=0.22359 V2_read=0.22387 ratio=1.0013 A1/law=0.9990 C1/law=0.9968 f_read=0.00152
+delta=-5/4 N=729 s=1 t=1 Y=1.2395 V2_law=0.55348 V2_read=0.55638 ratio=1.0052 A1/law=0.9939 C1/law=0.9827 f_read=0.00759
+delta=-5/4 N=729 s=1 t=2 Y=6.9430 V2_law=0.87410 V2_read=0.89565 ratio=1.0247 A1/law=0.9359 C1/law=0.8548 f_read=0.04160
+delta=-5/4 N=729 s=1 t=3 Y=35.0308 V2_law=0.97225 V2_read=0.99734 ratio=1.0258 A1/law=0.7314 C1/law=0.5215 f_read=0.06752
+delta=-5/4 N=729 s=1 t=4 Y=1590.8004 V2_law=0.99937 V2_read=0.91303 ratio=0.9136 A1/law=0.4076 C1/law=0.1819 f_read=0.03615
+delta=-5/4 N=729 s=1 t=6 Y=12.2736 V2_law=0.92466 V2_read=0.00153 ratio=0.0017 A1/law=0.0065 C1/law=0.0254 f_read=0.00165
+delta=-5/4 N=729 s=2 t=1/2 Y=1.1519 V2_law=0.53529 V2_read=0.53619 ratio=1.0017 A1/law=0.9978 C1/law=0.9940 f_read=0.00411
+delta=-5/4 N=729 s=2 t=1 Y=4.9581 V2_law=0.83216 V2_read=0.83683 ratio=1.0056 A1/law=0.9853 C1/law=0.9653 f_read=0.02340
+delta=-5/4 N=729 s=2 t=2 Y=27.7719 V2_law=0.96524 V2_read=0.98331 ratio=1.0187 A1/law=0.8261 C1/law=0.6699 f_read=0.12511
+delta=-5/4 N=729 s=2 t=3 Y=140.1233 V2_law=0.99291 V2_read=0.98493 ratio=0.9920 A1/law=0.4026 C1/law=0.1634 f_read=0.09458
+delta=-5/4 N=729 s=2 t=4 Y=6363.2014 V2_law=0.99984 V2_read=0.53775 ratio=0.5378 A1/law=0.0741 C1/law=0.0102 f_read=0.01208
+delta=-5/4 N=729 s=2 t=6 Y=49.0943 V2_law=0.98004 V2_read=0.93442 ratio=0.9535 A1/law=0.3360 C1/law=0.1184 f_read=0.04372
+delta=-5/4 N=729 s=4 t=1/2 Y=4.6076 V2_law=0.82167 V2_read=0.82333 ratio=1.0020 A1/law=0.9931 C1/law=0.9843 f_read=0.01440
+delta=-5/4 N=729 s=4 t=1 Y=19.8326 V2_law=0.95200 V2_read=0.95726 ratio=1.0055 A1/law=0.9520 C1/law=0.9013 f_read=0.08315
+delta=-5/4 N=729 s=4 t=2 Y=111.0876 V2_law=0.99108 V2_read=0.99940 ratio=1.0084 A1/law=0.5469 C1/law=0.2966 f_read=0.24720
+delta=-5/4 N=729 s=4 t=3 Y=560.4934 V2_law=0.99822 V2_read=0.85716 ratio=0.8587 A1/law=0.0800 C1/law=0.0075 f_read=0.03278
+delta=-5/4 N=729 s=4 t=4 Y=25452.8057 V2_law=0.99996 V2_read=0.13183 ratio=0.1318 A1/law=0.0136 C1/law=0.0014 f_read=0.00772
+delta=-5/4 N=729 s=4 t=6 Y=196.3774 V2_law=0.99493 V2_read=0.98258 ratio=0.9876 A1/law=0.3487 C1/law=0.1231 f_read=0.18272
+delta=-5/3 N=729 s=1/4 t=1/2 Y=0.0225 V2_law=0.02199 V2_read=0.02201 ratio=1.0012 A1/law=0.9994 C1/law=0.9976 f_read=0.00064
+delta=-5/3 N=729 s=1/4 t=1 Y=0.1161 V2_law=0.10401 V2_read=0.10463 ratio=1.0059 A1/law=0.9968 C1/law=0.9878 f_read=0.00175
+delta=-5/3 N=729 s=1/4 t=2 Y=3.2008 V2_law=0.76195 V2_read=0.78748 ratio=1.0335 A1/law=0.9836 C1/law=0.9360 f_read=0.00163
+delta=-5/3 N=729 s=1/4 t=3 Y=0.8952 V2_law=0.47235 V2_read=0.43699 ratio=0.9251 A1/law=0.9633 C1/law=1.0030 f_read=0.00199
+delta=-5/3 N=729 s=1/4 t=4 Y=0.0496 V2_law=0.04723 V2_read=0.04337 ratio=0.9182 A1/law=0.8933 C1/law=0.8689 f_read=0.00100
+delta=-5/3 N=729 s=1/4 t=6 Y=0.2514 V2_law=0.20087 V2_read=0.22533 ratio=1.1218 A1/law=1.0406 C1/law=0.9654 f_read=0.00205
+delta=-5/3 N=729 s=1/2 t=1/2 Y=0.0899 V2_law=0.08250 V2_read=0.08260 ratio=1.0012 A1/law=0.9993 C1/law=0.9974 f_read=0.00081
+delta=-5/3 N=729 s=1/2 t=1 Y=0.4643 V2_law=0.31710 V2_read=0.31892 ratio=1.0057 A1/law=0.9962 C1/law=0.9868 f_read=0.00269
+delta=-5/3 N=729 s=1/2 t=2 Y=12.8034 V2_law=0.92755 V2_read=0.94323 ratio=1.0169 A1/law=0.9754 C1/law=0.9356 f_read=0.00559
+delta=-5/3 N=729 s=1/2 t=3 Y=3.5808 V2_law=0.78170 V2_read=0.73162 ratio=0.9359 A1/law=0.9235 C1/law=0.9112 f_read=0.00487
+delta=-5/3 N=729 s=1/2 t=4 Y=0.1983 V2_law=0.16547 V2_read=0.12376 ratio=0.7479 A1/law=0.7556 C1/law=0.7634 f_read=0.00118
+delta=-5/3 N=729 s=1/2 t=6 Y=1.0054 V2_law=0.50135 V2_read=0.57635 ratio=1.1496 A1/law=1.1022 C1/law=1.0567 f_read=0.00417
+delta=-5/3 N=729 s=1 t=1/2 Y=0.3597 V2_law=0.26453 V2_read=0.26489 ratio=1.0014 A1/law=0.9990 C1/law=0.9967 f_read=0.00146
+delta=-5/3 N=729 s=1 t=1 Y=1.8574 V2_law=0.65003 V2_read=0.65359 ratio=1.0055 A1/law=0.9939 C1/law=0.9824 f_read=0.00644
+delta=-5/3 N=729 s=1 t=2 Y=51.2136 V2_law=0.98085 V2_read=0.99149 ratio=1.0108 A1/law=0.9437 C1/law=0.8811 f_read=0.02037
+delta=-5/3 N=729 s=1 t=3 Y=14.3232 V2_law=0.93474 V2_read=0.87186 ratio=0.9327 A1/law=0.7845 C1/law=0.6598 f_read=0.01295
+delta=-5/3 N=729 s=1 t=4 Y=0.7931 V2_law=0.44232 V2_read=0.16350 ratio=0.3696 A1/law=0.3723 C1/law=0.3750 f_read=0.00117
+delta=-5/3 N=729 s=1 t=6 Y=4.0217 V2_law=0.80086 V2_read=0.90338 ratio=1.1280 A1/law=1.2813 C1/law=1.4553 f_read=0.01558
+delta=-5/3 N=729 s=2 t=1/2 Y=1.4387 V2_law=0.58995 V2_read=0.59093 ratio=1.0017 A1/law=0.9978 C1/law=0.9940 f_read=0.00407
+delta=-5/3 N=729 s=2 t=1 Y=7.4295 V2_law=0.88137 V2_read=0.88598 ratio=1.0052 A1/law=0.9847 C1/law=0.9646 f_read=0.02118
+delta=-5/3 N=729 s=2 t=2 Y=204.8542 V2_law=0.99514 V2_read=1.00155 ratio=1.0064 A1/law=0.8322 C1/law=0.6882 f_read=0.06546
+delta=-5/3 N=729 s=2 t=3 Y=57.2928 V2_law=0.98285 V2_read=0.87592 ratio=0.8912 A1/law=0.4353 C1/law=0.2126 f_read=0.01986
+delta=-5/3 N=729 s=2 t=4 Y=3.1726 V2_law=0.76034 V2_read=0.00016 ratio=0.0002 A1/law=0.0028 C1/law=0.0383 f_read=0.00018
+delta=-5/3 N=729 s=2 t=6 Y=16.0866 V2_law=0.94147 V2_read=0.99668 ratio=1.0586 A1/law=1.3708 C1/law=1.7751 f_read=0.06554
+delta=-5/3 N=729 s=4 t=1/2 Y=5.7548 V2_law=0.85196 V2_read=0.85357 ratio=1.0019 A1/law=0.9931 C1/law=0.9844 f_read=0.01444
+delta=-5/3 N=729 s=4 t=1 Y=29.7178 V2_law=0.96745 V2_read=0.97218 ratio=1.0049 A1/law=0.9494 C1/law=0.8971 f_read=0.07653
+delta=-5/3 N=729 s=4 t=2 Y=819.4169 V2_law=0.99878 V2_read=0.99706 ratio=0.9983 A1/law=0.5399 C1/law=0.2920 f_read=0.12912
+delta=-5/3 N=729 s=4 t=3 Y=229.1712 V2_law=0.99566 V2_read=0.34735 ratio=0.3489 A1/law=0.0474 C1/law=0.0065 f_read=0.00519
+delta=-5/3 N=729 s=4 t=4 Y=12.6902 V2_law=0.92696 V2_read=0.96101 ratio=1.0367 A1/law=0.9546 C1/law=0.8790 f_read=0.03208
+delta=-5/3 N=729 s=4 t=6 Y=64.3464 V2_law=0.98470 V2_read=0.93600 ratio=0.9505 A1/law=0.2601 C1/law=0.0712 f_read=0.02178
+delta=-2 N=729 s=1/4 t=1/2 Y=0.0267 V2_law=0.02602 V2_read=0.02605 ratio=1.0013 A1/law=0.9994 C1/law=0.9975 f_read=0.00058
+delta=-2 N=729 s=1/4 t=1 Y=0.1728 V2_law=0.14735 V2_read=0.14843 ratio=1.0073 A1/law=0.9970 C1/law=0.9867 f_read=0.00116
+delta=-2 N=729 s=1/4 t=2 Y=4.7240 V2_law=0.82530 V2_read=0.80509 ratio=0.9755 A1/law=0.9875 C1/law=0.9995 f_read=0.00074
+delta=-2 N=729 s=1/4 t=3 Y=0.0456 V2_law=0.04364 V2_read=0.04218 ratio=0.9666 A1/law=0.9586 C1/law=0.9508 f_read=0.00077
+delta=-2 N=729 s=1/4 t=4 Y=0.0140 V2_law=0.01377 V2_read=0.01434 ratio=1.0418 A1/law=1.0746 C1/law=1.1084 f_read=0.00040
+delta=-2 N=729 s=1/4 t=6 Y=0.4528 V2_law=0.31168 V2_read=0.28291 ratio=0.9077 A1/law=0.9691 C1/law=1.0347 f_read=0.00110
+delta=-2 N=729 s=1/2 t=1/2 Y=0.1068 V2_law=0.09653 V2_read=0.09666 ratio=1.0013 A1/law=0.9993 C1/law=0.9973 f_read=0.00075
+delta=-2 N=729 s=1/2 t=1 Y=0.6913 V2_law=0.40873 V2_read=0.41138 ratio=1.0065 A1/law=0.9963 C1/law=0.9863 f_read=0.00201
+delta=-2 N=729 s=1/2 t=2 Y=18.8961 V2_law=0.94974 V2_read=0.94080 ratio=0.9906 A1/law=0.9795 C1/law=0.9685 f_read=0.00264
+delta=-2 N=729 s=1/2 t=3 Y=0.1825 V2_law=0.15436 V2_read=0.14091 ratio=0.9129 A1/law=0.9158 C1/law=0.9188 f_read=0.00100
+delta=-2 N=729 s=1/2 t=4 Y=0.0558 V2_law=0.05288 V2_read=0.06096 ratio=1.1526 A1/law=1.1575 C1/law=1.1624 f_read=0.00051
+delta=-2 N=729 s=1/2 t=6 Y=1.8113 V2_law=0.64429 V2_read=0.58991 ratio=0.9156 A1/law=0.9392 C1/law=0.9635 f_read=0.00235
+delta=-2 N=729 s=1 t=1/2 Y=0.4274 V2_law=0.29942 V2_read=0.29986 ratio=1.0015 A1/law=0.9990 C1/law=0.9966 f_read=0.00140
+delta=-2 N=729 s=1 t=1 Y=2.7651 V2_law=0.73440 V2_read=0.73838 ratio=1.0054 A1/law=0.9939 C1/law=0.9826 f_read=0.00540
+delta=-2 N=729 s=1 t=2 Y=75.5843 V2_law=0.98694 V2_read=0.98156 ratio=0.9945 A1/law=0.9486 C1/law=0.9048 f_read=0.00975
+delta=-2 N=729 s=1 t=3 Y=0.7302 V2_law=0.42202 V2_read=0.33033 ratio=0.7827 A1/law=0.7623 C1/law=0.7424 f_read=0.00167
+delta=-2 N=729 s=1 t=4 Y=0.2233 V2_law=0.18257 V2_read=0.27240 ratio=1.4920 A1/law=1.4897 C1/law=1.4874 f_read=0.00115
+delta=-2 N=729 s=1 t=6 Y=7.2451 V2_law=0.87872 V2_read=0.79954 ratio=0.9099 A1/law=0.8226 C1/law=0.7437 f_read=0.00616
+delta=-2 N=729 s=2 t=1/2 Y=1.7096 V2_law=0.63094 V2_read=0.63199 ratio=1.0017 A1/law=0.9978 C1/law=0.9940 f_read=0.00400
+delta=-2 N=729 s=2 t=1 Y=11.0602 V2_law=0.91708 V2_read=0.92145 ratio=1.0048 A1/law=0.9844 C1/law=0.9644 f_read=0.01874
+delta=-2 N=729 s=2 t=2 Y=302.3373 V2_law=0.99670 V2_read=0.98991 ratio=0.9932 A1/law=0.8380 C1/law=0.7071 f_read=0.03171
+delta=-2 N=729 s=2 t=3 Y=2.9207 V2_law=0.74494 V2_read=0.37784 ratio=0.5072 A1/law=0.3531 C1/law=0.2459 f_read=0.00207
+delta=-2 N=729 s=2 t=4 Y=0.8934 V2_law=0.47185 V2_read=0.78266 ratio=1.6587 A1/law=2.7411 C1/law=4.5299 f_read=0.00687
+delta=-2 N=729 s=2 t=6 Y=28.9804 V2_law=0.96664 V2_read=0.79663 ratio=0.8241 A1/law=0.4341 C1/law=0.2287 f_read=0.00923
+delta=-2 N=729 s=4 t=1/2 Y=6.8383 V2_law=0.87242 V2_read=0.87400 ratio=1.0018 A1/law=0.9930 C1/law=0.9844 f_read=0.01434
+delta=-2 N=729 s=4 t=1 Y=44.2410 V2_law=0.97790 V2_read=0.98210 ratio=1.0043 A1/law=0.9476 C1/law=0.8940 f_read=0.06856
+delta=-2 N=729 s=4 t=2 Y=1209.3492 V2_law=0.99917 V2_read=0.98403 ratio=0.9848 A1/law=0.5368 C1/law=0.2926 f_read=0.06343
+delta=-2 N=729 s=4 t=3 Y=11.6826 V2_law=0.92115 V2_read=0.00120 ratio=0.0013 A1/law=0.0040 C1/law=0.0123 f_read=0.00017
+delta=-2 N=729 s=4 t=4 Y=3.5736 V2_law=0.78135 V2_read=0.98457 ratio=1.2601 A1/law=5.7308 C1/law=26.0636 f_read=0.07350
+delta=-2 N=729 s=4 t=6 Y=115.9214 V2_law=0.99145 V2_read=0.00612 ratio=0.0062 A1/law=0.0054 C1/law=0.0048 f_read=0.00059

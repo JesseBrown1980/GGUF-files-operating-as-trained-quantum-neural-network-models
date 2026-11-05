@@ -1,0 +1,16 @@
+BASE_STAGE|taylor|rows=10|secs=16
+BASE_STAGE|control|rows=4|secs=15
+BASE_STAGE|reversal|rows=4|secs=0
+BASE_STAGE|wavevector|rows=3|secs=45
+BASE_STAGE|rotor|rows=218|secs=20
+BASE_STAGE|quench_pin|rows=28|secs=12
+BASE_STAGE|quench|rows=204|secs=108
+BASE_STAGE|pin|rows=146|secs=34
+BASE_STAGE|sector|rows=208|secs=106
+BASE_STAGE|window|rows=168|secs=57
+BASE_STAGE|conversion|rows=42|secs=189
+BASE_ROWS|byte_equal_to_receipt=1006|different=0|no_filed_partner=29|first_different=[]|json=0
+BASE_READ|rows=1457|met=1422|miss=35|filed_rows=1457|filed_rows_read_otherwise=|extra_rows=0|json=0
+BASE_ROUTES|taylor:rows=6:bad=0,convert:rows=4:bad=0,sector:rows=143:bad=0,full:rows=53:bad=0|secs=948|json=0
+TODO|0
+REMAIN|0

@@ -1,0 +1,204 @@
+READ.hbp rows 1457 MET 1422 MISS 35 DONE 1422 35
+duplicate row names 0
+  fam C1N rows 39 miss 0
+  fam C2 rows 39 miss 0
+  fam band_edge rows 2 miss 0
+  fam band_inside rows 3 miss 0
+  fam band_outside rows 2 miss 0
+  fam control_no_bose_must_miss rows 4 miss 0
+  fam conversion rows 6 miss 0
+  fam conversion_A1 rows 21 miss 0
+  fam conversion_A_negative rows 29 miss 0
+  fam conversion_B_positive rows 29 miss 0
+  fam conversion_C1 rows 21 miss 4
+  fam conversion_D2 rows 21 miss 0
+  fam conversion_V2 rows 29 miss 0
+  fam conversion_energy rows 94 miss 0
+  fam critical_gap_ratio rows 9 miss 0
+  fam critical_jbar_ratio rows 9 miss 0
+  fam disordered_A1 rows 12 miss 0
+  fam disordered_D2 rows 4 miss 0
+  fam e rows 39 miss 0
+  fam e_rises_with_P rows 1 miss 1
+  fam energy rows 240 miss 0
+  fam f rows 39 miss 0
+  fam gap rows 73 miss 0
+  fam hand_A rows 1 miss 0
+  fam hand_B rows 1 miss 0
+  fam hand_C1 rows 1 miss 0
+  fam hand_C2 rows 1 miss 0
+  fam hand_E rows 1 miss 0
+  fam hand_dA_dh rows 1 miss 0
+  fam hand_f rows 1 miss 0
+  fam hand_rows rows 1 miss 0
+  fam hand_sign_A_follows_h rows 1 miss 0
+  fam jbar rows 34 miss 0
+  fam no_leading_order_A1 rows 8 miss 0
+  fam no_leading_order_D2 rows 8 miss 0
+  fam pin_A1 rows 12 miss 0
+  fam pin_A_positive rows 12 miss 0
+  fam pin_B_negative rows 12 miss 0
+  fam pin_D2 rows 12 miss 0
+  fam plane_wave rows 2 miss 0
+  fam quench_C1 rows 41 miss 0
+  fam quench_jbar rows 53 miss 12
+  fam quench_phase rows 53 miss 6
+  fam quench_pin_A1 rows 24 miss 12
+  fam quench_pin_at_edge rows 12 miss 0
+  fam quench_pin_sign rows 18 miss 0
+  fam quench_pin_zero_A rows 18 miss 0
+  fam reversal rows 5 miss 0
+  fam rotor_P=1 rows 28 miss 0
+  fam rotor_P=2 rows 28 miss 0
+  fam rotor_P=3 rows 28 miss 0
+  fam rows_POLARITON_CONTROL_NO_BOSE rows 1 miss 0
+  fam rows_POLARITON_PIN rows 1 miss 0
+  fam rows_POLARITON_PIN_WINDOW rows 1 miss 0
+  fam rows_POLARITON_QUENCH rows 1 miss 0
+  fam rows_POLARITON_QUENCH_BAND rows 1 miss 0
+  fam rows_POLARITON_QUENCH_CONVERSION rows 1 miss 0
+  fam rows_POLARITON_QUENCH_PIN rows 1 miss 0
+  fam rows_POLARITON_REVERSAL rows 1 miss 0
+  fam rows_POLARITON_SECTOR rows 1 miss 0
+  fam rows_POLARITON_SECTOR_EQUALS_FULL rows 1 miss 0
+  fam rows_POLARITON_SYMMETRY rows 1 miss 0
+  fam rows_POLARITON_WAVEVECTOR rows 1 miss 0
+  fam sector_equals_full rows 2 miss 0
+  fam susceptibility_ratio rows 2 miss 0
+  fam susceptibility_scale rows 1 miss 0
+  fam symmetry_A_flips rows 1 miss 0
+  fam symmetry_B_same rows 1 miss 0
+  fam symmetry_E_same rows 1 miss 0
+  fam wavevector rows 3 miss 0
+  fam window_below_A1 rows 36 miss 0
+  fam window_below_B_sign rows 18 miss 0
+  fam window_below_D2 rows 18 miss 0
+  fam window_below_E_at_zero rows 6 miss 0
+  fam window_below_P2 rows 42 miss 0
+  fam window_inside_A1 rows 42 miss 0
+  fam window_inside_B_negative rows 42 miss 0
+  fam window_inside_D2 rows 42 miss 0
+  fam zero_field_A rows 2 miss 0
+  fam zero_field_B rows 2 miss 0
+  fam zero_field_C2 rows 2 miss 0
+
+== central table N=729 u=1/2 x=0
+s 1/2 q 0.02 0.02 D2 0.003963 0.003962 3962 pred 0.004000 0.004000 A1/y 2.2028 2.2028 pred 2.2020 2.2020 f_mine 0.009999 MISMATCH (True, False, True, True, True) res 571 ratio 0.9908
+s 1 q 0.08 0.08 D2 0.015830 0.015830 15830 pred 0.015978 0.015978 A1/y 2.2087 2.2087 pred 2.2080 2.2080 f_mine 0.039944 ALLOK res 752 ratio 0.9908
+s 2 q 0.32 0.32 D2 0.062063 0.062062 62062 pred 0.062615 0.062615 A1/y 2.2317 2.2317 pred 2.2313 2.2313 f_mine 0.156538 MISMATCH (True, False, True, True, True) res 918 ratio 0.9912
+s 4 q 1.28 1.28 D2 0.195340 0.195339 195339 pred 0.196343 0.196343 A1/y 2.2980 2.2980 pred 2.2982 2.2982 f_mine 0.490858 MISMATCH (True, False, True, True, True) res 733 ratio 0.9949
+s 8 q 5.12 5.12 D2 0.310306 0.310305 310305 pred 0.310532 0.310532 A1/y 2.3551 2.3551 pred 2.3553 2.3553 f_mine 0.776332 MISMATCH (True, False, True, True, True) res 884 ratio 0.9993
+s 16 q 20.48 20.48 D2 0.355330 0.355329 355329 pred 0.355765 0.355765 A1/y 2.3774 2.3774 pred 2.3779 2.3779 f_mine 0.889413 MISMATCH (True, False, True, True, True) res 20 ratio 0.9988
+
+== zero field lines 26
+N 81 {'A_ppb': '-1', 'B_ppb': '-1', 'C1_ppm': '-13431', 'C2_ppm': '80796', 'residual_1e-12': '0', 'cycles': '2', 'energy_ppb': '-8357580282', 'f_ppm': '392591'}
+N 243 {'A_ppb': '-4', 'B_ppb': '441', 'C1_ppm': '-4378', 'C2_ppm': '80269', 'residual_1e-12': '823', 'cycles': '13', 'energy_ppb': '-24554000987', 'f_ppm': '397579'}
+N 729 {'A_ppb': '-30', 'B_ppb': '-1', 'C1_ppm': '-1449', 'C2_ppm': '80090', 'residual_1e-12': '801', 'cycles': '71', 'energy_ppb': '-73152847362', 'f_ppm': '399198'}
+C2 N=729 float-free 0.0801 against 0.0801; 2rho^2 = 2/25
+sqrt(2C2) N=729 0.40022 claim 0.40022
+
+== y=0 rows of all (N,u,x) in PIN and PIN_WINDOW: energy against N*e of sector P=0
+y=0 rows 52
+within 1 ppb 25 outside 8 no sector row 19
+largest within 0.000000000989
+  in POLARITON_PIN 9 0 0 P2? - diff -0.000000000348
+  in POLARITON_PIN 27 0 0 P2? - diff -0.000000000061
+  in POLARITON_PIN 81 0 0 P2? - diff -0.000000000429
+  in POLARITON_PIN 243 0 0 P2? - diff -0.000000000969
+  in POLARITON_PIN 729 0 0 P2? - diff -0.000000000974
+  in POLARITON_PIN 3 1/2 0 P2? - diff -0.000000000170
+  in POLARITON_PIN 9 1/2 0 P2? - diff -0.000000000780
+  in POLARITON_PIN 27 1/2 0 P2? - diff -0.000000000559
+  in POLARITON_PIN 81 1/2 0 P2? - diff -0.000000000064
+  in POLARITON_PIN 243 1/2 0 P2? - diff -0.000000000164
+  in POLARITON_PIN 729 1/2 0 P2? - diff -0.000000000290
+  in POLARITON_PIN_WINDOW 81 1/2 1/4 P2? 0 diff -0.000000000659
+  in POLARITON_PIN_WINDOW 243 1/2 1/4 P2? 0 diff -0.000000000989
+  in POLARITON_PIN 3 1/2 1/2 P2? - diff -0.000000000696
+  in POLARITON_PIN 9 1/2 1/2 P2? - diff -0.000000000031
+  in POLARITON_PIN 27 1/2 1/2 P2? - diff -0.000000000955
+  in POLARITON_PIN 81 1/2 1/2 P2? - diff -0.000000000597
+  in POLARITON_PIN 243 1/2 1/2 P2? - diff -0.000000000007
+  in POLARITON_PIN 729 1/2 1/2 P2? - diff -0.000000000810
+  in POLARITON_PIN 3 1/2 3/2 P2? - diff -0.000000000291
+  in POLARITON_PIN 9 1/2 3/2 P2? - diff -0.000000000334
+  in POLARITON_PIN 27 1/2 3/2 P2? - diff -0.000000000016
+  in POLARITON_PIN 81 1/2 3/2 P2? - diff -0.000000000301
+  in POLARITON_PIN 243 1/2 3/2 P2? - diff -0.000000000623
+  in POLARITON_PIN 729 1/2 3/2 P2? - diff -0.000000000904
+  below POLARITON_PIN 3 0 0 P2 - E -0.816497 diff -0.000000
+  below POLARITON_PIN_WINDOW 3 1 -1/4 P2 1000000 E -0.750000 diff -0.146087
+  below POLARITON_PIN_WINDOW 9 1 -1/4 P2 1000000 E -2.250000 diff -1.202013
+  below POLARITON_PIN_WINDOW 81 1 -1/4 P2 1000000 E -20.250000 diff -14.782620
+  below POLARITON_PIN_WINDOW 243 1 -1/4 P2 1000000 E -60.750000 diff -45.163315
+  below POLARITON_PIN_WINDOW 729 1 -1/4 P2 1000000 E -182.250000 diff -136.290148
+  below POLARITON_PIN_WINDOW 81 1 -1/8 P2 1000000 E -10.125000 diff -8.269684
+  below POLARITON_PIN_WINDOW 243 1 -1/8 P2 1000000 E -30.375000 diff -26.003051
+  nosec POLARITON_PIN_WINDOW 3 1/4 -1/4 P2 111111 E -1.045334
+  nosec POLARITON_PIN_WINDOW 9 1/4 -1/4 P2 0 E -2.854109
+  nosec POLARITON_PIN_WINDOW 81 1/4 -1/4 P2 0 E -24.997290
+  nosec POLARITON_PIN_WINDOW 243 1/4 -1/4 P2 0 E -74.842047
+  nosec POLARITON_PIN_WINDOW 729 1/4 -1/4 P2 0 E -224.380052
+  nosec POLARITON_PIN_WINDOW 81 1/4 0 P2 0 E -14.155875
+  nosec POLARITON_PIN_WINDOW 243 1/4 0 P2 0 E -42.192384
+  nosec POLARITON_PIN_WINDOW 81 1/2 -1/4 P2 1000000 E -20.250000
+  nosec POLARITON_PIN_WINDOW 243 1/2 -1/4 P2 1000000 E -60.750000
+  nosec POLARITON_PIN_WINDOW 729 1/2 -1/4 P2 1000000 E -182.250000
+  nosec POLARITON_PIN_WINDOW 81 3/4 -1/8 P2 1000000 E -10.125000
+  nosec POLARITON_PIN_WINDOW 243 3/4 -1/8 P2 1000000 E -30.375000
+  nosec POLARITON_PIN_WINDOW 3 3/4 0 P2 0 E -0.523494
+  nosec POLARITON_PIN_WINDOW 9 3/4 0 P2 0 E -0.840280
+  nosec POLARITON_PIN_WINDOW 81 3/4 0 P2 0 E -3.339505
+  nosec POLARITON_PIN_WINDOW 243 3/4 0 P2 0 E -9.116953
+  nosec POLARITON_PIN_WINDOW 729 3/4 0 P2 0 E -26.471532
+  nosec POLARITON_PIN_WINDOW 81 3/4 1/8 P2 0 E -1.359725
+  nosec POLARITON_PIN_WINDOW 243 3/4 1/8 P2 0 E -2.780202
+
+== conversion line 39: D2 over f*sqrt(2C2(y=0)) and over f*2rho
+N 81 s 4 sqrt2C2 0.40199 C2 80796 D2/(f sqrt2C2) 0.93590 off% -6.410 D2/(f 2rho) 0.94055 rho_closer C2 at s 79684
+N 81 s 8 sqrt2C2 0.40199 C2 80796 D2/(f sqrt2C2) 0.95062 off% -4.938 D2/(f 2rho) 0.95534 rho_closer C2 at s 75434
+N 81 s 16 sqrt2C2 0.40199 C2 80796 D2/(f sqrt2C2) 0.83660 off% -16.340 D2/(f 2rho) 0.84075 rho_closer C2 at s 58456
+N 243 s 4 sqrt2C2 0.40067 C2 80269 D2/(f sqrt2C2) 0.98188 off% -1.812 D2/(f 2rho) 0.98353 rho_closer C2 at s 80145
+N 243 s 8 sqrt2C2 0.40067 C2 80269 D2/(f sqrt2C2) 0.99298 off% -0.702 D2/(f 2rho) 0.99465 rho_closer C2 at s 79670
+N 243 s 16 sqrt2C2 0.40067 C2 80269 D2/(f sqrt2C2) 0.98270 off% -1.730 D2/(f 2rho) 0.98435 rho_closer C2 at s 77690
+N 729 s 4 sqrt2C2 0.40022 C2 80090 D2/(f sqrt2C2) 0.99433 off% -0.567 D2/(f 2rho) 0.99489 rho_closer C2 at s 80076
+N 729 s 8 sqrt2C2 0.40022 C2 80090 D2/(f sqrt2C2) 0.99871 off% -0.129 D2/(f 2rho) 0.99927 rho_closer C2 at s 80023
+N 729 s 16 sqrt2C2 0.40022 C2 80090 D2/(f sqrt2C2) 0.99822 off% -0.178 D2/(f 2rho) 0.99878 rho_closer C2 at s 79803
+
+== sign, symmetry line 40
+N 81 [('1/2', 'A>0', 'B<0'), ('1', 'A>0', 'B<0'), ('2', 'A>0', 'B<0'), ('4', 'A>0', 'B<0'), ('8', 'A>0', 'B<0'), ('16', 'A>0', 'B<0')]
+N 243 [('1/2', 'A>0', 'B<0'), ('1', 'A>0', 'B<0'), ('2', 'A>0', 'B<0'), ('4', 'A>0', 'B<0'), ('8', 'A>0', 'B<0'), ('16', 'A>0', 'B<0')]
+N 729 [('1/2', 'A>0', 'B<0'), ('1', 'A>0', 'B<0'), ('2', 'A>0', 'B<0'), ('4', 'A>0', 'B<0'), ('8', 'A>0', 'B<0'), ('16', 'A>0', 'B<0')]
+sym 4594842955 -4594842951 -23462711040 -23462711118 -24628268590 -24628268590
+
+== susceptibility line 41: from B_ppb
+chi {81: '95.973', 243: '918.296', 729: '8423.697'} ratios 9.568 9.173 claim 9.57 9.17
+delta=2 D2/y^2 at (1/2, 3/2):
+ N 81 [('1/2', '0.2226'), ('1', '0.2226'), ('2', '0.2226'), ('4', '0.2225'), ('8', '0.2221'), ('16', '0.2204')] 2/9=0.2222
+ N 243 [('1/2', '0.2224'), ('1', '0.2224'), ('2', '0.2224'), ('4', '0.2223'), ('8', '0.2223'), ('16', '0.2221')] 2/9=0.2222
+ N 729 [('1/2', '0.2223'), ('1', '0.2223'), ('2', '0.2223'), ('4', '0.2223'), ('8', '0.2223'), ('16', '0.2222')] 2/9=0.2222
+A1/y at (1/2,3/2) N=729 [('1/2', '1.3336'), ('1', '1.3336'), ('2', '1.3336'), ('4', '1.3336'), ('8', '1.3335'), ('16', '1.3334')] 4/3=1.3333
+0.95% check 0.950  -6.72/729 in percent -0.922
+
+== u=0 line 42
+N 243 s 1/2 D2 0.000050 A1/y 2.0044 B sign + res 840
+N 243 s 1 D2 0.000200 A1/y 2.0044 B sign + res 810
+N 243 s 2 D2 0.000798 A1/y 2.0044 B sign + res 728
+N 243 s 4 D2 0.003190 A1/y 2.0044 B sign + res 112
+N 243 s 8 D2 0.012708 A1/y 2.0044 B sign + res 108
+N 243 s 16 D2 0.049805 A1/y 2.0045 B sign + res 452
+N 729 s 1/2 D2 0.000016 A1/y 2.0015 B sign + res 694
+N 729 s 1 D2 0.000063 A1/y 2.0015 B sign + res 697
+N 729 s 2 D2 0.000250 A1/y 2.0015 B sign + res 722
+N 729 s 4 D2 0.001001 A1/y 2.0015 B sign + res 743
+N 729 s 8 D2 0.004003 A1/y 2.0015 B sign + res 694
+N 729 s 16 D2 0.015975 A1/y 2.0015 B sign + res 652
+N=729 u=1/2 s=4 D2 0.1953 claim 0.1953
+Pin (u,x) points [('0', '0'), ('1/2', '0'), ('1/2', '1/2'), ('1/2', '3/2')]
+Pin Ns [3, 9, 27, 81, 243, 729]
+
+== residuals
+PIN N>=243 rows 56 max residual 918 at POLARITON_PIN|N=729|u=1/2|x=0|y=2/729|s=2|energy_ppb=-73158928058|A_ppb=2231682807|B_ppb=-
+  central rows 14 max 918 at POLARITON_PIN|N=729|u=1/2|x=0|y=2/729|s=2|energy_ppb=-73158928058|A_ppb=2231682807|B_ppb=-
+WINDOW N>=243 rows 91 max residual 899 at POLARITON_PIN_WINDOW|N=729|u=1/4|x=-1/4|y=0/729|s=0|energy_ppb=-224380052427|A_ppb=-46|B_p
+symmetry residuals ['143', '349']

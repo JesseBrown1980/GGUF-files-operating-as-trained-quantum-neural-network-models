@@ -1,0 +1,15 @@
+limit N*dev at delta=0, y2N=1/4, t=2: A1 -35.103 C1 -82.353 V2 12.146 D2
+N=81 y2N=0.2500 N*dev: V2 6.04 A1 -20.15 C1 -38.47 ; first-order at this y2N: V2 12.15 A1 -35.10 C1 -82.35
+N=243 y2N=0.2373 N*dev: V2 8.29 A1 -27.47 C1 -58.14 ; first-order at this y2N: V2 11.84 A1 -34.81 C1 -81.46
+N=729 y2N=0.2500 N*dev: V2 10.50 A1 -32.09 C1 -72.23 ; first-order at this y2N: V2 12.15 A1 -35.10 C1 -82.35
+N=2187 y2N=0.2475 N*dev: V2 11.46 A1 -33.96 C1 -78.45 ; first-order at this y2N: V2 12.09 A1 -35.05 C1 -82.18
+PIN N=729 t=1 read/first(full)=1.0000 read/first(README w1)=1.0000 read=0.002114
+PIN N=729 t=2 read/first(full)=1.0032 read/first(README w1)=1.0032 read=0.010389
+PIN N=729 t=3 read/first(full)=1.1755 read/first(README w1)=1.1752 read=0.027941
+first miss: C1=0.0709458 law=0.0774092 ratio=0.91650
+fourth miss: C1=0.0488690 law=0.0516902 ratio=0.94542
+epsilon check delta=0 s=1 t=2 eps=0.0468 Y=1.160 | V2 machine dev 0.0315 form 0.0251 | A1 machine dev -0.0718 form -0.0740 | C1 machine dev -0.1752 form -0.1731
+epsilon check delta=0 s=1/4 t=3 eps=0.3459 Y=0.102 | V2 machine dev 0.0551 form 0.0321 | A1 machine dev -0.3469 form -0.3636 | C1 machine dev -0.7490 form -0.7593
+epsilon check delta=1/2 s=1 t=3 eps=0.2202 Y=0.990 | V2 machine dev 0.1212 form 0.1095 | A1 machine dev -0.3632 form -0.3291 | C1 machine dev -0.8475 form -0.7677
+epsilon check delta=-1/2 s=1 t=2 eps=0.0584 Y=1.956 | V2 machine dev 0.0379 form 0.0387 | A1 machine dev -0.0795 form -0.1156 | C1 machine dev -0.1968 form -0.2698
+epsilon check delta=0 s=4 t=1 eps=0.0063 Y=6.834 | V2 machine dev 0.0077 form 0.0055 | A1 machine dev -0.0446 form -0.0280 | C1 machine dev -0.0968 form -0.0615

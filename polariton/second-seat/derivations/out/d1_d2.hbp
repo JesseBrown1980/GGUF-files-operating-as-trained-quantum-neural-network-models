@@ -1,0 +1,6 @@
+CONTACT_FORM|N=2..12|fock_states=451|mismatch=0|statement=(G/2L)sum=(G/2L)N(N-1)+(G/L)[n0(n+ + n-)+n+n-+P+P^dag]|u=1|pair_over_direct=1|json=0
+G2_DIRECT|state=hand_N2_real_even|N=2|norm=9|A=('0', '0', '0', '0')|B=('0', '0', '0', '0')|density_general_form_mismatch=0/8|density_stated_cos_only_mismatch=0/8|g2_C1_C2_mismatch=0/8|json=0
+G2_DIRECT|state=y_mix_N2_real_even|N=2|norm=28|A=('12', '0', '0', '0')|B=('-7', '0', '0', '0')|density_general_form_mismatch=0/8|density_stated_cos_only_mismatch=0/8|g2_C1_C2_mismatch=0/8|json=0
+G2_DIRECT|state=no_parity_real_N2|N=2|norm=25|A=('10', '0', '0', '0')|B=('-2', '0', '0', '0')|density_general_form_mismatch=0/8|density_stated_cos_only_mismatch=0/8|g2_C1_C2_mismatch=0/8|json=0
+G2_DIRECT|state=complex_even_N3|N=3|norm=46|A=('4', '0', '0', '0')|B=('8', '0', '0', '0')|density_general_form_mismatch=0/8|density_stated_cos_only_mismatch=0/8|g2_C1_C2_mismatch=0/8|json=0
+G2_DIRECT|state=complex_no_parity_N3|N=3|norm=78|A=('40', '0', '12', '0')|B=('4', '0', '-8', '0')|density_general_form_mismatch=0/8|density_stated_cos_only_mismatch=6/8|g2_C1_C2_mismatch=0/8|json=0

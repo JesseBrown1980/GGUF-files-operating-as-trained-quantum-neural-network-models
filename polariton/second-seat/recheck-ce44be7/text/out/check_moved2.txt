@@ -1,0 +1,48 @@
+energy_ppb largest change 0 at ('3', '1/2', '0', '16/3', '16') rows changed 0
+A_ppb largest change 16 at ('729', '1/2', '0', '2/729', '2') rows changed 18
+B_ppb largest change 726 at ('243', '0', '0', '1/243', '1') rows changed 15
+A1_ppm largest change 0 at ('3', '1/2', '0', '16/3', '16') rows changed 0
+D2_ppm largest change 0 at ('3', '1/2', '0', '16/3', '16') rows changed 0
+C1_ppm largest change 0 at ('3', '1/2', '0', '16/3', '16') rows changed 0
+C2_ppm largest change 0 at ('3', '1/2', '0', '16/3', '16') rows changed 0
+f_ppm largest change 0 at ('3', '1/2', '0', '16/3', '16') rows changed 0
+residual_1e-12 largest change 689 at ('27', '1/2', '3/2', '8/27', '8') rows changed 92
+cycles largest change 13 at ('729', '1/2', '3/2', '1/1458', '1/2') rows changed 29
+largest residual third 925 fourth 918
+central rows N=243,729, A_ppb and B_ppb third vs fourth:
+  243 0 -4 -4 441 441 0 0 823 823
+  243 1/2 551088737 551088737 -472374521 -472374519 3887 3887 159 157
+  243 1 1105042064 1105042064 -1887097222 -1887097222 15531 15531 23 25
+  243 2 2232421123 2232421123 -7403263301 -7403263299 60932 60932 832 820
+  243 4 4594842955 4594842955 -23462710744 -23462710746 193108 193108 915 790
+  243 8 9416338020 9416338020 -37527819987 -37527819987 308870 308870 41 41
+  243 16 18983956365 18983956365 -42548804185 -42548804185 350195 350195 98 106
+  729 0 -30 -30 -1 -1 0 0 801 801
+  729 1/2 550696251 550696249 -1444392477 -1444392477 3962 3962 547 571
+  729 1 1104343883 1104343884 -5770135927 -5770135927 15830 15830 708 752
+  729 2 2231682791 2231682807 -22621796328 -22621796307 62062 62062 485 918
+  729 4 4595937716 4595937717 -71201281892 -71201281890 195339 195339 638 733
+  729 8 9420473131 9420473140 -113106518824 -113106518922 310305 310305 215 884
+  729 16 19018851692 19018851692 -129517619936 -129517619936 355329 355329 21 20
+sector e_ppb largest change 0 at ('27', '0', '0', '1') rows changed 0
+sector f_ppb largest change 23 at ('43046721', '1/2', '1/2', '0') rows changed 7
+sector jbar_ppb largest change 503635437 at ('43046721', '1/2', '1/2', '0') rows changed 55
+sector gap_ppb largest change 113607 at ('43046721', '1/2', '3/2', '0') rows changed 31
+sector C2_ppm largest change 0 at ('3', '0', '0', '0') rows changed 0
+sector C1_ppm largest change 0 at ('3', '0', '0', '0') rows changed 0
+sector C1_times_N_ppm largest change 4178 at ('4782969', '1/2', '1/2', '0') rows changed 43
+sector N2_times_e_above_P0_ppm largest change 1 at ('531441', '0', '-1/2', '3') rows changed 3
+
+parity rows at 8dfa11a
+PARITY 7
+  PARITY|N=729|u=1/2|x=0|s=16/1|E_even_1e-12=-73566661009385|E_odd_1e-12=-73566661006326|odd_minus_even_1e-12=3059|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=21|res_o_1e-12=454|cyc_e=9|cyc_o=9|json=0
+  PARITY|N=729|u=1/2|x=0|s=8/1|E_even_1e-12=-73254546022647|E_odd_1e-12=-73254537813965|odd_minus_even_1e-12=8208682|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=215|res_o_1e-12=608|cyc_e=16|cyc_o=15|json=0
+  PARITY|N=729|u=1/2|x=0|s=4/1|E_even_1e-12=-73177600695145|E_odd_1e-12=-73177376501302|odd_minus_even_1e-12=224193843|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=638|res_o_1e-12=884|cyc_e=30|cyc_o=21|json=0
+  PARITY|N=729|u=0|x=0|s=16/1|E_even_1e-12=-182644490535756|E_odd_1e-12=-182643759150222|odd_minus_even_1e-12=731385534|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=925|res_o_1e-12=576|cyc_e=89|cyc_o=33|json=0
+  PARITY|N=729|u=1/2|x=0|s=2/1|E_even_1e-12=-73158928057973|E_odd_1e-12=-73158305676210|odd_minus_even_1e-12=622381763|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=485|res_o_1e-12=441|cyc_e=54|cyc_o=24|json=0
+  PARITY|N=729|u=0|x=0|s=8/1|E_even_1e-12=-182380923145422|E_odd_1e-12=-182380225075389|odd_minus_even_1e-12=698070033|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=688|res_o_1e-12=875|cyc_e=90|cyc_o=29|json=0
+  PARITY|N=729|u=1/2|x=0|s=1/1|E_even_1e-12=-73154359538344|E_odd_1e-12=-73153562544332|odd_minus_even_1e-12=796994012|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=708|res_o_1e-12=718|cyc_e=58|cyc_o=19|json=0
+PARITY 28
+PARITY_INERTIA 79 by N {'27': 23, '3': 28, '9': 28} ground_is_even {'1': 79}
+PARITY 112 by N {'27': 28, '3': 28, '81': 28, '9': 28}
+PARITY|N=3|u=1/2|x=0|s=16/1|E_even_1e-12=-21825368400807|E_odd_1e-12=-14656929854499|odd_minus_even_1e-12=7168438546308|c0_over_N_1e-12=333333333333|even_vector_byte_even=1|res_e_1e-12=6|res_o_1e-12=1|cyc_e=1|cyc_o=1|json=0

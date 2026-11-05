@@ -1,0 +1,186 @@
+built 40 points in 100 s
+QUANTITY z1
+  s^1 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (-3 + 4*d) / [(1+d)^3]
+     g sinh(k g t) coef B = 0
+  s^1 t^0 k=1  held_out_bad=0
+     cosh(k g t) coef A = (65/12 - 85/6*d + 12*d^2 - 4*d^3) / [(1+d)^3 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^1 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (-11/3 + d) / [(1+d)^3 (1-d)^1]
+     g sinh(k g t) coef B = 0
+  s^1 t^0 k=3  held_out_bad=0
+     cosh(k g t) coef A = (5/4 - 1/2*d) / [(1+d)^3 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^1 t^1 k=1  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-1 - 4*d^2 + 2*d^3) / [(1+d)^3 (1-d)^2]
+  s^3 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (20 - 34*d + 16*d^2) / [(1+d)^4 (1-d)^1]
+     g sinh(k g t) coef B = 0
+  s^3 t^0 k=1  held_out_bad=0
+     cosh(k g t) coef A = (-53/4 + 81/2*d - 44*d^2 + 16*d^3) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^3 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (-8 + 6*d) / [(1+d)^4 (1-d)^1]
+     g sinh(k g t) coef B = 0
+  s^3 t^0 k=3  held_out_bad=0
+     cosh(k g t) coef A = (5/4 - 1/2*d) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^3 t^1 k=1  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (17 - 46*d + 34*d^2 - 8*d^3) / [(1+d)^4 (1-d)^2]
+QUANTITY C1_1
+  s^0 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (-1/2 - 8*d + 17*d^2 - 7*d^3) / [(1+d)^3 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^0 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (3 + 10*d - 7*d^2) / [(1+d)^3 (1-d)^1]
+     g sinh(k g t) coef B = 0
+  s^0 t^0 k=4  held_out_bad=0
+     cosh(k g t) coef A = (-5/2 + d) / [(1+d)^3 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^0 t^1 k=2  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (6 - 12*d + 18*d^2 - 6*d^3) / [(1+d)^3 (1-d)^2]
+  s^2 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (-14 + 112*d - 172*d^2 + 80*d^3) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=1  held_out_bad=0
+     cosh(k g t) coef A = (22 - 428/3*d + 632/3*d^2 - 96*d^3) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (-40 + 140/3*d - 16*d^2) / [(1+d)^4 (1-d)^1]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=3  held_out_bad=0
+     cosh(k g t) coef A = (42 - 60*d + 24*d^2) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=4  held_out_bad=0
+     cosh(k g t) coef A = (-10 + 4*d) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^2 t^1 k=1  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-8 - 32*d^2 + 16*d^3) / [(1+d)^4 (1-d)^2]
+  s^2 t^1 k=2  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-16 + 68*d - 28*d^2) / [(1+d)^4 (1-d)^2]
+  s^4 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (213 - 594*d + 576*d^2 - 192*d^3) / [(1+d)^5 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=1  held_out_bad=0
+     cosh(k g t) coef A = (-234 + 700*d - 728*d^2 + 256*d^3) / [(1+d)^5 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (-16 - 64*d + 64*d^2) / [(1+d)^5 (1-d)^1]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=3  held_out_bad=0
+     cosh(k g t) coef A = (42 - 60*d + 24*d^2) / [(1+d)^5 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=4  held_out_bad=0
+     cosh(k g t) coef A = (-5 + 2*d) / [(1+d)^5 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^4 t^1 k=1  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (136 - 368*d + 272*d^2 - 64*d^3) / [(1+d)^5 (1-d)^2]
+  s^4 t^1 k=2  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-68 + 184*d - 136*d^2 + 32*d^3) / [(1+d)^5 (1-d)^2]
+QUANTITY n_1
+  s^0 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (1 - 15/4*d + 7*d^2 - 3*d^3 + d^4) / [(1+d)^3 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^0 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (3*d - 7*d^2 + 3*d^3 - d^4) / [(1+d)^3 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^0 t^0 k=4  held_out_bad=0
+     cosh(k g t) coef A = (-1 + 3/4*d) / [(1+d)^3 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^0 t^1 k=2  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (3 - 6*d + 9*d^2 - 3*d^3) / [(1+d)^3 (1-d)^3]
+  s^2 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (-8 + 45*d - 68*d^2 + 54*d^3 - 14*d^4) / [(1+d)^4 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=1  held_out_bad=0
+     cosh(k g t) coef A = (61/6 - 131/3*d + 48*d^2 - 16*d^3) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (-44/3 + 112/3*d - 116/3*d^2 + 10*d^3 - 2*d^4) / [(1+d)^4 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=3  held_out_bad=0
+     cosh(k g t) coef A = (33/2 - 15*d) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=4  held_out_bad=0
+     cosh(k g t) coef A = (-4 + 3*d) / [(1+d)^4 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^2 t^1 k=1  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-2 - 8*d^2 + 4*d^3) / [(1+d)^4 (1-d)^2]
+  s^2 t^1 k=2  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-8 + 34*d - 14*d^2) / [(1+d)^4 (1-d)^3]
+  s^4 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (70 - 467/2*d + 294*d^2 - 158*d^3 + 32*d^4) / [(1+d)^5 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=1  held_out_bad=0
+     cosh(k g t) coef A = (-193/2 + 207*d - 144*d^2 + 32*d^3) / [(1+d)^5 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (12 - 40*d + 42*d^2 - 18*d^3) / [(1+d)^5 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=3  held_out_bad=0
+     cosh(k g t) coef A = (33/2 - 15*d) / [(1+d)^5 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=4  held_out_bad=0
+     cosh(k g t) coef A = (-2 + 3/2*d) / [(1+d)^5 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^4 t^1 k=1  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (34 - 92*d + 68*d^2 - 16*d^3) / [(1+d)^5 (1-d)^2]
+  s^4 t^1 k=2  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-34 + 92*d - 68*d^2 + 16*d^3) / [(1+d)^5 (1-d)^3]
+QUANTITY B_1
+  s^2 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (-9/2 + 581/24*d - 100/3*d^2 + 24*d^3 - 7*d^4) / [(1+d)^4 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=1  held_out_bad=0
+     cosh(k g t) coef A = (73/12 - 51/2*d + 24*d^2 - 8*d^3) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (-22/3 + 52/3*d - 20*d^2 + 8*d^3 - d^4) / [(1+d)^4 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=3  held_out_bad=0
+     cosh(k g t) coef A = (29/4 - 23/6*d) / [(1+d)^4 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^2 t^0 k=4  held_out_bad=0
+     cosh(k g t) coef A = (-3/2 + 9/8*d) / [(1+d)^4 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^2 t^1 k=1  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-1 - 4*d^2 + 2*d^3) / [(1+d)^4 (1-d)^2]
+  s^2 t^1 k=2  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-4 + 21/2*d + d^2 - 3*d^3) / [(1+d)^4 (1-d)^3]
+  s^4 t^0 k=0  held_out_bad=0
+     cosh(k g t) coef A = (35 - 467/4*d + 147*d^2 - 79*d^3 + 16*d^4) / [(1+d)^5 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=1  held_out_bad=0
+     cosh(k g t) coef A = (-193/4 + 207/2*d - 72*d^2 + 16*d^3) / [(1+d)^5 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=2  held_out_bad=0
+     cosh(k g t) coef A = (6 - 20*d + 21*d^2 - 9*d^3) / [(1+d)^5 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=3  held_out_bad=0
+     cosh(k g t) coef A = (33/4 - 15/2*d) / [(1+d)^5 (1-d)^2]
+     g sinh(k g t) coef B = 0
+  s^4 t^0 k=4  held_out_bad=0
+     cosh(k g t) coef A = (-1 + 3/4*d) / [(1+d)^5 (1-d)^3]
+     g sinh(k g t) coef B = 0
+  s^4 t^1 k=1  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (17 - 46*d + 34*d^2 - 8*d^3) / [(1+d)^5 (1-d)^2]
+  s^4 t^1 k=2  held_out_bad=0
+     cosh(k g t) coef A = 0
+     g sinh(k g t) coef B = (-17 + 46*d - 34*d^2 + 8*d^3) / [(1+d)^5 (1-d)^3]
+done 107 s

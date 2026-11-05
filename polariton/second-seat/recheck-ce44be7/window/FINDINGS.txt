@@ -1,0 +1,201 @@
+FINDINGS, recheck lane "window", repo GGUF-files-operating-as-trained-quantum-neural-network-models, PR #8, head ce44be742d9d59d07bb8ec8a9ed6a559da4ec0bd.
+Seat: opus55, second seat for ACER-CLAUDE-FABLE5. Vantage: this laptop, Python 3.13 integers and Fractions, no float in any model arithmetic. Worktree C:/tmp/qnn-polariton-wt read and run only.
+Tags: MEASURED (a number from a named script in this folder), DERIVED (by hand here, then checked), NAMED, CONJECTURE, CANNOT_SEE.
+Tools in code/, rows in out/. One row family per script: t1_*, t2_*, t3_*, t4_*, t5_*, t6_*.
+
+PROCESS NOTE (MEASURED, carried here so it is not lost). At 04:16:45 local my t5_evenblock.py imported polariton/second_route.py by path, and python -I ignores PYTHONDONTWRITEBYTECODE, so one file appeared at
+polariton/__pycache__/second_route.cpython-313.pyc in the worktree. I found it at 04:18 through git status, removed that file and the empty folder, patched the script with sys.dont_write_bytecode, and git status is empty again with HEAD unchanged. No tracked file was touched. Later runs use python -I -B.
+
+
+F1. ITEM 1: the plane-wave forms, derived, and where the even mix enters.
+
+F1.1 Where a parity doublet changes the reading (DERIVED, then MEASURED).
+At y = 0 the sectors +P and -P are exactly degenerate, so every lowest level with P != 0 is an exact doublet: even (|+P> + |-P>)/sqrt2 and odd. B lowers P by 2, so B connects the two members only at P = +-1.
+ - |P| >= 2 (the plane waves at N >= 3): <B> = 0 on both members at y = 0. Nothing changes.
+ - |P| = 1 (odd N only, see F3): <B>_even = +(1/2) sum_j (j+1) c_j^2 > 0, <B>_odd = minus that. So the member held is a reading choice there. The N = 3 row is this case.
+At y != 0 the even-mix state is (psi_+ + psi_-)/sqrt2 with psi_+ the perturbed plane wave and psi_- its mirror. Exchange sends B to B^dag and A to A^dag, so <psi_-|B|psi_-> = <psi_+|B|psi_+> and the same for A. The cross terms <psi_+|B|psi_-> need the charge to travel from +N to -N, order y^(2N-2). So B's sign and size in the even mix come from ONE plane wave. The mix contributes only the exponentially small splitting.
+Measured even against odd (out/t1_parity.hbp, own block solver at K bits, no engine code): on all the below-edge points, N = 3, 9, 27 at every s and N = 81 at the rows it reached, the even level is the lower one, on every row. E_odd - E_even and the differences in <A>, <B> at N = 27, u = 1, x = -1/4: s = 1/2: 4.4e-84, B off 1.4e-80. s = 4: 1.4e-35, B off 3.2e-34. s = 16: 8.9e-7, B off 1.7e-5, P^2/N^2 = 0.59, the state has left the plane wave.
+At N = 9, s >= 4 and N = 3 at every s the two parities differ visibly (N = 3, s = 4: 1.32 in E, 0.69 in B). So the doublet reading is a large-N statement, and the prediction's scope N >= 243 is inside it.
+Sign of the splitting, DERIVED for small y: a path from +P to -P through charge 0 pairs with its mirror, so the coupling is -sum_k F_k^2/D_k with D_k > 0, negative whenever the doublet is the lowest level of the y = 0 spectrum, so the even member lies lower at leading order in y. This is why the engine's even start reaches the ground state as y -> 0+, and also at the N = 3 doublet.
+What could still be wrong: at N = 243 and 729 on the plane-wave side the splitting is far below any resolution I ran (K = 1800 bits covers N = 81 only), so even-below-odd there rests on the derivation and the trend. CANNOT_SEE by direct run at those rows.
+
+F1.2 The forms (DERIVED by hand, exact in N, then MEASURED equal in exact rationals).
+Reference |n0, n+, n-> = |0, N, 0>, E0 = xN. Units JN = 1. V = -y[a0^dag(a+ + a-) + h.c.].
+First order: V reaches only |1, N-1, 0>, element -y sqrt(N), energy above E0: D1 = u(N-1)/N - x. So c1 = y sqrt(N)/D1, and <A> = c1 sqrt(N):
+   A1/y = 2/D1 = 2/(u - x - u/N).
+Second order: sector P = N - 2 has two states, |2, N-2, 0> (above E0 by a = 2(u(N-2)/N - x)) and |0, N-1, 1> (above E0 by b = u(N-1)/N). V takes |1, N-1, 0> into them with -y sqrt(2(N-1)) and -y. The pair term joins them with kappa = sqrt(2(N-1))/N. Solving the 2 x 2:
+   d = y c1 [a - 2(N-1)/N]/(a b - kappa^2) on |0, N-1, 1>, and <B> = sqrt(N) d, since B on the reference gives sqrt(N)|0, N-1, 1> and <psi1|B|psi1> = 0.
+   <B>/y^2 = N [a - 2(N-1)/N] / (D1 (a b - kappa^2)), with a - 2(N-1)/N = 2[u - x - 1 + (1 - 2u)/N].
+   D2/y^2 = 4|u - x - 1 + (1 - 2u)/N| / (D1 (a b - kappa^2)) -> 2|u - x - 1|/(u (u - x)^2) as N -> infinity.
+   Relative 1/N term of D2/y^2: (1 - 2u)/W + u/w + 1 + (2u^2 + 1)/(u w), with w = u - x, W = u - x - 1.
+   sign<B> = sign(u - x - 1 + (1 - 2u)/N) at second order.
+Same limit from mean field, separately: amplitudes a, b, c on +, 0, - with e = x(a^2+c^2) + u[b^2(a^2+c^2) + a^2 c^2] + 2acb^2 - 2yb(a+c). b = y/(u-x), then e(c) = u c^2 + 2c b(b - y), c = -b(b - y)/u = y^2 (u-x-1)/(u (u-x)^2) = <B>/N. Same form, with the same two routes.
+Exact rationals (code/pw_lib.py, code/t1_series.py, out/t1_series.hbp): Rayleigh-Schrodinger from one plane wave in the monomial basis, N = 9, 27, 81, 243, 729, four points, orders to 10: the coefficient of y in <A>, of y^2 in <B> and of y^2 in E equal the closed forms exactly, as Fractions, 20 of 20. All odd orders of E and <B> and all even orders of <A> vanish.
+
+F1.3 Right number by a cancelled route? No. Both routes are real and of the same order, and the form's numerator is their difference.
+Route 1, direct, a+ -> a0 -> a-, gives y c1/b, the "u - x" part. Route 2 runs through |2, N-2, 0>, whose coefficient y sqrt(2N) c1/a is large as sqrt(N), and the pair element sqrt(2/N) is small, so the product is order 1 and gives the "-1". At u - x = 1 they cancel: there D2/y^2 has no y^2 term at N = infinity, and at u = 1/2, x = -1/2 it vanishes at every N (F2). On the receipt's four points they do not cancel: W = 1/4, 1/8, -1/4, -1/8. The note's wording "second order, with the pair term mixing n0 = 2 into n- = 1" is the right account.
+Series against exact diagonalization at N = 9, 27, 81 (out/t1_compare.hbp, 72 rows, own even block at 200 bits, series to order 16 or 20):
+ - N = 81, every s to 16 on all four points: E agrees to 12 digits where the series has converged, at s = 16 to 3e-10 to 1e-5 depending on the point. <B> agrees to 10 digits at s <= 8. A read: N = 81, (1, -1/4), s = 16: E -22.793996148386 both, A 12.8297945267 both, B 0.5258093487 both, against the receipt's -22793996149, 12829794526, 525809348 ppb.
+ - N = 27 the same at s <= 8. N = 9 the same at s <= 1 or 2. Beyond those the series diverges and the state has left the plane wave. N = 9, (1/2, -1/4), s = 4: <B> reads +0.327 with sign flipped from the form, P^2/N^2 = 0.52.
+ - The 1/N terms explain each gap in the README's table (exact second order at y -> 0 against the row at the smallest s): (1/2, -1/4), N = 729: 1.79168 against read 1.7917, form 1.7778. (3/4, -1/8), N = 243: 0.45197 against read 0.4520, form 0.4354. (1, -1/8), N = 243: 0.19466 against read 0.1947, form 0.1975. (1, -1/4), N = 729: 0.32009 against read 0.3201, form 0.3200. A1/y: 2/D1 at N = 243, (1, -1/8) 1.78430 against read 1.7843.
+What could still be wrong: nothing in the derivation at the points read. The form's scope is F2.
+
+
+F4. ITEM 4: the inside rows. The rotor's limit, and the 1/N coefficient in closed form. (F2, F3, F5, F6 follow below this entry as they finish.)
+
+F4.1 Exact y -> 0 chains (code/resp_lib.py, code/t4_chains.py, out/t4_chains.hbp; 600 fractional bits, own tridiagonal solves on the chains P = 0, 1, 2, no engine code).
+R(N) = (D2/y^2 at y -> 0) / (rho u N^2/(16 c0^2)). N = 81 ... 19683 by 3, and N = 2^7 ... 2^15 with Richardson in 1/N. MEASURED limits of N(R - 1):
+   (u, x)        K_D2 (chain)               K_A1 (chain)
+   (1/4, -1/4)   -3.12650799336717367178    0.28449259105721612772
+   (1/4, 0)      -3.88430587313255592776    0.45626733361411952992
+   (3/4, 0)      -17.3560542890753447       0.01904620279932705
+   (3/4, 1/8)    -44.48119318344            0.29769321477
+   (1/2, 1/4)    -17.78308675062266888      0.53036362434471441
+   (1/2, 0)      -6.71583836257749170183    0.26971186543814998011
+So R -> 1 as 1/N at each of the five points, and at the control. No point settles elsewhere. The 20% tolerance hides no wrong limit at y -> 0.
+At (3/4, 1/8), N = 243: 1 - 44.48/243 = 0.817, and the receipt's row at s = 1/2 reads 0.8160, the chain 0.816. So the 0.81 is the 1/N term, with its size set by rho = 1/14. The same at the others, 1 + K/243 against the row at s = 1/2: (1/4, -1/4) 0.9871, 0.9869. (1/4, 0) 0.9840, 0.9830. (3/4, 0) 0.9286, 0.9301. (1/2, 1/4) 0.9268, 0.9189, the remainder being of order 1/N^2.
+The earlier seat's -3.13, -17.34, -44.5, -6.72 were N = 6561 readings of these numbers.
+
+F4.2 The coefficient from theory (DERIVED here by hand, then MEASURED against F4.1).
+The chain at charge P in the gauge (-1)^j has an exact Weyl symbol in tau = (j + P/2)/N and p conjugate to j:
+   H_P = N[2 delta tau - 3u tau^2] - u P^2/(4N) - 2 o(tau) cos p,  o = (1/N) sqrt{[(N tau + 1/2)^2 - P^2/4][(N sigma + 1/2)^2 - 1/4]},  sigma = 1 - 2 tau.
+U = a+^dag a0 + a0^dag a- has the exact symbol sqrt(N sigma + 1/2) [ sqrt(N tau + 1/2 + Q/2) e^(-ip/2) - sqrt(N tau + 1/2 - Q/2) e^(ip/2) ], Q = P + 1/2 between chains P and P + 1. B from P = 2 to 0 is -sqrt((N tau + 1/2)^2 - 1/4), diagonal in tau, and from P = 1 to -1 it is +(N tau + 1/2).
+Expand about tau = r = rho, p = 0, with hbar = 1/N. With z = rho0, a = 4 - 3u, omega^2 = 4 a r z, c0 = (z/r - u)/4:
+   <tau> = r + t1/N,  t1 = -1/(2a) - (1 - 4r)/(2 omega).
+   E_P - E_0 = (c0/N + c1/N^2) P^2,  c1 = (1/(8r^2)) [ (1/a - 1 + 3r) + (3 - 8r)/omega - omega/4 ].
+   <nu_{P+1}|U|nu_P> = (Q/2)(T0 + T1hat/N), with T0 = sqrt(z/r) and 2 T0 T1hat = 4 c1 + [z/r^2 - 1/(4r^2) + z a/(4r)]/omega.
+   <nu_2|U R_1 U|nu_0> = -(N/4)(1 + w/N),  w = (a/4 - c0 + 1/(2r))/omega, from U = [H, f] + small with f' = N/(2 sqrt(tau sigma)) and <[U, f]>/2.
+   <B>_2 = -2 <psi_0|B|psi_2> + <psi_1-|B|psi_1+>. The lowest-state channel gives -(N^3 r~/(32 c~^2)) [T~^2 - 4 c~ (1 + w/N)], the two cross terms of order N^2 cancel, and the excited P = 1 term adds +N^2 r/(4 omega).
+Result, simplified with the identity z/2 - 1/4 - z^2/4 = -r^2:
+   K_D2 = (t1 + 1/2)/r - 2 c1/c0 + (1/r - u - 1/u)/omega.
+   A1/y = 2 + u/(4c0) + (1/N) { -u c1/(4 c0^2) + [z/r^2 - 1/(4r^2) + z a/(4r)]/(4 c0 omega) + (a/4 - c0 - 1/(2r))/omega }.
+The leading order of the same sum is the rotor: -(N^3 r/(32 c0^2)) (T0^2 - 4 c0) = -N^3 r u/(32 c0^2).
+Read against the chains (code/t4_theory.py), at 20 decimal digits:
+   (1/4, -1/4) off 0 in K_D2 and 0 in K_A1; (1/4, 0) 0, 0; (1/2, 0) 1e-20, 0; (3/4, 0) 7.3e-17, 7.9e-18; (1/2, 1/4) 2.6e-16, 1.6e-16; (3/4, 1/8) 3.6e-12, 1.1e-13. The offsets are the Richardson table's remainder, which is largest where K is largest.
+Also on the P = 0 branch below the edge (out/t4_below.hbp): K_D2 theory -28.9706, -38.1131, -5.5865, -12.1538, -2.3288 at (1, -1/4), (1, -1/8), (1/2, -1/4), (3/4, -1/8), (1/4, -1/2), against N(R-1) at N = 19683 of -28.9413, -38.0766, -5.5851, -12.1493, -2.3281. So the README's "still reaches the rotor's value as 1/N there" holds, tag MEASURED, and the coefficient is read.
+What the form shows about scope: K carries -1/(u omega), so the rotor at y -> 0 needs N u omega much above 1, which is the u = 0 case of the README's own bullet. It carries -2 c1/c0, so it fails at the c0 = 0 edge. And near delta -> 1, r -> 0, K grows as r^(-3/2), which is the takeover scale (1 - delta) ~ N^(-2/3).
+What could still be wrong: the Richardson assumes integer powers of 1/N. The fall of the table by about 2 to 4 digits per level says so, and exponentially small terms are outside it. At (3/4, 1/8) the match stops at 12 digits and I read no further there.
+
+F4.3 At finite s, beyond the engine's N (MEASURED; code/t4_reduced.py, out/t4_reduced.hbp, table out/t4_reduced_table.txt).
+A reduced even basis: the lowest L chain levels of each charge P <= Pmax, with exact U and B between them, at 200 bits, L = 10, 8, 6, Pmax about 2 lambda + 24 with lambda = s sqrt(rho0/rho)/(2 c0), the rotor's charge shift. It reproduces the receipt: (1/4, -1/4), N = 243 and 729, s = 16: E off 0, A off 2e-9, B off 3e-9. It is variational in L, and at N = 243, s = 16 with small omega L = 10 falls short: (3/4, 1/8) B off 9e-4, (1/2, 1/4) B off 1.5e-3. At N >= 729 the checks read 1e-9 to 6e-7.
+D2 over 2 rho f(q) at fixed s, N = 243, 729, 2187, 6561, with N(R - 1) at N = 6561 and its extrapolation from the last two N:
+   (1/4, -1/4) s=1:  0.98731 0.99584 0.99862 0.99954  -3.008, -3.006.  s=4:  1.00070 1.00058 1.00023 1.00008  +0.539, +0.554.  s=16: 0.98202 0.99918 1.00030 1.00016  +1.067, +1.275.
+   (1/4, 0)    s=1:  0.98283 0.99455 0.99821 0.99941  -3.888, -3.877.  s=4:  0.98706 0.99628 0.99883 0.99962  -2.516, -2.492.  s=16: 0.98317 0.99902 1.00019 1.00012  +0.786, +0.973.
+   (3/4, 0)    s=1:  0.93007 0.97637 0.99209 0.99736  -17.330, -17.343. s=4:  0.94001 0.97996 0.99331 0.99777  -14.625, -14.627. s=16: 0.98209 0.99634 0.99903 0.99971  -1.929, -1.837.
+   (3/4, 1/8)  s=1:  0.81514 0.93877 0.97964 0.99322  -44.499, -44.481. s=4:  0.81444 0.93882 0.97969 0.99324  -44.356, -44.325. s=16: 0.85979 0.96133 0.98799 0.99609  -25.635, -25.324.
+   (1/2, 1/4)  s=1:  0.91871 0.97470 0.99177 0.99728  -17.856, -17.782. s=4:  0.91748 0.97470 0.99181 0.99730  -17.721, -17.630. s=16: 0.93715 0.98718 0.99662 0.99897  -6.728, -6.403.
+So at every point and s read, the ratio goes to 1 and N(R - 1) settles. At s = 1 it reads the y -> 0 coefficient of F4.1 within the size of q: -44.48 against -44.48, -17.78 against -17.78, -17.34 against -17.36. A1 over the rotor reads within 7e-5 of 1 at N = 6561 at all 15 rows. So the frozen f(q) is the limit at finite q too, and the 20% hid no wrong limit. The 20% is wide against what the 1/N term already knows: at N = 243 the row-by-row deviation is at most the 18.6% of (3/4, 1/8) and the 1/N form reads it to 0.1% at small s.
+The form's coefficient at finite q I did not derive: K(s) above is MEASURED only. CONJECTURE: it follows from the same symbol with the rotor's own second-order terms in q.
+
+
+F2. ITEM 2: the below-edge forms at (u, x) the receipt does not hold.
+Run: exact rational series at N = 81, 243, 729, 2187 (code/t2_series.py, out/t2_series.hbp, summary out/t2_summary.hbp), even-block solver at N = 81, 243 (the earlier lane's Q48 block Cholesky, no engine code, code/t2_forms.py and t2_forms_b.py, out/t2_forms.hbp and t2_forms_b.hbp; 155 rows of the first sweep stand, and I stopped it for time once the series reproduced its rows), top-sector block for the excited branch (code/t2_pole.py).
+
+Where the forms hold (MEASURED). On the plane-wave side, away from the cases below:
+ - A1/y within 1% at N >= 243 at every point I read with u >= 1/16, except u = 1/16, s = 16 at N = 243: 1.016 at x = -2, 1.0175 at x = -5, and at N = 81, s = 16, where the state has moved.
+ - Large |x|, x = -1 to -100, u = 1/4 to 2: at N = 243 D2/y^2 within 3.6% of the form on all 18 rows at each u, at N = 729 within 1.1%, signs right on all rows. Example u = 1, x = -50, N = 2187: 0.038465 against 0.038446.
+ - Near the edge, N = 243: (1/2, -1/5), which is 0.0075 below the N = 243 crossing, P^2/N^2 = 0.99888 and 0.98184 at s = 4 and 16, A1/y 2.8655 and 2.8644 against 2.8571, D2/y^2 2.5135 and 2.5582 against 2.4490, which is 1.026 and 1.045 of the form. (5/8, -1/8): 1.029, 1.041. (7/16, -1/4): 1.026, 1.046. (13/64, -1/2): 1.031, 1.060. (1/4, -7/16): 1.028, 1.057. So near the edge at N = 243 the limit form sits at the 5% line at s = 16, and the exact-in-N second order accounts for all of it at s = 4 to about 0.2%.
+
+Where they fail (MEASURED, each with the reason, DERIVED).
+ (a) Near the zero, W = u - x - 1 -> 0. D2/y^2 has relative 1/N term (1 - 2u)/(W N), and at W = 0 the y^2 coefficient is nonzero at finite N unless u = 1/2. Rows at N = 243, u = 1/4: W = 1/64: read 0.1406 (s = 1), 0.1435 (s = 4), 0.1898 (s = 16), form 0.1212, exact-in-N 0.1404. W = 0: read 0.0171, 0.0202, 0.0697, form 0. W = -1/64: read 0.1145, 0.1112, 0.0584, form 0.1290. At u = 1/2, x = -1/2 the second order vanishes at every N, exactly, and D2/y^2 reads 0.00006 at s = 1 and 0.0178 at s = 16. The y^4 term from mean field at W = 0 is D2/y^2 = 4(1 - u) y^2/u, 0.0173 at s = 16, u = 1/2.
+   The zero of <B> in W reads -(1 - 2u)/N - 2(1 - u) y^2 (B_ZERO rows, 27 of 27 within 7e-5, 7 decimals at N = 2187), against sign(u - x - 1) in the frozen row. So the sign clause is wrong inside that narrow band and right outside it. The receipt's points sit at |W| = 1/8, 1/4, far outside.
+   Band where the 5% tolerance fails (TOLERANCE_5PCT): N = 243, u = 1/4: s = 4: W from -0.034 to +0.088, s = 16: -0.12 to +0.18. u = 1/2: s = 4: -0.004 to +0.009, s = 16: -0.065 to +0.11. N = 729, u = 1/4: -0.013 to +0.017, s = 16: -0.025 to +0.032. It shrinks as 1/N. The bisection assumes one crossing per side, which u = 3/4, s = 16 breaks, since the 1/N and y^2 terms oppose there; I quote no band at that u, s.
+ (b) Small u. The second-order denominator a b - kappa^2 vanishes at u(u(N-2)/N - x) = (N-1)/N^2, about N u (u - x) = 1. That is where the sector P = N - 2 reaches the plane wave. D2/y^2 runs 1/(N u w) above the form as it approaches: N = 243, u = 1/16, x = -1, N u w = 16.1: 1.14 at s = 4. u = 1/64, x = -1, N u w = 3.86: 3.38 read, 1.94 form, 3.30 exact-in-N. Below it the state is a different one: N = 81, u = 1/64, x = -1, N u w = 1.29: P^2/N^2 = 0.0049, B = +39.81, so D2 = 0.983, and A1/y 1.962. N = 243, u = 1/512, x = -1: P^2/N^2 = 0.0006, D2 = 0.984. That is the condensate in the even mode (a+ + a-)/sqrt2. A1/y also leaves its 1% at small u and s = 16 while the plane wave still holds: N = 243, u = 1/64, x = -5, N u w = 19: 0.427 against 0.399, P^2/N^2 = 0.9915. So on this side the README's "the ground state is the even mix of the two plane waves" needs the condition N u (u - x) above about 1, and the condition reads 1 as |x| grows (F3.3).
+ (c) u - x -> 0. All three of D1 = u(N-1)/N - x, a, and the form's u - x vanish there. On the plane-wave side of the edge u - x >= 2/3, and that minimum is exact: g(u) = u - x_edge(u) = 1 + u/2 - sqrt(u(4-3u))/2, with g' = 0 at u = 1/3, x = -1/3, g = 2/3. So the ground state never reaches the pole, and A1/y <= 3 at N = infinity on that side. At the pole the plane-wave branch is far excited: N = 81, u = 1/2, D1 = 0: E_branch about 40.1 against the lowest level -0.747, lowest P = 0. The ground-state rows there read the other forms: (1/2, 1/2), N = 243: P^2/N^2 = 0, A1/y 1.987, D2/y^2 0.472, against 4/(delta+1) = 2 and 2/(delta+1)^2 = 1/2. (1, 1): 1.335, 0.2225 against 4/3 and 2/9.
+   What the branch does there (DERIVED; numbers partly CANNOT_SEE). In mean field y(b) = w b - 2 u b^3 for small b, so the local minimum at the plane wave exists up to y_s = (2/3) w sqrt(w/(6u)) and has left at w -> 0. On the ladder |k, N-k, 0> with spacing D1 every level becomes degenerate at D1 = 0. My block of the top 12 charge sectors shows the weight on |0, N, 0> falling to about 0.3 at |D1| <= 1/sqrt(N), s = 1, N = 81, and it is not converged in the sector cut once n0 passes 12, so the A1/y numbers in out/t2_pole.hbp near the pole are CANNOT_SEE. My first guess, a two-level form, misses them, and I withdraw it here beside the output that still prints it.
+ (d) Near the edge, by level order: the forms stop at the exact crossing x_cross(N), see F3.2.
+
+Form with its 1/N term, for the record: F1.2. It reads the rows at s -> 0 to about 1e-4 relative, on all points where the plane wave is lowest. Measured in t1_compare and in the finiteN columns.
+
+Tag: forms MEASURED on the receipt's points and on these; bands MEASURED; pole statements DERIVED, with the block rows CANNOT_SEE near D1 = 0.
+What could still be wrong: u > 1 was read only at u = 2 and u = 9/8 by grid, and x > -1 at u < 1/8 only by level order.
+
+
+F3. ITEM 3: the three edges, and a third branch.
+
+F3.1 Mean field (DERIVED, MEASURED). e(s, m) = x s + u[(1-s)s + (s^2-m^2)/4] - (1-s) sqrt(s^2-m^2), with s = (n+ + n-)/N, m = P/N, pair phase pi.
+ - Balanced, m = 0: e = (delta-1)s + (1 - 3u/4)s^2, s* = 2(1-delta)/(4-3u), and s* < 1 is delta > -1 + 3u/2. Right.
+ - e(m) - e(0) = c0 m^2 at second order with c0 = (rho0/rho - u)/4, and c0 > 0 is delta > (4u-2)/(2+u). Right.
+ - Against the plane wave e = x: w^2/(4-3u) - w + 1 - u > 0 with w = 1 - delta, roots [(4-3u) +- sqrt(u(4-3u))]/2. The upper root lies beyond rho0 = 0, so the lower root is the edge. Right. x_edge = -1, -0.424306, -0.190983, -0.052178, 0 at u = 0, 1/4, 1/2, 3/4, 1 (out/t3_edges.hbp), matching the README's -1, -0.4243, -0.1910, -0.0522, 0. Added: u = 1/3 gives exactly x = -1/3.
+ - No interior minimum, a proof: at fixed s, e is convex in m^2, with interior minimum at sqrt(s^2-m^2) = 2(1-s)/u, which needs s >= 2/(2+u). On that branch e(s) = -1/u + s(x + u + 2/u) - s^2(u + 1/u), concave in s, so its minimum over s is at an end: s = 2/(2+u), which is m = 0, or s = 1, which is the plane wave. So the mean-field minimum over (s, m) is always the vacuum, the balanced state or the plane wave. MEASURED on a grid: 275 points, u in 0..5/4, x in -2..1, step 1/240 in s and m: 0 interior minima, and 0 grid minima below the three branches.
+
+F3.2 Exact levels over all P.
+ - The 18 points the README cites, over all P at N = 243 (the earlier lane sampled P): lowest P = 0 above the edge, P = 243 below it, 18 of 18 (out/t6_zero.hbp).
+ - Exact crossing of P = 0 and P = N (out/t3_edges.hbp, CROSS): N(x_cross - x_edge) tends to (E_P0 - N x_edge)/(1 - s*) at each u: N = 19683: u = 1/4: -0.24514 against -0.24514. u = 1/3: -0.26798 against -0.26797. u = 1/2: -0.37504 against -0.37504. u = 3/4: -0.58439 against -0.58441. u = 1: -0.96662 at N = 19683 against -0.96557, and at u = 1 E_P0 keeps a slow N^(-1/3) term. So the edge is right, with a 1/N shift, and it moves x_cross below x_edge at every u.
+ - c0 = 0 by E(P=1) = E(P=0) on the chains: N(x_exact - x_c0) settles at 0.411, -0.191, -0.493 at u = 1/4, 1/2, 3/4 by N = 19683 (out/t3_u1.hbp). So the c0 edge is right with a 1/N shift. It lies below the plane-wave edge, so it marks the P = 0 branch only.
+ - rho0 = 0 by <n0>/N on the P = 0 chain (RHO0_EDGE): at N = 2187, u = 1/2: 0.19988, 0.09963, 0.04932 at dx = 1/4, 1/8, 1/16 above x_rho0 against mf 0.2, 0.1, 0.05; 0.00486 at the edge; 0.00175, 0.00126, 0.00091 below it, about 2 to 4 polaritons in mode 0. So that edge is right.
+
+F3.3 A P between 0 and N (MEASURED).
+ Every N <= 24 at step 1/64 in u and x on 0 <= u <= 3/2, -3 <= x <= 1/2 (21,825 points per N, out/t3_boundary.hbp) and every N <= 27 at step 1/16, 1/32 (out/t3_scan_small.hbp): the only P with 0 < P < N that is ever lowest is P = 1, and only at odd N. 2,175 of 94,250 grid points in the coarse scan, all P = 1. At even N, none. No 2 <= P <= N - 1 is lowest at any point.
+ At the crossing of the low branch with the plane wave, where a third branch would most likely show, every other P lies above, N = 5 to 244, x = -1/8 to -50, by 0.50 at N = 5, x = -1/8 down to 3.4e-11 at N = 244, x = -50 (out/t3_margin.hbp, t3_boundary.hbp): the near-tie at large |x| is resolved in the exact levels. That crossing reads N u (u - x) = 1.0098 at N = 122, x = -5, 1.0283 at x = -3, 1.0685 at x = -2, 1.5261 at x = -1, and tends to 1 as |x| grows: the balance uN/4 = 1/(4(u-x)) of the direct energy and the pair term at second order.
+ What P = +-1 is: with N odd, P = 0 has odd n0 >= 1, and P = +-1 reaches even n0, including 0. So it is the balanced state's odd-N form, |P|/N -> 0, and it gives an exact doublet. It appears above the plane-wave edge, inside the window, only at small N or small u: grid points above the edge with rho0 > 0, c0 > 0 number 63, 55, 48, 40 at N = 3, 5, 7, 9, and 11 at N = 27 (out/t3_partial_inside.hbp). At N = 81 it needs u <= 1/16, at N = 121 u <= 1/32, at N = 243 u <= 1/64 (out/t3_partial_large.hbp). On the receipt's rows it occurs once: N = 3, (1/4, -1/4).
+ So the two-state comparison misses no macroscopic branch at u > 0 and large N, on these scans and by the proof above. It does miss the balanced branch at N u (u - x) below about 1, including all of u = 0 below x = -1: there the "edge" of the README is a touching at x = -1 and nothing changes at it, since the exact lowest stays P = 0 or 1 (F2(b), hold H1).
+
+F3.4 The u = 1 sentence (MEASURED). U1_LOWEST at N = 27, 81, 243, 729, 2187, x from -3 to 2: only P = N, then P = 0, flipping at -1/64, -1/128, -1/512, -1/1024, 0 on my grid, and CROSS gives N x_cross = -0.8694, -0.9058, -0.9329, -0.9525, -0.9666 at N = 243 ... 19683, tending to the -1 of E_P0(x = 0) -> -1 + O(N^(-1/3)).
+ Mean field at u = 1: rho = -x, rho0 = 1 + 2x, so the ordered pair state exists for -1/2 < x < 0, at e = -x^2 against the plane wave's e = x. Above it there, at every such x.
+ At x > 0 no ordered state exists in mean field. The exact state is P = 0 with <n+ + n-> = 1.1805, 0.3415, 0.1546, 0.0606 at x = 1/8, 1/2, 1, 2, N = 6561, equal to 2 jbar of the disordered form (0.1547 at delta = 2), and steady in N. Below x = -1/2 the balanced state has rho0 = 0 and e = x + 1/4, above the plane wave.
+ So "in mean field the ordered pair state is excited at every x" is right on -1/2 < x < 0, where it exists, and the phrase "every x" reaches x > 0 where it has no such state and the ground state is P = 0. Hold H2 states the range. Refuted as worded for x > 0, in the narrow sense that the object named does not exist there; the physics the sentence wants survives.
+
+
+F5. ITEM 5: the doublet at N = 3, other doublets, and even_block.
+
+F5.1 The doublet, by hand and exactly (DERIVED, MEASURED, code/t6_zero.py, out/t6_zero.hbp).
+N = 3, u = 1/4, x = -1/4, y = 0. On P = +1: |2,1,0> and |0,2,1>, diagonal d1 = x + (u/3)(2) = -1/12, d2 = 3x + (u/3)(2) = -7/12, off-diagonal squared (2)(1)(2)(1)/9 = 4/9. Mean -1/3, half difference 1/4, discriminant 1/16 + 4/9 = 73/144, exact in Fractions. So E = -1/3 - sqrt(73)/12 = -1.045333645443. Weights on the two states (1 -+ 3/sqrt(73))/2. B carries |2,1,0> to |2,0,1> with element 1 and |0,2,1> to |0,1,2> with element 2, so <P=-1|B|P=+1> = c1^2 + 2 c2^2 = (3/2)(1 + 1/sqrt(73)), and the even member has <B> = half of it, (3/4)(1 + 1/sqrt(73)) = 0.837780860397. The odd member has minus that.
+P = 0 lies at -1/8 - sqrt(1/64 + 2/3) = -0.951009483399. My even block reads +0.8377808604, my odd block -0.8377808604, and the receipt's row reads 0.837780860.
+At y -> 0+ the even member is the one that continues: the coupling through P = 0 lowers only it (F1.1), and the rows at s = 1/2 and above have E_even < E_odd.
+
+F5.2 Other exact doublets (MEASURED).
+Every level with lowest P != 0 at y = 0 is an exact doublet. The census at N <= 27 is F3.3. B connects the two members only at P = +-1, so a cusp of the whole-space level in kappa needs odd N and P = +-1: at grid step 1/16 in u and 1/32 in x the counts are 424, 294, 225, 183, 158, 140, 126, 118, 110, 105, 100, 97, 95 points at N = 3, 5, ... 27.
+Exact ties between sectors, a further hazard, on a grid of step 1/16 at N <= 27 (out/t5_ties.hbp): N = 2: (1/4, -2), (1/2, -1), (1, -1/2), the curve u x = -1/2, P = 0 with P = 2. N = 3: (1/8, -21/8), (1/4, -5/4), (1/2, -1/2), the curve u(u - 3x) = 1, P = 1 with P = 3. N = 5: (1/4, -3/4), P = 1 with P = 5. None at any other N on that grid. At the N = 2 and N = 3 ties B couples the two sectors inside the even block, so the even block itself has a cusp there. None of these is a route row.
+The route's y = 0 rows at N <= 3 (seven at N = 3, one hand row at N = 2): P = 0 on six, P = +-1 on one (the doublet), P = +-3 on one, (1, -1/4), where <B> = 0 on both members and there is no first-order cusp. So one row of the 60 can cross a cusp, and it is the one the first read marked.
+
+F5.3 Does the even block hide a fault? (MEASURED.) No, on every class I could construct.
+ - The two reads differ on 2 of 60 rows, to 9 decimals (diff of SECOND-ROUTE.hbp and SECOND-ROUTE-FIRST-READ.hbp): the doublet, 0 to 0.837780793, and N = 3, (1, -1/4), y = 0, 0 to 0.000000159. On the other 58 the printed exact_B is the same digits, so on those rows the whole-space difference and the even-block difference read one number and the change can hide nothing.
+ - Doctored rows through the route's own compare_full with both versions (code/t5_doctored.py, out/t5_doctored.hbp; flags: even block, whole space):
+     doublet as read: 0, 1. doublet with B = 0, what a pure P = +1 state would print: 1, 0. doublet with the odd member's B: 1, 1. doublet with half the B: 1, 1. plane-wave doublet as read: 0, 0. plane-wave doublet with B = 1e-3: 1, 1. pinned row as read: 0, 0. pinned row with B x 1.001: 1, 1. pinned row with B negated: 1, 1. engine sitting on the odd level at N = 3: 1, 1.
+   So the even block catches every fault the whole-space difference catches here, and one more: a state that lost its parity at the doublet passes the old check and fails the new one.
+ - What the even block could hide in principle: an engine on an even level while the whole space's lowest is odd and within the E limit of 1e-6, with a different <B>. That needs the odd block below the even at y != 0. Exact pivot counts on 26,117 points (N = 2..12, 15, 21, 27; 13 u, 25 x, 7 y, thinner at N > 12; out/t5_parity_scan.hbp): odd below even by more than 2^-40 on 0 points. The 3,638 points within 2^-40 at N <= 12 all resolve at 1000 bits with even below (out/t5_parity_resolve.hbp, 0 unresolved). The 326 such points at N = 15, 21, 27 I did not resolve. On the window rows themselves: N = 3, 9, 27 and N = 81 below the edge, even lower on every row (t1_parity.hbp, t1_parity81.hbp, gaps from 1e-184 to 7). Inside, N = 81, 243, 729 (reduced basis, t5_inside_parity.hbp), even lower on 90 of 90 rows; at N = 243, s = 16 the gap reads 3.55e-3 at (3/4, 1/8), 9.5e-4 at (1/2, 1/4), 2.08e-6 at (3/4, 0), 1.09e-7 at (1/4, 0), and below 1e-12 at (1/4, -1/4). So the class is empty on these scans. A proof for all y I do not have: the frustration between the positive pair element and the linear term leaves no sign gauge, so Perron-Frobenius is unavailable. That even is lowest at all y is a CONJECTURE.
+ - The even-block difference has its own small cost: at a small gap the third derivative shows. N = 3 doublet: E(kappa) gives 0.837780793 against 0.837780860, off 6.7e-8. N = 3, (1, -1/4), y = 0: 1.59e-7 against 0. Both are e3 kappa^2/2 at kappa = 2^-14, inside the limit 1e-5.
+ - E and <A> stay whole-space in compare_full, so a move to the wrong level is still caught through E.
+
+F5.4 even_block() itself (MEASURED, code/t5_evenblock.py, out/t5_evenblock.hbp). 3,180 checks, 0 bad, 0 zero pivots:
+ route.inertia_negative(route.even_block(route.congruent_matrix(...))) against (a) a direct count on the matrix of H in monomial even vectors |p,m>' + |m,p>', a non-symmetric rational matrix similar to H_even by a diagonal scaling, by exact elimination, (b) for N <= 5, the exact characteristic polynomial by Faddeev-LeVerrier with Descartes on the shifted polynomial, no pivots, and (c) whole-space count = even count + odd count.
+ Matrices: the doublet, the plane-wave doublet, the hand point, N = 4 and 5 points, with y in {0, 1/6, 1/3}, kappa in {0, +-2^-14, 1/7}, 49 lambda each, and 240 random rational points N = 2 to 9 with y, kappa_b, kappa_n nonzero.
+ By hand: T^t S T with S = W(H - lam)W is (WT)^t (H - lam)(WT), and W commutes with exchange, so WT spans the even space. Right.
+What could still be wrong: inertia_negative raises on a zero pivot, and full_ground then shifts mid by 2^-80; that branch was not reached in these checks.
+
+
+F6. ITEM 6: the text against the rows.
+Cell by cell (code/t6_cells.py, out/t6_cells.hbp): 45 cells of the two window tables, each the row value rounded or truncated to its digits: 0 off. The D2 columns are the floored D2_ppm.
+Sentences (code/t6_text.py, out/t6_text.hbp, t6_zero.hbp):
+ - D2 ratio at s = 1: (3/4, 0) 0.9301, 0.9764; (1/4, -1/4) 0.9873, 0.9958: the README's 0.930, 0.976, 0.987, 0.996. Right.
+ - u = 1, x = -1/4, N = 243, s = 4: D2 0.000087, A1/y 1.605, P2 0.999651. Rotor 2 rho f(16) = 0.4374, A1/y 3.8748, by my Mathieu reader: the README's 0.00009, 0.437, 1.605, 3.875, 0.99965. Right. u = 1/2, x = -1/4, N = 243: 0.000493 against 0.5114: the README's 0.0005, 0.511. Right, with N = 243 carried from the sentence before.
+ - Row counts: 126 = 7 tags x 6 s x 3 readings, 120 = 6 tags x 20. Right as counts. The text beside them omits the sign rows: holds H4, H5.
+ - Frozen f(q): my reader against the 30 entries of POLARITON_WINDOW_INSIDE: largest off 0.94 ppm, all floors of the exact value. (My first version read f(1) 2.6 ppm low through an uncounted zero pivot, the engine's first-run fault repeated in my own tool. The route's 417999 was right. Fixed, third reading in out/t6_mathieu.hbp.)
+ - The 28 y = 0 rows against exact chains over all P: E within 2e-9 and P^2/N^2 equal on 28 of 28, including P = 1 at the N = 3 doublet (bad = 0, out/t6_zero.hbp).
+ - N = 2: H2 = [[0, 2 sqrt2], [2 sqrt2, 2]], levels -2, 4, c0^2 = 2/3, c1^2 = 1/3, opposite signs; C1 = -4/3, C2 = 1/3, g2 = (2/3)(1 - cos kr)^2, 8/3 at half a period; E2 = -(2/3)h^2/3 = -(2/9)h^2, so d<A>/dh = 2/9: by hand, all right. The route and the engine's hand rows read these.
+ - N = 3 paragraph: F5.1. Right.
+ - read_prediction.py rerun on RECEIPT.hbp (out/read_again.hbp): met 1422, miss 35, and byte equal to READ.hbp after CR strip. Window rows: inside D2 42, A1 42, B negative 42; below E 6, P2 42, A1 36, D2 18, sign 18; all met. Hashes of read_prediction.py, second_route.py and RECEIPT.hbp are the workflow's and the attempt row's.
+ - All 196 POLARITON_PIN_WINDOW rows read by tools sharing no code with the engine (code/t6_rows.py, out/t6_rows.hbp), largest offsets in E, <A>, <B>:
+     N = 3, even block, 21 rows: 9e-10, 1.0e-9, 1.1e-9.
+     N = 9, even block, 21 rows: 9e-10, 1.0e-9, 1.0e-9. The route reads only s = 4 here, 3 rows, where the frozen POLARITON_CONVERSION_ROUTE says "the window rows at N = 3, 9". These 21 rows close that.
+     N = 81, even block, 63 rows: 9e-10, 1.0e-9, 2.0e-8, the last at (1/4, -1/4), s = 2, residual 667e-12.
+     N = 243, below, exact series, 28 rows: 1.0e-9 each. N = 729, below, exact series, 14 rows: 1.0e-9, 3.9e-9, 1.5e-9.
+     N = 729, inside, reduced basis L = 8, 14 rows: 9e-10, 4.6e-8, 6.2e-7, the last at (3/4, 0), s = 16, on my truncation side.
+     N = 243, inside, reduced basis L = 12, 35 rows: 2.5e-8, 3.3e-6, 4.2e-5, the last at (1/2, 1/4), s = 16. That truncation shows at s = 16 and small omega; the block solver reads the four s = 16 rows I ran at N = 243 within 1e-9 (out/t6_full243.hbp).
+   So the receipt's window rows are right as numbers, at N <= 729, from routes separate from the engine.
+
+
+F7. WHAT THIS LANE LEAVES.
+Survives (MEASURED unless tagged):
+ - A1/y = 2/(u-x), D2/y^2 = 2|u-x-1|/(u(u-x)^2) and sign<B> as the limit of an exact-in-N second order, on all four points; B's sign and size come from one plane wave, the even mix adds nothing visible at N >= 81 (DERIVED and MEASURED), and the second-order account is the right one.
+ - The three edges, with their 1/N shifts. No macroscopic third branch at u > 0 and large N (proof in mean field, scans in exact levels).
+ - The rotor at the five inside points: ratio -> 1 as 1/N, at y -> 0 with a closed-form coefficient read to 12 to 20 digits, and at s = 1, 4, 16 to N = 6561.
+ - The N = 2 and N = 3 paragraphs, both tables (45 of 45 cells), all 28 y = 0 rows, all 196 rows.
+ - even_block() and the change to compare_full: no hidden fault on any class built, and a stricter check at the doublet.
+Refuted, narrowly, with holds:
+ - "the ground state is the even mix of the two plane waves" below the edge, at N u (u-x) below about 1 and at u = 0 (H1).
+ - "excited at every x" at u = 1, for x > 0, where the state named has no existence (H2).
+ - sign<B> = sign(u-x-1) as a statement beyond its rows: the zero sits at -(1-2u)/N - 2(1-u)y^2, and the 5% on D2/y^2 fails in a band around it that shrinks as 1/N (H3).
+ - The counts' wording: 42 of the 126 are a sign check absent from the frozen row (H4), and 18 of the 120 are sign rows the sentence leaves out, with the reader narrower than the frozen clause on 18 more rows, which all hold (H5).
+Open or unread: see the items marked "could still be wrong" and CANNOT_SEE above: even below odd on the plane-wave side at N = 243, 729 (direct); 326 near ties at N = 15, 21, 27; the excited branch near D1 = 0; the 1/N coefficient at finite q (measured only); u > 1 beyond a grid. Hosted run untouched. No owning-gate claim is made here: all of this is scoped evidence from this laptop.

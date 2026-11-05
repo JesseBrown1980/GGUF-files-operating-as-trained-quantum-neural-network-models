@@ -1,0 +1,11 @@
+large-Y rows 21 with 1/law inside the read range 9
+nearer to 1 than to the law 7
+all above the law 21
+small-Y rows 14 above the law 12
+share of the way from the law to 1, large-Y rows: 0.069..1.234
+t=2 V2 coefficient at y->0: 4.347 ; (7/6)e^t=8.621 ; ratio 0.5043 ; A1 coefficient -29.350 ; C1 coefficient -63.047 ; -(5/4)e^(2t)=-68.248
+t=3 V2 coefficient at y->0: 16.928 ; (7/6)e^t=23.433 ; ratio 0.7224 ; A1 coefficient -239.658 ; C1 coefficient -496.244 ; -(5/4)e^(2t)=-504.286
+t=4 V2 coefficient at y->0: 55.027 ; (7/6)e^t=63.698 ; ratio 0.8639 ; A1 coefficient -1830.081 ; C1 coefficient -3715.190 ; -(5/4)e^(2t)=-3726.197
+t=6 V2 coefficient at y->0: 457.866 ; (7/6)e^t=470.667 ; ratio 0.9728 ; A1 coefficient -101484.311 ; C1 coefficient -203426.489 ; -(5/4)e^(2t)=-203443.489
+t=8 V2 coefficient at y->0: 3460.957 ; (7/6)e^t=3477.784 ; ratio 0.9952 ; A1 coefficient -5552077.097 ; C1 coefficient -11107615.151 ; -(5/4)e^(2t)=-11107638.151
+t=10 V2 coefficient at y->0: 25676.711 ; (7/6)e^t=25697.543 ; ratio 0.9992 ; A1 coefficient -303215394.276 ; C1 coefficient -606456465.262 ; -(5/4)e^(2t)=-606456494.262

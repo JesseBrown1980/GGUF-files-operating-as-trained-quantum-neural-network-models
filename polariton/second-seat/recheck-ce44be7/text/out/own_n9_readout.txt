@@ -1,0 +1,26 @@
+ u 1/2 x 0 s 1/2 A exact 0.569709568 read-out alone at 20 bits, off 1e-9 189.8 at 32 bits -0.005 first run off 189.1
+ u 1/2 x 0 s 1 A exact 1.132780356 read-out alone at 20 bits, off 1e-9 245.0 at 32 bits -0.002 first run off 244.5
+ u 1/2 x 0 s 2 A exact 2.263885889 read-out alone at 20 bits, off 1e-9 -16.4 at 32 bits -0.016 first run off -16.7
+ u 1/2 x 0 s 4 A exact 4.387677717 read-out alone at 20 bits, off 1e-9 -366.6 at 32 bits -0.059 first run off -367.5
+ u 1/2 x 0 s 8 A exact 6.196671001 read-out alone at 20 bits, off 1e-9 -621.8 at 32 bits -0.171 first run off -622.4
+ u 1/2 x 0 s 16 A exact 6.343294368 read-out alone at 20 bits, off 1e-9 -687.5 at 32 bits -0.179 first run off -688.2
+ u 0 x 0 s 1/2 A exact 0.533002721 read-out alone at 20 bits, off 1e-9 173.7 at 32 bits -0.032 first run off 173.6
+ u 0 x 0 s 1 A exact 1.057405580 read-out alone at 20 bits, off 1e-9 186.9 at 32 bits -0.041 first run off 186.2
+ u 0 x 0 s 2 A exact 2.129452762 read-out alone at 20 bits, off 1e-9 -99.1 at 32 bits -0.037 first run off -99.3
+ u 0 x 0 s 4 A exact 4.388432736 read-out alone at 20 bits, off 1e-9 -345.8 at 32 bits -0.056 first run off -346.4
+ u 0 x 0 s 8 A exact 6.265309780 read-out alone at 20 bits, off 1e-9 -654.9 at 32 bits -0.182 first run off -655.1
+ u 0 x 0 s 16 A exact 6.349870997 read-out alone at 20 bits, off 1e-9 -697.1 at 32 bits -0.180 first run off -697.9
+ u 1/2 x 1/2 s 1/2 A exact 0.486484520 read-out alone at 20 bits, off 1e-9 85.8 at 32 bits 0.018 first run off 85.8
+ u 1/2 x 1/2 s 1 A exact 0.970725300 read-out alone at 20 bits, off 1e-9 143.4 at 32 bits 0.031 first run off 142.9
+ u 1/2 x 1/2 s 2 A exact 1.922854549 read-out alone at 20 bits, off 1e-9 117.9 at 32 bits 0.029 first run off 117.4
+ u 1/2 x 1/2 s 4 A exact 3.675911491 read-out alone at 20 bits, off 1e-9 -244.7 at 32 bits -0.049 first run off -245.5
+ u 1/2 x 1/2 s 8 A exact 5.707159530 read-out alone at 20 bits, off 1e-9 -563.9 at 32 bits -0.129 first run off -564.9
+ u 1/2 x 1/2 s 16 A exact 6.265773993 read-out alone at 20 bits, off 1e-9 -665.1 at 32 bits -0.170 first run off -665.6
+ u 1/2 x 3/2 s 1/2 A exact 0.339100970 read-out alone at 20 bits, off 1e-9 24.7 at 32 bits 0.007 first run off 24.1
+ u 1/2 x 3/2 s 1 A exact 0.676706332 read-out alone at 20 bits, off 1e-9 45.2 at 32 bits 0.012 first run off 44.7
+ u 1/2 x 3/2 s 2 A exact 1.341450907 read-out alone at 20 bits, off 1e-9 60.7 at 32 bits 0.017 first run off 60.0
+ u 1/2 x 3/2 s 4 A exact 2.587706610 read-out alone at 20 bits, off 1e-9 -35.8 at 32 bits -0.007 first run off -36.4
+ u 1/2 x 3/2 s 8 A exact 4.472591945 read-out alone at 20 bits, off 1e-9 -375.2 at 32 bits -0.083 first run off -376.1
+ u 1/2 x 3/2 s 16 A exact 5.863179332 read-out alone at 20 bits, off 1e-9 -603.6 at 32 bits -0.141 first run off -604.4
+read-out alone: |off| min 16.4 median 244.7 max 697.1 1e-9
+first run: |off| min 16.7 median 244.5 max 697.9 1e-9

@@ -1,0 +1,7 @@
+PARITY|N=729|u=1/2|x=0|s=16/1|E_even_1e-12=-73566661009385|E_odd_1e-12=-73566661006326|odd_minus_even_1e-12=3059|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=21|res_o_1e-12=454|cyc_e=9|cyc_o=9|json=0
+PARITY|N=729|u=1/2|x=0|s=8/1|E_even_1e-12=-73254546022647|E_odd_1e-12=-73254537813965|odd_minus_even_1e-12=8208682|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=215|res_o_1e-12=608|cyc_e=16|cyc_o=15|json=0
+PARITY|N=729|u=1/2|x=0|s=4/1|E_even_1e-12=-73177600695145|E_odd_1e-12=-73177376501302|odd_minus_even_1e-12=224193843|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=638|res_o_1e-12=884|cyc_e=30|cyc_o=21|json=0
+PARITY|N=729|u=0|x=0|s=16/1|E_even_1e-12=-182644490535756|E_odd_1e-12=-182643759150222|odd_minus_even_1e-12=731385534|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=925|res_o_1e-12=576|cyc_e=89|cyc_o=33|json=0
+PARITY|N=729|u=1/2|x=0|s=2/1|E_even_1e-12=-73158928057973|E_odd_1e-12=-73158305676210|odd_minus_even_1e-12=622381763|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=485|res_o_1e-12=441|cyc_e=54|cyc_o=24|json=0
+PARITY|N=729|u=0|x=0|s=8/1|E_even_1e-12=-182380923145422|E_odd_1e-12=-182380225075389|odd_minus_even_1e-12=698070033|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=688|res_o_1e-12=875|cyc_e=90|cyc_o=29|json=0
+PARITY|N=729|u=1/2|x=0|s=1/1|E_even_1e-12=-73154359538344|E_odd_1e-12=-73153562544332|odd_minus_even_1e-12=796994012|c0_over_N_1e-12=1371742112|even_vector_byte_even=1|res_e_1e-12=708|res_o_1e-12=718|cyc_e=58|cyc_o=19|json=0

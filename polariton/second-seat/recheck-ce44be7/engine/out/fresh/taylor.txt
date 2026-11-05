@@ -1,0 +1,11 @@
+POLARITON_TAYLOR_POINT|N=27|u=1|x=-1|y=0|t=1|jbar_ppb=1151727998|A_ppb=0|json=0
+POLARITON_TAYLOR_POINT|N=27|u=1|x=-1|y=0|t=2|jbar_ppb=5004870427|A_ppb=0|json=0
+POLARITON_TAYLOR_POINT|N=27|u=1/2|x=0|y=0|t=2|jbar_ppb=4819950216|A_ppb=0|json=0
+POLARITON_TAYLOR_POINT|N=9|u=1|x=-1|y=1/64|t=1|jbar_ppb=875317735|A_ppb=-128505544|json=0
+POLARITON_TAYLOR_POINT|N=9|u=1|x=-1|y=1/64|t=2|jbar_ppb=2170829155|A_ppb=-358243766|json=0
+POLARITON_TAYLOR_POINT|N=9|u=1/2|x=1/2|y=-1/64|t=2|jbar_ppb=1168447549|A_ppb=-150171188|json=0
+POLARITON_TAYLOR_CONVERT|N=27|u=1|x=-1|y=1/5|s=taylor|delta=0|dt=2^-16|t=1|jbar_ppb=2549600280|f_ppb=188859280|A_ppb=-5085299126|B_ppb=1525170936|C1_ppb=208458755|C2_ppb=27316699|energy_off_1e-9=-1|norm_off_1e-9=-1|json=0
+POLARITON_TAYLOR_CONVERT|N=27|u=1|x=-1|y=1/5|s=taylor|delta=0|dt=2^-16|t=2|jbar_ppb=8263674532|f_ppb=612124039|A_ppb=-13145541704|B_ppb=5819391257|C1_ppb=671022602|C2_ppb=195833734|energy_off_1e-9=-1|norm_off_1e-9=-1|json=0
+POLARITON_TAYLOR_CONVERT|N=27|u=1|x=-1/2|y=2/5|s=taylor|delta=1/2|dt=2^-16|t=1|jbar_ppb=5269908425|f_ppb=390363587|A_ppb=-3912143923|B_ppb=4521808828|C1_ppb=74415790|C2_ppb=90214461|energy_off_1e-9=-1|norm_off_1e-9=-1|json=0
+POLARITON_TAYLOR_CONVERT|N=9|u=1|x=-1|y=1/3|s=taylor|delta=0|dt=2^-16|t=2|jbar_ppb=2597799103|f_ppb=577288689|A_ppb=-4063068801|B_ppb=1920525215|C1_ppb=463248652|C2_ppb=158472765|energy_off_1e-9=-1|norm_off_1e-9=-1|json=0
+POLARITON_DONE|json=0

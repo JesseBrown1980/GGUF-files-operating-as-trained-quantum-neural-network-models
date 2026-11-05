@@ -1,0 +1,96 @@
+== frozen f(q) against my own Mathieu, ppm, all 30
+largest |mine - frozen| in ppm 0.940
+== window inside table cell by cell
+(u,x) 1/4 -1/4 N 729 2rho 0.6154 0.6154 OK
+  yN 1 D2_ppm 75577 from B 0.075578 cell 0.075577 rotor(frozen f) 0.075894 rotor(mine) 0.075894 cell 0.075894 OK ratio 0.9958 res 744
+  yN 4 D2_ppm 458205 from B 0.458205 cell 0.458205 rotor(frozen f) 0.457938 rotor(mine) 0.457938 cell 0.457938 OK ratio 1.0006 res 565
+  yN 16 D2_ppm 576437 from B 0.576437 cell 0.576437 rotor(frozen f) 0.576913 rotor(mine) 0.576913 cell 0.576913 OK ratio 0.9992 res 343
+  A1/y yN=4 2.4360 2.4360 rotor 2.4360 2.4360 OK
+(u,x) 1/4 0 N 243 2rho 0.4615 0.4615 OK
+  yN 1 D2_ppm 13054 from B 0.013055 cell 0.013054 rotor(frozen f) 0.013283 rotor(mine) 0.013283 cell 0.013283 OK ratio 0.9828 res 135
+  yN 4 D2_ppm 179567 from B 0.179567 cell 0.179567 rotor(frozen f) 0.181921 rotor(mine) 0.181921 cell 0.181921 OK ratio 0.9871 res 101
+  yN 16 D2_ppm 394605 from B 0.394606 cell 0.394605 rotor(frozen f) 0.401360 rotor(mine) 0.401361 cell 0.401360 OK ratio 0.9832 res 23
+  A1/y yN=4 2.1698 2.1698 rotor 2.1673 2.1673 OK
+(u,x) 3/4 0 N 729 2rho 0.2857 0.2857 OK
+  yN 1 D2_ppm 5789 from B 0.005789 cell 0.005789 rotor(frozen f) 0.005929 rotor(mine) 0.005930 cell 0.005929 OK ratio 0.9764 res 736
+  yN 4 D2_ppm 85197 from B 0.085197 cell 0.085197 rotor(frozen f) 0.086940 rotor(mine) 0.086940 cell 0.086940 OK ratio 0.9800 res 219
+  yN 16 D2_ppm 240916 from B 0.240917 cell 0.240916 rotor(frozen f) 0.241801 rotor(mine) 0.241801 cell 0.241801 OK ratio 0.9963 res 310
+  A1/y yN=4 2.2288 2.2288 rotor 2.2302 2.2302 OK
+(u,x) 3/4 1/8 N 243 2rho 0.1429 0.1429 OK
+  yN 1 D2_ppm 345 from B 0.000345 cell 0.000345 rotor(frozen f) 0.000423 rotor(mine) 0.000423 cell 0.000423 OK ratio 0.8154 res 0
+  yN 4 D2_ppm 5504 from B 0.005505 cell 0.005504 rotor(frozen f) 0.006759 rotor(mine) 0.006759 cell 0.006759 OK ratio 0.8145 res 1
+  yN 16 D2_ppm 66277 from B 0.066277 cell 0.066277 rotor(frozen f) 0.077093 rotor(mine) 0.077094 cell 0.077093 OK ratio 0.8597 res 0
+  A1/y yN=4 2.0718 2.0718 rotor 2.0698 2.0698 OK
+(u,x) 1/2 1/4 N 243 2rho 0.2000 0.2000 OK
+  yN 1 D2_ppm 816 from B 0.000817 cell 0.000816 rotor(frozen f) 0.000889 rotor(mine) 0.000889 cell 0.000889 OK ratio 0.9188 res 0
+  yN 4 D2_ppm 12991 from B 0.012991 cell 0.012991 rotor(frozen f) 0.014160 rotor(mine) 0.014160 cell 0.014160 OK ratio 0.9175 res 344
+  yN 16 D2_ppm 120401 from B 0.120402 cell 0.120401 rotor(frozen f) 0.128489 rotor(mine) 0.128489 cell 0.128489 OK ratio 0.9371 res 13
+  A1/y yN=4 2.0755 2.0755 rotor 2.0714 2.0714 OK
+cell mismatches 0
+== counts of 126 and how many at N = 729
+inside 126 MET 126 at N=729 36 at N=243 90
+below 120 MET 120 at N=729 40 at N=243 80
+
+== D2 ratio line 92
+  3/4 0 N 243 yN=1 ratio 0.930 with D2_ppm 0.930
+  3/4 0 N 729 yN=1 ratio 0.976 with D2_ppm 0.976
+  1/4 -1/4 N 243 yN=1 ratio 0.987 with D2_ppm 0.987
+  1/4 -1/4 N 729 yN=1 ratio 0.996 with D2_ppm 0.996
+all five points at all s: D2 ratio by N
+  1/4 -1/4 N 81 ['0.959', '0.960', '0.973', '0.993', '0.960', '0.800']
+  1/4 -1/4 N 243 ['0.987', '0.987', '0.992', '1.001', '0.999', '0.982']
+  1/4 -1/4 N 729 ['0.996', '0.996', '0.997', '1.001', '1.001', '0.999']
+  1/4 0 N 81 ['0.942', '0.941', '0.940', '0.945', '0.948', '0.824']
+  1/4 0 N 243 ['0.983', '0.983', '0.983', '0.987', '0.995', '0.983']
+  3/4 0 N 81 ['0.799', '0.799', '0.800', '0.822', '0.910', '0.876']
+  3/4 0 N 243 ['0.930', '0.930', '0.931', '0.940', '0.976', '0.982']
+  3/4 0 N 729 ['0.976', '0.976', '0.977', '0.980', '0.992', '0.996']
+  3/4 1/8 N 81 ['0.441', '0.440', '0.438', '0.432', '0.411', '0.363']
+  3/4 1/8 N 243 ['0.816', '0.815', '0.815', '0.814', '0.817', '0.860']
+  1/2 1/4 N 81 ['0.710', '0.709', '0.706', '0.696', '0.664', '0.581']
+  1/2 1/4 N 243 ['0.919', '0.919', '0.918', '0.917', '0.919', '0.937']
+
+== below table lines 96-101
+1 -1/4 729 P2 0.9994 0.9994 A1/y 1.6017 1.6017 2/(u-x) 1.6000 1.6000 D2/y2 0.3202 0.3202 form 0.3200 0.3200 sign + + OK
+1 -1/8 243 P2 0.9931 0.9931 A1/y 1.7842 1.7842 2/(u-x) 1.7778 1.7778 D2/y2 0.1961 0.1961 form 0.1975 0.1975 sign + + OK
+1/2 -1/4 729 P2 0.9983 0.9983 A1/y 2.6691 2.6691 2/(u-x) 2.6667 2.6667 D2/y2 1.7922 1.7922 form 1.7778 1.7778 sign - - OK
+3/4 -1/8 243 P2 0.9886 0.9886 A1/y 2.2936 2.2936 2/(u-x) 2.2857 2.2857 D2/y2 0.4501 0.4501 form 0.4354 0.4354 sign - - OK
+
+== line 103 and line 9
+N=243 u=1 x=-1/4 s=4: D2 0.000087 86 A1/y 1.6052 P2 999651 POLARITON_PIN_WINDOW|N=243|u=1|x=-1/4|y=4/243|s=4|energy_ppb=-60802847513|A_ppb=3210402973|B_ppb=10545502|A1_ppm=26423|D2_ppm=86|C1_ppm=349|C2_ppm=0|f_ppm=999825|residual_1e-12=13|cycles=1|P2_over_N2_
+ rotor form: D2 0.4374 A1/y 3.8748 q 16.000 f 0.8748
+u=1/2 x=-1/4 N 243 s=4: D2 0.000493 493
+u=1/2 x=-1/4 N 729 s=4: D2 0.000054 53
+ rotor form at (1/2,-1/4) yN=4: D2 0.5114 q 11.520
+u=1 x=-1/4 N 243 s=4: D2 0.000087 86 A1/y 1.6052 P2 999651
+u=1 x=-1/4 N 729 s=4: D2 0.000010 9 A1/y 1.6017 P2 999961
+
+== points in the PIN_WINDOW stage
+  1 -1/4 N [3, 9, 81, 243, 729] s ['0', '1', '1/2', '16', '2', '4', '8'] rows 35
+  1 -1/8 N [81, 243] s ['0', '1', '1/2', '16', '2', '4', '8'] rows 14
+  1/2 -1/4 N [81, 243, 729] s ['0', '1', '1/2', '16', '2', '4', '8'] rows 21
+  1/2 1/4 N [81, 243] s ['0', '1', '1/2', '16', '2', '4', '8'] rows 14
+  1/4 -1/4 N [3, 9, 81, 243, 729] s ['0', '1', '1/2', '16', '2', '4', '8'] rows 35
+  1/4 0 N [81, 243] s ['0', '1', '1/2', '16', '2', '4', '8'] rows 14
+  3/4 -1/8 N [81, 243] s ['0', '1', '1/2', '16', '2', '4', '8'] rows 14
+  3/4 0 N [3, 9, 81, 243, 729] s ['0', '1', '1/2', '16', '2', '4', '8'] rows 35
+  3/4 1/8 N [81, 243] s ['0', '1', '1/2', '16', '2', '4', '8'] rows 14
+rows 196
+
+== edges line 80
+ u 0 x edge -1.0000
+ u 1/4 x edge -0.4243
+ u 1/2 x edge -0.1910
+ u 3/4 x edge -0.0522
+ u 1 x edge 0.0000
+== plane wave at N=19683
+  1 -1/4 e(0) -62520144 e(P=N) -250000001
+  1/2 0 e(0) -100012819 e(P=N) -1
+  POLARITON_READ|row=plane_wave_u=1_x=-1/4|result=MET|read=-250000001|predicted=below_e0=1|json=0
+  POLARITON_READ|row=plane_wave_u=1/2_x=0|result=MET|read=-1|predicted=below_e0=0|json=0
+  POLARITON_READ|row=e_rises_with_P_u=1/2_x=0|result=MISS|read=-100012819,-92670785,-49557110,15951321,-1|predicted=rising|json=0
+== sign rows at u=1/2 below edge etc. A1, s=1/2 at N=243 etc.
+== hopfield: a = 0.4/0.54
+ a 0.7407 u1 0.741 u2 0.9546 w(n+n-) = 4 - 1/a - 2a 1.1685 mean field u from 4-3u = 4-4u2+u1: 1.026 shift 2-1/a 0.6500
+ with amplitudes X0=0.54,X1=0.4 (X^2 fraction squares): a 0.5487
+   u1 0.549 u2 0.8144 w 1.0801

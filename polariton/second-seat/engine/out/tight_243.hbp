@@ -1,0 +1,14 @@
+POLARITON_PIN|N=243|u=1/2|x=0|y=16/243|s=16|energy_ppb=-25794324313|A_ppb=18983956365|B_ppb=-42548804187|A1_ppm=156246|D2_ppm=350195|C1_ppm=8031|C2_ppm=77690|f_ppm=400992|residual_1e-12=0|cycles=4|json=0
+POLARITON_PIN|N=243|u=1/2|x=0|y=8/243|s=8|energy_ppb=-24859027500|A_ppb=9416338020|B_ppb=-37527819988|A1_ppm=77500|D2_ppm=308870|C1_ppm=-1298|C2_ppm=79670|f_ppm=398423|residual_1e-12=0|cycles=6|json=0
+POLARITON_PIN|N=243|u=1/2|x=0|y=4/243|s=4|energy_ppb=-24628268590|A_ppb=4594842953|B_ppb=-23462711012|A1_ppm=37817|D2_ppm=193108|C1_ppm=-3641|C2_ppm=80145|f_ppm=397761|residual_1e-12=2|cycles=10|json=0
+POLARITON_PIN|N=243|u=1/2|x=0|y=2/243|s=2|energy_ppb=-24572252733|A_ppb=2232421118|B_ppb=-7403262873|A1_ppm=18373|D2_ppm=60932|C1_ppm=-4206|C2_ppm=80245|f_ppm=397612|residual_1e-12=4|cycles=13|json=0
+POLARITON_PIN|N=243|u=1/2|x=0|y=1/243|s=1|energy_ppb=-24558540629|A_ppb=1105042064|B_ppb=-1887097230|A1_ppm=9094|D2_ppm=15531|C1_ppm=-4336|C2_ppm=80264|f_ppm=397586|residual_1e-12=9|cycles=7|json=0
+POLARITON_PIN|N=243|u=1/2|x=0|y=1/486|s=1/2|energy_ppb=-24555134423|A_ppb=551088736|B_ppb=-472374594|A1_ppm=4535|D2_ppm=3887|C1_ppm=-4368|C2_ppm=80268|f_ppm=397581|residual_1e-12=7|cycles=4|json=0
+POLARITON_PIN|N=243|u=1/2|x=0|y=0/243|s=0|energy_ppb=-24554000987|A_ppb=-1|B_ppb=-1|A1_ppm=0|D2_ppm=0|C1_ppm=-4378|C2_ppm=80269|f_ppm=397579|residual_1e-12=3|cycles=16|json=0
+POLARITON_PIN|N=243|u=0|x=0|y=16/243|s=16|energy_ppb=-61849260605|A_ppb=16036264192|B_ppb=6051325438|A1_ppm=131985|D2_ppm=49805|C1_ppm=5449|C2_ppm=123754|f_ppm=498961|residual_1e-12=10|cycles=22|json=0
+POLARITON_PIN|N=243|u=0|x=0|y=8/243|s=8|energy_ppb=-61057371422|A_ppb=8017620051|B_ppb=1544060873|A1_ppm=65988|D2_ppm=12708|C1_ppm=-1108|C2_ppm=125196|f_ppm=498965|residual_1e-12=5|cycles=15|json=0
+POLARITON_PIN|N=243|u=0|x=0|y=4/243|s=4|energy_ppb=-60859407113|A_ppb=4008744414|B_ppb=387533275|A1_ppm=32993|D2_ppm=3189|C1_ppm=-2747|C2_ppm=125595|f_ppm=498966|residual_1e-12=7|cycles=11|json=0
+POLARITON_PIN|N=243|u=0|x=0|y=2/243|s=2|energy_ppb=-60809916543|A_ppb=2004363965|B_ppb=96970993|A1_ppm=16496|D2_ppm=798|C1_ppm=-3156|C2_ppm=125697|f_ppm=498966|residual_1e-12=5|cycles=19|json=0
+POLARITON_PIN|N=243|u=0|x=0|y=1/243|s=1|energy_ppb=-60797543932|A_ppb=1002180951|B_ppb=24248119|A1_ppm=8248|D2_ppm=199|C1_ppm=-3259|C2_ppm=125722|f_ppm=498966|residual_1e-12=5|cycles=8|json=0
+POLARITON_PIN|N=243|u=0|x=0|y=1/486|s=1/2|energy_ppb=-60794450782|A_ppb=501090346|B_ppb=6062365|A1_ppm=4124|D2_ppm=49|C1_ppm=-3284|C2_ppm=125729|f_ppm=498966|residual_1e-12=11|cycles=2|json=0
+POLARITON_PIN|N=243|u=0|x=0|y=0/243|s=0|energy_ppb=-60793419732|A_ppb=-1|B_ppb=5|A1_ppm=0|D2_ppm=0|C1_ppm=-3293|C2_ppm=125731|f_ppm=498966|residual_1e-12=5|cycles=21|json=0
