@@ -1,0 +1,20 @@
+HOLDS, second seat (opus55), numerics attack on the first read at 4725b8124d1ef19d2e22844534e3abf39543fb30.
+No hold touches READ-GRID.hbp, RECEIPT-GRID.hbp or the frozen row. Every OLD block below occurs once in its file at this head (grep -c -F, LF file).
+
+HOLD H1 | file=polariton-first-correction/README.md | severity=low
+OLD<<<
+**The remainder falls with N as 1/N².**
+>>>
+NEW<<<
+**The remainder falls by a factor near 81, the factor of 1/N², between the two N read.**
+>>>
+REASON: two N carry the measured ratio, 77.65 to 78.31 in certified lower bounds and 78.02 to 79.29 mid at the frozen four (READ-GRID lines 158-161, reproduced by this lane's own evaluator), 77.69 to 80.80 lower bounds at the six other points beside the frozen read (FINDINGS F6).
+
+HOLD H2 | file=polariton-first-correction/README.md | severity=low
+OLD<<<
+- **Separate code on the same rows:** the second seat's propagator meets all 20,
+>>>
+NEW<<<
+- **Separate code on the same rows, in [hosted run 42091397290](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/42091397290) at `4725b81`, which also reproduced the receipt and the read byte for byte:** the second seat's propagator meets all 20,
+>>>
+REASON: no file at 4725b81 carries these figures (grep of the tree finds them in this README only); step 12 of run 42091397290 prints them, 20 PASS, V2 inside 20, max C1_off 122, A1_off 885,924, f_off 2, C2_off 1 in 10^-18 (FINDINGS F9, out/hosted_grid_integrator.hbp).

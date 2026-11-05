@@ -1,0 +1,264 @@
+FINDINGS -- opus55 adversary lane on the first read of POLARITON_FIRST_CORRECTION
+lane=what_the_read_can_and_cannot_distinguish|seat=opus55_second_seat_for_ACER-CLAUDE-FABLE5|date=2026-11-05
+head_checked=4725b8124d1ef19d2e22844534e3abf39543fb30 (git -C C:/tmp/qnn-fc-read-wt rev-parse HEAD, status clean)
+row_sha256=3b1e0477a98624b619d12f82775666d88f8d2c14671b453a1198bedd9d50d549 (line 48 with its LF, equals PLAN.hbp row_sha256)
+SHA256SUMS in polariton-first-correction/ : 16 of 16 OK at this head
+
+====================================================================
+SECTION 0. CRUDE ALTERNATIVES, WRITTEN DOWN BEFORE ANY EVALUATION
+timestamp_written=2026-11-05T19:20:35Z
+====================================================================
+Disclosure, before evaluating: I had read the README table (law-alone offsets on C1 and A1) and the
+predicted-f range 0.0033..0.0110 printed in READ-GRID before writing these down, and I made a rough
+mental comparison of A1-offset against f for ALT2. No alternative below had been computed in any
+script before this timestamp. None of them has a free parameter; nothing is fitted to the read.
+
+Common notation (the row's own law, units JN = 1, u = 1, x = d - 1, from |N,0,0>):
+  gamma^2 = 1 - d^2, c1 = cosh(gamma t), sinh1 = sinh(gamma t), J0 = sinh1^2/gamma^2, s^2 = N y^2
+  X = -y sqrt(2N) (c1 - 1)/(1 + d),  P = y sqrt(2N) sinh1/gamma   (mean of c = (a+ + a-)/sqrt2, X + iP)
+  law: A1_law = 4|y|(c1 - 1)/(1 + d),  C1_law = C0/N = [4 sinh1^2/(1+d) + 8 s^2 (c1-1)^2/(1+d)^2]/N
+  f_pred = 2 (J0 + s^2 [(c1-1)^2/(1+d)^2 + J0]) / N    (the predicted f the read prints, row 39)
+  V2 is always A1^2/(2 C1) of the same alternative.
+
+ALT1  "N -> N - 1 everywhere in the law".
+      C1 = C0(s^2 -> (N-1) y^2) / (N - 1);  A1 = A1_law (the law's A1 has no N in it).
+
+ALT2  "the law times (1 - predicted f)", one depletion factor on each observable.
+      C1 = C1_law (1 - f_pred);  A1 = A1_law (1 - f_pred);  so V2 = V2_law (1 - f_pred).
+
+ALT3  "the Bogoliubov law with the condensate held at its t = 0 value", read with the row's exact
+      definitions. The Gaussian state of the law (condensate amplitude fixed at sqrt(N), its t = 0 value,
+      in the dynamics and in the a0 factors of the read-out), with n0 read as N - n by number conservation
+      and the normalisation N(N-1) of the row:
+      C1 = 2 [ N<n> - <n^2> + 2 sqrt(N(N-1)) Re<a+^dag a-^dag> ] / (N(N-1)),  A1 = A1_law,
+      with the moments of that Gaussian state:
+        <n> = X^2 + P^2 + 2 J0
+        Var(n) = (X^2+P^2)(2 J0 + 1) + 2 Re(conj(alpha)^2 U V) + 4 J0 (J0 + 1),  alpha = X + iP
+        U = cosh(gamma t) - i d sinh(gamma t)/gamma,  V = -i sinh(gamma t)/gamma
+        Re(conj(alpha)^2 U V) = -d J0 (X^2 - P^2) - 2 X P sinh(gamma t) cosh(gamma t)/gamma
+        Re<a+^dag a-^dag> = (X^2 - P^2)/2 - d J0
+      (Interpretation note: the task's wording "condensate fraction fixed at its t = 0 value" is read as this;
+      with every other choice also at leading order it is the law itself.)
+
+ALT4  "depleted-condensate Bogoliubov": the law's Bogoliubov solution with the condensate number
+      N0 = N (1 - f_pred) in its three parameters -- pair coupling g = J N0 = 1 - f, mean-field shift
+      eps = Delta + U N0 = d - f, drive F = y sqrt(2 N0) -- with f = f_pred at t = 2 held over the whole
+      quench, a0 -> sqrt(N0) and n0 -> N0 in the read-out, normalisation N^2 as the law has it:
+        gamma'^2 = g^2 - eps^2 = (1 - d)(1 + d - 2f)
+        A1 = 4 (1 - f) |y| (cosh(gamma' t) - 1) / (1 + d - 2f)
+        C1 = 4 (1 - f)^2 [ sinh(gamma' t)^2/(1 + d - 2f) + 2 s^2 (cosh(gamma' t) - 1)^2/(1 + d - 2f)^2 ] / N
+      (at f = 0 this is the law, which I check in the script as a self-test).
+
+Expectation written before evaluating, CONJECTURE: ALT1 moves C1 up by about 1/N while the read sits about
+1% below the law, so it misses C1 and A1. ALT2 may sit near the read on A1 and miss C1. ALT3 misses A1 by
+construction; its C1 is unknown to me. ALT4 is unknown to me.
+
+====================================================================
+WHAT I RAN (closed forms in exact rationals, and reads of filed rows; no model run)
+====================================================================
+adv_lib.py  my interval arithmetic over Fractions (outward rounding at 2^-320), my own tokenizer and
+            recursive-descent parser of the row's expression text, exp and sqrt enclosures. It imports nothing
+            from read_first_correction.py and shares no code with it.
+adv_data.py loaders for RECEIPT-GRID.hbp, RECEIPT-BASELINE.hbp, polariton/RECEIPT.hbp (read only).
+s1..s8      the steps below; each writes its own .hbp beside it (json=0); sha256 at the end of this file.
+Engine: I built a standalone copy of src/bin/polariton_first_correction.rs (source sha256 ad121216..., the
+pinned one) with cargo +1.81.0 into engine/ and target/ of this folder, and did not run it (E=0, no launch of
+the model). Every number below comes from rows the repo already files.
+Section 0 above is byte-identical to FINDINGS-SECTION0-AS-WRITTEN-20261105T192035Z.txt (mtime 19:20:55Z,
+sha256 21c12b14615e01c99c0fad5cdc33d61b12fe2b712b9dfb1a2da154119266acc4), written before s4 ran.
+
+====================================================================
+F1  The law and the first correction, evaluated independently: 60 of 60 printed values agree.  MEASURED
+====================================================================
+ran:  s1_verify_forms.py -> s1_verify_forms.hbp
+read: polariton/PREDICTION.hbp line 48 (row text, parsed by my parser); READ-GRID.hbp first_e18, law_e18,
+      predicted_f_ppb.
+result: at all ten points, floor(1e18 x value) of my enclosure equals the printed integer for C1, A1, V2 first
+      (30), C1, A1 law (20) and predicted f in ppb (10): 60 of 60. My enclosures are narrower than 1e-80 relative.
+      The law, re-derived by me from the displaced Bogoliubov solution (X = -y sqrt(2N)(c1-1)/(1+d),
+      J0 = sinh^2/gamma^2, C1 = 4[X^2 + (1-d)J0]/N, A1 = 2 sqrt(2N)|X|/N), equals the row's A1_law and C1_law
+      at all ten points to below 1e-60 relative.
+could still be wrong: both evaluations read the same row text, so a fault in the text of w10..C12 would be
+      shared. I did not re-derive the first correction (the 1/N expansion) itself: CANNOT_SEE on that.
+
+====================================================================
+F2  Task 1: how far the first-order coefficient could be off, point by point, K = 1600.  MEASURED
+====================================================================
+ran:  s2_coeff_and_control.py -> s2_coeff_and_control.hbp (rows S2_COEFF, S2_WORST)
+definition: kappa = (read - law)/(first - law) - 1, with the read's certified interval [v - err - 2, v + err + 2]
+      x 1e-18 (V2: [V2_lo - 2, V2_hi + 2]) and my closed-form enclosures. kappa is the fractional error of the
+      first-order term that would by itself explain the read. kappa_admitted = (1/1000)|first|/|first - law| is
+      the largest |kappa| the 1/1000 clause admits with zero remainder.
+kappa, ppm, certified interval:      C1                 A1                 V2
+  (1/2,1/4)  blind          [-10704,-10379]    [-8076,-6960]     [+82933,+140491]
+  (1/2,1/2)  blind          [-12095,-11797]    [-8326,-7758]     [-108782,-89326]
+  (0,1/4)    touched        [-13716,-13588]    [-10010,-9463]    [-52265,-46076]
+  (0,1/2)    touched        [-15774,-15661]    [-10734,-10455]   [-46320,-43985]
+  (1/4,1/4)  blind          [-12465,-12274]    [-9265,-8515]     [-88329,-70223]
+  (1/4,1/2)  blind          [-14197,-14026]    [-9774,-9393]     [-54228,-49498]
+  (1/4,1)    blind          [-19144,-19019]    [-12232,-12043]   [-55151,-53465]
+  (-1/4,1/4) blind          [-14215,-14118]    [-10155,-9723]    [-41068,-37847]
+  (-1/4,1/2) blind          [-16522,-16439]    [-11038,-10817]   [-42148,-40716]
+  (-1/4,1)   blind          [-22960,-22903]    [-14590,-14482]   [-59360,-58615]
+worst |kappa|: C1 2.296% at (-1/4,1); A1 1.459% at (-1/4,1); V2 14.05% at (1/2,1/4).
+kappa admitted by 1/1000: C1 4.64% (-1/4,1) to 11.77% (1/2,1/4); A1 11.59% to 23.00%; V2 24.28% to 462.08%.
+reading: on C1 and A1 the read sits between the law and law + first at every point, 97.70% to 98.96% (C1) and
+      98.54% to 99.30% (A1) of the way to law + first. One N cannot say how much of kappa is a coefficient error
+      and how much is the next order; F3 splits them.
+could still be wrong: the intervals are the engine's own account (C1_err, A1_err, V2_lo/hi); I did not
+      re-certify the engine (the review at 2d77636 did).
+
+====================================================================
+F3  Task 2: the remainder at two N, exact, and a third N from seen rows.  MEASURED within each stated model
+====================================================================
+ran:  s3_two_n.py -> s3_two_n.hbp ; s3b_two_models.py -> s3b_two_models.hbp ; s6_three_n.py -> s6_three_n.hbp ;
+      s7_a1_two_n.py -> s7_a1_two_n.hbp
+read: RECEIPT-BASELINE N = 729, K = 729, t = 2 (full space, eps_tail = 0); RECEIPT-GRID K = 1600; RECEIPT-BASELINE
+      N = 2187, K = 1000, y = 1/94 and 1/47 (seen, delta = 0); N = 6561, K = 1600, y = 1/81 (seen).
+R = C1 read/first - 1, ppm, certified, and the ratio:
+  (0,1/4):   R729 11199.09 (half width 3e-5)  R6561 [142.875,144.224]   ratio [77.651,78.384]
+  (0,1/2):   R729 15651.92                    R6561 [199.083,200.520]   ratio [78.056,78.620]
+  (1/2,1/4): R729  7071.46                    R6561 [88.150,90.906]     ratio [77.788,80.221]
+  (1/2,1/2): R729  9606.21                    R6561 [119.642,122.660]   ratio [78.315,80.291]
+  The filed ratio_times_1000_lo values 77650, 78056, 77787, 78315 are these lower ends.
+benchmarks, exact at each point: a first-coefficient error alone gives a ratio of 9.66 to 10.02; a relative
+      remainder of order 1/N^2 alone gives 81; a 1/N^3 term in C1 itself alone gives 86.90 to 90.17 (first changes
+      by about 9% between the two N). The measured 77.65..80.29 sits below both second-order benchmarks.
+e, the first-coefficient error, from two N, in two conventions for "a 1/N^2 remainder":
+  absolute, read - first = e(first - law) + Z/N^3:
+      (0,1/4) [-0.1882,-0.1738]%  (0,1/2) [-0.2384,-0.2257]%  (1/2,1/4) [-0.1263,-0.0898]%  (1/2,1/2) [-0.1518,-0.1184]%
+  relative, R = e(first - law)/first + b/N^2 (the task's form):
+      (0,1/4) [-0.0645,-0.0499]%  (0,1/2) [-0.0654,-0.0525]%  (1/2,1/4) [-0.0482,-0.0113]%  (1/2,1/2) [-0.0456,-0.0117]%
+  the 1/N^2 coefficient of R: b = 5916..5924, 8274..8283, 3737..3753, 5081..5099 (relative form); in the absolute
+      form C1 = C0/N + C1corr/N^2 + Z/N^3 with Z = 299121..299526, 491101..491620, 71187..71493, 106249..106623,
+      Z/C0 = 5301..5308, 7235..7243, 3422..3437, 4571..4587.
+  The two forms differ only at the next order, and e moves by a factor of about 3 between them: two N bound
+      |e| <= 0.24% and do not separate e from the next order.
+third N (seen rows, delta = 0): the two-term fit through N = 729 and 6561 predicts kappa at N = 2187. Measured at
+      s' = sqrt(2187)/94 = 0.49750 it sits -2804 to -2983 ppm off that prediction (numerical error about 8 ppm; my
+      estimate of the s' offset, by secant from the neighbouring two-N fits, +64 ppm). At s = 1 (y = 1/47,
+      s' = 0.99501) it sits -4776 to -4903 ppm off. So the remainder carries a 1/N^3 part. With
+      kappa = e + Z'/N + W'/N^2 through N = 729, 2187, 6561, at (0,1/2): e in [-0.0249,-0.0052]% with the s' offset,
+      [-0.0297,-0.0100]% raw; Z' = -104.0; W' = 10210..10547. W'/N^2 is 1.95%, 0.22%, 0.024% of the first correction
+      at N = 729, 2187, 6561, against Z'/N of 14.2%, 4.7%, 1.6%. At (0,1), seen: e in [-0.0417,-0.0277]%.
+A1, the same split (s7): two-N e_A at the four points lies in [-0.136%,+0.003%]; at (0,1/2) the two-term prediction
+      of kappa_A at N = 2187 sits 1273 to 1713 ppm from the measured one (no s' offset applied), the same 1/N^3 part.
+reading: the first coefficient agrees with the read to within 0.24% from two N in either form, and to within 0.03%
+      at (0,1/2) with a third N. Zero sits within reach once a 1/N^4 part of the size the series shows is allowed,
+      about 100 ppm on e (CONJECTURE on that size).
+could still be wrong: N = 2187 sits at s' = 0.4975 and 0.9950, so the three-N solve carries my secant estimate of the
+      s offset (64 and 141 ppm). The N = 2187 rows are seen baseline rows at delta = 0 only. At delta = 1/2 no third N
+      is on file: CANNOT_SEE there. A run at N = 2187, delta = 1/2, y = 1/94 and 1/188 would settle it; not run, E=0.
+
+====================================================================
+F4  Task 3: the crude alternatives of SECTION 0, at the ten points.  MEASURED
+====================================================================
+ran:  s4_alternatives.py -> s4_alternatives.hbp, the forms exactly as written at 2026-11-05T19:20:35Z. ALT3 at leading
+      order and ALT4 at f = 0 both equal the law, checked to below 1e-60.
+points inside 1/1000, certified, of 10:      C1   A1   V2   all three
+  ALT1 N -> N-1                               0    0    3     0
+  ALT2 law x (1 - f_pred)                     0    7    0     0
+  ALT3 Bogoliubov state, n0 = N - n read-out  1    0    0     0     (C1 inside at (0,1/2): -623 ppm)
+  ALT4 depleted-condensate Bogoliubov         0    2    1     0     (A1 inside at (1/2,1/4) and (1/2,1/2))
+C1, read over alternative minus 1, ppm: ALT1 -8476..-20656; ALT2 -5080..-9713; ALT3 -4421..+7584 at its 9 misses;
+      ALT4 +1794..+23911.
+reading: no alternative sits within 1/1000 on C1, A1 and V2 together at any point, 0 of 40. The C1 clause rejects
+      each alternative at 9 or 10 of 10 points. The A1 clause alone would accept ALT2 at 7 of 10; the V2 clause
+      alone would accept ALT1 at 3 of 10. The discrimination comes from C1.
+could still be wrong: four alternatives are not every one a reviewer could write; F5 gives the band of rivals that
+      would read MET.
+
+====================================================================
+F5  What the clauses resolve: rival first corrections that would also read MET on the same rows.  MEASURED
+====================================================================
+ran:  s3_two_n.py (S3_RIVAL_BAND) and s5_term_bands.py -> s5_term_bands.hbp. A rival scales one term, or a whole
+      correction, of the row by lambda; every clause is re-read on the same filed intervals the way the filed reader
+      reads them (1/1000 certified on C1, A1, V2 at ten points; the 30x clause with |R| and e_N at four points).
+lambda for which every clause reads MET:
+      whole C1 correction [0.9711,1.0234]   whole A1 correction [0.9561,1.0718]
+      C10 [0.9678,1.0281]  C11 [0.8998,1.0407]  C12 [0.7503,1.1015]  w10 [0.9164,1.1165]  w11 [0.9078,1.1512]
+binding clauses: on C1 the 30x clause sets the lower end (alone it admits [0.9711,1.0252]) and the C1 clause the
+      upper (alone [0.9305,1.0234]); on A1 the V2 clause binds (the A1 clause alone admits [0.8694,1.1012]).
+per point: the C1 1/1000 clause alone admits a whole-correction scale of 0.891..1.081 at (0,1/4) and 0.872..1.107 at
+      (1/2,1/4); the 30x clause alone 0.963..1.033 at (0,1/4) and 0.971..1.025 at (1/2,1/4).
+C12, the s^4 term, carries 16.2% and 23.1% of the C1 correction at (1/4,1) and (-1/4,1), and 0.15% to 4.1% at the
+      other eight. The 30x clause admits C12 scaled anywhere in [-0.35,2.22], since its points have s <= 1/2, so the
+      test of C12 rests on the two s = 1 points.
+reading: the clauses as frozen tell the row's first correction from a rival off by more than -2.9%/+2.3% on its C1
+      part, -4.4%/+7.2% on its A1 part, and -25%/+10% on C12. The rows themselves (F3) resolve more than the clauses.
+
+====================================================================
+F6  Task 4: the law-alone control, and how deep in the 1/N region the points sit.  MEASURED
+====================================================================
+ran:  s2_coeff_and_control.py (first_minus_law_over_limit, S2_V2_LAW_ALONE)
+|first - law|/|first|, in units of the 1/1000 limit:
+             C1      A1      V2                     C1      A1      V2
+  (1/2,1/4)  8.492   4.345   0.216      (1/4,1)    17.713  7.330   2.945
+  (1/2,1/2) 10.140   4.837   0.437      (-1/4,1/4) 11.182  4.763   1.614
+  (0,1/4)   10.514   4.714   1.051      (-1/4,1/2) 13.636  5.533   2.504
+  (0,1/2)   12.711   5.379   1.900      (-1/4,1)   21.532  8.626   4.117
+  (1/4,1/4)  9.505   4.504   0.472      (1/4,1/2)  11.406  5.068   1.230
+reading: no point was nondiscriminating on C1 or A1 because every point sits 8.5 to 21.5 limits deep on C1 and 4.3 to
+      8.6 on A1. On V2 the corrections of A1^2 and of C1 nearly cancel, and the law alone sits inside 1/1000 of the
+      read at three blind points: (1/2,1/4) [-246.8,-234.3] ppm, (1/2,1/2) [+390.0,+398.5], (1/4,1/4) [+431.4,+440.0];
+      it straddles the limit at the touched (0,1/4), [+998.0,+1004.5]. The row's control reads C1 and A1, and the
+      reader follows the row. The README sentence "so every point discriminates" and the top-level README sentence
+      "The law alone sits outside 1/1000 at every point" read wider than the V2 values (HOLDS H1, H2).
+
+====================================================================
+F7  Task 5: the selection, t = 2, the tolerance, and the README read word by word.  MEASURED unless tagged
+====================================================================
+ran:  s8_readme_and_identity.py -> s8_readme_and_identity.hbp; greps of READ-GRID, COST-LOCAL-GRID, polariton/READ.hbp
+a. README table: 50 of 50 numbers equal READ-GRID, rounded. MEASURED.
+b. True at this head: largest C1 half width 1.388e-8 at (-1/4,1); V2 at 6382 ppm of margin at (1/2,1/4); law alone
+   8.33..20.60 times on C1, 4.29..8.43 on A1; remainder lower bounds 77.65..78.31; e6561 674..1509 ppb; expanding L
+   C1 off <= 3 e-18, A1 off <= 29 e-18; eps(K=1600) > eps(K=1200) at 8 of 10 (the two others: (1/4,1), (-1/4,1));
+   K = 1200 certified inside at 10 of 10; f_pred 0.0032676..0.0109901; cost 166..175 s, 274..347 s, 79 MB. MEASURED.
+c. V2's clause is a function of the other two: V2_read/V2_first - 1 = (1 + rA)^2/(1 + rC) - 1 to 1e-6 ppm at all
+   ten points, since both sides are A1^2/(2 C1). Three clauses per point carry two measurements. MEASURED_IS;
+   falsifier: one point where the identity fails on the filed rows; scope: K = 1600 rows at this head.
+d. The f clause reads the predicted f, a closed form, so the engine cannot move it (read_first_correction.py:
+   f_ok = v["f_predicted"] <= Fr(1, 50)). The signs clause reads signs the law already has: <A> = -2Ny(c1-1)/(1+d)
+   < 0 and <B> = |alpha|^2/2 > 0 in the Bogoliubov state. Both read MET for the law alone. MEASURED (source),
+   DERIVED (signs).
+e. The tolerance: the row set 1/1000 from the touched (0,1/2), whose read sits at 199.8 ppm (the row: near 2e-4)
+   with the law alone at -12355 ppm (the row: near 1e-2). The eight blind C1 remainders, 89.5..493.8 ppm, are 0.45 to
+   2.47 times the touched one. The limit is 2.0 to 11.2 times the measured C1 remainder, and 8.0 to 30.6 times on A1.
+   MEASURED.
+f. One time, t = 2: the c_k and gs_k of the first correction enter as ten numbers per observable, so the read tests
+   its time dependence at one time. NAMED (scope).
+g. The remainder clause's N = 729 side: three of its four N = 729 rows (delta = 0, y = 1/108; delta = 1/2, y = 1/108
+   and 1/54) are the N = 729 rows among the four contact C1 misses in polariton/READ.hbp, which the row says the
+   correction was derived after reading. The formula leaves R729 at 0.71% to 1.12% on those three (1.57% on the
+   fourth), so it was not fitted to them. MEASURED.
+h. "The remainder falls with N as 1/N^2" (README line 30): the ratio is measured at two N and sits below both 1/N^2
+   benchmarks, and a third N (F3) shows a 1/N^3 part. The sentence holds at leading order (HOLD H3, low).
+i. "Separate code on the same rows: the second seat's propagator meets all 20, with C1 within 122 x 10^-18 ...":
+   no filed row at this head carries these numbers; the hosted job's step "The frozen grid, once filed, reproduces
+   ..." prints them in its log. CANNOT_SEE from the worktree.
+j. The workflow step at 4725b81 is named "Checkout, on a pull request its merge with the base" (at 7f72d2c: "Checkout
+   exact head"). Whether "that head's hosted run passed" was a push run on 7f72d2c or a merge-ref run: CANNOT_SEE,
+   GitHub not queried.
+
+====================================================================
+WHAT SURVIVES, WHAT IS REFUTED, WHAT IS OPEN
+====================================================================
+survives (MEASURED, reproduced with no shared code): blind 8 of 8 and touched 2 of 2 met; C1, A1, V2 at most 493.8,
+  125.4, 242.9 ppm (absolute) off law + first; the law alone 8,332..20,596 ppm off on C1; remainder 77.65..78.31 in
+  lower bounds; every README number checked in F7 a and b. No crude alternative passes (F4).
+refuted (MEASURED): "so every point discriminates" and, at top level, "The law alone sits outside 1/1000 at every
+  point", on V2: 3 points inside, 1 straddling.
+narrowed (MEASURED): "falls with N as 1/N^2" holds at leading order, with a 1/N^3 part (F3).
+open: the clauses resolve the C1 correction to -2.9%/+2.3%, the A1 correction to -4.4%/+7.2%, C12 to -25%/+10% (F5);
+  a third N at delta = 1/2; an independent derivation of the first correction; the route numbers of README line 33.
+
+hbp sha256 (this folder):
+  s1  eb76b502ae4c2004d6702019eeb197e4334f77e5f2c3024e816785005ca09d70
+  s2  65b1327f4589a7e598477033473cc14245293d2ad0a961ce1b4ca890d6e47415
+  s3  5229d5c91561ddeab5843ae8952c91a8be978668e2e0a4b7631d44ecdea35d9d
+  s3b 20a091056fa083f74c1def094ec8aae4fb40a3470c3d0d4b0f8dea6ab301d933
+  s4  96fbc529f85b9d7ffd2434c9d4a0ea3b36a35c6ea4f10441490a58d82b679446
+  s5  1685fd1ab9e48538cfa21ad079804ddeb73c809554f256e7b9368af0a4eb3fa5
+  s6  07d489e09b702801150855d797d44960e5df24494704dc656dcf4c613f108d37
+  s7  f6d6eee0555bd58c33a496b67ea205341aafccb0723b49002c9c89312eef403f
+  s8  46f4c42b05159330049c67da96a635d2ca896c97646fdebf97b9a599c1a6942c

@@ -1,0 +1,35 @@
+HOLD H1 | file=polariton-first-correction/README.md | severity=low
+OLD<<<
+- **Separate code on the same rows:** the second seat's propagator meets all 20, with C₁ within 122 × 10⁻¹⁸, f and C₂ within 2 × 10⁻¹⁸, and A₁ within 8.9 × 10⁻¹³, the engine's read-out roots, inside its account. The route's Bessel tables meet exact series on 12 tables at 1 unit of 2⁻⁶², and norm(B), the spectral interval and the series tail hold on all 20 rows.
+>>>
+NEW<<<
+- **Separate code on the same rows:** the second seat's propagator meets all 20, with C₁ within 122 × 10⁻¹⁸, f and C₂ within 2 × 10⁻¹⁸, and A₁ within 8.9 × 10⁻¹³, the engine's read-out roots, inside its account. The route's Bessel tables meet exact series on 12 tables at 1 unit of 2⁻⁶², and norm(B), the spectral interval and the series tail hold on all 20 rows. Run locally at 19:05 and 19:09 UTC, `route-bessel-grid.hbp` sha256 `e6b04b3f7de48300da2348d05354f21000344b4ffc8e9c8a732ed6ef0f71363f` and `route-integrator-grid.hbp` sha256 `c5146fc653f362884fee98eb63ec7d602cc2fc9df345942b699f72c03e0b46ca`, and again in [hosted run 42091397290](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/42091397290) at this head, whose 20 propagator rows and Bessel rows are the local rows byte for byte. OPEN: the two files go beside the receipt, since a hosted log is kept for a limited time.
+>>>
+REASON: MEASURED: git ls-tree at 4725b81 holds no route grid file; the numbers match C:/tmp/qnn-fc-out/grid/route-*.hbp exactly (C1 122, f 2, C2 1, A1 885924 e-18; 12 tables at 1 unit; 20/20 PASS), and hosted run 42091397290 (success 19:42:47Z) prints the same 20 propagator rows and Bessel rows byte for byte; no repo file at this head holds them.
+
+HOLD H2 | file=polariton-first-correction/README.md | severity=low
+OLD<<<
+The numerical error at N = 6561 is 6.7 × 10⁻⁷ to 1.5 × 10⁻⁶ of first, under the residual and under the gap.
+>>>
+NEW<<<
+The numerical error at N = 6561 is 6.7 × 10⁻⁷ to 1.5 × 10⁻⁶ of first, and at N = 729 it is 2.6 × 10⁻¹¹ to 5.5 × 10⁻¹¹ of first, which the read prints as `e729_ppb=0`, its floor in parts per billion. At both N it sits under the residual and under the gap.
+>>>
+REASON: MEASURED (MY-READ.hbp e729_ppt_ceil=28,26,55,53): the row's clause covers both N; the README states N = 6561 only and the read prints the N = 729 bound floored to 0.
+
+HOLD H3 | file=polariton-first-correction/README.md | severity=low
+OLD<<<
+The largest half width is 1.4 × 10⁻⁸ on C₁,
+>>>
+NEW<<<
+The largest half width on C₁ is 1.4 × 10⁻⁸ at K = 1600 and 1.5 × 10⁻⁸ at K = 1200,
+>>>
+REASON: MEASURED from RECEIPT-GRID.hbp: max C1_err_e18 = 13878849978 at K = 1600 and 15028962539 at K = 1200; the sentence follows one that names both K.
+
+HOLD H4 | file=polariton-first-correction/README.md | severity=low
+OLD<<<
+on 8 points no lane has run and 2 the second seat touched, reported apart.
+>>>
+NEW<<<
+on 8 points no lane has run and 2 the second seat touched, reported apart. Before the grid, the source review built the Hamiltonian block at all 20 grid runs in the engine's `rows` and `bessel` modes, from 15:57 to 16:09 UTC; those modes print c, E, norm(B) and the Bessel tables, and the observables at those points were first printed by the grid run ([F5 and F7](reviews/opus55-source-2d77636/independent/FINDINGS.txt)).
+>>>
+REASON: MEASURED: fc-review-independent-20261105/out/t2_grid_bessel.hbp (15:57:42Z) and t2c_rows_grid.hbp (16:09:45Z) hold 16 GRID_E and 16 ROWS_GRID rows at blind points, disclosed in the filed review's F5 and F7; no observable at a blind point found before 19:02:49Z.

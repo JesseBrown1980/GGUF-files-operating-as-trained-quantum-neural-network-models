@@ -1,0 +1,180 @@
+FINDINGS, opus55 reread lane, attack on the first read of POLARITON_FIRST_CORRECTION
+Lane folder: C:/tmp/opus55/fc-read-attack-reread-20261105/
+Head checked: git -C C:/tmp/qnn-fc-read-wt rev-parse HEAD = 4725b8124d1ef19d2e22844534e3abf39543fb30 (MEASURED, about 19:15 UTC Nov 5).
+Vantage: seat=opus55 (second seat for ACER-CLAUDE-FABLE5), host=acer, Windows 11 + WSL Ubuntu (kernel 6.18.33.2), python 3.13.14
+(Windows) and 3.12.3 (WSL), rustc 1.81.0 msvc, gh read-only. Worktree read only; everything written here. No model run at delta = +-3/5.
+Engine processes of mine: one at a time, one K = 1200 run.
+
+======================================================================
+F1. ITEM 1: law and first correction at the ten points, from the row's text and from F5's text
+======================================================================
+Ran: my_forms.py + eval_points.py, output MY-FORMS.hbp (202 rows).
+Code: my own tokenizer and recursive-descent parser. Values are held in Q(r), r = gamma t, r^2 = (1 - delta^2) t^2, as pairs of
+rational intervals. cosh(b r) = sum (b^2 r^2)^m/(2m)! and sinh(b r) = b r sum (b^2 r^2)^m/(2m+1)!, each summed until the first
+omitted term is below 2^-656; the tail is bounded by term/(1 - ratio) and added to the interval, and every endpoint is rounded
+outward to a multiple of 2^-640. sinh1^2 is taken as r^2 S(r^2)^2, where the reader uses (cosh 2 gamma t - 1)/2, so the route differs.
+No code from read_first_correction.py; synthetic/forms_mine.py was never opened.
+
+F1a. Transcription, line 48 against F5. DERIVED by exact polynomial algebra; MEASURED by the run.
+  w10, w11, C10, C11, C12 of line 48 each have the shape (numerator)/D3|D4|D5 with F5's denominator. As polynomials in d,
+  c_1..c_4, gs_1, gs_2 the numerators have 16, 17, 14, 23 and 25 monomials, and the difference with F5's numerators has 0
+  monomials on all five (TRANSCRIPTION rows).
+  w0, C0, A1_first, C1_first, C1_law and A1_law agree exactly at 40 of 40 random rational points, with every symbol independent,
+  so the identities hold as rational functions (TRANSCRIPTION_TOP). Line 39's law (POLARITON_QUENCH_CONVERSION) against line 48's
+  C1_law and A1_law: also 40 of 40. Line 39's A1 law carries no outer abs; it equals line 48's 2|y||w0| wherever cosh(gamma t) >= 1.
+F1b. Values at N = 6561, t = 2, y = s/81: floor of 10^18 times each enclosure endpoint, lo = hi on every value. MEASURED.
+  (delta,s)     C1_first           A1_first            V2_first            C1_law             A1_law              f_pred (line 39)
+  (1/2,1/4)  3143643672389569  15689651883244526   39152843304006152   3170341466640254  15757839013793647   0.003267612077836511
+  (1/2,1/2)  3507238816544135  31363943570266146  140238091520686173   3542805702217210  31515678027587294   0.003931888147002238
+  (0,1/4)    8511529834596556  33941158316181857   67673041758111008   8601025482388883  34101181371402857   0.004405763300982722
+  (0,1/2)   10215507274851768  67837458815330094  225241913823040310  10345361338776853  68202362742805715   0.005593682908541548
+  (1/4,1/4)  5880467979548195  24966999663114089   53001825224276793   5936367189091612  25079452683589843   0.004060785750273379
+  (1/4,1/2)  6802247562530553  49905975369447394  183072312105716814   6879835609454245  50158905367179686   0.004999387569818712
+  (1/4,1)   10468281129517270  99587759084648521  473703449343614246  10653709290904776 100317810734359372   0.008753794848000046
+  (-1/4,1/4)10130100948389628  41600930869972251   85420543095541800  10243378063435144  41799087805983071   0.004200558849586361
+  (-1/4,1/2)12691059585438645  83138128687524855  272315656353627596  12864123675553568  83598175611966143   0.005558479967070643
+  (-1/4,1)  22854974630007745 165766392955692521  601149147579074662  23347106124027265 167196351223932286   0.010990164437007768
+  C1_first at N = 729, y = s/27: (1/2,1/4) 26370551865456766, (1/2,1/2) 29004333580435833, (0,1/4) 70160081870321463,
+  (0,1/2) 82590072871059799.
+  Tail bound: at most 102 terms, 32 series per point, largest tail bound below 2^-639, every enclosure narrower than 2^-632.
+  The values from F5's text overlap line 48's on all 168 compared; 0 rows have F5_overlaps=0 or line39_overlaps=0.
+  At N = 729, C1_first 0.070160, 0.026371 and 0.029004 at (0,1/4), (1/2,1/4) and (1/2,1/2) equal F5's printed "law+first"
+  (contact/FINDINGS.txt, the 4 C1 misses).
+  Against READ-GRID.hbp: every first_e18 (30), law_e18 (20) and predicted_f_ppb (10) equals mine digit for digit (F2).
+  Could still be wrong: this checks the row's text and its transcription from F5. F5's derivation itself (the first-order Heisenberg
+  expansion at fixed s) is not re-derived here; the frozen read is its test.
+
+======================================================================
+F2. ITEM 2: every FC_READ, FC_CONTROL, FC_CERT row recomputed from RECEIPT-GRID.hbp and RECEIPT-BASELINE.hbp alone
+======================================================================
+Ran: my_read.py (MY-READ.hbp, 119 rows), then compare_read.py (COMPARE-READ.hbp).
+Result, MEASURED: 117 filed rows compared (64 FC_READ, 20 FC_CONTROL, 10 FC_CERT, 10 FC_AT_LOWER_K, 2 FC_READ_SET, 1 FC_CONTROL_SET,
+  10 C1_lower_bound_positive), 1,221 fields, 0 differing, 0 unmatched. That covers off over first, MET or MISS, certified_inside,
+  the law-alone state, the signs with their errors, predicted f, expanding L, FC_AT_LOWER_K and all four remainder rows
+  (R729, R6561, e729, e6561, gap, ratio_times_1000_lo 77650 / 78056 / 77787 / 78315).
+  Printing conventions the read declares and I matched: floors to 1e-18 and 1e-9; intervals widened by 2 units. The engine's
+  e18_s60 is floor for both signs (engine line 727), so the true value lies in [v - err - 1, v + err + 2] units; the 2-unit
+  widening is outward. DERIVED from the engine source.
+Stricter readings I computed alongside (MY-READ.hbp, MEASURED):
+  - tight intervals [v - err - 1, v + err + 2]: certified_inside unchanged on 30 of 30; the worst certified edge is 494,394 ppb
+    of first, at (-1/4, 1) on C1, against 1,000,000.
+  - control on the whole interval: outside 1/1000 on 20 of 20 (whole_tight_interval_outside=1), the same states.
+  - signs with <A>'s error taken as N/2 (A1_err + 1), from A1 = 2|<A>|/N (engine lines 879, 900; DERIVED), and <B>'s as
+    eps (N + 1)(1 + eps/2) + 2^-23 (norm(B) <= (N + 1)/2 is the reader's docstring, NAMED): MET on 10 of 10. The read's
+    N (A1_err + 2) is twice that, outward.
+  - remainder with tight intervals: the same lower ratios. Both reads sit above first at both N, so |.| resolves.
+  - numerical_over_margin: at most 6,382 ppm (V2 at (1/2,1/4)).
+  - expanding L: C1 off at most 3 units and A1 off at most 29 units of 1e-18; eps falls with K on 2 of 10, eps_tail on 2 of 10,
+    and the logged leak_max on 10 of 10, by 16.1 to 177,472 times. eps = eps_tail + eps_poly + eps_round to within 8 units on 10 of 10.
+  - V2 = A1^2/(2 C1) and C1 > 0 lower bound: 10 of 10.
+Refutation attempted, not found: no number in READ-GRID.hbp differs from what the receipts and the row give under its declared
+  conventions. Also MEASURED: all 50 cells of the stage README's table equal my values rounded half up (0.1 ppm, 1 ppm), and the
+  README's 494 / 125 / 243 ppm, 8,332 to 20,596 ppm, 77.65 to 78.31, 6.7e-7 to 1.5e-6, 0.0033 to 0.0110, 3e-18 / 29e-18, 8 of 10,
+  166 to 175 s, 274 to 347 s and 79 MB all match the files.
+Could still be wrong: the engine's own error fields (eps_tail, C1_err, A1_err, V2 bounds) are taken as printed. Their rigor is the
+  2d77636 review's and the baseline's (every_certificate_holds_the_full_value 24 of 24 at N = 729), not this lane's.
+
+======================================================================
+F3. ITEM 3: the row, clause by clause, against the read
+======================================================================
+Read as written (READ-GRID): grid N=6561, t=2, y=s/81 (row_is_the_row's_t_and_N 20/20, plan check); 10 points, 8 blind and
+  2 touched, reported apart; C1, A1, V2 within 1/1000 with each row's denominator (first_e18) and absolute error printed;
+  predicted f <= 1/50 by line 39's f = (2 J0 + n_coh)/N, which my evaluator reproduces 10/10 (max 0.01099); signs; the law-alone
+  control and its nondiscriminating rule (none); the remainder at the four named points with equal y sqrt(N), delta and t; eps
+  printed per point with eps = tail + poly + round; the V2 interval with a positive C1 lower bound (10/10).
+Read more loosely than the words (MEASURED; no verdict changes):
+  (a) block_control "expanding_L_converges_on_every_point" is read as the overlap of the K = 1200 and K = 1600 certified intervals.
+      Two valid enclosures of one number always overlap, so this test turns red only when a certificate is wrong. What shows
+      convergence is printed beside it: C1 off at most 3 and A1 off at most 29 units of 1e-18, against half widths of 2.5e9 to 1.5e10
+      units. Under "the certificate shrinks with L" it would read MISS on 8 of 10 (eps rises); the README says so.
+  (b) The control reads the midpoint; the whole interval gives the same 20 of 20.
+  (c) "below the gap to the 30x threshold" compares e6561 with r729 - 30 r6561, the gap in N = 729 units. In N = 6561 units the gap
+      is (r729 - 30 r6561)/30 = 146,186 to 321,928 ppb against e6561 = 674 to 1,509 ppb: MET either way, by at least 106 times (146,186 / 1,378 at (1/2, 1/4)).
+  (d) "its numerical error at both N": e729 is printed as e729_ppb=0, the floor of 26 to 55 parts per trillion (my ceil print);
+      the decision uses exact fractions, so only the print is inward. The README states N = 6561 only (hold H2).
+  (e) The block_control half "agrees with the receipt's N=729 rows within 10^-5 relative" is read in READ-BASELINE.hbp
+      (agrees_with_the_full_space_receipt PASS, 204 values). C1, A1 and V2 at t = 2: worst 589 ppb relative. Over all 204 values
+      (baseline_relative.py, my code): 8 exceed 1e-5 relative, all C2 at t = 1, values 3.2e-6 to 6.3e-5, each within one 1e-9 print
+      step of the old receipt (largest off 8.34e-10). The read's tolerance adds that print step, which the words do not name.
+Left to other gates (READ-GRID does not re-read them): outward norms in the observable bound, leaking shells L-1 and L, no
+  charge sector, exchange parity, the Duhamel tail bound itself. They were read by the 2d77636 review (filed) and by the hosted
+  route/certificate steps. "integer only, Rust 1.81, clippy -D warnings": hosted fmt + clippy + build passed at 7f72d2c (run
+  42084476668) and at 4725b81 (run 42091397290); float_used=0 on 20/20 rows; 0 f32/f64 words in the engine source.
+Stricter than the words: the signs are read with certified errors, and MET on C1, A1, V2 also requires certified_inside. The row's
+  "combined numerical and block error smaller than each margin" asks for the second.
+
+======================================================================
+F4. ITEM 4: prediction first, as history
+======================================================================
+From git (commit times are self-reported, NAMED) with server-side bounds (GitHub merge commits and Actions run times, MEASURED by gh):
+  5792654  12:43:49 UTC  line 48 added (git show: 1 added POLARITON_FIRST_CORRECTION line; ce44be7 has 0). On GitHub by 15:02:41:
+           merge 4693097, committer GitHub, has 5792654 as parent. PREDICTION.hbp, READ.hbp and RECEIPT.hbp are unchanged from
+           5792654 to head (0 diff lines). The plan's row_sha256 3b1e0477... = sha256 of line 48 with its LF.
+  f303c35  15:25:23  engine, reader, route, plan with the 20 grid rows, controls [skip ci]. The 20 grid rows are byte-identical at
+           f303c35, 2d77636, e106d63, 7f72d2c and 4725b81 (sha16 5899bfd716edb6f9).
+  2d77636  15:35:18  baseline receipt and read; push CI created 15:35:17Z; first-correction PR run passed 15:35:21-15:40:40Z.
+  e106d63  18:27:23  the review applied: engine, reader, plan amendment, baseline re-filed; its first-correction run failed in 21 s
+           (18:27:26-18:27:47Z), cause not read.
+  7f72d2c  18:27:55  SHA256SUMS pins only (diff over e106d63); first-correction run 42084476668 created 18:27:55Z, passed 18:39:53Z.
+           8d98adc, merged by GitHub as e2aaffe at 18:31:19 UTC, names 7f72d2c and says "No grid point has run".
+  grid     /c/tmp/qnn-fc-out changed at 18:41:11Z (grid/ created); RECEIPT-GRID.hbp and COST 19:02:49Z; READ-GRID-FIRST.hbp 19:03:06Z.
+  34ac13c  19:10:27  receipt and read filed; 4725b81 19:10:46 README. Filed binary d9718bbe... mtime 18:14:09Z.
+Search for a run at a blind point before 18:41 UTC (N = 6561, delta in {1/2, 1/4, -1/4}, y = s/81), three independent ways:
+  - Field scan (scan_blind.py), any engine version's rows: the 7f72d2c tree (734 text files) has 16 exact hits, all FC_RUN plan rows.
+    The three fc-review lanes (5,904 files) have 7,920 exact hits, in synthetic reads, synthetic receipts, plan copies, forms
+    comparisons, and the engine's rows/bessel outputs (below). The four local worktrees (1,753 files) have 4,004: the author's
+    synthetic battery at 18:15-18:16Z, plan copies, and the grid itself at 19:02:49Z and later.
+  - Markers (check_synthetic.py): of the engine-format rows at N = 6561 and a blind delta, 2,570 carry synthetic=1 and 16 sit under a
+    SYNTHETIC_NOT_A_READ|no_model_ran first line, with 0 unmarked, in the lanes and the 7f72d2c tree. In the worktrees, 1,285 are
+    marked, and the 32 unmarked are the two copies of RECEIPT-GRID.hbp (19:02:49Z, 19:10:25Z).
+  - Digits (search_digits.py), since this engine is deterministic: 183 values of 15 or more digits from the 20 grid rows. 0 files
+    hold any of them among 8,913 in the lanes, the 7f72d2c tree and seven earlier polariton lanes. Positive control: hits on my
+    run5 copy and on READ-GRID.hbp. In the worktrees, only the grid outputs at 19:02:49Z and later hold them.
+  - The independent review lane ran the engine's rows and bessel modes at all 20 grid runs (t2_grid_bessel.hbp 15:57:42Z,
+    t2c_rows_grid.hbp 16:09:45Z, t5b_floor.hbp 16:05:48Z). Those modes print c, E, norm(B), Bessel tables and floors, which the
+    filed review states as F5 and F7 (reviews/opus55-source-2d77636/independent/FINDINGS.txt), at grid points before the grid.
+    NEAR rows: earlier receipts carry N = 6561 quench rows at delta = 1/2 with y = 0 (s = 0), and the second seat's limit table carries
+    (1/2, s=2, t=1) and (0, 1/2, t=2), the last being the touched point. None is a blind (delta, s).
+  Verdict: no observable at a blind point found before 18:41 UTC in those roots (MEASURED within the named roots); blind holds.
+  Hold H4 states the rows/bessel exposure beside the README's "no lane has run".
+Could still be wrong: other disks, other machines (liris), deleted files and expired logs are CANNOT_SEE. mtimes are local
+  filesystem times. The digit search catches only this engine version; the field scan catches others only in these roots.
+
+======================================================================
+F5. ITEM 5: byte for byte
+======================================================================
+Reader at this head on the filed receipts (run5r/), MEASURED:
+  - WSL Ubuntu, python 3.12.3: raw output identical to READ-GRID.hbp, sha256 ae2522617c75c934fd7abc39e0452427ee574d594b276a9d5f49a31f680fe32f.
+  - Windows, python 3.13.14, stdout redirected: 26,334 bytes with 162 CR, differing from byte 118. With CR removed it is identical
+    (same sha256). Text-mode stdout on Windows writes CRLF; ".gitattributes: * text eol=lf" stores LF. The author's first copy
+    C:/tmp/qnn-fc-out/grid/READ-GRID-FIRST.hbp (19:03:06Z) has 0 CR and the filed sha256.
+  - Hosted, run 42091397290 at 4725b81 (pull request merge with base), success 19:42:47Z: the grid step re-ran 20 engine rows (STAGE_DONE
+    runs=20), then cmp grid.hbp RECEIPT-GRID.hbp and cmp read-grid.hbp READ-GRID.hbp under set -euo pipefail, in a passed step.
+Engine at 7f72d2c through run_stage.py, one K = 1200 row (delta = -1/4, y = 1/81, the largest offsets), MEASURED:
+  - git archive 7f72d2c -> src-7f72d2c/, cargo +1.81.0 build --release (7.8 s), CARGO_TARGET_DIR in this folder.
+  - run_stage.py with a one-row plan, parallel 1: 129.27 s, peak working set 46,800 kB; the row equals RECEIPT-GRID.hbp's row byte for
+    byte (sha256 a1dd0090fbfa7bc58ccecbe0a7d4b310ccb0584d78db10bda6edf32bc754e926).
+  - Binary: mine d1cbdc72...5319, filed d9718bbe...7902 (found at C:/tmp/qnn-fc-target/release/, mtime 18:14:09Z). Both are 286,720
+    bytes; 23 bytes differ, all in the COFF TimeDateStamp (2), three debug-directory TimeDateStamps (6) and the CodeView GUID (15).
+    0 differ in .text, .rdata, .data, .pdata or .reloc (pe_diff.py, PE-DIFF.hbp). Both embed only src\bin\polariton_first_correction.rs.
+    So the filed binary's code is the 7f72d2c build's. My first guess, embedded paths, was refuted by this run.
+Route on the grid: the stage README's numbers match the local route files exactly. Hosted run 42091397290 prints the same 20 propagator
+  rows and Bessel rows byte for byte. No repo file at 4725b81 holds them (hold H1).
+
+======================================================================
+F6. Other
+======================================================================
+- Task text "4725b81 adds only the filed grid, the read and README text": 7f72d2c..4725b81 also brings, through merge 64e198c,
+  adaf3e7's step rename in .github/workflows/polariton.yml and 77addcf's root-README scope line. Engine, plan, reader, route,
+  run_stage, PREDICTION and RECEIPT-BASELINE: 0 diff. MEASURED.
+- SHA256SUMS at head: 16 of 16 pins match the files.
+- The filed review's line 2 ("No grid point was run by any engine in this lane") sits beside its own F7 (rows mode at every grid run,
+  "No dynamics"). Read together, "run" there means dynamics. It is a filed record, left as is; H4 puts the fact in the stage README.
+
+======================================================================
+F7. CANNOT_SEE / not checked
+======================================================================
+- That the read "was run once": no log of attempts exists to read.
+- F5's derivation and the engine's certificate rigor: taken from their own lanes, not re-derived here.
+- Runs outside the searched roots (other disks, other hosts, deleted outputs), and GitHub push events (Actions createdAt used instead).
+- The K = 1600 rows locally (hosted reproduced all 20); clippy locally (the owning gate, hosted fmt/clippy/build, passed).
