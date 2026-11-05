@@ -56,4 +56,4 @@ A 103-qubit arbitrary pure state has `2^103` complex amplitudes; the HTTP-0 `3^1
 
 Result semantics: exact gate list + full amplitude/probability check ⇒ PASS within that circuit's scope; incomplete circuit or unsupported gate ⇒ explicit NOT_RUN/REJECTED. Keep existing QNN version FAIL and OPEN receipts intact.
 
-**Update, same day:** times 3 to 100 of the 24-qubit sample ran in [the whole-circuit integer engine](FULL-Q24-INTEGER-20261104.md), so this audit's prefix now has its full circuit beside it. The comparison with Google's simulator is OPEN there.
+**Update, same day:** times 3 to 100 of the 24-qubit sample ran in [the whole-circuit integer engine](FULL-Q24-INTEGER-20261104.md), so this audit's prefix now has its full circuit beside it. Its comparison with Google's simulator [passes](QSIM-OFFICIAL-REFERENCE-20261104.md), 128 of 128 parts within 10⁻⁶.
