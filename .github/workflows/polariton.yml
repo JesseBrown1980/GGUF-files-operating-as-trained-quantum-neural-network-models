@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
-      - name: Checkout exact head
+      - name: Checkout, on a pull request its merge with the base
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Rust 1.81 and lints
         run: rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
