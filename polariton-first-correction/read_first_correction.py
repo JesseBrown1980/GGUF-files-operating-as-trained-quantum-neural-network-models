@@ -269,6 +269,7 @@ def against_old_receipt(rows, old, label, relative=Fr(1, 100000)):
     """Each row that has a partner in the full-space engine's receipt: C1, <A>, <B>, f, C2, jbar within 10^-5 relative, with the receipt's ppb rounding beside it."""
     read = bad = 0
     worst = Fr(0)
+    worst_frozen = Fr(0)
     for r in rows:
         partner = old.get((r.n, r.delta, r.y, r.t))
         # A small block at N = 729 answers to the full space in the sweep's own check, against its certificate.
@@ -284,7 +285,13 @@ def against_old_receipt(rows, old, label, relative=Fr(1, 100000)):
             if off > tolerance:
                 bad += 1
                 say("FC_RECEIPT_OFF|N=%d|K=%d|delta=%s|y=%s|t=%d|name=%s|mine_e18=%d|receipt_ppb=%d" % (r.n, r.k, r.delta, r.y, r.t, name, mine, theirs))
-    check("agrees_with_the_full_space_receipt_%s" % label, read > 0 and bad == 0, "values=%d|off=%d|worst_relative_ppb=%d|limit_relative_ppb=10000" % (read, bad, ppb(worst)))
+        # The row's own three observables, at the row's t. V^2 from the receipt is A1^2/(2 C1), with A1 = 2|A|/N.
+        if r.t == 2 and r.k == r.n:
+            their_c1 = Fr(int(partner["C1_ppb"]), 10 ** 9)
+            their_a1 = 2 * abs(Fr(int(partner["A_ppb"]), 10 ** 9)) / r.n
+            their_v2 = their_a1 * their_a1 / (2 * their_c1)
+            worst_frozen = max(worst_frozen, abs(Fr(r.C1, E18) / their_c1 - 1), abs(Fr(r.A1, E18) / their_a1 - 1), abs(Fr(r.V2, E18) / their_v2 - 1))
+    check("agrees_with_the_full_space_receipt_%s" % label, read > 0 and bad == 0 and worst_frozen <= relative, "values=%d|off=%d|worst_C1_A1_V2_at_t=2_relative_ppb=%d|limit_relative_ppb=10000|worst_over_every_value_read_ppb=%d" % (read, bad, ppb(worst_frozen), ppb(worst)))
 
 
 def sweep_checks(rows):
