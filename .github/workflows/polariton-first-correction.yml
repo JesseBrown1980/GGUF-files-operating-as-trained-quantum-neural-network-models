@@ -6,12 +6,26 @@ on:
       - "src/bin/polariton_first_correction.rs"
       - "polariton-first-correction/**"
       - ".github/workflows/polariton-first-correction.yml"
+      - "polariton/PREDICTION.hbp"
+      - "polariton/RECEIPT.hbp"
+      - "polariton/second-seat/recheck-ce44be7/contact/chebdrv.py"
+      - "polariton/second-seat/recheck-ce44be7/contact/cheb/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
   push:
     branches: [main]
     paths:
       - "src/bin/polariton_first_correction.rs"
       - "polariton-first-correction/**"
       - ".github/workflows/polariton-first-correction.yml"
+      - "polariton/PREDICTION.hbp"
+      - "polariton/RECEIPT.hbp"
+      - "polariton/second-seat/recheck-ce44be7/contact/chebdrv.py"
+      - "polariton/second-seat/recheck-ce44be7/contact/cheb/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
 permissions:
   contents: read
 jobs:
@@ -38,6 +52,8 @@ jobs:
           grep -q 'row_sha256=3b1e0477a98624b619d12f82775666d88f8d2c14671b453a1198bedd9d50d549' polariton-first-correction/PLAN.hbp
           cd polariton-first-correction
           sha256sum --strict -c --quiet SHA256SUMS
+          cd reviews/opus55-source-2d77636
+          sha256sum --strict -c --quiet SHA256SUMS
       - name: The route builds the Hamiltonian in the full Fock space and meets the engine's rows, parity, bandwidth and interval
         run: python3 -I -X utf8 polariton-first-correction/route_first_correction.py rows target/release/polariton_first_correction
       - name: The baseline reproduces byte for byte, and its read is the one on file
@@ -51,6 +67,8 @@ jobs:
           cmp read-baseline.hbp $D/READ-BASELINE.hbp
       - name: The route's big-integer Bessel series meet the engine's tables on the baseline
         run: python3 -I -X utf8 polariton-first-correction/route_first_correction.py bessel target/release/polariton_first_correction polariton-first-correction/RECEIPT-BASELINE.hbp
+      - name: The reader's grid mode, on synthetic receipts built from the closed forms, reads each scenario as the row asks. No engine and no model run in this step
+        run: python3 -I -X utf8 polariton-first-correction/synthetic/synth_reader.py polariton-first-correction/read_first_correction.py "$RUNNER_TEMP/synth"
       - name: The real engine passes the controls' checks, and each sabotage fails a named one
         run: |
           set -euo pipefail
@@ -66,6 +84,19 @@ jobs:
             grep -E '^FC_READ_DONE' sab-read.hbp
             cmp <(grep -E '^FC_READ_DONE' sab-read.hbp) <(grep -E "^FC_CONTROL_EXPECT\|sabotage=$name\|" $D/CONTROLS.hbp | cut -d'|' -f3-)
           done
+      - name: The second seat's propagator meets the engine on the baseline's rows and on the crosscheck rows, and the certificate is walked on small blocks, before the grid
+        run: |
+          set -euo pipefail
+          D=polariton-first-correction
+          E=target/release/polariton_first_correction
+          python3 -I -X utf8 $D/run_stage.py $E $D/PLAN.hbp crosscheck crosscheck.hbp crosscheck-cost.hbp 4
+          cat real.hbp crosscheck.hbp > real-and-crosscheck.hbp
+          python3 -I -X utf8 $D/read_first_correction.py control polariton/RECEIPT.hbp real-and-crosscheck.hbp > /dev/null
+          CARGO_TARGET_DIR="$RUNNER_TEMP/cheb" cargo +1.81.0 build --release --manifest-path polariton/second-seat/recheck-ce44be7/contact/cheb/Cargo.toml
+          mkdir -p "$RUNNER_TEMP/tables"
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" $D/RECEIPT-BASELINE.hbp 4
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" crosscheck.hbp 4
+          python3 -I -X utf8 $D/route_first_correction.py certificate $E
       - name: The frozen grid, once filed, reproduces byte for byte, reads as on file, and meets the second seat's propagator
         run: |
           set -euo pipefail
@@ -83,5 +114,4 @@ jobs:
           python3 -I -X utf8 $D/route_first_correction.py bessel $E grid.hbp
           CARGO_TARGET_DIR="$RUNNER_TEMP/cheb" cargo +1.81.0 build --release --manifest-path polariton/second-seat/recheck-ce44be7/contact/cheb/Cargo.toml
           mkdir -p "$RUNNER_TEMP/tables"
-          grep -E '\|K=1200\|' grid.hbp > grid-1200.hbp
-          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" grid-1200.hbp 4
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" grid.hbp 4

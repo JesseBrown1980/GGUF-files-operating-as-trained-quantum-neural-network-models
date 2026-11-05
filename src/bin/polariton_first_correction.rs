@@ -465,7 +465,8 @@ fn bessel(num: i128, den: i128) -> Vec<i128> {
     while out.len() > 1 && *out.last().unwrap() == 0 {
         out.pop();
     }
-    // The sum rule J_0^2 + 2 Sum J_k^2 = 1 within 2^-54.
+    // The sum rule J_0^2 + 2 Sum J_k^2 = 1, asserted within 2^-54 + (table length) 2^-48: measured off at most 2^-51.8 over E = 1..3000 at W = 6.
+    // The route holds the table itself to the exact series.
     let mut rule = (out[0] >> 8) * (out[0] >> 8);
     for value in out.iter().skip(1) {
         rule += 2 * (*value >> 8) * (*value >> 8);
@@ -897,7 +898,7 @@ fn point(n: i128, k_in: usize, delta: Rat, y: Rat, times: &[i128], w: u32, sab: 
             let s_norm = 2 * (big + 1);
             let ds_s60 = (eps40 * (2 * r.s_up + ((s_norm * eps40) >> 8))) >> 12;
             let a1_err = (ds_s60 + read_s) / big + 1;
-            let v2 = (a1 * a1) / (2 * c1);
+            let v2 = if c1 > 0 { (a1 * a1) / (2 * c1) } else { 0 };
             let lo = (a1 - a1_err).max(0);
             let hi = a1 + a1_err;
             let c_lo = c1 - c1_err;
@@ -1032,6 +1033,7 @@ fn main() {
             let w: u32 = get(6).parse().expect("W");
             let mut times: Vec<i128> = get(7).split(',').map(|v| v.parse().expect("T")).collect();
             times.sort_unstable();
+            assert!(times[0] >= 1, "T starts at 1");
             let sab = match get(8).strip_prefix("sabotage=") {
                 Some(rest) => parse_sabotage(rest),
                 None => Sabotage::default(),

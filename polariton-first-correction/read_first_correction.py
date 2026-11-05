@@ -248,6 +248,57 @@ def plan_runs(path, stage):
 # ---- The checks every row owes.
 
 
+def plan_coverage(rows, runs, label):
+    """Each planned run has its one row at each planned time, and the receipt holds exactly those rows, so every clause of the row has its rows to read."""
+    planned = sorted((int(run["N"]), min(int(run["K"]), int(run["N"])), Fr(run["delta"]), Fr(run["y"]), int(t)) for run in runs for t in run["times"].split(","))
+    check("the_receipt_holds_each_planned_row_once_%s" % label, sorted(r.key() for r in rows) == planned, "planned=%d|rows=%d" % (len(planned), len(rows)))
+
+
+def printed_fields_checks(rows, label):
+    """What each row's fields owe the frozen row's text and one another, recomputed here: the model, eps as its parts, the conversions, V^2 and its interval by monotone division on C1 and A1, the series' degree, and the engine's leak log under its certificate."""
+    bad = {"model_fields": 0, "eps_is_its_parts": 0, "conversions": 0, "V2_is_its_definition": 0, "V2_interval_propagates": 0, "series_degree_and_reach": 0, "leak_log_under_the_certificate": 0}
+    unit = Fr(1, E18)
+    for r in rows:
+        f = r.raw
+        w = int(r.window.split("^-")[1])
+        windows = r.t << w
+        if Fr(f["x"]) != r.delta - 1 or f["u"] != "1" or f["float_used"] != "0" or r.dim != sum(q // 2 + 1 for q in range(r.k + 1)):
+            bad["model_fields"] += 1
+        if not 0 <= r.eps - (r.eps_tail + r.eps_poly + r.eps_round) <= 8:
+            bad["eps_is_its_parts"] += 1
+        if abs(Fr(r.A1, E18) - 2 * Fr(abs(r.A), E18) / r.n) > 4 * unit or abs(Fr(r.D2, E18) - 2 * Fr(abs(r.B), E18) / r.n) > 4 * unit or abs(Fr(r.f, E18) - 2 * Fr(r.jbar, E18) / r.n) > 4 * unit:
+            bad["conversions"] += 1
+        if r.C1 <= 0 or r.A1 <= 0:
+            bad["V2_is_its_definition"] += 1
+        else:
+            v2 = Fr(r.A1, E18) ** 2 / (2 * Fr(r.C1, E18))
+            if abs(Fr(r.V2, E18) - v2) > v2 * (Fr(4, r.A1) + Fr(2, r.C1)) + 4 * unit:
+                bad["V2_is_its_definition"] += 1
+        c_lo, c_hi = Fr(r.C1 - r.C1_err, E18), Fr(r.C1 + r.C1_err, E18)
+        a_lo, a_hi = max(Fr(r.A1 - r.A1_err, E18), Fr(0)), Fr(r.A1 + r.A1_err, E18)
+        if c_lo > 8 * unit:
+            want_lo, want_hi = a_lo * a_lo / (2 * c_hi), a_hi * a_hi / (2 * c_lo)
+            slack_lo = want_lo * (Fr(8, max(r.A1 - r.A1_err, 1)) + Fr(4, r.C1 + r.C1_err)) + 8 * unit
+            slack_hi = want_hi * (Fr(8, max(r.A1 + r.A1_err, 1)) + Fr(8, max(r.C1 - r.C1_err, 1))) + 8 * unit
+            if r.V2_hi < 0 or Fr(r.V2_lo, E18) > want_lo + slack_lo or Fr(r.V2_hi, E18) < want_hi - slack_hi or not r.V2_lo <= r.V2 <= r.V2_hi:
+                bad["V2_interval_propagates"] += 1
+        elif c_lo < -8 * unit and r.V2_hi >= 0:
+            bad["V2_interval_propagates"] += 1
+        if int(f["applies"]) != int(f["degree"]) * (2 * windows - 1) or int(f["reach"]) != 2 * int(f["degree"]) + 1:
+            bad["series_degree_and_reach"] += 1
+        leak_sum, leak_max, tail_max = int(f["leak_sum_e18"]), int(f["leak_max_e18"]), int(f["tail_max_e18"])
+        norm_b = Fr(int(f["norm_B_s20"]), 1 << 20)
+        if r.k < r.n:
+            one_window = norm_b * Fr(tail_max, E18) / (1 << w)
+            ceiling = r.t * norm_b * Fr(tail_max + r.eps_poly + r.eps_round + 2, E18) + Fr(2 * windows, 1 << 62) + 4 * unit
+            if r.eps_tail == 0 or Fr(leak_sum, E18) > Fr(r.eps_tail, E18) + Fr(4 * windows, 1 << 62) + 2 * unit or leak_sum <= windows // 4 or Fr(leak_max, E18) > norm_b * Fr(tail_max + 2, E18) + 2 * unit or Fr(r.eps_tail + 2, E18) < one_window or Fr(r.eps_tail, E18) > ceiling:
+                bad["leak_log_under_the_certificate"] += 1
+        elif r.eps_tail != 0 or norm_b != 0 or leak_max != 0:
+            bad["leak_log_under_the_certificate"] += 1
+    for name, count in bad.items():
+        check("%s_%s" % (name, label), count == 0, "rows=%d|off=%d" % (len(rows), count))
+
+
 def internal_checks(rows, label):
     """Norm and energy against the rounding accounting: each row, one name per set, and the worst margin printed."""
     bad_norm, bad_energy, nmax, emax = [], [], Fr(0), Fr(0)
@@ -262,7 +313,9 @@ def internal_checks(rows, label):
         emax = max(emax, energy / r.energy_bound())
     check("norm_inside_the_rounding_account_%s" % label, not bad_norm, "rows=%d|worst_read_over_bound_ppm=%d" % (len(rows), (nmax * 10 ** 6).__floor__()))
     check("energy_inside_the_rounding_account_%s" % label, not bad_energy, "rows=%d|worst_read_over_bound_ppm=%d" % (len(rows), (emax * 10 ** 6).__floor__()))
-    check("no_sabotage_named_in_%s" % label, all(not r.sabotage for r in rows) or label.startswith("control"))
+    names = {r.sabotage for r in rows}
+    check("no_sabotage_named_in_%s" % label, len(names) == 1 if label.startswith("control") else names == {""})
+    printed_fields_checks(rows, label)
 
 
 def against_old_receipt(rows, old, label, relative=Fr(1, 100000)):
@@ -348,8 +401,11 @@ def anchor_checks(rows):
     check("anchor_K=800_does_not_certify", 800 in seen and not inside(seen[800]))
     check("anchor_K=1000_certifies", 1000 in seen and inside(seen[1000]))
     check("anchor_K=1200_certifies", 1200 in seen and inside(seen[1200]))
+    check("anchor_K=1600_certifies", 1600 in seen and inside(seen[1600]))
     if 1200 in seen:
         for k in sorted(seen):
+            if k == 1200:
+                continue
             r = seen[k]
             top = seen[1200]
             ok = abs(r.C1 - top.C1) <= r.C1_err + top.C1_err + 4 and abs(r.A1 - top.A1) <= r.A1_err + top.A1_err + 4
@@ -360,23 +416,24 @@ def baseline(prediction, plan, receipt, old_path):
     rows = load_rows(receipt)
     runs = plan_runs(plan, "baseline")
     say("FC_READ_START|stage=baseline|seen_rows_only=1|rows=%d|planned_runs=%d" % (len(rows), len(runs)))
+    plan_coverage(rows, runs, "baseline")
     forms = Forms(open(prediction, encoding="utf-8", newline="").read().split("\n")[47])
-    # No baseline run sits on a blind point.
-    blind = set(forms.blind())
-    on_blind = 0
+    # No baseline run sits on a point of the frozen grid, blind or touched.
+    points = set(forms.grid())
+    on_grid = 0
     for run in runs:
         y = Fr(run["y"])
         n = int(run["N"])
-        if n == 6561 and (Fr(run["delta"]), y * 81) in blind:
-            on_blind += 1
-    check("no_baseline_run_on_a_blind_point", on_blind == 0)
+        if n == 6561 and (Fr(run["delta"]), y * 81) in points:
+            on_grid += 1
+    check("no_baseline_run_on_a_grid_point", on_grid == 0)
     internal_checks(rows, "baseline")
     against_old_receipt(rows, old_receipt_rows(old_path), "baseline")
     sweep_checks([r for r in rows if r.n == 729])
     anchor_checks(rows)
     # The observables at each seen point against law plus first, as a preview of the reader on seen data, kept apart from the frozen read.
     for r in rows:
-        if r.k == r.n or (r.n == 6561 and r.k == 1200) or (r.n == 2187):
+        if r.k == r.n or (r.n == 6561 and r.k >= 1200) or (r.n == 2187):
             if r.t != 2:
                 continue
             v = forms.values(r.n, r.delta, r.y, r.t)
@@ -394,7 +451,7 @@ def read_one(obs, interval, value, first, set_name, r):
     half = (interval[1] - interval[0]) / 2
     certified = interval[0] / first - 1 >= -LIMIT and interval[1] / first - 1 <= LIMIT
     say("FC_READ|set=%s|delta=%s|s=%s|N=%d|K=%d|obs=%s|read_e18=%d|first_e18=%d|abs_off_e18=%d|off_over_first_ppb=%d|limit_ppb=1000000|numerical_half_width_e18=%d|numerical_over_margin_ppm=%d|certified_inside=%d|result=%s" % (
-        set_name, r.delta, r.y * 81, r.n, r.k, obs, e18(value), e18(first), e18(abs(value - first)), ppb(off), e18(half), (half / margin * 10 ** 6).__floor__() if margin > 0 else -1, certified, "MET" if abs(off) <= LIMIT and certified else "MISS"))
+        set_name, r.delta, r.y * 81, r.n, r.k, obs, e18(value), e18(first), e18(abs(value - first)), ppb(off), e18(half), (half / abs(first) / margin * 10 ** 6).__floor__() if margin > 0 else -1, certified, "MET" if abs(off) <= LIMIT and certified else "MISS"))
     return abs(off) <= LIMIT and certified
 
 
@@ -402,6 +459,7 @@ def grid(prediction, plan, receipt_baseline, receipt_grid):
     forms = Forms(open(prediction, encoding="utf-8", newline="").read().split("\n")[47])
     rows = load_rows(receipt_grid)
     base = load_rows(receipt_baseline)
+    internal_checks(base, "baseline_file")
     points = forms.grid()
     blind, touched = forms.blind(), forms.touched()
     check("the_row_names_10_points_8_blind_2_touched", len(points) == 10 and len(blind) == 8 and len(touched) == 2 and sorted(blind + touched) == sorted(points))
@@ -409,6 +467,7 @@ def grid(prediction, plan, receipt_baseline, receipt_grid):
     planned = {(Fr(run["delta"]), Fr(run["y"]) * 81) for run in runs}
     check("the_plan_runs_the_row's_points", planned == set(points) and all(int(run["N"]) == 6561 for run in runs))
     say("FC_READ_START|stage=grid|rows=%d|planned_runs=%d" % (len(rows), len(runs)))
+    plan_coverage(rows, runs, "grid")
     internal_checks(rows, "grid")
     by_point = {}
     for r in rows:
@@ -438,7 +497,7 @@ def grid(prediction, plan, receipt_baseline, receipt_grid):
             say("FC_CONTROL|set=%s|delta=%s|s=%s|obs=%s|read_e18=%d|law_e18=%d|off_over_law_ppb=%d|limit_ppb=1000000|state=%s" % (set_name, delta, s, obs, e18(value), e18(law), ppb(off), state))
         # Predicted f, and the signs with their certified errors.
         f_ok = v["f_predicted"] <= Fr(1, 50)
-        say("FC_READ|set=%s|delta=%s|s=%s|obs=f|predicted_f_ppb=%d|read_f_e18=%d|limit=1/50|result=%s" % (set_name, delta, s, ppb(v["f_predicted"]), r.f, "MET" if f_ok else "MISS"))
+        say("FC_READ|set=%s|delta=%s|s=%s|obs=f|predicted_f_ppb=%d|read_f_e18=%d|read_f_at_most_1/50=%d|limit=1/50|result=%s" % (set_name, delta, s, ppb(v["f_predicted"]), r.f, Fr(r.f, E18) <= Fr(1, 50), "MET" if f_ok else "MISS"))
         good = f_ok and good
         a_err = Fr(r.A1_err + 2, E18) * 6561
         b_err = r.b_err()
@@ -455,7 +514,8 @@ def grid(prediction, plan, receipt_baseline, receipt_grid):
             low = ks[k]
             c_off = abs(low.C1 - r.C1)
             a_off = abs(low.A1 - r.A1)
-            ok = c_off <= low.C1_err + r.C1_err + 4 and a_off <= low.A1_err + r.A1_err + 4 and low.eps >= r.eps
+            # The result reads the overlap of the two certified intervals, the row's expanding_L. eps_low and eps_high print beside it; eps carries a rounding floor that grows with K (1.30e-7 at K = 1600, 2.00e-7 at K = 2000 at N = 6561, delta = 0, y = 1/81).
+            ok = c_off <= low.C1_err + r.C1_err + 4 and a_off <= low.A1_err + r.A1_err + 4
             say("FC_READ|set=%s|delta=%s|s=%s|obs=expanding_L|K_low=%d|K_high=%d|C1_off_e18=%d|C1_err_low_e18=%d|A1_off_e18=%d|A1_err_low_e18=%d|eps_low_e18=%d|eps_high_e18=%d|result=%s" % (set_name, delta, s, k, top, c_off, low.C1_err, a_off, low.A1_err, low.eps, r.eps, "MET" if ok else "MISS"))
             good = ok and good
             lv = forms.values(6561, delta, s / 81, 2)

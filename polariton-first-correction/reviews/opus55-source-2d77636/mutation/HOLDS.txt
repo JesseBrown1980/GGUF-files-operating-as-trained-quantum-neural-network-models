@@ -1,0 +1,684 @@
+HOLD H1 | file=polariton-first-correction/route_first_correction.py | severity=high
+OLD<<<
+    limit = 10 ** 4  # 10^-14, in units of 10^-18
+    for r in rows:
+        n, k, t = int(r["N"]), int(r["K"]), int(r["t"])
+        delta, y = Fr(r["delta"]), Fr(r["y"])
+        got = chebdrv.run_chain(n, k, 1, delta, y, [Fr(t)], threads=int(threads), moments=0)
+        them = chebdrv.parse_row(got[0])
+        c_off = abs(int(them["C1_e18"]) - int(r["C1_e18"]))
+        a_off = abs(int(them["A1_e18"]) - int(r["A1_e18"]))
+        check("second_seat_propagator_N=%d_K=%d_delta=%s_y=%s_t=%d" % (n, k, delta, y, t), c_off <= limit and a_off <= limit, "C1_off_e18=%d|A1_off_e18=%d|limit_e18=%d" % (c_off, a_off, limit))
+>>>
+NEW<<<
+    # The engine's read-out carries its square roots at 2^-24, and read_x, read_s in its point() account for them on C1 and A1. The propagator reads at 2^-62.
+    # Measured at 2d77636 on the baseline's rows: C1 off 15507 and A1 off 6118833 at worst in 10^-18, and at N = 6561, K = 1200: C1 off 5, A1 off 53459.
+    for r in rows:
+        n, k, t = int(r["N"]), int(r["K"]), int(r["t"])
+        delta, y = Fr(r["delta"]), Fr(r["y"])
+        got = chebdrv.run_chain(n, k, 1, delta, y, [Fr(t)], threads=int(threads), moments=0)
+        them = chebdrv.parse_row(got[0])
+        dim = int(r["even_states"])
+        c_limit = 10 ** 18 * 2 * ((1 << 38) + (dim * n * n >> 10) + 1) // ((1 << 60) * n * (n - 1)) + 10 ** 4
+        a_limit = 10 ** 18 * ((1 << 39) + (dim * n >> 10) + 1) // ((1 << 60) * n) + 10 ** 4
+        c_off = abs(int(them["C1_e18"]) - int(r["C1_e18"]))
+        a_off = abs(int(them["A1_e18"]) - int(r["A1_e18"]))
+        d_off = abs(int(them["D2_e18"]) - int(r["D2_e18"]))
+        f_off = abs(int(them["f_e18"]) - int(r["f_e18"]))
+        c2_off = abs(int(them["C2_e18"]) - int(r["C2_e18"]))
+        sign_off = abs(Fr(int(r["A_e18"]), n) - int(them["A_e18"])) + abs(Fr(int(r["B_e18"]), n) - int(them["B_e18"]))
+        v2_inside = int(r["V2_hi_e18"]) < 0 or int(r["V2_lo_e18"]) - 2 <= int(them["V2_e18"]) <= int(r["V2_hi_e18"]) + 2
+        ok = c_off <= c_limit and a_off <= a_limit and d_off <= a_limit and f_off <= 10 ** 4 and c2_off <= 10 ** 4 and sign_off <= a_limit and v2_inside
+        check("second_seat_propagator_N=%d_K=%d_delta=%s_y=%s_t=%d" % (n, k, delta, y, t), ok, "C1_off_e18=%d|C1_limit_e18=%d|A1_off_e18=%d|A1_limit_e18=%d|D2_off_e18=%d|f_off_e18=%d|C2_off_e18=%d|A_and_B_over_N_off_e18=%d|V2_inside_interval=%d" % (c_off, c_limit, a_off, a_limit, d_off, f_off, c2_off, sign_off.__ceil__(), v2_inside))
+>>>
+REASON: as filed this mode reads FAIL with the real engine on a seen row: N=6561,K=1200,delta=0,y=1/81 gives C1_off=5, A1_off=53459 against limit 10000, exit 1 (run/route_integrator_seen.out); it would turn the grid's last step red for a read-out rounding the certificate already accounts for; the new limits use that account and read every observable the propagator prints, and all 62 filed rows pass them (run/patched-integrator-baseline.out).
+HOLD H2 | file=polariton-first-correction/read_first_correction.py | severity=high
+OLD<<<
+    say("FC_READ_START|stage=grid|rows=%d|planned_runs=%d" % (len(rows), len(runs)))
+>>>
+NEW<<<
+    say("FC_READ_START|stage=grid|rows=%d|planned_runs=%d" % (len(rows), len(runs)))
+    plan_coverage(rows, runs, "grid")
+>>>
+REASON: synthetic receipts: with every K=1600 row gone the reader exits 0 with blind=8/8, touched=2/2 and 0 expanding_L rows; a duplicate bad row is overwritten and reads MET; an extra row is unread (synth/SYNTH-READ.hbp S09, S10, S11), while the row asks expanding L on every point and the plan asks the verdict at the larger K.
+HOLD H3 | file=polariton-first-correction/read_first_correction.py | severity=high
+OLD<<<
+    say("FC_READ_START|stage=baseline|seen_rows_only=1|rows=%d|planned_runs=%d" % (len(rows), len(runs)))
+>>>
+NEW<<<
+    say("FC_READ_START|stage=baseline|seen_rows_only=1|rows=%d|planned_runs=%d" % (len(rows), len(runs)))
+    plan_coverage(rows, runs, "baseline")
+>>>
+REASON: the same coverage check on the baseline's own read, which prints rows=62 and planned_runs=40 and compares neither.
+HOLD H4 | file=polariton-first-correction/read_first_correction.py | severity=high
+OLD<<<
+# ---- The checks every row owes.
+>>>
+NEW<<<
+# ---- The checks every row owes.
+
+
+def plan_coverage(rows, runs, label):
+    """Each planned run has its one row at each planned time, and the receipt holds exactly those rows, so every clause of the row has its rows to read."""
+    planned = sorted((int(run["N"]), min(int(run["K"]), int(run["N"])), Fr(run["delta"]), Fr(run["y"]), int(t)) for run in runs for t in run["times"].split(","))
+    check("the_receipt_holds_each_planned_row_once_%s" % label, sorted(r.key() for r in rows) == planned, "planned=%d|rows=%d" % (len(planned), len(rows)))
+
+
+def printed_fields_checks(rows, label):
+    """What each row's fields owe the frozen row's text and one another, recomputed here: the model, eps as its parts, the conversions, V^2 and its interval by monotone division on C1 and A1, the series' degree, and the engine's leak log under its certificate."""
+    bad = {"model_fields": 0, "eps_is_its_parts": 0, "conversions": 0, "V2_is_its_definition": 0, "V2_interval_propagates": 0, "series_degree_and_reach": 0, "leak_log_under_the_certificate": 0}
+    unit = Fr(1, E18)
+    for r in rows:
+        f = r.raw
+        w = int(r.window.split("^-")[1])
+        windows = r.t << w
+        if Fr(f["x"]) != r.delta - 1 or f["u"] != "1" or f["float_used"] != "0" or r.dim != sum(q // 2 + 1 for q in range(r.k + 1)):
+            bad["model_fields"] += 1
+        if not 0 <= r.eps - (r.eps_tail + r.eps_poly + r.eps_round) <= 8:
+            bad["eps_is_its_parts"] += 1
+        if abs(Fr(r.A1, E18) - 2 * Fr(abs(r.A), E18) / r.n) > 4 * unit or abs(Fr(r.D2, E18) - 2 * Fr(abs(r.B), E18) / r.n) > 4 * unit or abs(Fr(r.f, E18) - 2 * Fr(r.jbar, E18) / r.n) > 4 * unit:
+            bad["conversions"] += 1
+        if r.C1 <= 0 or r.A1 <= 0:
+            bad["V2_is_its_definition"] += 1
+        else:
+            v2 = Fr(r.A1, E18) ** 2 / (2 * Fr(r.C1, E18))
+            if abs(Fr(r.V2, E18) - v2) > v2 * (Fr(4, r.A1) + Fr(2, r.C1)) + 4 * unit:
+                bad["V2_is_its_definition"] += 1
+        c_lo, c_hi = Fr(r.C1 - r.C1_err, E18), Fr(r.C1 + r.C1_err, E18)
+        a_lo, a_hi = max(Fr(r.A1 - r.A1_err, E18), Fr(0)), Fr(r.A1 + r.A1_err, E18)
+        if c_lo > 8 * unit:
+            want_lo, want_hi = a_lo * a_lo / (2 * c_hi), a_hi * a_hi / (2 * c_lo)
+            slack_lo = want_lo * (Fr(8, max(r.A1 - r.A1_err, 1)) + Fr(4, r.C1 + r.C1_err)) + 8 * unit
+            slack_hi = want_hi * (Fr(8, max(r.A1 + r.A1_err, 1)) + Fr(8, max(r.C1 - r.C1_err, 1))) + 8 * unit
+            if r.V2_hi < 0 or Fr(r.V2_lo, E18) > want_lo + slack_lo or Fr(r.V2_hi, E18) < want_hi - slack_hi or not r.V2_lo <= r.V2 <= r.V2_hi:
+                bad["V2_interval_propagates"] += 1
+        elif c_lo < -8 * unit and r.V2_hi >= 0:
+            bad["V2_interval_propagates"] += 1
+        if int(f["applies"]) != int(f["degree"]) * (2 * windows - 1) or int(f["reach"]) != 2 * int(f["degree"]) + 1:
+            bad["series_degree_and_reach"] += 1
+        leak_sum, leak_max, tail_max = int(f["leak_sum_e18"]), int(f["leak_max_e18"]), int(f["tail_max_e18"])
+        norm_b = Fr(int(f["norm_B_s20"]), 1 << 20)
+        if r.k < r.n:
+            one_window = norm_b * Fr(tail_max, E18) / (1 << w)
+            ceiling = r.t * norm_b * Fr(tail_max + r.eps_poly + r.eps_round + 2, E18) + Fr(2 * windows, 1 << 62) + 4 * unit
+            if r.eps_tail == 0 or Fr(leak_sum, E18) > Fr(r.eps_tail, E18) + Fr(4 * windows, 1 << 62) + 2 * unit or leak_sum <= windows // 4 or Fr(leak_max, E18) > norm_b * Fr(tail_max + 2, E18) + 2 * unit or Fr(r.eps_tail + 2, E18) < one_window or Fr(r.eps_tail, E18) > ceiling:
+                bad["leak_log_under_the_certificate"] += 1
+        elif r.eps_tail != 0 or norm_b != 0 or leak_max != 0:
+            bad["leak_log_under_the_certificate"] += 1
+    for name, count in bad.items():
+        check("%s_%s" % (name, label), count == 0, "rows=%d|off=%d" % (len(rows), count))
+>>>
+REASON: synthetic S12 to S16 and mutants: no result of the reader depends on x, u, eps, D2, the V2 interval against C1_err and A1_err, degree, reach, applies, norm_B, tail_max or leak_*, so a wrong x, a dropped eps part, V2 off its definition by 2.7e-3 and a printed-narrow V2 interval all read MET; these checks recompute each from the row's own fields, 0 off on all 62 filed baseline rows, and leak_sum under eps_tail leaves 5.3x at K=128 to 24.7x at N=6561,K=1200, where every_certificate_holds leaves 3465x or more.
+HOLD H5 | file=polariton-first-correction/read_first_correction.py | severity=medium
+OLD<<<
+    check("no_sabotage_named_in_%s" % label, all(not r.sabotage for r in rows) or label.startswith("control"))
+>>>
+NEW<<<
+    names = {r.sabotage for r in rows}
+    check("no_sabotage_named_in_%s" % label, len(names) == 1 if label.startswith("control") else names == {""})
+    printed_fields_checks(rows, label)
+>>>
+REASON: this check holds on every control receipt whatever it carries, since its second clause is true for the label; on a control the rows now name one sabotage or none, and printed_fields_checks runs on every stage.
+HOLD H6 | file=polariton-first-correction/read_first_correction.py | severity=low
+OLD<<<
+    say("FC_READ|set=%s|delta=%s|s=%s|N=%d|K=%d|obs=%s|read_e18=%d|first_e18=%d|abs_off_e18=%d|off_over_first_ppb=%d|limit_ppb=1000000|numerical_half_width_e18=%d|numerical_over_margin_ppm=%d|certified_inside=%d|result=%s" % (
+        set_name, r.delta, r.y * 81, r.n, r.k, obs, e18(value), e18(first), e18(abs(value - first)), ppb(off), e18(half), (half / margin * 10 ** 6).__floor__() if margin > 0 else -1, certified, "MET" if abs(off) <= LIMIT and certified else "MISS"))
+>>>
+NEW<<<
+    say("FC_READ|set=%s|delta=%s|s=%s|N=%d|K=%d|obs=%s|read_e18=%d|first_e18=%d|abs_off_e18=%d|off_over_first_ppb=%d|limit_ppb=1000000|numerical_half_width_e18=%d|numerical_over_margin_ppm=%d|certified_inside=%d|result=%s" % (
+        set_name, r.delta, r.y * 81, r.n, r.k, obs, e18(value), e18(first), e18(abs(value - first)), ppb(off), e18(half), (half / abs(first) / margin * 10 ** 6).__floor__() if margin > 0 else -1, certified, "MET" if abs(off) <= LIMIT and certified else "MISS"))
+>>>
+REASON: synthetic S03: half width is absolute and the margin is relative to first, so the field printed 1571 ppm where half width over first over margin is 500000 ppm; the MET or MISS is unaffected, and the row's "smaller than each observable's margin" is what this field reports.
+HOLD H7 | file=polariton-first-correction/read_first_correction.py | severity=low
+OLD<<<
+        for k in sorted(seen):
+            r = seen[k]
+            top = seen[1200]
+>>>
+NEW<<<
+        for k in sorted(seen):
+            if k == 1200:
+                continue
+            r = seen[k]
+            top = seen[1200]
+>>>
+REASON: READ-BASELINE.hbp row anchor_K=1200_interval_holds_K=1200 compares a row with itself, C1_off_e18=0, A1_off_e18=0, and holds whatever the engine does.
+HOLD H8 | file=polariton-first-correction/read_first_correction.py | severity=low
+OLD<<<
+    base = load_rows(receipt_baseline)
+>>>
+NEW<<<
+    base = load_rows(receipt_baseline)
+    internal_checks(base, "baseline_file")
+>>>
+REASON: synthetic S17: a baseline file naming a sabotage reads rc=0, since grid mode takes the remainder's N=729 rows without reading them.
+HOLD H9 | file=polariton-first-correction/run_stage.py | severity=low
+OLD<<<
+    cost = [line.rstrip("|json=0") + "|peak_working_set_kB=%s|json=0" % peak for line in err.decode("utf-8").splitlines() if line.startswith("POLARITON_FIRST_CORRECTION_COST|")]
+>>>
+NEW<<<
+    cost = [line.removesuffix("|json=0") + "|peak_working_set_kB=%s|json=0" % peak for line in err.decode("utf-8").splitlines() if line.startswith("POLARITON_FIRST_CORRECTION_COST|")]
+>>>
+REASON: rstrip takes characters, not a suffix: a Linux row "peak_rss_kB=12340|json=0" comes out "peak_rss_kB=1234", measured with python -c on that text; the hosted cost file carries the row's peak memory.
+HOLD H10 | file=polariton-first-correction/route_first_correction.py | severity=low
+OLD<<<
+        (8, 8, "1/4", "1/3"),
+        (8, 5, "-1/4", "1/5"),
+>>>
+NEW<<<
+        (8, 8, "3/4", "1/3"),
+        (8, 5, "-3/4", "1/5"),
+>>>
+REASON: the rows mode builds H at delta = 1/4 and -1/4 at small N on every push (elements only, no state evolved); 3/4, -3/4 and -1/2 pass the same checks (run/out/real/route-rows.hbp), and the grid's deltas stay out of every run.
+HOLD H11 | file=polariton-first-correction/route_first_correction.py | severity=low
+OLD<<<
+        (30, 12, "-1/4", "1/81"),
+        (40, 9, "1/4", "1/324"),
+>>>
+NEW<<<
+        (30, 12, "-1/2", "1/81"),
+        (40, 9, "3/4", "1/324"),
+>>>
+REASON: the other two rows-mode cases at the grid's deltas, as H10.
+HOLD H12 | file=polariton-first-correction/route_first_correction.py | severity=medium
+OLD<<<
+        exact = exact_bessel_scaled(z, len(table) - 1)
+        off = max(abs(a - b) for a, b in zip(table, exact))
+>>>
+NEW<<<
+        # Past the table's end its absent entries read as 0, up to two past the series' degree.
+        exact = exact_bessel_scaled(z, max(len(table) - 1, degree + 2))
+        off = max(abs((table[i] if i < len(table) else 0) - exact[i]) for i in range(len(exact)))
+>>>
+REASON: zip stops at the table's end, so a table cut short passes: mutants K08 and K09 drop entries under 2^8 and 2^20 units and read bessel_table PASS on all 11 tables, while this comparison reads both FAIL (run/SHARP.hbp, SC10).
+HOLD H13 | file=polariton-first-correction/route_first_correction.py | severity=medium
+OLD<<<
+        # What the table drops, past its last entry, stays under the unit, so the series at this degree is the certified one.
+        rho = majorant(degree, z)
+        windows = (int(r["t"])) << w
+        printed_poly = Fr(int(r["eps_poly_e18"]), 10 ** 18)
+        check("series_tail_covered_E=%d_W=%d" % (big_e, w), rho * windows <= printed_poly + Fr(1, 10 ** 18) + Fr(windows, 1 << 60), "rho_times_windows_e24=%d|printed_eps_poly_e18=%d" % ((rho * windows * 10 ** 24).__floor__(), int(r["eps_poly_e18"])))
+    say("FC_ROUTE_BESSEL|tables=%d|worst_units_of_2^-62=%d" % (len(seen), worst))
+    finish("bessel")
+>>>
+NEW<<<
+    say("FC_ROUTE_BESSEL|tables=%d|worst_units_of_2^-62=%d" % (len(seen), worst))
+    route_certificate_parts(rows)
+    finish("bessel")
+>>>
+REASON: the slack of 4 units a window sits at the size of rho itself, 1 to 6 units on the baseline, so series_tail_covered holds with eps_poly printed 0: mutants T06 and T07 read PASS on all 11 tables with printed_eps_poly_e18=0 in T06; each row is now read, with 4 units of 10^-18 in place of that slack, and the 62 filed rows pass.
+HOLD H14 | file=polariton-first-correction/route_first_correction.py | severity=medium
+OLD<<<
+# ---- The Hamiltonian, built in the full Fock space with its own formulas.
+>>>
+NEW<<<
+def even_up(n, k, y, q, m):
+    """Upward elements of H from the even state (q, m), p = q - m, as (target, mul, under, den) of mul sqrt(under)/den, from the operators' definitions."""
+    p, n0 = q - m, n - q
+    out = []
+    if q + 2 <= k and n0 >= 2:
+        out.append(((q + 2, m + 1), 1, (p + 1) * (m + 1) * n0 * (n0 - 1), n))
+    if q + 1 <= k and n0 >= 1:
+        out.append(((q + 1, m), abs(y.numerator), (p + 1) * n0 * (2 if p == m else 1), y.denominator))
+        if p > m:
+            out.append(((q + 1, m + 1), abs(y.numerator), (m + 1) * n0 * (2 if p == m + 1 else 1), y.denominator))
+    return out
+
+
+def block_gershgorin(n, k, delta, y, scale):
+    """Gershgorin's interval of this block at this scale, outward."""
+    index, size = {}, 0
+    for q in range(k + 1):
+        for m in range(q // 2 + 1):
+            index[(q, m)] = size
+            size += 1
+    sums = [0] * size
+    for q in range(k + 1):
+        for m in range(q // 2 + 1):
+            for target, mul, under, den in even_up(n, k, y, q, m):
+                v = ((isqrt(under * scale * scale) + 1) * mul) // den + 1
+                sums[index[(q, m)]] += v
+                sums[index[target]] += v
+    lo, hi = None, None
+    for q in range(k + 1):
+        for m in range(q // 2 + 1):
+            d = ((delta - 1) * q + Fr((n - q) * q + (q - m) * m, n)) * scale
+            s = sums[index[(q, m)]]
+            lo = d.__floor__() - s if lo is None else min(lo, d.__floor__() - s)
+            hi = d.__ceil__() + s if hi is None else max(hi, d.__ceil__() + s)
+    return lo, hi
+
+
+def block_schur(n, k, y):
+    """The Schur test on the block's outgoing elements from shells K - 1 and K, at 2^20, outward, and the largest column's squared 2-norm, a lower bound on norm(B)^2."""
+    col_max, column_two, row = 0, Fr(0), {}
+    for q in (k - 1, k):
+        for m in range(q // 2 + 1):
+            col, two = 0, Fr(0)
+            for target, mul, under, den in even_up(n, k + 2, y, q, m):
+                if target[0] <= k:
+                    continue
+                v = ((isqrt(under << 40) + 1) * mul) // den + 1
+                col += v
+                two += Fr(mul * mul * under, den * den)
+                row[target] = row.get(target, 0) + v
+            col_max, column_two = max(col_max, col), max(column_two, two)
+    return isqrt(col_max * max(row.values())) + 1, column_two
+
+
+def route_certificate_parts(rows):
+    """What the certificate rests on, row by row, from the operators' definitions: the series' tail, the reach, norm(B) and the spectral interval on the row's own block."""
+    scale = 1 << 30
+    blocks = {}
+    tail_bad = reach_bad = norm_bad = interval_bad = 0
+    for r in rows:
+        n, k, t = int(r["N"]), int(r["K"]), int(r["t"])
+        delta, y = Fr(r["delta"]), Fr(r["y"])
+        w = int(r["window"].split("^-")[1])
+        degree, big_e, c = int(r["degree"]), int(r["E"]), int(r["c"])
+        windows = t << w
+        if majorant(degree, Fr(big_e, 1 << w)) * windows > Fr(int(r["eps_poly_e18"]), 10 ** 18) + Fr(4, 10 ** 18):
+            tail_bad += 1
+        if int(r["reach"]) != 2 * degree + 1:
+            reach_bad += 1
+        key = (n, k, delta, y)
+        if key not in blocks:
+            blocks[key] = block_gershgorin(n, k, delta, y, scale)
+        lo, hi = blocks[key]
+        if max(c * scale - lo, hi - c * scale) > big_e * scale:
+            interval_bad += 1
+        printed = int(r["norm_B_s20"])
+        if k < n:
+            schur, column_two = block_schur(n, k, y)
+            if abs(printed - schur) > 2 + schur // (1 << 18) or Fr(printed, 1 << 20) ** 2 < column_two:
+                norm_bad += 1
+        elif printed != 0:
+            norm_bad += 1
+    check("series_tail_covered_on_every_row", tail_bad == 0, "rows=%d|off=%d" % (len(rows), tail_bad))
+    check("reach_is_2_degree_plus_1_on_every_row", reach_bad == 0, "rows=%d|off=%d" % (len(rows), reach_bad))
+    check("norm_B_from_the_operators_on_every_row", norm_bad == 0, "rows=%d|off=%d" % (len(rows), norm_bad))
+    check("spectral_interval_on_every_row's_block", interval_bad == 0, "rows=%d|blocks=%d|off=%d" % (len(rows), len(blocks), interval_bad))
+
+
+# ---- The Hamiltonian, built in the full Fock space with its own formulas.
+>>>
+REASON: the route reads the spectral interval only at K <= 12 and norm(B) nowhere; mutants G08 (interval skips the top shell) and B01, B02, B05, B06, B07 pass every filed check; these read every receipt row's own block, 40 blocks on the baseline in about 85 s under load here, and pass on all 62 filed rows.
+HOLD H15 | file=polariton-first-correction/PLAN.hbp | severity=medium
+OLD<<<
+FC_RUN|stage=control|group=sabotage_base|N=729|K=128|delta=0|y=1/108|W=6|times=2|json=0
+>>>
+NEW<<<
+FC_RUN|stage=crosscheck|group=delta_off_the_receipt|N=729|K=256|delta=-1/2|y=1/54|W=6|times=2|json=0
+FC_RUN|stage=crosscheck|group=delta_off_the_receipt|N=729|K=729|delta=-1/2|y=1/54|W=6|times=2|json=0
+FC_RUN|stage=crosscheck|group=delta_off_the_receipt|N=729|K=256|delta=-3/4|y=1/54|W=6|times=2|json=0
+FC_RUN|stage=crosscheck|group=delta_off_the_receipt|N=729|K=729|delta=-3/4|y=1/54|W=6|times=2|json=0
+FC_RUN|stage=crosscheck|group=delta_off_the_receipt|N=729|K=256|delta=3/4|y=1/54|W=6|times=2|json=0
+FC_RUN|stage=crosscheck|group=delta_off_the_receipt|N=729|K=729|delta=3/4|y=1/54|W=6|times=2|json=0
+FC_RUN|stage=control|group=sabotage_base|N=729|K=128|delta=0|y=1/108|W=6|times=2|json=0
+>>>
+REASON: every baseline and control row sits at delta=0 or 1/2, while 3 of the 10 grid points sit at delta<0 and 3 at delta=1/4, where the old receipt has no partner; mutant S06 (x wrong at delta<0 in point only) passes every check before the grid; these rows put delta<0 and delta=3/4 under the propagator and the sweep before the grid.
+HOLD H16 | file=.github/workflows/polariton-first-correction.yml | severity=high
+OLD<<<
+      - name: The frozen grid, once filed, reproduces byte for byte, reads as on file, and meets the second seat's propagator
+>>>
+NEW<<<
+      - name: The second seat's propagator meets the engine on the baseline's rows and on the crosscheck rows, and the certificate is walked on small blocks, before the grid
+        run: |
+          set -euo pipefail
+          D=polariton-first-correction
+          E=target/release/polariton_first_correction
+          python3 -I -X utf8 $D/run_stage.py $E $D/PLAN.hbp crosscheck crosscheck.hbp crosscheck-cost.hbp 4
+          cat real.hbp crosscheck.hbp > real-and-crosscheck.hbp
+          python3 -I -X utf8 $D/read_first_correction.py control polariton/RECEIPT.hbp real-and-crosscheck.hbp > /dev/null
+          CARGO_TARGET_DIR="$RUNNER_TEMP/cheb" cargo +1.81.0 build --release --manifest-path polariton/second-seat/recheck-ce44be7/contact/cheb/Cargo.toml
+          mkdir -p "$RUNNER_TEMP/tables"
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" $D/RECEIPT-BASELINE.hbp 4
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" crosscheck.hbp 4
+          python3 -I -X utf8 $D/route_first_correction.py certificate $E
+      - name: The frozen grid, once filed, reproduces byte for byte, reads as on file, and meets the second seat's propagator
+>>>
+REASON: the only evolution by a separate code runs after the grid is read, on K=1200 rows; run on the 62 baseline rows it took about 3 minutes at one thread here and reads what no other check before the grid reads: mutants R04, R06, R17, W12 and S06 pass every filed check with reads off by 61700x, 261x, 5790x, 1.4x and 5e9x their own printed error, and each fails here (run/SHARP.hbp, SC9).
+HOLD H17 | file=polariton-first-correction/route_first_correction.py | severity=medium
+OLD<<<
+# ---- The second seat's propagator, on the same blocks.
+>>>
+NEW<<<
+# ---- The certificate recomputed from its own words on small blocks.
+
+CP = 180
+CERT_CASES = [(100, 40, "1/2", "1/20", 6, 2), (100, 40, "-1/2", "1/20", 6, 2), (100, 48, "0", "1/10", 6, 1), (40, 40, "1/2", "1/20", 6, 1)]
+
+
+def cert_block(n, k, x, y):
+    """PHP and the outgoing part of H on |a, b> with a + b <= k, by the operators' definitions, at 2^CP."""
+    basis = [(a, q - a) for q in range(k + 1) for a in range(q + 1)]
+    index = {s: i for i, s in enumerate(basis)}
+    rows, leaks, diag = [[] for _ in basis], [[] for _ in basis], []
+    for i, (a, b) in enumerate(basis):
+        n0 = n - a - b
+        d = x * (a + b) + Fr(n0 * (a + b) + a * b, n)
+        diag.append((d.numerator << CP) // d.denominator)
+        moves = []
+        if n0 >= 2:
+            moves.append(((a + 1, b + 1), Fr(1, n), (a + 1) * (b + 1) * n0 * (n0 - 1)))
+        if a >= 1 and b >= 1:
+            moves.append(((a - 1, b - 1), Fr(1, n), a * b * (n0 + 1) * (n0 + 2)))
+        if n0 >= 1:
+            moves.append(((a + 1, b), -y, (a + 1) * n0))
+            moves.append(((a, b + 1), -y, (b + 1) * n0))
+        if a >= 1:
+            moves.append(((a - 1, b), -y, a * (n0 + 1)))
+        if b >= 1:
+            moves.append(((a, b - 1), -y, b * (n0 + 1)))
+        for bra, coefficient, under in moves:
+            element = (coefficient.numerator * isqrt(under << (2 * CP))) // coefficient.denominator
+            if bra in index:
+                rows[i].append((index[bra], element))
+            else:
+                leaks[i].append((bra, element))
+    return basis, index, rows, leaks, diag
+
+
+def cert_apply(rows, diag, v):
+    out = [0] * len(v)
+    for i, value in enumerate(v):
+        if value:
+            out[i] += (diag[i] * value) >> CP
+            for t, element in rows[i]:
+                out[t] += (element * value) >> CP
+    return out
+
+
+def cert_window(rows, diag, re, im, w):
+    """exp(-i H 2^-w), its Taylor series, until the terms fall under 2^-(CP - 8)."""
+    tr, ti, sr, si, j = re[:], im[:], re[:], im[:], 0
+    while True:
+        j += 1
+        hr, hi = cert_apply(rows, diag, tr), cert_apply(rows, diag, ti)
+        tr = [(value >> w) // j for value in hi]
+        ti = [(-value >> w) // j for value in hr]
+        sr = [a + b for a, b in zip(sr, tr)]
+        si = [a + b for a, b in zip(si, ti)]
+        if max(max(abs(v) for v in tr), max(abs(v) for v in ti)) < 256:
+            return sr, si
+
+
+def cert_compare(name, mine, theirs, relative, absolute):
+    off = abs(Fr(theirs) - Fr(mine))
+    limit = Fr(relative) * abs(Fr(mine)) + Fr(absolute)
+    say("FC_ROUTE_CERT|name=%s|off_e24=%d|limit_e24=%d|result=%s" % (name, (off * 10 ** 24).__floor__(), (limit * 10 ** 24).__floor__(), "PASS" if off <= limit else "FAIL"))
+    return off <= limit
+
+
+def route_certificate(engine):
+    """The engine's row at a small block against the same certificate walked here: the state in the Fock space window by window, the tail, the leak, norm(B), the rounding account, epsilon, the reads and their errors."""
+    say("FC_ROUTE_START|mode=certificate|cases=%d" % len(CERT_CASES))
+    e18 = 10 ** 18
+    one = 1 << CP
+    for n, k, delta_text, y_text, w, t in CERT_CASES:
+        text = subprocess.run([engine, "point", str(n), str(k), delta_text, y_text, str(w), str(t)], capture_output=True, text=True, check=True).stdout
+        r = fields([line for line in text.splitlines() if line.startswith("POLARITON_FIRST_CORRECTION_READ|")][0])
+        delta, y = Fr(delta_text), Fr(y_text)
+        big_e, degree, err_units, reach = int(r["E"]), int(r["degree"]), int(r["elem_err_units"]), int(r["reach"])
+        z = Fr(big_e, 1 << w)
+        windows = t << w
+        mine_degree = 1
+        while majorant(mine_degree, z) > Fr(8, 1 << 62):
+            mine_degree += 1
+        table = exact_bessel_scaled(z, degree + 1)
+        weight = sum(((1 if j == 0 else 2) * abs(table[j]) >> 40) * (j * (j + 1) // 2 + 1) + 1 for j in range(degree + 1))
+        dim = sum(q // 2 + 1 for q in range(k + 1))
+        root = isqrt(dim) + 1
+        per_window = Fr(((weight >> 22) + 1) * root * 4 + root * 4 + ((big_e >> w) + 1) * 8 * err_units + (degree + 1) * 16, 1 << 62)
+        rho = Fr(int(r["eps_poly_e18"]), e18) / windows
+        norm_b = Fr(block_schur(n, k, y)[0], 1 << 20) if k < n else Fr(0)
+        basis, index, rows, leaks, diag = cert_block(n, k, delta - 1, y)
+        re, im = [0] * len(basis), [0] * len(basis)
+        re[0] = one
+        first_shell = k + 1 - reach
+        floor_states = sum(q // 2 + 1 for q in range(max(first_shell, 0), k + 1))
+        eps_tail = tail_max = leak_max = leak_sum = Fr(0)
+        for window in range(windows):
+            if reach > k:
+                tail = Fr(1)
+            else:
+                total = sum(re[i] * re[i] + im[i] * im[i] for i, s in enumerate(basis) if s[0] + s[1] >= first_shell)
+                tail = Fr(isqrt(total + (floor_states << (2 * CP - 84))), one) + Fr(1, 1 << 42)
+            tail_max = max(tail_max, tail)
+            rr, ri = {}, {}
+            for i, items in enumerate(leaks):
+                for bra, element in items:
+                    rr[bra] = rr.get(bra, 0) + ((element * re[i]) >> CP)
+                    ri[bra] = ri.get(bra, 0) + ((element * im[i]) >> CP)
+            lk = Fr(isqrt(sum(v * v for v in rr.values()) + sum(v * v for v in ri.values())), one)
+            leak_max = max(leak_max, lk)
+            leak_sum += lk / (1 << w)
+            eps_tail += norm_b * (tail + rho + window * (per_window + rho)) / (1 << w)
+            re, im = cert_window(rows, diag, re, im, w)
+        sums = dict(q=0, pm=0, n0q=0, xd=0, xu=0, xl=0, sa=0, sb=0, p=0, a=0, b=0)
+        for i, (a, b) in enumerate(basis):
+            weight_i = re[i] * re[i] + im[i] * im[i]
+            q, n0 = a + b, n - a - b
+            sums["q"] += q * weight_i
+            sums["pm"] += a * b * weight_i
+            sums["n0q"] += n0 * q * weight_i
+            sums["xd"] += (n0 * q) ** 2 * weight_i
+            sums["xu"] += (a + 1) * (b + 1) * n0 * max(n0 - 1, 0) * weight_i
+            sums["xl"] += a * b * (n0 + 1) * (n0 + 2) * weight_i
+            sums["sa"] += (a + 1) * n0 * weight_i
+            sums["sb"] += a * (n0 + 1) * weight_i
+            for name, target, under, ok in (("p", (a + 1, b + 1), (a + 1) * (b + 1) * n0 * (n0 - 1), n0 >= 2), ("a", (a + 1, b), (a + 1) * n0, n0 >= 1), ("a", (a, b + 1), (b + 1) * n0, n0 >= 1), ("b", (a - 1, b + 1), a * (b + 1), a >= 1)):
+                if ok and target in index:
+                    other = index[target]
+                    sums[name] += isqrt(under << (2 * CP)) * ((re[i] * re[other] + im[i] * im[other]) >> CP)
+        scale = one * one
+        c1 = 2 * (Fr(sums["n0q"], scale) + 2 * Fr(sums["p"], scale)) / (n * (n - 1))
+        a_read, b_read = Fr(sums["a"], scale), Fr(sums["b"], scale)
+        a1 = 2 * abs(a_read) / n
+        read_x = Fr((1 << 38) + (dim * n * n >> 10) + 1, 1 << 60)
+        read_s = Fr((1 << 39) + (dim * n >> 10) + 1, 1 << 60)
+        eps = sum(Fr(int(r[name + "_e18"]), e18) for name in ("eps_tail", "eps_poly", "eps_round"))
+        x_up = Fr(isqrt(sums["xd"]) + isqrt(sums["xu"]) + isqrt(sums["xl"]), one)
+        s_up = 2 * Fr(isqrt(sums["sa"]) + isqrt(sums["sb"]), one)
+        c1_err = 2 * (eps * (2 * x_up + ((n + 1) * (n + 1) + n) * eps) + read_x) / (n * (n - 1))
+        a1_err = (eps * (2 * s_up + 2 * (n + 1) * eps) + read_s) / n
+        unit = Fr(4, e18)
+        tol = Fr(1, 10 ** 6)
+        results = [
+            cert_compare("degree", mine_degree, degree, 0, 1),
+            cert_compare("reach", 2 * degree + 1, reach, 0, 0),
+            cert_compare("norm_B", norm_b, Fr(int(r["norm_B_s20"]), 1 << 20), Fr(1, 1 << 16), 0),
+            cert_compare("eps_poly", majorant(degree, z) * windows + Fr(windows, 1 << 62), Fr(int(r["eps_poly_e18"]), e18), 0, Fr(windows, 1 << 62) + unit),
+            cert_compare("eps_round", per_window * windows, Fr(int(r["eps_round_e18"]), e18), tol, unit),
+            cert_compare("eps_tail", eps_tail, Fr(int(r["eps_tail_e18"]), e18), tol, unit),
+            cert_compare("tail_max", tail_max, Fr(int(r["tail_max_e18"]), e18), tol, unit),
+            cert_compare("leak_max", leak_max, Fr(int(r["leak_max_e18"]), e18), tol, Fr(1, 1 << 40)),
+            cert_compare("leak_sum", leak_sum, Fr(int(r["leak_sum_e18"]), e18), tol, Fr(1, 1 << 40)),
+            cert_compare("eps", eps, Fr(int(r["eps_e18"]), e18), 0, 2 * unit),
+            cert_compare("C1", c1, Fr(int(r["C1_e18"]), e18), 0, 4 * read_x / (n * (n - 1))),
+            cert_compare("A1", a1, Fr(int(r["A1_e18"]), e18), 0, 2 * read_s / n),
+            cert_compare("V2", a1 * a1 / (2 * c1), Fr(int(r["V2_e18"]), e18), Fr(1, 10 ** 5), unit),
+            cert_compare("f", Fr(sums["q"], scale) / n, Fr(int(r["f_e18"]), e18), 0, Fr(1, 10 ** 12)),
+            cert_compare("C2", 2 * Fr(sums["pm"], scale) / (n * (n - 1)), Fr(int(r["C2_e18"]), e18), 0, Fr(1, 10 ** 12)),
+            cert_compare("A", a_read, Fr(int(r["A_e18"]), e18), 0, 2 * read_s),
+            cert_compare("B", b_read, Fr(int(r["B_e18"]), e18), 0, Fr(1, 1 << 20)),
+            cert_compare("C1_err", c1_err, Fr(int(r["C1_err_e18"]), e18), Fr(1, 100), unit),
+            cert_compare("A1_err", a1_err, Fr(int(r["A1_err_e18"]), e18), Fr(1, 100), unit),
+        ]
+        check("certificate_recomputed_N=%d_K=%d_delta=%s_y=%s_t=%d" % (n, k, delta, y, t), all(results), "names=%d" % len(results))
+    finish("certificate")
+
+
+# ---- The second seat's propagator, on the same blocks.
+>>>
+REASON: eps_tail, tail_norm, b_norm, the rounding account, C1_err and A1_err are read by no separate arithmetic, and B02 (norm(B) cut by 8), W01 (eps_tail a single window, C1_err x0.011) and X02 (C1_err cut by 16) pass every filed check with the reads unchanged; this mode walks the same certificate in big integers on blocks of N=100 and N=40, passes the real engine within 1e-6 and 1 percent (run/route_cert_real.out, run/patched-cert-real.out), and fails 48 of the 68 mutants that pass every filed check before the grid (run/CERT.hbp).
+HOLD H18 | file=polariton-first-correction/route_first_correction.py | severity=medium
+OLD<<<
+    elif mode == "integrator":
+        route_integrator(*sys.argv[2:7])
+>>>
+NEW<<<
+    elif mode == "integrator":
+        route_integrator(*sys.argv[2:7])
+    elif mode == "certificate":
+        route_certificate(sys.argv[2])
+>>>
+REASON: the mode H17 adds.
+HOLD H19 | file=polariton-first-correction/route_first_correction.py | severity=low
+OLD<<<
+#        route_first_correction.py integrator CHEBDRV_DIR CHEB_EXE TABLES RECEIPT THREADS   the second seat's separate propagator on the receipt's blocks
+>>>
+NEW<<<
+#        route_first_correction.py integrator CHEBDRV_DIR CHEB_EXE TABLES RECEIPT THREADS   the second seat's separate propagator on the receipt's blocks
+#        route_first_correction.py certificate ENGINE                    the certificate walked here on small blocks, against the engine's rows there
+>>>
+REASON: usage line for the mode H17 adds.
+HOLD H20 | file=polariton-first-correction/read_first_correction.py | severity=low
+OLD<<<
+    # No baseline run sits on a blind point.
+    blind = set(forms.blind())
+    on_blind = 0
+    for run in runs:
+        y = Fr(run["y"])
+        n = int(run["N"])
+        if n == 6561 and (Fr(run["delta"]), y * 81) in blind:
+            on_blind += 1
+    check("no_baseline_run_on_a_blind_point", on_blind == 0)
+>>>
+NEW<<<
+    # No baseline run sits on a point of the frozen grid, blind or touched.
+    points = set(forms.grid())
+    on_grid = 0
+    for run in runs:
+        y = Fr(run["y"])
+        n = int(run["N"])
+        if n == 6561 and (Fr(run["delta"]), y * 81) in points:
+            on_grid += 1
+    check("no_baseline_run_on_a_grid_point", on_grid == 0)
+>>>
+REASON: this check reads the plan only and holds whatever the engine does; it also passes a baseline run at the two touched points, (0,1/4) and (0,1/2), which the operator's order keeps unrun until the grid.
+HOLD H21 | file=polariton-first-correction/read_first_correction.py | severity=low
+OLD<<<
+        say("FC_READ|set=%s|delta=%s|s=%s|obs=f|predicted_f_ppb=%d|read_f_e18=%d|limit=1/50|result=%s" % (set_name, delta, s, ppb(v["f_predicted"]), r.f, "MET" if f_ok else "MISS"))
+>>>
+NEW<<<
+        say("FC_READ|set=%s|delta=%s|s=%s|obs=f|predicted_f_ppb=%d|read_f_e18=%d|read_f_at_most_1/50=%d|limit=1/50|result=%s" % (set_name, delta, s, ppb(v["f_predicted"]), r.f, Fr(r.f, E18) <= Fr(1, 50), "MET" if f_ok else "MISS"))
+>>>
+REASON: result reads the closed form alone (largest 0.010990 over the 10 points, forms/FORMS-COMPARE.hbp), so it holds whatever the engine does; the read f is then at least marked against the same 1/50, with the row's frozen result left as it stands.
+HOLD H22 | file=.github/workflows/polariton-first-correction.yml | severity=low
+OLD<<<
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/bin/polariton_first_correction.rs"
+>>>
+NEW<<<
+  pull_request:
+    branches: [main]
+    paths:
+      - "polariton/PREDICTION.hbp"
+      - "polariton/RECEIPT.hbp"
+      - "polariton/second-seat/recheck-ce44be7/contact/**"
+      - "src/bin/polariton_first_correction.rs"
+>>>
+REASON: the pin of line 48, the old receipt the agreement check reads, and the second seat's propagator sit outside this job's paths, so a change to them alone runs no check of this stage.
+HOLD H23 | file=.github/workflows/polariton-first-correction.yml | severity=low
+OLD<<<
+  push:
+    branches: [main]
+    paths:
+      - "src/bin/polariton_first_correction.rs"
+>>>
+NEW<<<
+  push:
+    branches: [main]
+    paths:
+      - "polariton/PREDICTION.hbp"
+      - "polariton/RECEIPT.hbp"
+      - "polariton/second-seat/recheck-ce44be7/contact/**"
+      - "src/bin/polariton_first_correction.rs"
+>>>
+REASON: the same paths on push, as H22.
+HOLD H24 | file=.github/workflows/polariton-first-correction.yml | severity=medium
+OLD<<<
+          grep -E '\|K=1200\|' grid.hbp > grid-1200.hbp
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" grid-1200.hbp 4
+>>>
+NEW<<<
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" grid.hbp 4
+>>>
+REASON: PLAN.hbp reads the verdict at the larger K, 1600, while this step puts only K=1200 under the second seat's propagator, so the row the verdict reads meets no separate code; the propagator at K=1200, N=6561 takes about 16 s at one thread here.
+HOLD H25 | file=polariton-first-correction/CONTROLS.hbp | severity=low
+OLD<<<
+FC_CONTROL_EXPECT|sabotage=leak_understated|FC_READ_DONE|stage=control|checks_failed=1|failed=every_certificate_holds_the_full_value|json=0
+>>>
+NEW<<<
+FC_CONTROL_EXPECT|sabotage=leak_understated|FC_READ_DONE|stage=control|checks_failed=2|failed=leak_log_under_the_certificate_control,every_certificate_holds_the_full_value|json=0
+>>>
+REASON: with H4 and H5 the sabotage fails one more named check, measured with the patched reader on the sabotage's receipt (run/SAB-CONTROLS.hbp); the workflow compares this row byte for byte.
+HOLD H26 | file=polariton-first-correction/CONTROLS.hbp | severity=low
+OLD<<<
+FC_CONTROL_EXPECT|sabotage=bessel_short|FC_READ_DONE|stage=control|checks_failed=3|failed=norm_inside_the_rounding_account_control,energy_inside_the_rounding_account_control,agrees_with_the_full_space_receipt_control|json=0
+>>>
+NEW<<<
+FC_CONTROL_EXPECT|sabotage=bessel_short|FC_READ_DONE|stage=control|checks_failed=4|failed=norm_inside_the_rounding_account_control,energy_inside_the_rounding_account_control,series_degree_and_reach_control,agrees_with_the_full_space_receipt_control|json=0
+>>>
+REASON: with H4 and H5 the sabotage fails one more named check, the printed applies against the printed degree, measured the same way.
+HOLD H27 | file=polariton-first-correction/SHA256SUMS | severity=low
+OLD<<<
+352b0d3b2cd47b6010269d8e5c6ec644b04bc5a4feb2ba0312dcda58913c6b27 PLAN.hbp
+07f043f68f2894b6ee1465071cd43dc1fa702f9e196ea558a6f762d38a4cc415 CONTROLS.hbp
+107fe821072b5a33126a8d50396b6c2d618f922dafe8a4c4af9f609c4e017462 read_first_correction.py
+ef49138c9f8c3fd9cb523dc43e065cad976572f7e0fdef68fea7304f4e13a832 route_first_correction.py
+d06778c047820ecc49cffa6f8bec17acbda2d28cf80cfddf3e4b5f3c4d50ddc0 run_stage.py
+17bf973cd0feb35d641f62132cb8f4feaf4188026458515fc89651ed1f49bbd9 ../src/bin/polariton_first_correction.rs
+0628e397606cad697bab8bd6a1d758db0660cc91e5e6c0b7266847ba21446798 ../polariton/PREDICTION.hbp
+>>>
+NEW<<<
+27ac7650337d954950020edebd2c859c5ca0af70e7c684cda7fa08d2f8210650 PLAN.hbp
+5db64d4d9256df901587deff2d89243300b261fa4b517dde038977dda4237386 CONTROLS.hbp
+3582e507450d67f94461a37a5ed3438cdbaee7a919f502949ebd9d9e5e72b79b read_first_correction.py
+9817699268a8bbf0945dafd3dd4378ac26e2b31eb025dcaa1c6b586bc3016694 route_first_correction.py
+37fa0c0c100ac30fe08d56752352f280eedd5d68f2ce34b8252f2f0765c6ea31 run_stage.py
+17bf973cd0feb35d641f62132cb8f4feaf4188026458515fc89651ed1f49bbd9 ../src/bin/polariton_first_correction.rs
+0628e397606cad697bab8bd6a1d758db0660cc91e5e6c0b7266847ba21446798 ../polariton/PREDICTION.hbp
+347480a5b9467017d07b9a52334edb1536c5b4e72df58c3a4afd85e2be0b9681 ../polariton/RECEIPT.hbp
+7b1a1a2767f28a157fade981b0b5715c9a1e030002c73b2fcf68871d1016c49f ../polariton/second-seat/recheck-ce44be7/contact/chebdrv.py
+cd4f6e6ed4f4ddb37be526228c78c84778805fddb0deb479aa8fede645baf3e9 ../polariton/second-seat/recheck-ce44be7/contact/cheb/src/main.rs
+>>>
+REASON: the pins of PLAN.hbp, CONTROLS.hbp, the reader, the route and run_stage.py with every hold above applied, computed from patched/; the engine and the prediction stay at their pins; three files this stage reads and no sum held are added: the old receipt, chebdrv.py, cheb's main.rs. If only some holds land, recompute.
+HOLD H28 | file=polariton-first-correction/READ-BASELINE.hbp | severity=low
+OLD<<<
+FC_READ_START|stage=baseline|seen_rows_only=1|rows=62|planned_runs=40|json=0
+FC_CHECK|name=no_baseline_run_on_a_blind_point|result=PASS|json=0
+>>>
+NEW<<<
+FC_READ_START|stage=baseline|seen_rows_only=1|rows=62|planned_runs=40|json=0
+FC_CHECK|name=the_receipt_holds_each_planned_row_once_baseline|result=PASS|planned=62|rows=62|json=0
+FC_CHECK|name=no_baseline_run_on_a_grid_point|result=PASS|json=0
+>>>
+REASON: the new first rows the reader prints with H3, H4, H20; the workflow compares this file byte for byte. Measured: run/READ-BASELINE-with-holds.hbp, every other row byte-identical to the filed read.
+HOLD H29 | file=polariton-first-correction/READ-BASELINE.hbp | severity=low
+OLD<<<
+FC_CHECK|name=no_sabotage_named_in_baseline|result=PASS|json=0
+>>>
+NEW<<<
+FC_CHECK|name=no_sabotage_named_in_baseline|result=PASS|json=0
+FC_CHECK|name=model_fields_baseline|result=PASS|rows=62|off=0|json=0
+FC_CHECK|name=eps_is_its_parts_baseline|result=PASS|rows=62|off=0|json=0
+FC_CHECK|name=conversions_baseline|result=PASS|rows=62|off=0|json=0
+FC_CHECK|name=V2_is_its_definition_baseline|result=PASS|rows=62|off=0|json=0
+FC_CHECK|name=V2_interval_propagates_baseline|result=PASS|rows=62|off=0|json=0
+FC_CHECK|name=series_degree_and_reach_baseline|result=PASS|rows=62|off=0|json=0
+FC_CHECK|name=leak_log_under_the_certificate_baseline|result=PASS|rows=62|off=0|json=0
+>>>
+REASON: the seven rows H4 and H5 add, each off=0 on the 62 filed rows.
+HOLD H30 | file=polariton-first-correction/READ-BASELINE.hbp | severity=low
+OLD<<<
+FC_CHECK|name=anchor_K=1000_interval_holds_K=1200|result=PASS|C1_off_e18=197|C1_err_e18=1938074952445|A1_off_e18=43772|A1_err_e18=10817659020109|json=0
+FC_CHECK|name=anchor_K=1200_interval_holds_K=1200|result=PASS|C1_off_e18=0|C1_err_e18=38818502487|A1_off_e18=0|A1_err_e18=216807121328|json=0
+>>>
+NEW<<<
+FC_CHECK|name=anchor_K=1000_interval_holds_K=1200|result=PASS|C1_off_e18=197|C1_err_e18=1938074952445|A1_off_e18=43772|A1_err_e18=10817659020109|json=0
+>>>
+REASON: the row H7 removes.

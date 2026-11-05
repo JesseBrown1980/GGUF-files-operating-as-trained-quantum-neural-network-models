@@ -59,7 +59,7 @@ def run_one(engine, run, sabotage, slot, results, failures):
     peak = peak_working_set_kb(process)
     if process.returncode != 0:
         failures.append("%s exit %d %s" % (" ".join(command), process.returncode, err.decode("utf-8", "replace")[-300:]))
-    cost = [line.rstrip("|json=0") + "|peak_working_set_kB=%s|json=0" % peak for line in err.decode("utf-8").splitlines() if line.startswith("POLARITON_FIRST_CORRECTION_COST|")]
+    cost = [line.removesuffix("|json=0") + "|peak_working_set_kB=%s|json=0" % peak for line in err.decode("utf-8").splitlines() if line.startswith("POLARITON_FIRST_CORRECTION_COST|")]
     results[slot] = (out.decode("utf-8").replace("\r\n", "\n"), cost)
 
 
