@@ -1,4 +1,3 @@
-polariton/*.hbp text eol=lf
-polariton/*.py text eol=lf
 data/google-qsim/* text eol=lf
 docs/*.hbp text eol=lf
+polariton/** text eol=lf

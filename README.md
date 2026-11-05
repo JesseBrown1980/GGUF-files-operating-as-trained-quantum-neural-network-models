@@ -27,6 +27,12 @@ The [prediction-first Google-circuit audit](docs/GOOGLE-QSIM-LIKE-FOR-LIKE-20261
 
 **Measured scope:** Google's 103-active-qubit depth-40 Willow experiment is an entirely different iSWAP-like, noisy quantum circuit. No full Willow circuit or quantum speed advantage is claimed. HTTP-0 has [23,887,872 actual ternary channels](https://github.com/JesseBrown1980/qoled-internet-HEB-C-revisted-HTTP---free-0-hbi-hbp-sha-sh-hash/blob/main/engine96/MEASURED-20261104.hbp) and 43,046,721 virtual evidence addresses, but those counts are not `2^103` complex qubit amplitudes.
 
+## Three-mode polariton test — November 4, 2026
+
+[The test](polariton/README.md) takes the pair scattering behind [the 2025 Nature polariton supersolid](https://www.nature.com/articles/s41586-025-08616-9) as N identical qutrits, with labels −1, 0, +1, in their exact symmetric space, in integers and with the prediction pushed first. It answers GPT-6's central question: with no fit, the order that sits in the two-point correlation at zero field becomes a pinned density modulation at the predicted size, reading 0.3553 against 0.3558 at N = 729. Up to N = 43,046,721, including 23,887,872, the energy, pair fraction and gap read the predicted values. **887 rows met and 31 missed**, with the misses kept, and a separate exact-rational route within 66 units of 2⁻⁶⁰ on 143 levels.
+
+**Scope:** a closed system of three plane waves. The paper's 2.6% modulation, 2% wavevector shift and 250 and 430 μW thresholds need pump, loss and its dispersion, and are OPEN.
+
 ## Versions at a glance
 
 Every version was pre-registered before its code, run twice (the second time from a fresh clone, byte
