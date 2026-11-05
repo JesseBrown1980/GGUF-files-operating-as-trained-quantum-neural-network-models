@@ -1,0 +1,190 @@
+FINDINGS, second seat, separate routes and owning gate. Head checked: 2d776369fbf7448c6adcf3ecce4bcaa2ae792c20 (git -C C:/tmp/qnn-fc-review-wt rev-parse HEAD).
+No grid point was run by any engine in this lane. Worktree untouched; all runs on a copy in this folder.
+
+F1. Route integrator mode fails on seen rows. MEASURED.
+Ran: python3 -I -B -X utf8 copy/polariton-first-correction/route_first_correction.py integrator <contact> <cheb.exe> <tables> <subset> 1, on subsets of RECEIPT-BASELINE.hbp.
+Read: out/route-integrator-subset-6561-1200.hbp: second_seat_propagator_N=6561_K=1200_delta=0_y=1/81_t=2 result=FAIL C1_off_e18=5 A1_off_e18=53459 limit_e18=10000, exit 1.
+out/route-integrator-subset-2187.hbp: FAIL on both rows, A1_off_e18=394272, 352866. out/route-integrator-subset-729-512.hbp: FAIL on all four, A1_off_e18 277204..1169874, and C1_off_e18=10037 on one.
+Could still be wrong: the grid's y are smaller, so A1_off there may sit lower than at y=1/81. It cannot be read without running a grid point. Any single row over 10^4 turns the job red. The mode has never run hosted: it sits behind the grid's if-filed guard (hold H6).
+
+F1b. Where the A1 offset sits. MEASURED, N=729, K=512, delta=0, y=1/108, t=2.
+Ran: a copy of the engine that also dumps the state at the read (target-dump; row bytes equal the receipt's row), read by scripts/t1b_state_read.py with exact integer roots at 2^200.
+Read: engine row minus exact read of its own state: C1 +163 e-18, A1 -1169872 e-18, f 0, C2 0, energy row -7837028 e-18 against exact -15 e-18. Second seat minus engine row: C1 -165, A1 +1169874. So the engine's state and the second seat's state meet to 2 e-18 on C1 and A1; the offset is the engine's read-out, whose roots are taken at 2^-24 (root24, polariton_first_correction.rs line 147).
+Could still be wrong: one row at this step; N=6561 follows below.
+
+F2. Second seat against the receipt, every field the task names. MEASURED, out/t1_cheb_vs_receipt.hbp, cheb built from contact/cheb on Rust 1.81, chebdrv.py driven with EXE and TABLES overridden, file unedited.
+N K delta y t | C1 off, A1 off, f off, <A>/N off, <B>/N off, in e-18 (second seat minus engine; engine <A>,<B> divided by N since the engine prints them undivided and the second seat divided)
+729 512 0 1/108 2 | -165 1169874 -1 -584937 -585530
+729 729 0 1/108 2 | -168 1169848 -2 -584924 -585531
+729 729 0 1/108 1 | -995 4689650 0 -2344824 74126
+729 729 0 1/108 3 | 169 1287693 -20 -643847 -366233
+729 512 1/2 1/54 2 | -7265 699156 0 -349578 -695333
+729 729 1/2 1/54 2 | -7265 699148 -1 -349574 -695333
+729 729 1/2 4/27 3 | -2423 782458 32 -391229 695534
+2187 1000 0 1/94 2 | 3 -394272 4 197137 -136836
+2187 1000 0 1/47 2 | 143 -352866 -2 176434 137813
+6561 512 0 1/81 2 | 2 -53472 -2 26736 47578
+6561 1000 0 1/81 2 | 1 -53480 -2 26740 47579
+6561 1200 0 1/81 2 | 5 -53459 1 26730 47579
+f and C2, which have no root in their read-out, meet at 32 e-18 or better. Sign of <A> and <B> on the engine: same as the second seat. Could still be wrong: rows are seen rows only; no grid point read.
+
+F3. Does the second seat's code share nothing with the engine? NAMED claim in README line 9 and in cheb's header. Partly refuted at text level. MEASURED, scripts/t1_overlap.py.
+Verbatim: fn isqrt (whole body), const Q, const ONE, the opening of parse_rat, m==0||mul==0 guard. Near-verbatim: the diagonal numerator expression; Gershgorin at 2^20; Miller start z + 40 z^(1/3) + constant and normalisation by J0 + 2 Sum J_2k.
+Conventions that differ: orthonormal even basis with sqrt 2 (engine) against Fock amplitudes on a half space with mirrored lookups (second seat); 128 windows of degree ~50 against one series of z = E t ~ 2200 terms; floor against round-to-nearest; different c and E; <A>,<B> scaled by N or not; Python big-integer Bessel against i128.
+Conventions shared, so no second route tests them: the operator text of H, K as q <= K, C1 = 2<n0 n + P + P^dag>/(N(N-1)), A1 = 2|<a0^dag a+ + a-^dag a0>|/N, Q = 62.
+The route's own Python shares no code with the engine (MEASURED by reading). isqrt is a standard Newton floor root; its output is tested by the route's rows mode at small N and by F7 below at N=6561.
+
+F4. The reader's expanding_L clause low.eps >= r.eps meets a rounding floor of the certificate. MEASURED on the seen point; CONJECTURE for the grid's points.
+Ran: target-win polariton_first_correction point 6561 K 0 1/81 6 2 at K=1600 (296 s) and K=2000 (533 s). Delta=0, y=1/81 is the seen anchor.
+Read: K=1200 eps_e18=379557362760 tail_max_e18=18147602531 leak_sum_e18=15341479756; K=1600 eps_e18=130360418469 tail_max_e18=67984728 leak_sum_e18=608131; K=2000 eps_e18=199831130089 tail_max_e18=79353412 leak_sum_e18=97928.
+So eps rises from K=1600 to K=2000 while C1 and A1 move by 2e-18 and 17e-18 and the actual integrated leak falls by 6. Rows out/engine_6561_K1600_d0_y81.hbp, out/engine_6561_K2000_d0_y81.hbp.
+Cause, DERIVED: tail_norm (engine line 712) adds +1 at 2^-84 per state, so b >= sqrt(n_tail) 2^-42, and the tail term adds norm(B) h per window times eps_round so far. At K=1600 sqrt(n_tail) 2^-42 = 6.8e-11 equals the printed tail_max, and t norm(B) (6.8e-11) + norm(B) eps_round t/2 = 9.0e-8 + 4.1e-8 = 1.31e-7, the printed eps_tail. The floor grows with K through norm(B) and n_tail.
+Consequence: read_first_correction.py line 458 requires low.eps >= r.eps inside the expanding_L result, a clause the frozen row does not carry (it says "expanding_L_converges_on_every_point"). Where the real tail at K=1200 sits below the K=1600 floor, the read prints expanding_L MISS and the point counts with_a_miss, for a reason in the rounding account.
+Could still be wrong: delta=1/2 and +-1/4 at N=6561 cannot be run here, so which grid points fall on which side is an estimate (F12).
+
+F4b. The same floor at an allowed delta = 1/2 point. MEASURED. target-win engine, N=2187, delta=1/2, y=1/188, t=2, W=6.
+K=1000 eps_e18=25729249805 C1_e18=9274688566876691 A1_e18=26812514519296747; K=1200 eps_e18=28888944985 C1_e18=9274688566876692 A1_e18=26812514519296745. eps rises 12% with K while C1 moves 1e-18 and A1 2e-18. Rows out/eL_2187_K1000_d12.hbp, out/eL_2187_K1200_d12.hbp.
+
+F4c. The floor at every grid run, computed without any dynamics. MEASURED by port, scripts/t5b_floor.py, out/t5b_floor.hbp.
+The port of the engine's accumulation with the tail norm at its least value reproduces the printed eps_tail at the seen point: K=1600 130298411539 against printed 130298411538; K=2000 199724074333 against 199724074332, in e-18. So at those K the printed eps_tail is the floor to 1e-18.
+Least eps at each grid run, e-18, K=1200 then K=1600: (1/2,1/4) 67229444184, 115480491418; (1/2,1/2) 69752551491, 119746828987; (0,1/4) 67229444184, 115480491418; (0,1/2) 69752551491, 119690851174; (1/4,1/4) 67229444184, 115480491418; (1/4,1/2) 69752551491, 119746828987; (1/4,1) 75936453427, 130360418470; (-1/4,1/4) 67296301908, 115644827338; (-1/4,1/2) 69752551491, 119970775689; (-1/4,1) 75972313234, 130593920671.
+So the clause low.eps >= r.eps holds at a point only when the real part of eps_tail at K=1200 reaches 4.8e-8 to 5.5e-8. At the seen (0,1) it is 3.04e-7.
+
+F4d. The reader's grid mode has never run on any rows; a dry run on synthetic rows. MEASURED for the code path, values SYNTHETIC. scripts/t5c_synth_grid.py wrote out/synthetic-grid.hbp from the closed forms and the floor; no model ran.
+Reader exit 0, 144 rows, every branch ran without an exception, all ten C1_lower_bound_positive PASS, FC_CONTROL_SET nondiscriminating=none, the four remainder rows printed. With eps at the floor on both K, every expanding_L row reads MISS (C1_off 0, A1_off 0, eps_low < eps_high) and FC_READ_SET reads blind all_rows_met=0 with_a_miss=8, touched 0 and 2, while every C1, A1, V2, f and signs row reads MET. Out: out/synthetic-read.hbp. These synthetic rows are no read of the grid.
+
+F2b. Second seat at K=1600 on the seen point. MEASURED, out/t1_cheb_K1600.hbp, one thread, 46 s. C1 off 7, A1 off -53435, f off 2, C2 off -1, <A>/N off 26718, <B>/N off 47581, all e-18. cheb c=-292 E=1310, engine c=-292 E=1330. Engine K=1600 took 296 s, K=2000 533 s on this machine under other load.
+
+F5. Bessel at the grid's E. MEASURED, out/t2_grid_bessel.hbp, out/t2b_bessel_sweep.hbp, against an exact fixed-point series at 2^400 written here, which shares nothing with the route's Fractions.
+The grid's E and W=6: K=1200 E in {1008,1009,1035,1088,1089}, K=1600 E in {1241,1245,1270,1271,1275,1330,1333}, z = E/64 from 15.75 to 20.83. Read from rows mode, first line only.
+Every table within 0.498 units of 2^-62 of the exact value; largest dropped entry 0.484 units; 2 Sum_{k>degree} |J_k| at most 0.241 units; table_len equals degree or degree+1. bessel exit 0 on every one; sum-rule assert holds.
+Port of majorant_from gives rho of 2 to 8 units, each at or above the exact majorant (rho_covers_exact=1 on all 20), degree 49 to 57, reach 99 to 115.
+Sweep: E=1..3000 at W=6: 0 panics; 99 sampled against the exact series, worst 0.503 units. W=0 to 24 at E = 1, 1088, 1333, 5000: exit 0 and within 0.5 units where compared. Overflow appears from W=28 (polariton_first_correction.rs line 428, a checked multiply), a panic; the plan's W is 6.
+Sum rule: actual off at most 2^-51.8 (E=471), and 2659 of 3000 tables sit over 2^-54, so the comment's "within 2^-54" states less than the code's tolerance of 2^-54 + len 2^-48 (hold H14). The assert catches a table error near 2^-40 and up; the route's exact series is the fine check.
+Could still be wrong: the exact series and the engine agree only at the sampled E outside the grid's list.
+
+F6. Is route_bessel's tail check meaningful? Refuted in its stated reach. DERIVED, and MEASURED on sabotage below.
+series_tail_covered compares the exact majorant at the printed degree with the printed eps_poly, with a slack of 1e-18 + windows/2^60 = 1.1e-16 at t=2. The printed eps_poly on the baseline runs 2.7e-17 to 1.4e-16, so the slack is the size of the quantity: the engine's rho could sit 4 units per window low unseen. Its magnitude at stake (1e-16) is far under eps.
+It reads the printed degree only, so it says nothing of the series the engine applied, and the comment "What the table drops... stays under the unit" has no code behind it: table entries past the table's end are never computed by the route. The sabotage named for this (bessel_short) passes this route: F6b. Its reach is coarse, and real at that reach: a majorant low by 8 turns it red (F19).
+Holds H4 and H5 add applies == (2 windows - 1) degree, which holds on all 62 baseline rows, and an exact check of dropped entries.
+
+F7. The engine's Hamiltonian at every grid run, rows mode, against formulas written here. MEASURED, scripts/t2c_rows_grid.py, out/t2c_rows_grid.hbp. No dynamics.
+20 runs, 361,201 or 641,601 rows each, 0 off on labels, exact diagonal, d, pair, a, b, sign; worst scaled element off 0.814 units against elem_err_units=2; sum over a row of scaled absolute values at most 0.99919 of 2^62, so the computed H-tilde has Gershgorin radius under 1.
+E covers a separate outward Gershgorin on the even block at all 20 (E_covers_gershgorin=1, t2_grid_bessel.hbp), with E within 3 of the sharp half width.
+norm(B) by a Schur test written here equals the engine's printed norm_B_s20 at the seen point: K=1200 565974935, K=1600 691814436, K=2000 790506435.
+The route's rows mode, by contrast, reads N up to 40 only. That is the scope of its parity, bandwidth and interval checks at hosted.
+
+F1c. The same attribution at N=6561, K=1200, delta=0, y=1/81. MEASURED, out/t1b_6561_1200.txt. Patched-copy row equals the receipt's row byte for byte.
+Engine row minus exact read of its own state: C1 -4, A1 +53464, f -1, C2 0, V2 +425932 e-18; energy row +4316640 e-18 against exact +9 e-18.
+Second seat minus exact read of the engine's state: C1 +1, A1 +5, f 0, in e-18 (N=2187, K=1000: C1 +7, A1 +48, f +4, out/t1b_2187_1000.txt). So two propagators that share no state, 13005 window steps against 2298 one-shot terms, meet to 5e-18 on the observables read at full precision. That is the sharp statement of the route's agreement.
+The limit question. 10^-14 is 2000 times the C1 offset at N=6561, and 1/5 of the A1 offset; at N=729 C1 alone reaches 10037 e-18, over it. The figure traces to no term of the engine's account. The engine's own read-out bound is read_x, read_s: 2 read_x/(N(N-1)) = 1.2e-14 for C1 and read_s/N = 7.3e-11 for A1 at N=6561, so for A1 the limit sits 7000 times inside the engine's own stated rounding. Hold H1.
+
+F8. The engine's outward norms against exact norms. MEASURED, same script. exact norm(X phi)=480010, norm(S phi)=1066 at N=6561 K=1200, and C1_err row 38818502487 against 16932513595 from the exact norms, A1_err row 216807121328 against 123363502322. The row's errors sit 2.3 and 1.8 times above what eps and the exact norms need. At N=729 K=512: 1632091087 against 852957390, 5309029963 against 2435665274. So x_up and s_up are outward at both.
+
+F9. The certificate against the truth at state level, N=729, full space in reach. MEASURED, scripts/t6_state_distance.py, out/t6_state_distance.hbp. norm(psi_K - exp(-i (c_F - c_K) t) psi_full), with the phase from an exact Taylor sum, states from the dump copy.
+delta=0, y=1/108: K=128 true 1.010e-1, eps 2.118, leak_sum 3.76e-1; K=192 1.666e-2, 4.016e-1, 5.58e-2; K=256 1.550e-3, 4.772e-2, 4.41e-3; K=384 1.772e-7, 5.408e-5, 2.89e-7; K=512 2.8e-15, 4.35e-9, 1.1e-14; K=640 2.9e-15, 2.68e-9, 1.4e-14.
+delta=1/2, y=1/54: K=128 7.54e-2, 1.889, 2.71e-1; K=192 1.10e-2, 3.07e-1, 3.65e-2; K=256 1.05e-3, 3.32e-2, 3.09e-3; K=384 1.24e-6, 7.31e-5, 2.65e-6; K=512 3.5e-12, 6.75e-9, 4.3e-12; K=640 1.1e-15, 2.72e-9, 1.2e-14.
+So eps >= leak_sum >= true at every row. The smallest eps over true is 21 at K=128; at K>=512 the true distance is the two runs' rounding, 3e-15, under the rounding account's 1e-12.
+The reader's every_certificate_holds_the_full_value reads observables, where the room is 4500 to 25000. So a leak understated by a factor under about 4500 passes that check at K=128; leak_understated uses 2^-20. Eps_tail against leak_sum has 5.3 of room on the baseline, and it holds by construction (each window's bound covers norm(B psi) at its start). Holds H10 to H12.
+
+F10. Size of the tail against s and delta at allowed points, for the hand estimate. MEASURED, out/calib_2187_K500.txt, N=2187, K=500, t=2. eps_tail: delta=0: y=1/47 2.97e-2, y=1/94 2.68e-3, y=1/188 7.43e-4; delta=1/2: 2.01e-3, 1.92e-4, 5.71e-5. So s=1 to 1/2 falls by 11, s=1 to 1/4 by 40, delta=0 to 1/2 by 13 to 15 at K=500.
+
+F12. Hand estimate at the grid's points. CONJECTURE, scripts/t5d_estimate.py, out/t5d_estimate.hbp, exact rationals, no model run.
+Argument. eps(K=1600) = the least eps of F4c, since the seen point's K=1600 tail already sits at the floor and every grid point's tail rate is at or under delta=0's (j0 = sinh^2(gamma t)/gamma^2 largest at delta=0).
+eps(K=1200) = least eps + real, real = 3.04e-7 (the seen (0,1) printed eps_tail minus its floor) times R_delta times Q(s/(1+delta)). R_delta from the Bogoliubov rate scaled to the measured K-series (K=1000 to 1200 falls by 62): 0.22 at delta=+-1/4, 7.7e-4 at delta=1/2. Q from F10: 1/11 at s=1/2, 1/40 at s=1/4.
+Errors: C1_err = 10 f eps and A1_err = 8 eps sqrt(f/2), both reproduce the seen row (0.1023 eps, 0.5712 eps at f=0.0102). V2 relative = 2 A1 relative + C1 relative.
+Result at K=1600, relative C1, A1, V2: (1/2,1/4) 1.2e-6, 2.4e-6, 6.0e-6; (1/2,1/2) 1.3e-6, 1.4e-6, 4.1e-6; (0,1/4) 6.0e-7, 1.3e-6, 3.2e-6; (0,1/2) 6.6e-7, 7.5e-7, 2.1e-6; (1/4,1/4) 8.0e-7, 1.7e-6, 4.1e-6; (1/4,1/2) 8.8e-7, 9.6e-7, 2.8e-6; (1/4,1) 1.1e-6, 6.9e-7, 2.5e-6; (-1/4,1/4) 4.8e-7, 1.0e-6, 2.5e-6; (-1/4,1/2) 5.3e-7, 6.1e-7, 1.7e-6; (-1/4,1) 6.3e-7, 4.7e-7, 1.6e-6. K=1200 sits lower on nine of them and higher at (-1/4,1).
+Margins: the worst V2 half-width is 6.6e-3 of a 9e-4 margin, so C1, A1 and V2 errors at both K sit far under 1/1000 unless a residual lands within 6e-6 of the limit.
+30x test: R6561 estimated as R729/81 (the seen s=1 pair reads 80.5): 8.7e-5, 1.2e-4, 1.4e-4, 1.9e-4 at (1/2,1/4), (1/2,1/2), (0,1/4), (0,1/2); gap to 30x 4.5e-3, 6.0e-3, 7.1e-3, 9.9e-3. e6561 at K=1600 over R6561: 1.4e-2, 1.1e-2, 4.3e-3, 3.4e-3. e729 at K=729 is 3e-11. So error below residual and below gap on all four, by 70 or more, if the residual scales near 1/N^2.
+The clause low.eps >= r.eps: real reaches the needed 4.8e-8 to 5.5e-8 only at (-1/4,1) in this estimate; so nine of ten points would print expanding_L MISS at this head, the delta=1/2 pair by a factor over 1000 and the others by factors of 2 to 45. Hold H2 removes that.
+Could still be wrong: R_delta and Q are carried from other N and K; a residual could cross zero at some point and make e6561 < R6561 fail, which the frozen clause then reports as a MISS, rightly.
+
+F13. GPT-6's comment 6656570333, items 1 to 7, and baseline comment 6655816618, where each is done at this head. DERIVED by reading; run status as marked.
+1 q-bandwidth and parity: route_first_correction.py rows, checks hamiltonian_* extra_off, odd_off, states_are_the_even_block_*; hosted PASS at N<=40 (run 42056499947). At N=6561: t2c here (F7), and no hosted check. Parity at N=6561 rests on the formula.
+2 spectral interval, Bessel, remainder, separate big-integer checker: route rows spectral_interval_* at N<=40; route bessel bessel_table_* (off<=4 units; measured 1) and series_tail_covered_*. Missing: interval at the grid's N (t2 here: covered, at 20 runs; hosted it rests on the N<=40 check and the formula, an open item); tail check too loose and blind to the series applied (F6, H4, H5); norm(B) by separate code (H17).
+3 window accumulation, no re-normalisation: engine lines 802-866 hold no normalisation (read by me); eps_* accumulate each window; reader norm_inside_the_rounding_account_*, energy_inside_the_rounding_account_*. Worst 879 ppm and 15024 ppm of bound on the baseline. Energy's read is dominated by root24: printed 4.3e-12 against exact 9e-18 at N=6561, so the energy check's real sensitivity is the read-out's, near 1e-9 on its bound.
+4 C1_lower>0, monotonic V2: engine lines 900-909 (V2_hi=-1 when c_lo<=0); reader v2_valid, check C1_lower_bound_positive_* in grid; baseline prints V2_interval=C1_lower_bound_not_positive at K=128,192. Ran on synthetic rows only for grid.
+5 K=512 fails, K=1000 and 1200 accept: reader anchor_checks, READ-BASELINE rows; N=729 and N=2187 against the receipt: against_old_receipt, 204 values, off=0, worst C1,A1,V2 at t=2 589 ppb. Reproduced here on Windows and under WSL (F11).
+6 negative controls: run_stage sabotage=, CONTROLS.hbp, hosted step: all four fail named checks. Sensitivity: F9, H10-H12. Missing nothing named by GPT-6.
+7 30x on intervals: reader grid(), rigorous and below, set=remainder. Never run on real rows; dry run prints four rows (F4d).
+Baseline comment: K sweep, time, RSS, A1, C1, V2, integrated leakage, numerical error: PLAN group=sweep and full_space; RECEIPT and READ rows; FC_BLOCK_VS_FULL. RSS: hosted cost rows carry the rstrip fault (H3); local carries working set. Full-space receipt as reference: against_old_receipt. 8 points unseen until the row is committed: row pushed at 5792654, no_baseline_run_on_a_blind_point PASS. Old MISS rows frozen: git diff 5792654 HEAD -- polariton/ is empty (MEASURED). K=1000 certified against the full operator: eps at K=1000, N=6561 in the anchor rows. Even-state counts match: K=512 66049, K=1200 361201, K=1600 641601.
+
+F14. The frozen row, clause by clause. Where it is read, at this head. Read by me; run status as marked. polariton/PREDICTION.hbp line 48, sha256 3b1e0477... equal at 5792654 and at this head (MEASURED); git diff 5792654 HEAD -- polariton/ empty.
+model=u=1,x=delta-1,from_ket_N,0,0: engine point() lines 749-750, 783; route rows builds x=delta-1 in Fock space (hosted PASS, N<=40). 
+forms w0, C0, w10, w11, C10, C11, C12, A1_first, C1_first, V2_first, A1_law, C1_law, D3-5, c_k, gs_k, sinh1, s^2: reader Forms, from the row's text. Evaluated twice here: the reader's class and a separate evaluator, 14 points, off under 1e-30 (out/t5_forms.hbp). MEASURED.
+grid=N=6561,t=2,y=s/81, (delta,s): the_plan_runs_the_row's_points; row_is_the_row's_t_and_N. PLAN's 20 rows carry the ten points at K=1200 and 1600 (checked by reading; the check PASS on the dry run).
+touched_2, blind_8, reports them separately: the_row_names_10_points_8_blind_2_touched; FC_READ_SET rows.
+predicted_f at most 1/50: f_predicted, typed in the reader since the row carries no form; it equals line 39's f=(2J0+n_coh)/N (read by me). Closed form at the ten points: 0.0033 to 0.0110. Printed with the read f.
+C1, A1, V2 within 1/1000: read_one. MET needs the value and the whole certified interval inside. 
+each row prints its denominator and absolute error: first_e18, abs_off_e18.
+control, the law alone; nondiscriminating: FC_CONTROL, FC_CONTROL_SET. Closed-form first over law: C1 -0.84% to -2.1%, A1 -0.43% to -0.86%, so it discriminates at all ten if the read sits near first.
+the_remainder, 30x, four points, N=729 y=s/27 to N=6561 y=s/81: reader grid set=remainder; rigorous = r729 - e729 >= 30 (r6561 + e6561). Baseline holds K=729 at the four N=729 partners.
+numerical error below residual and gap: below.
+signs: obs=signs with a_err, b_err from A1_err and eps.
+block, n+ + n- at most L: engine K. K=1200, 1600 sit inside it; even_states (K/2+1)^2.
+tail_certificate, Duhamel over the whole interval, printed: eps_tail; FC_CERT. Derivation read and agreed (engine header lines 10-18, code 802-815); uniform bound per window. MEASURED at state level N=729: F9.
+the_final_boundary_weight_alone_is_no_certificate: eps_tail integrates a uniform bound, leak_sum logs the samples.
+observables bound, both norms outward: C1_err, A1_err; x_up, s_up, x_norm, s_norm. F8. ||X|| and ||S|| bounds checked by hand: N^2/2 < (N+1)^2+N, sqrt 2 N < 2(N+1). DERIVED.
+V2 through a positive C1 lower bound: engine 900-909; C1_lower_bound_positive.
+leaking_shells q=L-1,L only, full outgoing couplings: b_norm lines 627-662; Schur written here equals it (F7). No hosted route reads norm(B): its one hosted test is the sabotage, and b_norm_no_linear passes every hosted check (F19). Hold H17.
+combined error under each margin: certified, numerical_over_margin_ppm.
+block_control, expanding_L converges: obs=expanding_L, with a clause the row does not carry (F4, H2). Same integrator agrees with the full space at N=729, t=2: sweep_checks. With the receipt's N=729 rows within 10^-5: against_old_receipt, rows at delta=0 and 1/2 only, which are the row's two N=729 deltas; 589 ppb worst. Elapsed time, peak memory, cumulative bound: COST rows (H3), eps_* rows.
+no charge sector; exchange parity exact and used: basis; route odd_off.
+integrator integer only, Rust 1.81, clippy, the tricks: hosted Format, Clippy, build; float_used=0; grep 0 hits; the Chebyshev recurrence (step), restriction (Block), parity (basis), matrix-free rows (Op arrays, one per kind).
+own error bound printed and added: eps_poly, eps_round printed; eps = tail + poly + round + 16.
+reason_for_1/1000: no read owed.
+Is K=1200, 1600, W=6 consistent with the row? Yes for block, t, y, certificate: reach 99 to 115 < K, degree 49 to 57, z at most 20.83, E covers Gershgorin at all 20 (F5, F7). The row leaves L and the window open. The plan's verdict at the larger K means a wider certified interval than K=1200 on nine points (F4c, F12), still 1.7e-3 to 6.6e-3 of the margin. K=1600 has no baseline row (H15).
+
+F15. README.md and PLAN.hbp against what is filed. Read by me, with git.
+README line 3: row at line 48, pushed at 5792654 before the folder existed: MEASURED true (hash equal at 5792654; first commit of the folder f303c35). 8 blind, 2 touched: true (row text).
+README line 5, status: stale at this head. "The baseline on seen rows comes next" while RECEIPT-BASELINE, READ-BASELINE and COST-LOCAL-BASELINE are filed at 2d77636 and hosted run 42056499947 reproduces them. Hold H13.
+README line 9: "shares no code with the engine" is true of the route's Python; of the propagator it drives, see F3. Hold H16 names what is shared.
+README line 10: same bytes at any parallelism: MEASURED at 4 (the file, hosted) and 2 (WSL, F11).
+PLAN line 1 row hash: true. written_before_any_stage: commit order f303c35 then 2d77636; GPT-6's comment records earlier pilot rows on already-read points, so the plan's stages are what came after it. PLAN lines 3-4 name the checks as they stand in F13. PLAN rows: 40 baseline, 4 control, 20 grid; the receipt's 62 rows = 24 + 30 + 4 + 4. The plan's verdict at the larger K: reader's top = max(ks). K=1600 has no baseline row: H15.
+The plan's order, 3 before 4: this review.
+
+F16. The time limit. MEASURED inputs, DERIVED sum. Hosted run 42056499947, 4 at a time: baseline step 234 s, controls 65 s, whole job 5m16s; hosted K=1200 row 88 s against local 126 s. Local K=1600 296 s, so hosted about 207 s by the same ratio. Grid: 10 x 88 + 10 x 207 = 2950 s over 4 = about 12.3 minutes. Route bessel on 12 tables under 1 minute (2 s here). Second seat on one thread here: K=1200 20 s, K=1600 46 s; ten rows of each on one thread 11 minutes, about 4 at 4 threads. Whole job with the grid and H6, H7: about 25 minutes against timeout-minutes 340, so the limit holds by more than 13 times. Peak memory at K=1600: arrays 77 MB per run. Could still be wrong: runner speed varies; the margin covers it.
+
+F6b. route_bessel at this head on the bessel_short sabotage's rows. MEASURED, out/head-route-bessel-sab.hbp: exit 0, failed=0. With H4, H5 applied: exit 1, failed=series_applied_to_its_printed_degree, rows=4 short=4 (out/held-route-bessel-sab.hbp). On the baseline with H4, H5: 115 checks PASS, tables=38, worst 1 unit.
+Route's exact series at the grid's own E, on rows holding only the fields it reads (out/synthetic-bessel-rows.hbp, no model): 12 tables, worst 1 unit, failed=0 (out/route-bessel-grid-E.hbp).
+
+F11. The hosted gate, step by step. MEASURED: hosted run 42056499947 at this head (log saved as hosted-run-42056499947.log), and the same lines under WSL Ubuntu 24.04 with rustc 1.81.0 and Python 3.12.3, at parallel 2 (scripts/gate_wsl.sh, out/gate_wsl.log), and on Windows for fmt, clippy, build.
+Toolchain, fmt, clippy --locked --offline --bin, build --release --locked --offline: exit 0 on all three lanes. The crate has no dependencies, so --offline has nothing to fetch.
+CI file: grep -rnE '\bf(32|64)\b' src tests 0 hits; git ls-files for json, js, mjs, ts 0 hits; cargo clippy --release --all-targets -D warnings exit 0 here; hosted ci job success on push and on pull request.
+Pins: the row hash reads 3b1e0477... here and hosted. sha256sum --strict -c on SHA256SUMS's one-space lines works on coreutils 9.4: clean exit 0, and one added byte in PLAN, CONTROLS, reader, route, run_stage or engine exit 1; a changed byte on line 48 exit 1 (out/gate_negative.hbp). So the pins check what they name.
+A row appended to PREDICTION.hbp with line 48 unchanged also turns the pins red, through the whole-file line in SHA256SUMS. The later delta = +-3/5 experiment will meet this if its row goes into that file before this PR merges. Fail closed; an open item, no hold.
+Unpinned in this job: chebdrv.py, cheb, polariton/RECEIPT.hbp, Cargo.toml, Cargo.lock, rust-toolchain.toml (the polariton job pins some of them under its own filters). Hold H9.
+Same bytes on Linux and Windows: hosted cmp baseline.hbp against the file filed from Windows: PASS (run log). WSL at parallel 2: PASS, so the same bytes at 4 and 2. K=1600 at N=6561, delta=0, y=1/81: Windows run against WSL run, cmp exit 0 (out/wsl_k1600_compare.txt), which the baseline does not cover.
+cmp: exit 1 after one change in a copied receipt; so it compares what it says. read-baseline against READ-BASELINE: PASS hosted and WSL.
+Sabotage loop: hosted log shows shell /usr/bin/bash -e {0}, four FC_READ_DONE rows matching CONTROLS. Under bash -e here: a right line passes on to the next command; a wrong line and an unknown name each exit 1 before it. Under sh the same file is a syntax error, exit 2; the runner uses bash. All four sabotages reproduce their expected rows at WSL.
+Grid step's build: CARGO_TARGET_DIR="$RUNNER_TEMP/cheb" cargo +1.81.0 build --release --manifest-path .../contact/cheb/Cargo.toml from the repo root, on a copy under WSL: built, $RUNNER_TEMP/cheb/release/cheb exists. It writes an unpinned Cargo.lock into the checkout, harmless. Then the integrator line turns the job red, F1. That step's other lines cannot run here; on seen and synthetic rows they run (F4d, F6b).
+Path filters: PR 11's 13 files trigger this job and ci, measured in gh run list at this head; they match no filter of polariton.yml, whose polariton/** covers only that folder and whose .gitattributes covers only the root file, and no run of the 98-minute job exists at this head. That is what the PR needs. The other way: this job's inputs outside its filters, hold H8.
+Time limit: F16.
+
+F17. The holds applied together on a copy, and read. MEASURED, scripts/apply_holds.py (each OLD occurs once at this head, 0 bad), scripts/held_test.sh, out/held_test.log. The baseline with H15's row is assembled from the filed rows and this lane's K=1600 row, since H14 changes only a comment; a real refile is the owner's step.
+fmt, clippy, build exit 0 with H14. Baseline read: rows=63, planned_runs=41, checks_failed=0, tail_certificate_covers_the_logged_leak PASS with smallest eps_tail over leak_sum 5.34; anchor_K=1600_interval_holds_K=1200 PASS, C1_off 0, A1_off 2.
+Pins regenerated, 14 lines, sha256sum --strict -c exit 0. Route bessel: F6b. Controls: each sabotage's FC_READ_DONE equals the updated CONTROLS, leak_understated failing tail_certificate_covers_the_logged_leak (short=3 of 3) and every_certificate_holds. Synthetic grid read: expanding_L MET on all ten, blind all_rows_met=8, touched 2, checks_failed=0.
+Integrator with H1 on the 18 seen rows of H6: failed=0, 73 s at 2 threads under WSL. N=6561 K=1200: C1_off 5 of limit 12690, A1_off 53459 of 72678818, f_off 1, C2_off 0 of 1000. K=1600: 7 of 13165, 53435 of 72679055, 2, 1. On sabotage rows: bessel_short, norm_drift, drop_even_root fail on all 4 rows; leak_understated passes on all 4, since the state is unchanged there and the reader's checks own it.
+run_stage with H3 prints peak_rss_kB 2564, 3096, 4024, 17716 under WSL.
+
+F18. A trial, here only: roots at 2^40 on the linear and lateral read-outs, in a copy (scripts/patch_root40.py). MEASURED. A1 against the second seat falls from 1169874 to 33 e-18 at N=729, K=512, and from 53472 to 15 e-18 at N=6561, K=512. energy reads 5.9e-14 in place of 7.8e-12 at N=729. So with a change of 3 lines plus a helper the A1 route limit could sit near 1e-15. It moves A, B, A1, D2, V2 and energy in the receipts, so the baseline refiles. An option for the owner: H1 is the smaller step, and the verdict's margins do not need it.
+
+F19. Would the routes and the reader turn red if the engine were broken? MEASURED, scripts/t7_mutate.py, out/t7_mutations.hbp. One text mutation at a time on a copy of the engine, on stage control only (N=729, delta=0, y=1/108, K=128, 192, 256, 729), with route rows, reader control and route bessel at this head.
+Red at this head: a_raise_root2, b_raise_root2, pair_n0_squared, diag_drops_pm (route rows and reader); E_under_by_a_fifth (route rows only: the spectrum sits well inside E at these K, so the stage and reader pass, and only the route's N<=40 interval check sees it); step_one_sided_pair, phase_part, bessel_norm_odd (engine panics, so the stage exits 1); majorant_low_by_8 (route bessel's tail check: it has coarse reach); round_account_dropped (reader norm); c1_read_no_pair, a_read_one_kind (reader).
+Green at this head: tail_bound_over_8 (red with H11, tail_certificate_covers_the_logged_leak); b_norm_no_linear (green with H1-H16, red with H17, F19b); degree_less_4 (a shorter series with its larger rho correctly carried, so the certificate stays true; the sharper states limit of H1 reads it at 3 of 4 rows).
+Could still be wrong: sixteen mutations are a sample of the engine's text.
+
+F19b. H17 on the mutation. MEASURED, out/t7_mutations_H17.hbp. b_norm_no_linear: route bessel with H4 and H17 exit 1, failed=norm_B_covers_the_edges_leaving_the_block. Unmutated: exit 0. Head's scripts: exit 0 on both.
+
+F20. Receipt invariance beside F11. MEASURED: stage control at parallel 1 on Windows against parallel 2 under WSL: cmp exit 0. Second seat's row at 1 and 2 threads: equal (N=729, K=512).
+
+F21. What this lane could not check. CANNOT_SEE, each with what would settle it.
+Every grid point: off limits here. A1_off at y=1/324 and 1/162, the real tail at K=1200 on the grid's points, the residuals against the forms: the grid run itself, after the holds.
+The grid step's lines on a real receipt, hosted: first possible once RECEIPT-GRID.hbp is filed. The reader's grid mode is exercised here on synthetic rows only.
+N=6561 at delta=1/2 and +-1/4 in any dynamics: the estimate F12 stands in for it, CONJECTURE.
+A later hosted run of the holds' workflow: the owner's push. The steps ran here from the held workflow's own text under WSL at parallel 2 (F22).
+The hosted runner's speed at K=1600: estimated by the K=1200 ratio.
+Asolaria fabric and recall were not asked for this code review; the owning gate for these claims is the repo's hosted job, which I read at run 42056499947.
+
+F22. The held workflow's own text, end to end. MEASURED, scripts/run_workflow_text.py, out/held-workflow-steps.hbp, out/held-workflow.log, under WSL at parallel 2, threads 2, on the copy with all 17 holds applied. Every run: block under bash -e in order, checkout and rustup skipped: all rc=0. The fresh baseline at 41 runs equals the assembled receipt byte for byte, K=1600 row included; the read equals the regenerated READ-BASELINE; Bessel, controls with the updated CONTROLS, and the new seen-rows step pass; the grid step stops at its guard, FC_GRID not_filed. No RECEIPT-GRID.hbp exists in the copy, checked first by the script. Could still be wrong: the hosted runner has not seen these holds, and the grid step's lines past the guard run only on a real receipt.
+Note beside F22: after that copy was made, one comment in H4's NEW lost a trailing "(H17)" in HOLDS.txt. The tested route differs from the filed hold by that comment only.

@@ -1,0 +1,11 @@
+FC_READ_HOLDS_APPLIED|review_head=4725b8124d1ef19d2e22844534e3abf39543fb30|lanes=reread,numerics,adversary|holds=10|json=0
+FC_READ_HOLD|lane=reread|hold=H1|file=polariton-first-correction/README.md|severity=low|disposition=own:separate_code|json=0
+FC_READ_HOLD|lane=reread|hold=H2|file=polariton-first-correction/README.md|severity=low|disposition=own:remainder|json=0
+FC_READ_HOLD|lane=reread|hold=H3|file=polariton-first-correction/README.md|severity=low|disposition=apply|json=0
+FC_READ_HOLD|lane=reread|hold=H4|file=polariton-first-correction/README.md|severity=low|disposition=apply|json=0
+FC_READ_HOLD|lane=numerics|hold=H1|file=polariton-first-correction/README.md|severity=low|disposition=own:remainder|json=0
+FC_READ_HOLD|lane=numerics|hold=H2|file=polariton-first-correction/README.md|severity=low|disposition=own:separate_code|json=0
+FC_READ_HOLD|lane=adversary|hold=H1|file=polariton-first-correction/README.md|severity=medium|disposition=apply|json=0
+FC_READ_HOLD|lane=adversary|hold=H2|file=README.md|severity=medium|disposition=apply|json=0
+FC_READ_HOLD|lane=adversary|hold=H3|file=polariton-first-correction/README.md|severity=low|disposition=own:remainder|json=0
+FC_READ_HOLD|lane=adversary|hold=H4|file=polariton-first-correction/README.md|severity=medium|disposition=own:scope|json=0

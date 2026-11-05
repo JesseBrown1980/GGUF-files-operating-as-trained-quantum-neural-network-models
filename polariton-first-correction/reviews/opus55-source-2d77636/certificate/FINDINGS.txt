@@ -1,0 +1,119 @@
+FINDINGS, certificate review of src/bin/polariton_first_correction.rs and what reads it, at head 2d776369fbf7448c6adcf3ecce4bcaa2ae792c20
+Seat: opus55, second seat for ACER-CLAUDE-FABLE5. Folder: C:/tmp/opus55/fc-review-certificate-20261105/
+Tags: MEASURED (a number from a named run in results/) / DERIVED (by hand, written here) / NAMED / CONJECTURE / CANNOT_SEE.
+
+VERDICT IN ONE LINE
+Every inequality the printed bound rests on survives, by derivation and by 42,258 reads against an exact reference at N <= 40. The bound's value has a rounding floor that rises with K, and the reader turns that floor into frozen MISS rows at the grid (F11, hold H1). H1 goes in before the grid. With H1 in, the engine is fit to read the grid.
+
+F0 SETUP
+Ran: git rev-parse HEAD on the worktree = 2d776369fbf7448c6adcf3ecce4bcaa2ae792c20. Source sha256 17bf973c... equals SHA256SUMS. cargo +1.81.0 build --release --locked --offline and clippy -D warnings, exit 0. gh pr checks 11: the hosted first-correction job passes at this head (5m16s), which is the owning gate for the baseline's bytes. PR 11 draft, OPEN, MERGEABLE.
+Instrumented copy: copy/make_copy.py, adds printing and two helper modes, no change to arithmetic; its rows at N=40, K=12 are byte-identical with the real engine's. copy2 breaks the bound on request (test of the test). copy3 adds only the H3 guard.
+Runs of the model: N <= 40 with delta in {0, +-1/2, +-3/4}; N = 200, 729, 2187 with delta in {0, +-1/2}; N = 6561 with delta = 0, y = 1/81 only, K = 1200, 1600, t = 1, 2. No run at any off-limits point. No stage grid. Closed-form bounds at the grid's ranges in overflow_ranges.py carry no state and no time step.
+My own slip, corrected: building the second seat's cheb with --manifest-path wrote polariton/second-seat/recheck-ce44be7/contact/cheb/Cargo.lock into the worktree at 13:27:49. I removed that one file within a minute. git status --short is empty, head unchanged. The binary sits in cheb-target/ in my folder.
+
+F1 DUHAMEL. Survives. DERIVED and MEASURED.
+By hand: with C = PHP and phi' = -iC phi, phi(0) in P, d/ds(psi - phi) = -iH(psi - phi) - i(H - C)phi, and (H - C)phi = QHP phi since phi lies in P. So norm(psi(t) - phi(t)) <= int_0^t norm(B phi(s)) ds with B = QHP. The engine evolves C alone: step() has only shells q <= K. The frame carries exp(ict), a global phase. Even sector: H keeps exchange parity and the start is even, so P and Q are taken inside the even sector. Units: h = 2^-W in the same t as H, JN = 1.
+Measured (decompose.py, results/dec-small.hbp, dec-n40.hbp, 1,152 rows, exact block state of my own in the full Fock space): norm(psi_full - phi_exact) <= sampled integral on every row, integral over deviation between 1.042 (N=4, delta=1/2, y=1/10, K=2, t=1) and 104. Largest odd part of the full state: 0 units. |<A> - <S>/2| under 2^-200 on every row.
+Could still be wrong: the integral is sampled, trapezoid at 2^-5 or 2^-6, so its smallest ratio could move in the third digit. The inequality itself is a theorem.
+
+F2 THE BOUNDARY AND THE SCHUR TEST. Survives. DERIVED and MEASURED.
+By hand on the even basis: a+^dag a0 and a-^dag a0 together send (p,m) with p > m to (p+1,m) with sqrt((p+1)n0), and to (p,m+1) with sqrt((m+1)n0), times sqrt 2 when p = m+1. From p = m they send to (p+1,p) with sqrt(2(p+1)n0). P^dag sends (p,m) to (p+1,m+1) with sqrt((p+1)(m+1)n0(n0-1))/N, no extra factor. These are the code's pair_raise, a_raise, b_raise. Q H P: shell K-1 only by the pair; shell K by the pair and both linear raises. b_norm's closure takes all of these with those factors, and adds each element to its column and to its target's row. sqrt(col_max row_max) is the Schur bound in orthonormal bases. Top of the block: K = N returns 0; K = N-1 takes the linear raise into q = N, the pair is 0 at n0 = 1; start[] holds labels through q = K+2.
+Measured: printed norm_B over power iteration on B^T B on the even sector: 1.000 to 1.382 at N <= 40 (dec rows, K up to N-1, p = m included, largest at N=4, y=1/2, K=2); at grid-sized K: 1.052 (N=6561, K=1200), 1.048 (K=1600), 1.056 (K=1000), 1.075 (K=512), 1.041 (N=729, K=128), 1.068 (N=2187, K=1000), results/schur-large.txt. The Schur bound cannot lose 10%: a copy with 0.9 norm(B) gets caught on 40 of 780 reads (results/rig2-schur_90.hbp). Measured: my own Gershgorin E and c equal the engine's on all 9 N=2187 rows of floor_proxy.
+Could still be wrong: power iteration gives a lower bound on the true norm, so the ratios are upper bounds on the looseness.
+
+F3 THE WINDOW. Survives. DERIVED and MEASURED.
+By hand. phi = phi_low + phi_high at shell K - R. T_m(Htilde) raises q by at most 2m, so B T_m phi_low = 0 for K - R + 2m <= K - 2, which leaves m >= ceil((R-1)/2) = degree at R = 2 degree + 1. T_m has norm <= 1 on the block, since spectrum(Htilde) lies in [-1,1]. |J_m(x)| <= (x/2)^m/m! for x >= 0 and increases in x, so rho at tau = h covers all tau in [0,h]. So norm(B phi(s+tau)) <= norm(B)(norm(phi_high) + rho), with norm(phi_low) <= 1 at the exact unit state. norm(phi_high) <= norm(Pi phi_c) + norm(phi - phi_c). The code's bound carries exactly these: tail on the computed state at 2^42, rho, eps_round + eps_poly at the window's start, added before the update of the same window. Order right. r > K returns 1, exact for the unit state.
+Measured: copy2 with reach 2 in place of 2 degree + 1 goes outside on 173 of 780 reads at coarse windows (rig2-reach_small), for example N=3, K=2, W=0, eps 3e-13 against deviation 4e-3, while the real reach goes outside on 0 of 42,258. The tail set to 0 goes outside on 272 of 272. With K above the reach, tail below 1: smallest eps over deviation 6.08 over 680 rows (N=40, delta=1/2, y=0, W=12, K=24, t=2, results/fine-0.hbp).
+Not distinguished by any run: rho's term and the offset's term in the fine sets, since the tail's floor exceeds both at these sizes. rho set to 0 stays inside on 780 of 780. Their presence rests on the derivation.
+
+F4 THE SERIES. Survives. DERIVED and MEASURED.
+By hand: exp(-izx) = J_0(z) + 2 Sum_{k>=1} (-i)^k J_k(z) T_k(x). Part 0's dest and sign follow (-i)^k; part 1 multiplies by i = (-i)^3, so phase = k + 3 part, right. Scale: J at 2^62, 2J kept in a, a v at 2^124, >> 16 to 2^108, >> 46 to 2^62, right. Truncation: terms through degree; rho starts at m = degree, one term more than the remainder needs.
+Measured, majorant_from against exact fractions (check_series.py majorant): 30,230 rows, 11,099 below the cap and 0 of those below exact, loosest ratio 1.954. 19,131 rows sit at the cap of 2^87 units, where the true sum passes 2^21. The early break adds 2 value where the remaining series at ratio <= 1/2 is at most value. Degree (check_degree.py): rho <= 8 units up to z = 219 (E = 14032 at W = 6). By z = 625 rho sits at its cap, so eps_poly reads 2^25 per window, a true statement since the state distance is at most 2, and at larger z the eps products stop by overflow check (F6). The grid's z is at most 2227/64 = 34.8 by closed form, printed 20.8 at K = 1600 with delta = 0.
+Measured, Bessel tables against my own power series in big integers (check_series.py bessel, results/bessel-table.txt): E = 2..2999 at W = 6, worst 0.503901 units of 2^-62 at E = 2528, k = 3, against the 4 the certificate takes; dropped entries at most 0.499996 units; rho over the actual remainder at least 13.7. Same at W = 0 (E <= 199), 2, 4, 8, 10, 12, 14.
+Phases measured through the state: norm(phi_exact - phi_computed) sits under eta on all 1,152 decomposition rows.
+Could still be wrong: nothing here that I can name. W = 0 above E = 200 was stopped by me: 520 bits are too few for the series there, a limit of my check, CANNOT_SEE.
+
+F5 ROUNDING. Survives. DERIVED and MEASURED.
+By hand. p_{k+1} = 2A p_k - p_{k-1} + f_k, p_1 = A p_0 + f_0, with A = Htilde's integer matrix, exactly symmetric, and each sum exact in i128, so the only rounding is the floor, with norm(f_k) <= sqrt(dim) units. e_k = Sum_{j<k} U_{k-1-j}(A) f_j, norm(U_n) <= n+1, so norm(e_k) <= k(k+1)/2 sqrt(dim). Per part Sum |a_k| norm(e_k); both parts 2 of that. Code: ((weight >> 22) + 1) dim_root 2 2, where weight holds Sum |a_k| (k(k+1)/2 + 1): a factor of 2 to spare. Final floors at most sqrt(2 dim) units against dim_root 4. A's elements: at most 2 units each (printed elem=2 on all 38,826 rows of main, long, fine, stress), diagonal at most 1, at most 7 per row, so norm(A - Atrue) <= 14 units; norm(exp(-izA) - exp(-izAtrue)) <= z 14 units against (floor(Eh)+1) 8 elem. Bessel: (degree+1) 2 2 4 units covers 4 units per coefficient on both parts, and the entries the table drops; measured 0.504. All in units of 2^-62.
+Spectrum: E > r + 1 with r the outward Gershgorin radius, so norm(Htilde) <= 1 - 1/E, E <= 2227 on the grid, margin at least 4.4e-4 against 14 units = 3e-18. The recurrence stays inside [-1,1].
+Terms not written in the code, each far inside the slack above: (1 + rho) per window on earlier error; the state norm 1 + eta multiplying the per-window terms; 2(degree+1) 2^-46 units per component from the accumulator's >> 16; under 1 unit per window from flooring two parts of bound before its +1.
+Measured: eta over norm(phi_exact - phi_computed) between 52.4 (N=16, delta=1/2, y=1/10, K=15, W=8, t=1) and 664. At larger dimension, two window sizes against each other, eta sum over state difference (rounding_actual.py): 233 at N=40, 464 at N=200, 351 at N=200, K=120, 1399 at N=729, K=384, 507 at N=729, K=256, with the state difference near 1e-15 and eta near 3e-13 to 5e-13.
+Could still be wrong: the W=6 against W=8 reading gives the sum of two errors, so it reads the actual rounding within a factor near 2.
+
+F6 OVERFLOW AND TRUNCATION. Survives. DERIVED and MEASURED.
+overflow_ranges.py, closed forms, results/overflow-ranges.txt: N = 6561, K <= 1600, the four deltas, s in {1/4,1/2,1}. E <= 2227, degree <= 120, dim = 641,601. Tightest honest rows: sum in step under 2^125 of 2^127; 2 Htilde v under 2^63(1 - 1/E) against the i64 limit, a margin near 2^52; a v under 2^126; re^2 + im^2 under 2^126; dx product under 2^122 at the largest eps it can print; hi hi under 2^125 once c_lo > 0, which forces eps below about 0.7 and A1_err below about 4.3 at the grid's N; root input under 2^127 of 2^128; leak's squares under 2^123 with norm(B) from the K=1600 row. No stop on these ranges.
+Measured: N=6561, K=1600, delta=0, y=1/81, t=2 ran to the end through overflow-checks in 367 s, E=1330, degree 57, reach 115, norm(B)=659.77 (results/anchor-6561-K1600.txt). C1_e18 prints the same value as at K=1200.
+Stops seen off the grid's ranges, no wrong value printed in any: C1 reads 0 at K=0 and at K=1, y=0 (2,082 runs), hold H3. N=1 divides by nn=0. y=100, W=0 stops at the eps products with rho near its cap (18 runs).
+e18 conversions floor, off by under 1e-18; the reader's +1, +2 and the engine's +16 at 2^62 cover them. eta in norm_bound and energy_bound can sit 1.73e-18 under the true printed sum at worst, far inside eps_round's factor of 2 to spare.
+
+F7 OBSERVABLES. Survives. DERIVED and MEASURED.
+By hand, from the mode expansion of the averaged g2: coefficient of 2 cos kr is <X>, so C1 = 2<X>/(N(N-1)) with X = n0 n + P + P^dag; coefficient of 2 cos 2kr is <n+ n->. With A = a0^dag a+ + a-^dag a0 and exchange symmetry, <A> = 2 Re<a0^dag a+> and <S> = 4 Re<a0^dag a+>, so <A> = <S>/2. r.a sums the raising elements of S, so r.a = <S>/2, right. B = a-^dag a+: r.b = lateral + self/2 = <a+^dag a- + a-^dag a+>/2, right, with the even factors at p = m+1, m+2.
+norm(X psi) <= norm(n0 n psi) + norm(P^dag psi) + norm(P psi), each from squared elements, since each maps basis states to orthogonal images, and xu, xl count elements leaving the block. S on even states: <n+ f(n0)> = <q f(n0)>/2 gives up and down, and the 2 from a+ + a-. x_norm = (N+1)^2 + N: norm(n0 n) <= N^2/4, norm(P) <= (N+1.5)^2/8. s_norm = 2(N+1), with norm(S) = sqrt2 N exactly. b: norm <= (N+1)/2. Read-out: nearest root within 2^-25, Sum |psi_i psi_t| <= norm^2 per kind, so X within 2^-24 and S within 2^-23, against 2^-22 and 2^-21. Interval division: lo = max(A1 - err, 0), hi = A1 + err, V2_lo = lo^2/(2 c_hi) floored, V2_hi = hi^2/(2 c_lo) + 1, right, and the sentinel prints V2_lo = 0, V2_hi_e18 = -1 only when c_lo <= 0; a valid interval prints V2_hi_e18 >= 0.
+Measured against the exact reference, 42,258 reads, none outside: C1 smallest bound over offset 5.43 (N=4, delta=-1/2, y=1/100000, W=0, K=1, t=1), 8.73 at K=N. A1 15.41 (N=24, delta=-1/2, y=1/10, W=0, K=0, t=1), 15.43 at K=N. <A> same. <B> with the reader's b_err 18.90 (N=3, delta=-1/2, y=10, W=0, K=3, t=5). V2: true value inside on all 5,402 valid intervals. x_up over norm(X phi_c) 1.029 to 10.49; s_up over norm(S phi_c) 1.251 to 4.30 (dec rows). x_norm over norm(X): 4.20 (N=4), 2.18 (N=40). s_norm over norm(S): 1.77, 1.45; S reads sqrt2 N.
+Could still be wrong: the V2 margin was read as inside or outside only.
+
+F8 THE READER'S NORM AND ENERGY BOUNDS. True statements. DERIVED and MEASURED.
+norm_bound: phi_c within eta of a unit state gives |norm^2 - 1| <= 2 eta + eta^2, plus dim 2^-84 for the floors of w, right. energy_bound: <C> = 0 at the start and is conserved in the block, |<C>_c| <= eta(2 norm(C) + norm(C) eta) with norm(C) <= |c| + E, plus the read-out at twice its worst case, right.
+Measured: smallest bound over read: norm 66.75, energy 4.358 (N=20, delta=0, y=0, W=2, K=18, t=2). 0 outside on 42,258 reads.
+What PASS and FAIL mean. FAIL: the computed state left the account, or the read-out broke, a real alarm. PASS: the read sits inside an account some 500 to 1,400 times wider than the rounding at N = 729. A rounding error orthogonal to the state moves the norm only at second order, and any Hermitian H conserves its own energy, so neither check tests the Hamiltonian. The other checks do that: the route's rows and the receipts.
+
+F9 THE TRUTH AT SMALL N. No read outside any printed bound. MEASURED.
+truth_lib.py and sweep.py: the Taylor series of the exponential on the full three-mode Fock space, Python integers at 2^-240, written from the README's H, sharing no code. Self-check: norm - 1 and energy near 1e-70, odd part 0, Im<A> and Im<B> 0.
+Sets: main 26,136 reads (N = 2..40, delta 0, +-1/2, y = 0, 1/324, 1/81, 1/10, 1/3, 1, -1/5, 3, every K to N=16, W = 2, 4, 6, 8, t = 1, 2). long 3,024 (t up to 16). fine 792 (W = 10, 12, K above reach). stress 8,874 (y = 1/1000, 1/100000, -7/3, 5/2, 10, 100; W = 0, 1, 2, 3, 5, 7, 9, 14; t = 1, 2, 5). tight 1,512. low-k 1,920 through the guarded copy, K = 0, 1. Total 42,258, outside 0.
+Smallest state margin: eps over norm(psi_full - phi_c) = 1.021 at N=2, delta=3/4, y=1/100000, W=0, K=1, t=1. Derived value: resonant pair level with g = sqrt2/2, bound g t, deviation 2 sin(g t/2), ratio 1.0212. So the bound is as tight as it can be there, and it holds. In main at W = 2: 1.032 at N=3, delta=1/2, y=1/324, K=1, t=1. At K=N: 50.5. With K above reach: 6.08.
+Test of the test (rig, rig2): tail 0 outside 272/272. norm(B)/2 outside 240/780. 0.9 norm(B) outside 40/780. reach 2 outside 173/780. The real bound 0/780 on the same rows. So the comparison sees a broken bound.
+Could still be wrong: N <= 40 has at most 441 even states and K - R reaches positive values only at fine windows. Larger N rests on the derivation, on F10's state reads at N = 729, and on the baseline.
+
+F10 WHERE THE BOUND IS LOOSE, BY WHAT FACTOR, AND WHY. MEASURED.
+state_large.py, N=729, delta=0, y=1/54, t=2, each block's state against the full space's, phases exact:
+ K=128: true 0.163, eps 3.44, ratio 21; K=192: 0.0341, 0.802, 23; K=256: 4.18e-3, 0.120, 29; K=320: 2.02e-4, 9.61e-3, 48; K=384: 1.30e-6, 2.64e-4, 203; K=512: 1.30e-15, 4.62e-9, 3.5e6.
+Causes, in order of size:
+ a. The floor, F11. eps_tail over log of actual leak: 2e5 at N=6561, K=1600; 3e3 to 3e6 at N=2187, K=1000; 1.6e3 to 4e5 at N=729, K >= 512. looseness-baseline.txt.
+ b. The split. norm(B) times the norm on all shells above K-R at each window, where the actual norm(B phi) reads shells K-1, K: 7.7, 11, 15, 25 at N=6561, K=512, 800, 1000, 1200.
+ c. Duhamel's triangle: leak_sum over true deviation 1.7 to 9 at N=729; 1.04 to 104 at N <= 40.
+ d. Cauchy-Schwarz in the observable: 2 norm(X phi) eps, where the deviation lives near K and X meets phi only at that boundary. C1_err over true offset at N=729, y=1/54, delta=0: 2.6e4 (K=128), 5.7e4 (192), 3.1e5 (256), 1.5e10 (384), 2.3e8 (512). At N=6561, K=1200: C1_err = 3.9e-8, and K=1200 and K=1600 print the same C1_e18 at delta=0, y=1/81.
+ e. norm(O) in the eps^2 term: x_norm is 2.2 to 4.2 times norm(X). This term sets C1_err once eps passes about 0.05 to 0.2.
+ f. Rounding: eta some 500 to 1,400 times the actual; rho at least 13.7 times the actual remainder; 4 units per coefficient against 0.504.
+ g. Read-out: A1_err is floored by 2^-21/N, 6.5e-10 at N=729, against actual 1e-12.
+ Schur itself: 1.00 to 1.38 at small N, 1.04 to 1.07 at grid sizes. Small.
+For the frozen limit none of this bites: at N=6561, delta=0, y=1/81, V2's half-width over V2 is 5.5e-6 at K=1200 and 1.9e-6 at K=1600, against 1e-3.
+
+F11 THE FLOOR, AND THE READER'S EXPANDING_L CLAUSE. THE ONE FAULT THAT WOULD HAVE CHANGED THE READ. Hold H1, high.
+What is true of eps. tail_norm floors w at 2^-84 and adds 1 per state, so b >= sqrt(S) 2^-42 with S the states on shells above K - R, from the first window on. The offset term adds norm(B) eta(s). So
+   eps_tail >= t norm(B) (sqrt(S) 2^-42 + eta(t)/2).
+DERIVED, and MEASURED against the law: printed over law 1.00025 (K=1200, t=1), 0.99980 (K=1600, t=1), 0.99983 (K=1600, t=2), results/floor-law.txt. Each of norm(B), sqrt(S), eta rises with K below N/2. So eps at its floor rises with K: K=1600 over K=1200 is 1.62 at t=1 (measured) and about 1.72 at t=2 (by the law).
+This is a true upper bound with a floor. It is sound.
+What the reader does with it. read_first_correction.py line 458, in grid():
+   ok = c_off <= low.C1_err + r.C1_err + 4 and a_off <= low.A1_err + r.A1_err + 4 and low.eps >= r.eps
+and a False prints FC_READ obs=expanding_L result=MISS and counts the point in with_a_miss. A miss stays.
+Measured at allowed points, each a pair the clause would call MISS while the observables agree:
+   N=6561, delta=0, y=1/81, t=1: eps(K=1200) = 3.3933e-8, eps(K=1600) = 5.4953e-8, the same C1_e18. The grid's own N and K.
+   N=2187, delta=1/2, y=1/94, t=2: eps(K=1000) = 2.7098e-8, eps(K=1090) = 2.8611e-8, the same C1_e18, A1 within 1e-17. The grid's own delta and t, at equal y sqrt(N) to s = 1/2.
+At t=2, N=6561, delta=0, y=1/81 the clause holds, 3.796e-7 over 1.304e-7, because the real tail at K=1200 is 330 times its floor there. That point sits outside the grid, and the estimate below puts the ten grid points at smaller tails.
+Estimate for the grid, CONJECTURE, no run at any of these points (floor_proxy.py, N=2187 runs only, results/floor-proxy.txt): eps(K=1600) near 1.30e-7 on every point. eps(K=1200) under that on all eight points with s < 1, estimates 7.6e-8 to 1.0e-7, and these estimates lean high, since the scaling I used overstates the tail 27 times at the one point where I can check it, delta=0, s=1. (1/4,1) and (-1/4,1) sit near the line after that correction, about 1.1e-7 and 1.6e-7. So 8 or 9 of the 10 points would print MISS on expanding_L, at least 6 of the 8 blind.
+Direct demonstration, SYNTHETIC, no model ran, kept in my folder (synth_grid.py, results/SYNTHETIC-*): every observable set from the row's closed forms, eps at the measured floors. Reader as it stands: blind all_rows_met=0, with_a_miss=8; touched 0, 2; every other row MET; checks_failed=0. With H1: blind 8, 0; touched 2, 0. This run also walked the grid path end to end with no crash.
+The frozen row asks "expanding_L_converges_on_every_point". It does not ask eps to fall with K. The two interval conditions read that sentence, and the row keeps printing eps_low and eps_high.
+An engine change would not cure it: a finer tail_norm leaves the offset part, t norm(B) eta/2, which also rises with K, 1.6e-8 to 4.1e-8 at t=2.
+With H1: READ-BASELINE.hbp reproduces byte for byte, since the clause lives in grid() alone (measured after dropping the CR that Windows stdout adds).
+Falsifier: eps_low and eps_high on the grid's rows, once read. If eps(K=1200) >= eps(K=1600) on all ten, the clause would have been harmless, and H1 still loses nothing.
+Could still be wrong: which points fall on which side. The mechanism is measured.
+
+F12 THE ROUTE'S LIMIT ON A1. Hold H2, medium. MEASURED.
+route_first_correction.py integrator, limit 10^-14 on C1 and A1. It runs in the workflow only when the grid is filed, so it has never run in CI. Run here on seen rows, with cheb built in my folder:
+   N=6561, K=1200, delta=0, y=1/81, t=2: FAIL, C1_off_e18=5, A1_off_e18=53459.
+   N=729, K=512, delta=0, y=1/108: FAIL, C1_off_e18=165, A1_off_e18=1169874. y=1/54: FAIL, 1175, 797478.
+Whose offset (attribute_a1.py, results/a1-attribution.txt): A1 recomputed from the engine's own dumped state with exact roots agrees with the second seat within 5e-18 at N=729, K=512. The printed A1 sits 8e-13 from both. So the state is right and the offset is root24, 2^-25 per root, inside A1_err = 6e-9. The propagators agree to 5e-18, a strong result the check can read once its limit matches the read-out. C1's roots carry 1/N^2: 2.8e-15 at worst at N=6561, inside 10^-14.
+Left as it stands, the job goes red after the read is filed, and the tolerance would then change after the read. With H2: PASS on these three rows, with the off and limit printed.
+
+F13 SMALL FAULTS. Holds H3, H4, H5, H6, low. MEASURED or DERIVED. None touches a receipt byte: three filed rows reproduced with H3, H4, H5 in; fmt and clippy pass.
+H3 C1 reads 0 at K=0, and at K=1 with y=0, and v2 divides by it before the sentinel. H4 t=0 prints nothing and exits 0, and blocks later t. H5 the comment says 2^-54 where the assertion allows 2^-54 + len 2^-48. H6 rstrip takes a set of characters, so a Linux peak_rss ending in 0 loses it in the cost file.
+Not held, one line: polariton-first-correction/README.md says the baseline comes next, and the baseline is filed at this head.
+After any hold: SHA256SUMS pins these four files, so it needs regenerating. With all six in, my copies hash read_first_correction.py 489ad546..., route_first_correction.py c4689d40..., polariton_first_correction.rs 1e778e44..., run_stage.py 37fa0c0c... (holds-test/). The engine's hash changes the pin the grid runs at.
+
+F14 WHAT I COULD NOT CHECK.
+CANNOT_SEE: eps, tail and every read at the grid's points, off limits. The count in F11 is an estimate for that reason.
+CANNOT_SEE: an exact reference above N = 40. At N = 729 I compared the engine with itself across K, and across W. N = 6561 rests on K against K and on the second seat's propagator at one row.
+CANNOT_SEE: the actual Gershgorin looseness of E at grid sizes. It sets cost through the degree and enters no error term past rho, so I did not chase it.
+CANNOT_SEE: the Bessel check at W = 0 above E = 200, my check's precision.
+Not in this lane's target and not reviewed line by line: the row's closed forms in Forms, the sabotage controls' expected rows. The hosted job covers the controls.
+Fabric, recall and the backend office were not asked in this lane: the review's ground is the worktree and runs on it.

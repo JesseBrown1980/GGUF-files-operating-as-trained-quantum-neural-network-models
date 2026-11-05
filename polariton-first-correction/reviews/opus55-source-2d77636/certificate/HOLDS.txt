@@ -1,0 +1,56 @@
+HOLD H1 | file=polariton-first-correction/read_first_correction.py | severity=high
+OLD<<<
+            ok = c_off <= low.C1_err + r.C1_err + 4 and a_off <= low.A1_err + r.A1_err + 4 and low.eps >= r.eps
+>>>
+NEW<<<
+            ok = c_off <= low.C1_err + r.C1_err + 4 and a_off <= low.A1_err + r.A1_err + 4
+>>>
+REASON: eps has a floor that rises with K, t norm(B) (sqrt(S) 2^-42 + eta/2), law within 0.03% of three rows: measured eps(K=1200)=3.393e-8 below eps(K=1600)=5.495e-8 at N=6561, delta=0, y=1/81, t=1, and eps(K=1000)=2.710e-8 below eps(K=1090)=2.861e-8 at N=2187, delta=1/2, y=1/94, t=2, with C1 the same 18 digits; on the grid this clause turns each point at its floor into a frozen MISS of expanding_L, and a synthetic receipt of all-MET values reads blind all_rows_met=0, with_a_miss=8, then 8, 0 with this hold.
+
+HOLD H2 | file=polariton-first-correction/route_first_correction.py | severity=medium
+OLD<<<
+        check("second_seat_propagator_N=%d_K=%d_delta=%s_y=%s_t=%d" % (n, k, delta, y, t), c_off <= limit and a_off <= limit, "C1_off_e18=%d|A1_off_e18=%d|limit_e18=%d" % (c_off, a_off, limit))
+>>>
+NEW<<<
+        # The engine reads <A> through roots at 2^-24, nearest, on two kinds of transition, so its A1 sits within 2^-23/N of the state's exact value. The second seat reads with finer roots.
+        a_limit = limit + 10 ** 18 // ((1 << 23) * n)
+        check("second_seat_propagator_N=%d_K=%d_delta=%s_y=%s_t=%d" % (n, k, delta, y, t), c_off <= limit and a_off <= a_limit, "C1_off_e18=%d|A1_off_e18=%d|limit_e18=%d|A1_limit_e18=%d" % (c_off, a_off, limit, a_limit))
+>>>
+REASON: the route's own run fails on the seen row N=6561, K=1200, delta=0, y=1/81, t=2 with A1_off_e18=53459 over limit 10000, and at N=729, K=512 with 1169874; recomputing A1 from the engine's dumped state with exact roots agrees with the second seat to 5e-18, so the offset is the read-out root, inside A1_err; the workflow reaches this step only when the grid is filed, so it would go red after the read.
+
+HOLD H3 | file=src/bin/polariton_first_correction.rs | severity=low
+OLD<<<
+            let v2 = (a1 * a1) / (2 * c1);
+>>>
+NEW<<<
+            let v2 = if c1 > 0 { (a1 * a1) / (2 * c1) } else { 0 };
+>>>
+REASON: measured stop, attempt to divide by zero, on every run at K=0 and at K=1, y=0 (2,082 of them in my sweeps), where C1 reads 0; with the guard the sentinel path prints and those rows sit inside every bound (1,920 reads, 0 outside, smallest eps over deviation 1.021); no plan row has C1 at 0, so baseline bytes stay.
+
+HOLD H4 | file=src/bin/polariton_first_correction.rs | severity=low
+OLD<<<
+            times.sort_unstable();
+>>>
+NEW<<<
+            times.sort_unstable();
+            assert!(times[0] >= 1, "T starts at 1");
+>>>
+REASON: measured, point 8 8 0 1/81 6 0,1 prints no row and exits 0, since t=0 never meets done and blocks every later t; the plan has no t=0, so baseline bytes stay.
+
+HOLD H5 | file=src/bin/polariton_first_correction.rs | severity=low
+OLD<<<
+    // The sum rule J_0^2 + 2 Sum J_k^2 = 1 within 2^-54.
+>>>
+NEW<<<
+    // The sum rule J_0^2 + 2 Sum J_k^2 = 1, asserted within 2^-54 + len 2^-48. The route holds the table to the exact series.
+>>>
+REASON: the assertion two lines down has tolerance (1 << 54) + (len << 60) at 2^108, which is 2^-54 + len 2^-48; the coefficient error the certificate takes rests on the route's comparison, measured 0.504 units at worst over E=2..2999 at W=6.
+
+HOLD H6 | file=polariton-first-correction/run_stage.py | severity=low
+OLD<<<
+    cost = [line.rstrip("|json=0") + "|peak_working_set_kB=%s|json=0" % peak for line in err.decode("utf-8").splitlines() if line.startswith("POLARITON_FIRST_CORRECTION_COST|")]
+>>>
+NEW<<<
+    cost = [line.removesuffix("|json=0") + "|peak_working_set_kB=%s|json=0" % peak for line in err.decode("utf-8").splitlines() if line.startswith("POLARITON_FIRST_CORRECTION_COST|")]
+>>>
+REASON: str.rstrip takes a set of characters: measured, 'a|peak_rss_kB=12340|json=0'.rstrip('|json=0') gives 'a|peak_rss_kB=1234', so a Linux peak ending in 0 loses its zeros in the cost file the row asks for; Windows prints CANNOT_SEE there and hides it; receipts are untouched.
