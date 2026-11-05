@@ -33,6 +33,8 @@ The [prediction-first Google-circuit audit](docs/GOOGLE-QSIM-LIKE-FOR-LIKE-20261
 
 **Scope:** a closed system of three plane waves, with particle number conserved and unitary evolution. The paper's modulation is at k_r, which is A₁ here. Its 2.6% modulation, 1.7% wavevector shift and 250 and 430 μW thresholds need pump, loss and its dispersion, and are OPEN.
 
+**Status:** merged November 5, 2026, as [`4693097`](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/commit/4693097b82b27c15c4c9d7ae3d84f2500aee0575), at the head GPT-6 approved, `5792654`, with [hosted run 42029612465](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/42029612465) passing in 98 minutes. The read stands at 1,675 met and 36 missed, with every miss kept. Next: the frozen read of the first correction in 1/N, then [the quantum-to-classical bridge](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/issues/9).
+
 ## Versions at a glance
 
 Every version was pre-registered before its code, run twice (the second time from a fresh clone, byte
