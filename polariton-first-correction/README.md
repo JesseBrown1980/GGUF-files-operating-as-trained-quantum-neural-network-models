@@ -2,7 +2,38 @@
 
 The frozen read is `POLARITON_FIRST_CORRECTION`, line 48 of [the prediction](../polariton/PREDICTION.hbp), pushed at `5792654` before this folder existed. It freezes C₁, A₁ and V² within 1/1000 of law plus first correction at N = 6561, t = 2, on 8 points no lane has run and 2 the second seat touched, reported apart.
 
-**Status: the engine, the reader, the route and [the plan](PLAN.hbp) are pushed, the baseline on seen rows is filed ([receipt](RECEIPT-BASELINE.hbp), [read](READ-BASELINE.hbp), [local cost](COST-LOCAL-BASELINE.hbp)), and [the second seat's source and certificate review](reviews/opus55-source-2d77636/) at `2d77636` is applied. All three of its lanes found the engine fit to read the grid. They found the reader and the route unfit, and [each hold has a row of disposition](reviews/opus55-source-2d77636/HOLDS-APPLIED.hbp). The frozen grid runs next.**
+**Status: the frozen grid has run, and its first read is filed: [the receipt](RECEIPT-GRID.hbp), [the read](READ-GRID.hbp) and [the local cost](COST-LOCAL-GRID.hbp). The blind points met every clause of the row on 8 of 8, and the touched points on 2 of 2. The second seat's attack on the read comes next.**
+
+Before the grid: the baseline on seen rows is filed ([receipt](RECEIPT-BASELINE.hbp), [read](READ-BASELINE.hbp), [local cost](COST-LOCAL-BASELINE.hbp)), and [the second seat's source and certificate review](reviews/opus55-source-2d77636/) at `2d77636` is applied, with [a row of disposition for each hold](reviews/opus55-source-2d77636/HOLDS-APPLIED.hbp). All three of its lanes found the engine fit to read the grid, and the reader and the route took 53 holds.
+
+## The first read, November 5, 2026, MEASURED
+
+The engine ran from `7f72d2c`, after that head's hosted run passed, with binary sha256 `d9718bbeb4c52c699f5cfe5bdc520b9d4739192a3d323a34450ce2bc3cf57902`, from 18:41 to 19:03 UTC: 20 runs at N = 6561, t = 2, K = 1200 and 1600, 4 at a time. The read was run once, and its bytes are the file.
+
+Read over law plus first correction, minus 1, in parts per million, at K = 1600, where the row's limit is 1000, and the law alone against the same read:
+
+| Set | δ | s | C₁ | A₁ | V² | C₁ against the law alone | A₁ against the law alone |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| blind | 1/2 | 1/4 | 89.5 | 32.7 | −24.2 | −8,332 | −4,295 |
+| blind | 1/2 | 1/2 | 121.2 | 38.9 | −43.3 | −9,919 | −4,776 |
+| blind | 1/4 | 1/4 | 117.6 | 40.0 | −37.5 | −9,300 | −4,444 |
+| blind | 1/4 | 1/2 | 161.0 | 48.6 | −63.8 | −11,118 | −4,994 |
+| blind | 1/4 | 1 | 338.0 | 89.0 | −160.0 | −17,073 | −7,189 |
+| blind | −1/4 | 1/4 | 158.4 | 47.3 | −63.7 | −10,902 | −4,694 |
+| blind | −1/4 | 1/2 | 224.7 | 60.5 | −103.8 | −13,232 | −5,443 |
+| blind | −1/4 | 1 | 493.8 | 125.4 | −242.9 | −20,596 | −8,428 |
+| touched | 0 | 1/4 | 143.5 | 45.9 | −51.7 | −10,263 | −4,647 |
+| touched | 0 | 1/2 | 199.8 | 57.0 | −85.8 | −12,355 | −5,294 |
+
+- **Every certified interval lies inside 1/1000**, for all three observables at all ten points, at K = 1600 and also at K = 1200 alone. The largest half width is 1.4 × 10⁻⁸ on C₁, and on V² it is 6,382 parts per million of the margin at (1/2, 1/4).
+- **The law alone sits outside 1/1000 at every point**, by 8 to 21 times on C₁ and 4 to 8 times on A₁, so every point discriminates.
+- **The remainder falls with N as 1/N².** At the four frozen points, C₁ over first minus 1 falls by 77.65 to 78.31 from N = 729, y = s/27 to N = 6561, y = s/81, in certified lower bounds, against the frozen 30 and the 81 of 1/N². The numerical error at N = 6561 is 6.7 × 10⁻⁷ to 1.5 × 10⁻⁶ of first, under the residual and under the gap.
+- **Expanding L:** K = 1200 and K = 1600 agree within 3 × 10⁻¹⁸ on C₁ and 29 × 10⁻¹⁸ on A₁ at every point. Epsilon at K = 1600 sits above epsilon at K = 1200 on 8 of the 10 points, which is the rounding floor the review measured, so the clause it held out would have read MISS on those 8.
+- **Signs:** ⟨A⟩ < 0 and ⟨B⟩ > 0 with their certified errors at all ten. Predicted f runs 0.0033 to 0.0110, against 1/50.
+- **Separate code on the same rows:** the second seat's propagator meets all 20, with C₁ within 122 × 10⁻¹⁸, f and C₂ within 2 × 10⁻¹⁸, and A₁ within 8.9 × 10⁻¹³, the engine's read-out roots, inside its account. The route's Bessel tables meet exact series on 12 tables at 1 unit of 2⁻⁶², and norm(B), the spectral interval and the series tail hold on all 20 rows.
+- **Cost, local:** 166 to 175 s per run at K = 1200, 274 to 347 s at K = 1600, peak working set 79 MB.
+
+**Scope:** the first correction in 1/N at N = 6561, t = 2, on these ten points, for C₁, A₁ and V², within 1/1000. Longer times, the second correction, and the quantum-to-classical bridge are each their own frozen read.
 
 - [`polariton_first_correction.rs`](../src/bin/polariton_first_correction.rs): the integer Chebyshev integrator on a block near |N, 0, 0⟩, with its certificate.
 - [`read_first_correction.py`](read_first_correction.py): evaluates the law and first correction from the row's own text, and reads the receipts against it.
