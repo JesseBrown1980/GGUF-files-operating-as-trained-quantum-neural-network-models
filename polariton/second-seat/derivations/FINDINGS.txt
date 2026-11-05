@@ -1,0 +1,120 @@
+SECOND SEAT, DERIVATIONS LANE, QNN branch fable5-polariton-three-mode-20261104 at 8dfa11ace0994c8ab96635c554135f02c42e3e62, PR #8
+Each derivation was done before reading how the prediction states it. Output rows are in out/, code in code/ and fullspace/.
+Tags: MEASURED, DERIVED, NAMED, CONJECTURE, CANNOT_SEE.
+
+OWN INSTRUMENTS
+- code/poltri.py: tridiagonal J chains at 180 fractional bits in Python integers.
+- fullspace/: Rust 1.81, i128 Q48, parity-even block Cholesky with inverse iteration. MEASURED against the receipt: N=81, u=1/2, s=4: E -8.580414080 (receipt -8.580414081), B -7.479109181 (-7.479109182). N=243: B -23.462711012 (-23.462710744). This crate is scratch; clippy without -D warnings reports 2 warnings; it is outside the repo and is SCOPED evidence only.
+- Fault found and fixed in my own tool: ground_vec first stopped at 2 iterations, and J=1 vectors had residual 0.63 at N=2187. It now iterates to residual below 2^-110, and out/d4_response.hbp is the rerun.
+
+F1. HAMILTONIAN (item 1). DERIVED, MEASURED, confirmed.
+Sum over momentum-conserving tuples gives (G/2L)N(N-1) + (G/L)[n0(n+ + n-) + n+n- + P + P^dag]. So u=1 and pair/direct=1. Exact on 451 Fock states, N=2..12, 0 mismatches (out/d1_d2.hbp). The truncation drops the 2k mode, and the y term is -y(A + A^dag) from W(x) = -2y cos kx with its +k to +2k element dropped. Consistent at the three-mode level.
+
+F2. DENSITY AND g2 (item 2). MEASURED, confirmed, with one low hold.
+First-quantised wavefunction on an 8x8 grid in Z[zeta_8], N=2,3, five states including complex and parity-free ones.
+- General form N + <A>e^{ikx} + c.c. + <B>e^{2ikx} + c.c.: 0/8 mismatch on all five.
+- C1, C2 as x-averaged normal-ordered harmonics: 0/8 on all five.
+- README's cosine form N + 2<A>cos kx + 2<B>cos 2kx: 0/8 where A and B are real, 6/8 wrong on complex_no_parity_N3 (A=40+12i). Every state read has real A and B: real states by real elements, quench states by parity, since n+ <-> n- sends A to A^dag. PREDICTION row says for_real_states; quench states are complex and parity is what makes them real. Hold H6.
+
+F3. MEAN FIELD AND THE WINDOW (item 3). DERIVED, MEASURED. Formulas confirmed; the window is not stated in the repo.
+Derived: rho=(1-delta)/(4-3u), e=-(1-delta)^2/(4-3u), sector gap sqrt(4(4-3u)rho rho0), c0=(rho0/rho-u)/4 as the m^2 coefficient of e with m=rho+ - rho-. theta=pi is the minimum wherever rho rho0>0, since the cos theta coefficient 2 rho rho0 is positive, at any u.
+Three edges at y=0 (out/d3_window.hbp):
+  u      rho0=0 delta   c0=0 delta   plane-wave equal x   plane-wave equal delta
+  0      -1             -1           -1                   -1
+  1/4    -5/8           -4/9         -0.424306            -0.174306
+  1/2    -1/4            0           -0.190983             0.309017
+  3/4     1/8            4/11        -0.052178             0.697822
+  1       1/2            2/3          0                    1
+Plane-wave line: 1-delta = [(4-3u) - sqrt(u(4-3u))]/2. At u=1 it is x=0, so the plane wave is below the pair state at every x<0. Sector scan at N=243, all P on a grid, 18 points: the lowest P is 0 or N exactly as this line says. Integer mean-field grid found no intermediate m below both.
+Rows outside: u=1, x=-1/4 and x=-1/8 lie below the plane-wave line, so they read the P=0 branch, an excited one. All pin rows (u=1/2 x=0, 1/2, 3/2; u=0 x=0) lie inside. README names only u=1, x=-1/4. Hold H1.
+
+F4. THE PINNING (item 4). DERIVED, MEASURED, confirmed at new points. Holds as stated inside the window.
+Derivation: with theta=pi-2e and rho+-=rho+-m/2,
+  e = e0 + 4 rho rho0 e^2 - 4y sqrt(rho rho0) e cos(a) + c0 m^2 + y g m sin(a), g=sqrt(rho0/rho)
+  cos mode gives -y^2 cos^2 a. sin mode gives -y^2 g^2 sin^2 a/(4c0). With g^2=4c0+u: V/N=-y^2[1+(u/4c0)sin^2 a].
+  Density mode: no linear term at order y, so it enters at y^4.
+  <A>/N = y[1+(u/4c0)sin^2 a - i(u/4c0) sin a cos a], and the rotor average drops the last term, so A1/y=2[1+(u/8c0)(1+f)]. <B>=N rho <e^{2ia}>, so D2=2 rho f.
+  Mathieu: -(c0/N)d^2 + (N y^2 u/8c0)cos 2a gives q=N^2 y^2 u/(16c0^2). All as the note writes. Own integer Mathieu gives the six frozen f(q) values exactly: 9999, 39944, 156537, 490857, 776331, 889412 ppm.
+Gauge step: the term linear in J completes to (c0/N)(J+N y g sin a/2c0)^2. The gauge function has zero flux, since the integral of sin a over a period is 0. Hermiticity forces the symmetric ordering.
+Test for a same-order Berry or ordering term: exact y->0 response on J=0,1,2 chains, 9 (u,x) with u>0 inside the window or on the P=0 branch, plus 3 at u=0, N=81..6561 (out/d4_response.hbp). MEASURED at N=6561:
+  chiA/rotor 0.99937 to 1.00008; chiD/rotor 0.9932 to 0.99953; 4M/g 1.0002 to 1.0033 (M=<J=1|A^dag|J=0>, rotor g/4); c0 exact/c0 1.0003 to 1.0045; rest of the response/(N/4) 0.9978 to 0.9999.
+  Each ratio moves to 1 as 1/N: N(chiD/rotor-1) is steady, -6.72 at u=1/2 x=0, -3.13 at u=1/4 x=-1/4, -17.34 at u=3/4 x=0, -44.5 at u=3/4 x=1/8, -38.0 at u=1 x=-1/8. Any term at the rotor's order would leave a ratio off 1 at large N. None does.
+  So the 0.96% shortfall in D2 at N=729 in the README table is this 1/N term: 6.72/729=0.92%.
+Finite yN at u,x outside the receipt, own full-space solver, N=81, 243, s=1/2..16 (out/d4_grid_pass.hbp). N=243: u=1/4 x=-1/4 D2 ratio 0.982..1.0007, A1/y 0.9967..1.0011. u=1/4 x=0 0.983..0.995, A1/y within 0.2%. u=3/4 x=0 0.930..0.982, A1/y within 0.23%. u=3/4 x=1/8 0.815..0.860, A1/y within 0.19%. u=1/2 x=1/4 0.918..0.937.
+Where it fails, all MEASURED:
+  a) Below the plane-wave line, out/d4_grid_fail.hbp, N=243, s=4: u=1 x=-1/4 D2 0.000087 against 0.437, A1/y 1.605 against 3.875, <J^2>=59028 (N^2=59049). u=1/2 x=-1/4 D2 0.000493 against 0.511, <J^2>=58992. u=3/4 x=-1/8 D2 0.000122 against 0.305. The ground state is the even mix of the two plane waves. The P=0 branch still follows the rotor in the y->0 chain.
+  b) Large y: control parameter m/rho = y g/(2 c0 rho). u=1/4 x=-1/4: y=16/81 gives 1.45 and D2 ratio 0.80; y=16/243 gives 0.48 and ratio 0.982.
+  c) Small N rho near delta=1: u=3/4 x=1/8, N=81, ratio 0.44.
+  d) c0->0 at the second column of F3, where q diverges and the balanced state stops being a minimum.
+
+F5. u=0 (item 5). DERIVED, MEASURED, confirmed, and it has a law the note leaves open.
+With a0 real, c=(a+ + a-)/sqrt2=c1+ic2, d=(a+ - a-)/sqrt2=d1+id2, the mean-field energy is
+  e = x(R^2+r^2) + (1-R^2-r^2)(R^2-r^2) - 2 sqrt2 y sqrt(1-R^2-r^2) c1, R^2=c1^2+d2^2, r^2=c2^2+d1^2.
+This has no dependence on the angle in (c2,d1) at any order in y. Exact check: 6 rational points on the circle, 1 distinct value at u=0, 6 distinct at u=1/2 (out/d8_checks.hbp).
+Below leading order, MEASURED (out/d5_u0.hbp): D2/y^2 grows as N at fixed x. Define a=(D2/y^2)16c0^2/(rho N). Extrapolated from N=2187,6561 against Bogoliubov zero-point energy (omega_s-TrA)/2 about the flat circle, with no fit:
+  x      a chain   a zero-point   1/sqrt(2(1-x^2))
+  -3/4   1.069020  1.069038       1.069045
+  -1/2   0.816495  0.816495       0.816497
+  -1/4   0.730296  0.730296       0.730297
+   0     0.707107  0.707106       0.707107
+   1/4   0.730297  0.730296       0.730297
+   1/2   0.816497  0.816495       0.816497
+   3/4   1.069004  1.069042       1.069045
+So N u_eff -> -1/omega with omega=sqrt(2(1-x^2)) the sector gap. The numbers are MEASURED; the closed form 1/omega is read off them, CONJECTURE as an analytic statement.
+<B> is POSITIVE at u=0, all rows, so the pattern pins at a=0, the opposite position from u>0. The scale is q0=N y^2/(16 c0^2 omega), so y ~ N^(-1/2), against y ~ 1/N for u>0.
+Scan at x=0 (out/d5_scan.hbp): D2/(y^2 N) at N=243 is 0.0485 for s<=8, falling to 0.0209 at s=64. D2/(2 rho f(q0)) is 1.097 at small s, 1.012 at s=64; N=81 reads 1.29, and (ratio-1)N is about 23 at both. A1/y -> 2.004. Receipt N=729 s=4 D2=0.001001 against 2 rho f(q0)=0.00097. Hold H3.
+
+F6. DISORDERED AND CRITICAL (item 6). DERIVED, MEASURED, confirmed, constants added, and a read-out fault found.
+Disordered, derived from displaced Bogoliubov: A1/y=4/(delta+1), D2/y^2=2/(delta+1)^2, jbar=(delta/omega-1)/2, gap 2 omega. Exact chains, 6 (u,x), N to 2187: ratios go to 1 as 1/N with N(ratioD-1) from -0.36 to 0.37, B positive (out/d6_dis.hbp).
+Critical, derived: with c=(a+ + a-)/sqrt2, d=(a+ - a-)/sqrt2, soft coordinates (P_c, X_d), H=p^2+((delta-1)/2)r^2+g r^4, g=(4-3u)/(16N). J is the angular momentum and the y term is a uniform shift of p. At delta=1 scaling r^6 ~ 1/g gives gap=kappa g^(1/3), jbar=(<xi^2>/4) g^(-1/3), so the exponents are N^(-1/3), N^(1/3).
+Constants of -lap+r^4 at m=0, exact-element basis of 70 states (out/d6_critical.hbp): E0=2.34482907, E1=9.52978138, kappa=7.18495231, <xi^2>=0.65147777.
+  jbar -> 0.16286944 (16N/(4-3u))^(1/3) - c, gap -> 7.18495 ((4-3u)/(16N))^(1/3).
+  Measured at 180 bits, u=1/2, N=14348907: 73.0408 against 73.4806-0.44. N=43046721: 105.5373 against 105.9773-0.44. c=0.44 at u=1/2 is read off, not derived. Gap ratio 0.99962 at N=43046721.
+READ-OUT FAULT, MEASURED (out/d6_top.hbp, out/d6_emul.hbp): the top rungs of disordered and critical rows carry the 2^-60 rounding of o^2. sector_o2 stores o^2 in E/N^2 units. At k=1, N=43046721, o^2 is about 622 units, so rounding moves o by up to 8e-4 relative at low k.
+  N          u,x      pairs read  pairs 180 bit  off        gap read    gap 180 bit  off
+  43046721   1/2,1/2  106.039063  105.537257     +4.8e-3    0.01104192  0.01103782   +3.7e-4
+  23887872   1/2,1/2   86.797897   86.648165     +1.7e-3    0.01343275  0.01343078   +1.5e-4
+  14348907   1/2,1/2   73.084768   73.040804     +6.0e-4    0.01591748  0.01591657   +5.7e-5
+  4782969    1/2,1/2   50.512769   50.509247     +7.0e-5    0.02295010  0.02294997   +5.6e-6
+  1594323    1/2,1/2   34.887357   34.887062     +8.4e-6    0.03308766  0.03308765   +1.9e-7
+  43046721   1/2,3/2    0.077323    0.077350     -3.6e-4    3.46421530  3.46410169   +3.3e-5
+  23887872   1/2,3/2    0.077339    0.077350     -1.5e-4    3.46408283  3.46410176   -5.5e-6
+Cause tested: rebuilding d and o2 with the engine's rounding and reading that matrix at 180 bits returns the receipt's gap: 3.46421530 against 3.46421530, 3.46408283 against 3.46408283, 0.01104191 against 0.01104192, 0.01343275 against 0.01343275. Pairs through the same finite difference: 106.0329 against 106.0391, 0.077323 against 0.077323.
+Effect on the README: "rises by 1.4509 at the top step" is 1.44491 at 180 bits, and "falls by 0.6937" is 0.69348. The 5% tolerances are met either way, so no READ row changes. The second route stops at N<=243 and could not see this.
+Ordered rows are unaffected, since o^2 is large at k~N/5: u=1/2 x=0, N=23887872: E/N^2 -0.100000010560 against -100000011 ppb, f 0.399999975612 against 399999975 ppb, gap 1.09544506 against 1095445063 ppb. At N=43046721 E and f agree too; my gap there, 1.09547472, is limited by my window (tail 1.6e-8), so that one digit is CANNOT_SEE from my run. Hold H2.
+
+F7. THE QUENCH (item 7). DERIVED, MEASURED, confirmed, first correction in closed form, and the 31 misses accounted for.
+su(1,1): K0=j+1/2, H0=2 delta K0+2K1, H1=-3u(K0^2-K0)-2{K0,K1}+3K1. First order in eps=1/N, in closed form:
+  gamma^6 J1(t) = -(4-3 delta u) sinh^2(2 gamma t)/4 + (3/2) gamma t [1+3delta^2-delta u(2+delta^2)] sinh(2 gamma t) + delta[3u(1+delta^2)-delta(7+delta^2)] sinh^2(gamma t).
+  Exact Taylor series through t^14 with truncated eps polynomials, at (delta,u)=(0,1),(1/2,1),(-1/2,1),(1/3,1/2): 0 mismatches (out/d7_derive.out). Large t: J1 -> -(4-3 delta u)J0^2/gamma^2.
+Band edge: J1=-[t^2+(3-+u)t^4+(2/5)(4-+3u)t^6], upper sign at delta=+1. Exact series through t^12 at u=0,1/2,1. So the pair count deviates as t^6/N, and the RELATIVE deviation as [1+(3-+u)t^2+(2/5)(4-+3u)t^4]/N. The note's t^4/N is correct as the leading power of the relative deviation, with coefficient 2/5 at delta=1 and 14/5 at delta=-1 for u=1. I independently got the t^6 coefficient from the classical soft-mode expansion, -(2/5)(4-3u).
+The 31 misses (out/d7_compare.hbp):
+  12 pair rows: read minus first order is 0.35 to 1.37 times (first order)^2 in all 12, so each misses by the 1/N term with a second-order residual. Example delta=1, t=4, N=6561: read 0.979919, first order 0.979363. delta=1, t=8, N=19683: 0.918253 against 0.910207. Largest first-order size: delta=-1, t=8, N=6561, where J1/(N J0) is -1.79 and the series is past use.
+  6 phase rows: exact <H>=0 gives Re<P>/(N jbar)=-delta+(3u/2)<j^2>/(N jbar), Gaussian value -delta+3u(jbar+1/2)/N. Read against it: 0.524402/0.525853, 0.000858/0.000860, 0.006147/0.006198, -0.474069/-0.473325, 0.002070/0.002076, 0.014778/0.015072.
+  12 pinned rows: exact series for A1=2|y||w0+w1/N|. delta=0, u=1: w0=-2(cosh t-1), w1=-t sinh t+(65/12)cosh t-(11/3)cosh 2t+(5/4)cosh 3t-3, 9 held-out series terms exact. Read over first order at y=1/1024: N=729: t=1 0.9998, t=2 1.0031, t=3 1.175. N=243: t=1 1.0002, t=2 1.027, t=3 44 (w1/N is -0.99 of w0, the first order has cancelled, jbar/N=0.41). delta=1/2: N=729 0.9999, 1.0023, 1.075; N=243 0.9999, 1.020, 1.987. So these are the same 1/N term, and t=3 needs higher order.
+  1 row, e rises with P: not a 1/N matter, F3 covers it. At P=N, e=x, and at u=1/2, x=0 e(P) comes back to 0 from 0.016.
+  Band edge pinned: delta=1 u=1: w1=t^4, so A1=2|y|t^4/N with <A> positive. delta=1 u=1/2: w1=5t^4/2+t^2/2. delta=-1 u=1: w1=28t^6/15+3t^4.
+Identity for C1, exact from <H>=0: C1=[4(1-delta)jbar-(8-6u)<j^2>/N]/(N-1). With Gaussian <j^2> it reads within 2.85% on 46 rows with jbar/N<=1/100, delta!=1, N>=6561.
+Sign of <A> in the quench, derived: R(t)=R*(1-cosh gamma t), R*=y sqrt(N)/(1+delta), so negative inside the band, as README says. Positive for delta>1, negative for delta<-1. At delta=-1 the limit is A1=4|y|t^2.
+Hold H4 and H7.
+
+F8. THE SOURCE (item 8). Opened arXiv v1 PDF and TeX source (paper/). MEASURED where a number; otherwise read.
+- The paper writes no interacting three-mode Hamiltonian. Main text names the terms a+1^dag a-1^dag a0 a0 + h.c. and a+1^dag a0 + a-1^dag a0 + h.c., and cites PRB 87 155302, PRB 70 205301, PRB 63 041303. The supplement's 8x8 matrix is linear, on TE0, exciton and TE1 modes. Both named terms match this model's P and y terms. The n0(n+ + n-)+n+n- part, u=1 and equal overlaps are the model's own.
+- Its |+-1> are TE1 modes with Hopfield 0.4, |0> a TE0 BiC with 0.54, with pump and loss. README lists these as open.
+- The paper says "the linear coupling term alone does not fix the phase of the modulation". This model's u=0 result reads the same way at leading order.
+- A difference that README does not state: the paper's modulation is at k_r, and its supplement says the +-1 interference with TE0 absent is at twice "the spatial frequency of that of the supersolid". This model's pinned ground state is mainly at 2k: N=729, s=4, D2=0.1953, A1=0.0126. The k harmonic dominates only on the quench branch. Hold H5.
+- 2.3 and 0.04: main text has 1/k_r=2.3 um, Methods has about 2.3 um^-1. The prediction row uses 2.3 per um, so 0.04/2.3=1.7%, matching README's 2%. With the main-text line it would be 9%. The paper's two lines differ; CANNOT_SEE which it means without reading the figure.
+- A1^2=16 rho0 rho cos^2(theta/2): confirmed, direct Fourier of the coherent state, 3 cases, 12 digits. Quench cos^2(theta/2)=(1-delta)/2: confirmed for large jbar from Re<P>/(N jbar)->-delta, and C1=A1^2/2=4(1-delta)jbar/N.
+- (1-delta)V^2: paper defines K=(n1+n-1)/(2 n0), so 0.5% is rho/rho0, the per-mode reading README uses. rho=0.00495, rho0=0.9901, A^2/(8 rho0 rho)=0.01724, and 0.0169 with rho0=1. README's 0.017 holds. At delta=-1, V>=0.093.
+- Paper's K=A^2/4 against a plain sinusoidal density: 1+A cos kx with flat phase has field sidebands A/4, so K=A^2/16. Direct Fourier at A=2.6%: K=4.2259e-5, A^2/16=4.225e-5, A^2/4=1.69e-4. The paper's 0.02% is A^2/4, and A^2/16 gives 0.004%. A^2/4 holds if A modulates the field. README's 16 rho0 rho is the A^2/16 reading, so the note and the paper differ by 4 and README does not say so. CANNOT_SEE how Fig. 1e defines A; only the text was read.
+- Unequal overlaps, CONJECTURE on the overlaps (contact through exciton fraction, equal spatial overlaps), DERIVED given that: with a=X1^2/X0^2, the n+n- coupling is u1=a, the -n^2 coupling is u2=2-(a+1/a)/2, the delta shift is 2-1/a, 4-3u becomes 4-4u2+u1, and c0 and q take u1. Hopfield read as fractions: a=0.741, u1=0.741, u2=0.955, u_eff=1.026. Read as amplitudes: a=0.549, u1=0.549, u2=0.814, u_eff=0.903. Hold H8.
+
+NOT REFUTED: every formula in items 1 to 7 as the note writes it, inside its stated rows. README N=2 hand values also re-derived: levels -2,4; C1=-4/3; C2=1/3; g2(pi)=8/3; d<A>/dh=2/9.
+
+WHAT I COULD NOT CHECK
+- Fabric, recall and owning seats were not asked. This lane ran read and run only, so the triplet's first two lanes stand unasked. CANNOT_SEE, not FALSE.
+- GitHub required checks for PR #8: not read. Hosted reproduction is CANNOT_SEE from here.
+- Full space at N=729 with my solver: not run, by time.
+- Nature final text, the paper's figures, and its cited three-mode references: not opened.
+- Pinned w1 in closed form at general delta: only delta=0, +-1 done. delta=1/2 is a series sum.
+- N=43046721 ordered gap digit: my window limits it.

@@ -1,0 +1,122 @@
+HOLD H1 | file=polariton/README.md | severity=high
+OLD<<<
+**Status: run in integers, Rust 1.81 and clippy `-D warnings`, with [the prediction](PREDICTION.hbp) pushed before the engine existed, at `fce08f9`. Read against its frozen tolerances, [887 rows are met and 31 missed](READ.hbp), and the misses stay. Yes to the central test: with no fit, the correlation order at zero field becomes a pinned density modulation at the predicted size. The second seat's attack is OPEN.**
+>>>
+NEW<<<
+**Status: run in integers, Rust 1.81 and clippy `-D warnings`, with [the prediction](PREDICTION.hbp) pushed before the engine existed, at `fce08f9`. Read against its frozen tolerances, [887 rows are met and 31 missed](READ.hbp), and the misses stay. Yes to the central test at u = 1/2, x = 0: with no fit, the correlation order at zero field becomes a pinned density modulation at the predicted size. At the contact value u = 1 the ground state is an even mix of the two plane waves for every x < 0, and there it reads D₂ = 0.00009 against the rotor's 0.437 at N = 243, yN = 4. The second seat's attack is OPEN.**
+>>>
+REASON: The status says yes with no u; at the source contact value the ground state fails the formula by a factor of 5000, measured.
+
+HOLD H2 | file=polariton/README.md | severity=high
+OLD<<<
+- **The plane wave:** at u = 1, x = −1/4, a state with all polaritons in one mode has E/N² = −1/4, below the pair state's −1/16. So the contact model's pair state is an excited one, and the pinned ground-state test runs at u = 1/2, where the plane wave reads 0 against −1/10.
+>>>
+NEW<<<
+- **The plane wave:** at u = 1, x = −1/4, a state with all polaritons in one mode has E/N² = −1/4, below the pair state's −1/16. So the contact model's pair state is an excited one, and the pinned ground-state test runs at u = 1/2, where the plane wave reads 0 against −1/10.
+- **The window of the pair state at y = 0:** ρ₀ > 0 needs δ > −1 + 3u/2. The balanced state has c₀ > 0 for δ > (4u − 2)/(2 + u). It lies below the plane wave for 1 − δ < [(4 − 3u) − √(u(4 − 3u))]/2. For u = 0, 1/4, 1/2, 3/4, 1 that last edge is x = −1, −0.4243, −0.1910, −0.0522, 0, and the lowest sector at N = 243 follows it at 18 points scanned over P. So the u = 1 rows at x = −1/4 and −1/8 read the P = 0 branch.
+- **Below that edge in the full space:** at N = 243, yN = 4, ⟨P²⟩ reads 59,028 of N² = 59,049 at u = 1, x = −1/4, with D₂ = 0.00009 against the rotor's 0.437 and A₁/y = 1.605 against 3.875. At u = 1/2, x = −1/4, D₂ = 0.0005 against 0.511. The y → 0 response on the P = 0 branch still reaches the rotor's value as 1/N there.
+>>>
+REASON: The window is undefined in PREDICTION and README names one row; state the three edges and the measured failure below them.
+
+HOLD H3 | file=polariton/README.md | severity=medium
+OLD<<<
+- **Takeover scaling:** the pair count rises by 1.4509 at the top step, against 3^(1/3) = 1.4422, and the gap falls by 0.6937, against 0.6934.
+>>>
+NEW<<<
+- **Takeover scaling:** the pair count rises by 1.4509 at the top step, against 3^(1/3) = 1.4422, and the gap falls by 0.6937, against 0.6934. The top rungs read here carry the 2⁻⁶⁰ rounding of o² in `sector_o2`, which is large at low k. Rebuilding that rounded matrix returns the receipt's gaps to 8 digits. At 180 bits on a low-k window: x = 1/2 pairs 86.648 and 105.537, gap 0.0134308 and 0.0110378; x = 3/2 pairs 0.07735 at both, gap 3.464102 at both. So the top step is 1.4449 and 0.69348. The offset in pairs is 7×10⁻⁵ at N = 4,782,969, 6×10⁻⁴ at 14,348,907 and 5×10⁻³ at 43,046,721. The tolerances are met either way, and the x = 0 rows agree at 180 bits.
+- **Takeover constants:** near δ = 1 the soft modes are a 2D problem, H = p² + gr⁴ with g = (4 − 3u)/(16N). Its m = 0 levels give gap → 7.18495 g^(1/3) and pairs → 0.162869 g^(−1/3), less 0.44 at u = 1/2 (read off, not derived). Against 180 bits at N = 43,046,721: gap ratio 0.99962, pairs 105.537 against 105.977 − 0.44.
+>>>
+REASON: Top-rung digits and the 1.4509 and 0.6937 ratios are 2^-60 rounding of o^2, reproduced to 8 digits; add 180-bit values and the derived constants.
+
+HOLD H4 | file=polariton/README.md | severity=medium
+OLD<<<
+- **With u = 0:** the mean-field energy −Ny² has no dependence on α, so this pinning is absent at leading order. D₂ at yN = 4 reads 0.0010 at N = 729, against 0.196 at u = 1/2, and A₁/y reads 2.00.
+>>>
+NEW<<<
+- **With u = 0:** the mean-field energy −Ny² has no dependence on α, so this pinning is absent at leading order. D₂ at yN = 4 reads 0.0010 at N = 729, against 0.196 at u = 1/2, and A₁/y reads 2.00. Below leading order the pin is set by zero-point energy: D₂/y² grows as N, with q₀ = Ny²/(16c₀²ω) and ω = √(2(1 − x²)) the sector gap, so y scales as N^(−1/2). The coefficient reads 1/ω to within 4×10⁻⁵ at seven x, from exact chains at N ≤ 6561 and from a Bogoliubov zero-point sum with no fit. The form 1/ω is read off those numbers (CONJECTURE). ⟨B⟩ is positive here, so the 2k pattern pins at the potential's extrema, the opposite position from u > 0.
+>>>
+REASON: u = 0 pins at q0 ~ N y^2 with <B> positive, measured, and README leaves the scale and the opposite position unsaid.
+
+HOLD H5 | file=polariton/README.md | severity=medium
+OLD<<<
+| 12 | Pair count within 2% of the closed form where it is at most N/100 | At δ = 1, t = 8, N = 6561: 0.79 of it | That criterion is too wide. At fixed t the deviation falls as 1/N: at δ = 1, t = 4 it reads 5.7%, 2.0%, 0.7% at N = 2187, 6561, 19683. At the band edge it grows quickly with t, about as t⁴/N (CONJECTURE) |
+>>>
+NEW<<<
+| 12 | Pair count within 2% of the closed form where it is at most N/100 | At δ = 1, t = 8, N = 6561: 0.79 of it | That criterion is too wide. At fixed t the deviation falls as 1/N: at δ = 1, t = 4 it reads 5.7%, 2.0%, 0.7% at N = 2187, 6561, 19683. At the band edge the deviation is [1 + (3 ∓ u)t² + (2/5)(4 ∓ 3u)t⁴]/N, from exact series, so t⁴/N is its leading power, with coefficient 2/5 at δ = 1 and 14/5 at δ = −1 for u = 1. All 12 rows read within 0.35 to 1.37 of (first order)² from the first correction below |
+>>>
+REASON: The CONJECTURE t^4/N now has exact coefficients and all 12 misses have a first-order value.
+
+HOLD H6 | file=polariton/README.md | severity=low
+OLD<<<
+| 6 | Re⟨P⟩/(N j̄) = −δ within 2% | At δ = ±1/2, t = 3: off by 5% | The same depletion. Four of the six are at δ = 0, where a percentage of 0 is my reader's floor, reading at most 0.015 |
+>>>
+NEW<<<
+| 6 | Re⟨P⟩/(N j̄) = −δ within 2% | At δ = ±1/2, t = 3: off by 5% | Energy conservation gives −δ + (3u/2)⟨j²⟩/(N j̄), which is −δ + 3u(j̄ + 1/2)/N for a Gaussian state: 0.5259 against the read 0.5244, and 0.0151 against 0.0148. Four of the six are at δ = 0, where a percentage of 0 is my reader's floor, reading at most 0.015 |
+>>>
+REASON: The six phase misses follow from energy conservation with no parameter.
+
+HOLD H7 | file=polariton/README.md | severity=low
+OLD<<<
+| 12 | Pinned A₁ within 5% at N = 243, 729 for t = 1, 2, 3 | At δ = 0, t = 3, N = 729: 0.0279 against 0.0354 | Pairs reach about 14% of N there, so the condensate has depleted. t = 1 is met everywhere, and t = 2 at N = 729 |
+>>>
+NEW<<<
+| 12 | Pinned A₁ within 5% at N = 243, 729 for t = 1, 2, 3 | At δ = 0, t = 3, N = 729: 0.0279 against 0.0354 | Pairs reach about 14% of N there, so the condensate has depleted. The first correction at δ = 0, u = 1 is A₁ = 2|y||w₀ + w₁/N|, with w₀ = −2(cosh t − 1) and w₁ = −t sinh t + (65/12)cosh t − (11/3)cosh 2t + (5/4)cosh 3t − 3. Read over it at N = 729: 0.9998, 1.0031, 1.175 for t = 1, 2, 3. t = 1 is met everywhere, and t = 2 at N = 729 |
+>>>
+REASON: The pinned misses are the same 1/N term, in closed form at delta=0.
+
+HOLD H8 | file=polariton/README.md | severity=medium
+OLD<<<
+- **Reading the paper's 2.6% (CONJECTURE):** a coherent state of fixed position has A₁² = 16ρ₀ρ cos²(θ/2), with θ the pair phase, and a quench gives cos²(θ/2) = (1 − δ)/2. At the paper's Bragg fraction of 0.5%, 2.6% then needs (1 − δ)V² ≈ 0.017, with V the visibility after averaging over pulses. The averaged density cannot separate δ from V, and g²(r) can, since C₁ and C₂ do not depend on the pattern's position.
+>>>
+NEW<<<
+- **Reading the paper's 2.6% (CONJECTURE):** a coherent state of fixed position has A₁² = 16ρ₀ρ cos²(θ/2), with θ the pair phase, and a quench gives cos²(θ/2) = (1 − δ)/2. At the paper's Bragg fraction of 0.5%, 2.6% then needs (1 − δ)V² ≈ 0.017, with V the visibility after averaging over pulses. The averaged density cannot separate δ from V, and g²(r) can, since C₁ and C₂ do not depend on the pattern's position. The paper writes K = (n₁ + n₋₁)/2n₀ as scaling with A²/4. A density 1 + A cos kx with flat phase has K = A²/16, by direct Fourier 4.226×10⁻⁵ at A = 2.6%, and the 16ρ₀ρ above is that reading. So the paper's expected 0.02% is 0.004% here. How its Fig. 1e defines A is unread.
+- **Which harmonic:** the paper's modulation is at k_r. The pinned ground state here is mainly at 2k, with D₂ = 0.195 and A₁ = 0.0126 at N = 729, yN = 4. The k harmonic leads on the quench branch.
+>>>
+REASON: README and the paper differ by a factor 4 in K against A, unstated, and the paper reads k where the pinned state reads 2k.
+
+HOLD H9 | file=polariton/README.md | severity=low
+OLD<<<
+The density is N + 2⟨A⟩cos kx + 2⟨B⟩cos 2kx, with A = a₀†a₊ + a₋†a₀ and B = a₋†a₊. So A₁ = 2|⟨A⟩|/N and D₂ = 2|⟨B⟩|/N are its two harmonics. The averaged two-point function is g²(r) = 1 + C₁cos kr + C₂cos 2kr.
+>>>
+NEW<<<
+The density is N + 2Re(⟨A⟩e^(ikx)) + 2Re(⟨B⟩e^(2ikx)), which is N + 2⟨A⟩cos kx + 2⟨B⟩cos 2kx on the states read, where ⟨A⟩ and ⟨B⟩ are real from real amplitudes or from the parity n₊ ↔ n₋, with A = a₀†a₊ + a₋†a₀ and B = a₋†a₊. So A₁ = 2|⟨A⟩|/N and D₂ = 2|⟨B⟩|/N are its two harmonics. The averaged two-point function is g²(r) = 1 + C₁cos kr + C₂cos 2kr.
+>>>
+REASON: The cosine form is wrong on a complex parity-free state, 6 of 8 grid points; it holds on the states read for the stated reason.
+
+HOLD H10 | file=polariton/README.md | severity=low
+OLD<<<
+- **The pattern's harmonic:** after a quench C₁ = 4(1 − δ)j̄/N, as energy conservation fixes, so the order is at k. In the ground state it is at 2k, with C₁ of order 1/N.
+>>>
+NEW<<<
+- **The first correction in 1/N:** j̄ = J₀ + J₁/N, with γ⁶J₁ = −(4 − 3δu)sinh²(2γt)/4 + (3/2)γt[1 + 3δ² − δu(2 + δ²)]sinh(2γt) + δ[3u(1 + δ²) − δ(7 + δ²)]sinh²(γt). At δ = ±1, J₁ = −[t² + (3 ∓ u)t⁴ + (2/5)(4 ∓ 3u)t⁶]. It matches exact series through t¹⁴ at four (δ, u) with no mismatch, and at large t it is −(4 − 3δu)J₀²/γ².
+- **The pattern's harmonic:** after a quench C₁ = 4(1 − δ)j̄/N, as energy conservation fixes, so the order is at k. In the ground state it is at 2k, with C₁ of order 1/N.
+>>>
+REASON: Gives the first correction the task asked for, verified on exact series.
+
+HOLD H11 | file=polariton/README.md | severity=low
+OLD<<<
+- **The extended model:** pump, loss and spatial extent, for the 250 and 430 μW thresholds and the coherence length, with the paper's Hopfield coefficients 0.54 and 0.4 for the overlaps, and its dispersion slope for the 2% shift.
+>>>
+NEW<<<
+- **The extended model:** pump, loss and spatial extent, for the 250 and 430 μW thresholds and the coherence length, with the paper's Hopfield coefficients 0.54 and 0.4 for the overlaps, and its dispersion slope for the 2% shift. With contact through the exciton fraction and equal spatial overlaps (CONJECTURE), a = X₁²/X₀² splits u: n₊n₋ takes u₁ = a, the −n² term takes u₂ = 2 − (a + 1/a)/2, δ shifts by 2 − 1/a, 4 − 3u becomes 4 − 4u₂ + u₁, and c₀ and q take u₁. With 0.54 and 0.4 as fractions, u₁ = 0.741 and the mean-field u is 1.026.
+>>>
+REASON: Unequal Hopfield weights split u into two couplings, needed for the open extended model.
+
+HOLD H12 | file=polariton/README.md | severity=low
+OLD<<<
+- **Larger N:** the rotor rows reach N = 531,441, and the full space reaches N = 729.
+>>>
+NEW<<<
+- **Larger N:** the rotor rows reach N = 531,441, and the full space reaches N = 729. Sector rows above N ≈ 5×10⁶ at low k need o² stored finer than 2⁻⁶⁰, and the exact route, now at N ≤ 243, can reach them on a low-k window.
+>>>
+REASON: Names what limits the top rungs and how the exact route can reach them.
+
+HOLD H13 | file=polariton/README.md | severity=low
+OLD<<<
+- **The conversion:** at strong pinning D₂ = f(q)·√(2C₂(y = 0)), so the correlation at zero field sets the modulation. Read within 0.6% at N = 729 for yN = 4, 8, 16.
+>>>
+NEW<<<
+- **At other points:** at u = 1/4, 3/4 and other x, not in the receipt, an integer full-space solver at N = 243 reads D₂ within 0.982 to 1.0007 of the rotor at u = 1/4, x = −1/4, and A₁/y within 0.33%. Exact y → 0 chains to N = 6561 reach the rotor at 9 points as 1/N, with N(D₂ ratio − 1) = −6.72 at u = 1/2, x = 0, which is the 0.9% in the table above.
+- **The conversion:** at strong pinning D₂ = f(q)·√(2C₂(y = 0)), so the correlation at zero field sets the modulation. Read within 0.6% at N = 729 for yN = 4, 8, 16.
+>>>
+REASON: Records the rotor test at u and x outside the receipt.

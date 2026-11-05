@@ -6,12 +6,18 @@ on:
       - "src/bin/polariton_three_mode.rs"
       - "polariton/**"
       - ".github/workflows/polariton.yml"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".gitattributes"
   push:
     branches: [main]
     paths:
       - "src/bin/polariton_three_mode.rs"
       - "polariton/**"
       - ".github/workflows/polariton.yml"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".gitattributes"
 permissions:
   contents: read
 jobs:
@@ -32,18 +38,28 @@ jobs:
           cargo +1.81.0 build --release --locked --offline --bin polariton_three_mode
       - name: The 29 prediction rows hash to their value at fce08f9
         run: test "$(head -n 29 polariton/PREDICTION.hbp | sha256sum | cut -d' ' -f1)" = "91d6a6e706c606be959cd8deb590f973a315fc923cf7589095aff8e489371f4e"
-      - name: The receipt is the one the README reads
-        run: test "$(sha256sum polariton/RECEIPT.hbp | cut -d' ' -f1)" = "393b093336443fb1bc64ccc5181ba9e7f5d7cec360b1b631333c90bef05dd966"
+      - name: The receipt hash is the one the attempt record in the prediction file names
+        run: |
+          set -euo pipefail
+          test "$(sha256sum polariton/RECEIPT.hbp | cut -d' ' -f1)" = "347480a5b9467017d07b9a52334edb1536c5b4e72df58c3a4afd85e2be0b9681"
+          grep -q "receipt_sha256=347480a5b9467017d07b9a52334edb1536c5b4e72df58c3a4afd85e2be0b9681" polariton/PREDICTION.hbp
+      - name: The reader, the exact route and their rows are the pinned ones
+        run: |
+          set -euo pipefail
+          test "$(sha256sum polariton/read_prediction.py | cut -d' ' -f1)" = "b1e14433d722b950cc45c970a8f0d75a163f1578bce31e3c73eb716c2c99329f"
+          test "$(sha256sum polariton/READ.hbp | cut -d' ' -f1)" = "f0f10236e6e50064c0e5790fb62160e69b1ae4c288e7c59e69cf84b4b57b1bb7"
+          test "$(sha256sum polariton/second_route.py | cut -d' ' -f1)" = "41638616460448a18304edbf90a406e59ab413f780ab4e122b579d7474e2a5d0"
+          test "$(sha256sum polariton/SECOND-ROUTE.hbp | cut -d' ' -f1)" = "bc8109c5e8994de9365496419d98990a43c6b65340258e9dd37bb0eb5d2ac916"
       - name: Every stage reproduces the receipt byte for byte
         run: |
           set -euo pipefail
           : > receipt.hbp
-          for stage in taylor control reversal wavevector rotor quench_pin quench pin sector; do
+          for stage in taylor control reversal wavevector rotor quench_pin quench pin sector window conversion; do
             /usr/bin/time -f "STAGE|$stage|seconds=%e" target/release/polariton_three_mode "$stage" > stage.out 2> stage.err
             tail -1 stage.err
             grep -v '^POLARITON_DONE' stage.out >> receipt.hbp
           done
-          echo 'POLARITON_DONE|stages=taylor,control,reversal,wavevector,rotor,quench_pin,quench,pin,sector|json=0' >> receipt.hbp
+          echo 'POLARITON_DONE|stages=taylor,control,reversal,wavevector,rotor,quench_pin,quench,pin,sector,window,conversion|json=0' >> receipt.hbp
           cmp receipt.hbp polariton/RECEIPT.hbp
       - name: The read against the frozen predictions is the one on file
         run: |
@@ -55,6 +71,9 @@ jobs:
           set -euo pipefail
           python3 -I -X utf8 polariton/second_route.py hand > route.hbp
           python3 -I -X utf8 polariton/second_route.py taylor_compare polariton/RECEIPT.hbp >> route.hbp
+          python3 -I -X utf8 polariton/second_route.py convert_compare polariton/RECEIPT.hbp >> route.hbp
           python3 -I -X utf8 polariton/second_route.py sector_compare polariton/RECEIPT.hbp 243 >> route.hbp
           python3 -I -X utf8 polariton/second_route.py full_compare polariton/RECEIPT.hbp 9 >> route.hbp
+          python3 -I -X utf8 polariton/second_route.py top_compare polariton/RECEIPT.hbp 59049 >> route.hbp
+          python3 -I -X utf8 polariton/second_route.py mathieu 1/50 2/25 8/25 32/25 128/25 512/25 >> route.hbp
           cmp route.hbp polariton/SECOND-ROUTE.hbp

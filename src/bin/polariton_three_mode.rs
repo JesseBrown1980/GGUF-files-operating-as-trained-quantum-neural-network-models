@@ -6,7 +6,7 @@
 //! Three engines: exact-inertia levels of the fixed-momentum tridiagonal sectors at scale 2^60, restarted Lanczos on the
 //! full space for pinned ground states, and a reversible leapfrog of integer shears for a quench from |N,0,0>.
 //!
-//! usage = polariton_three_mode sector | pin | quench | reversal | wavevector | taylor | hand | control | all
+//! usage = polariton_three_mode sector | rotor | pin | quench | quench_pin | reversal | wavevector | taylor | control | window | conversion | all
 #![forbid(unsafe_code)]
 #![deny(clippy::float_arithmetic)]
 
@@ -123,18 +123,23 @@ fn ppm(fix: i128) -> i128 {
 
 // ---- Levels of a fixed-momentum sector: n+ = j + P, n- = j, entries of H/N at scale 2^60.
 
-fn sector_o2(n: u64, charge: u64) -> Vec<i64> {
+/// o^2 of the tridiagonal at 2^90: (n+ + 1)(n- + 1) n0 (n0 - 1) / N^4, floor exact by long division, with no roots.
+fn sector_o2(n: u64, charge: u64) -> Vec<i128> {
     let top = (n - charge) / 2;
     let big = i128::from(n);
     (0..top)
         .map(|j| {
             let (plus, minus) = (i128::from(j + charge), i128::from(j));
             let n0 = big - 2 * minus - i128::from(charge);
-            // o/N at 2^60 is sqrt((n+ + 1)(n- + 1)) sqrt(n0(n0 - 1)) / N^2, and o^2 is its square at 2^60.
-            let (one, b1) = root_bits(((plus + 1) * (minus + 1)) as u128);
-            let (two, b2) = root_bits((n0 * (n0 - 1)) as u128);
-            let o = round_div(rescale(one * two, b1 + b2, SCALE), big * big);
-            ((o * o) >> SCALE) as i64
+            let den = (big * big * big * big) as u128;
+            let mut rem = ((plus + 1) * (minus + 1) * n0 * (n0 - 1)) as u128;
+            let mut quo = 0u128;
+            for _ in 0..5 {
+                rem <<= 18;
+                quo = (quo << 18) + rem / den;
+                rem %= den;
+            }
+            quo as i128
         })
         .collect()
 }
@@ -172,13 +177,13 @@ fn sector_d(n: u64, charge: u64, x: Q, u: Q, dx: Shift, kappa: Shift) -> Vec<i64
         .collect()
 }
 
-fn count_below(d: &[i64], o2: &[i64], lambda: i64) -> usize {
-    // A zero pivot is read as a tiny negative one, so it is counted as negative.
+fn count_below(d: &[i64], o2: &[i128], lambda: i64) -> usize {
+    // A zero pivot is read as a tiny negative one, so it is counted as negative. Here o^2 is at 2^90.
     let signed = |q: i128| if q == 0 { -1 } else { q };
     let mut q = signed(i128::from(d[0] - lambda));
     let mut count = usize::from(q < 0);
     for (dk, ok) in d[1..].iter().zip(o2.iter()) {
-        q = signed(i128::from(*dk - lambda) - ((i128::from(*ok)) << SCALE) / q);
+        q = signed(i128::from(*dk - lambda) - (*ok << 30) / q);
         if q < 0 {
             count += 1;
         }
@@ -186,7 +191,7 @@ fn count_below(d: &[i64], o2: &[i64], lambda: i64) -> usize {
     count
 }
 
-fn level(d: &[i64], o2: &[i64], index: usize, seed: i64, start_width: i64) -> i64 {
+fn level(d: &[i64], o2: &[i128], index: usize, seed: i64, start_width: i64) -> i64 {
     let mut w = start_width.max(16);
     let mut lo = seed.saturating_sub(w);
     while count_below(d, o2, lo) > index {
@@ -220,7 +225,7 @@ fn sector_point(n: u64, u: Q, x: Q, critical: bool) -> String {
         }
         p
     };
-    let m = if critical { 20 + 3 * power / 4 } else { 20 };
+    let m = if critical { 20 + power / 2 } else { 20 };
     let hh = 1i64 << (SCALE - m);
     let plain = |s: i128| Shift { sign: s, m };
     let d0 = sector_d(n, 0, x, u, NO_SHIFT, NO_SHIFT);
@@ -700,9 +705,9 @@ fn lanczos(op: &Sparse, start: Vec<i64>, krylov: usize, tol: i128, max_cycles: u
             beta.push(b as i64);
             basis.push(next);
         }
-        let o2: Vec<i64> = beta
+        let o2: Vec<i128> = beta
             .iter()
-            .map(|b| ((i128::from(*b) * i128::from(*b)) >> SCALE) as i64)
+            .map(|b| (i128::from(*b) * i128::from(*b)) >> 30)
             .collect();
         let d = &alpha;
         theta = level(d, &o2, 0, theta, 1 << 40);
@@ -806,7 +811,37 @@ fn pin_row(
     )
 }
 
+type RowMaker = fn(&Space, Params, &Ground, u32, &str, &str) -> String;
+
+/// A pin row with <(n+ - n-)^2>/N^2 beside it, which tells the pair state from the plane waves.
+fn window_row(
+    space: &Space,
+    par: Params,
+    ground: &Ground,
+    bits: u32,
+    y_text: &str,
+    s_text: &str,
+) -> String {
+    let mut charge_squared = 0i128;
+    let mut norm = 0i128;
+    for (i, &(p, m)) in space.states.iter().enumerate() {
+        let value = i128::from(ground.vector[i]);
+        let weight = (value * value) >> SCALE;
+        norm += weight;
+        charge_squared += weight * (p - m) * (p - m);
+    }
+    let big = space.n;
+    let share = (charge_squared / (big * big) * 1_000_000) / norm.max(1);
+    pin_row(space, par, ground, bits, y_text, s_text)
+        .replace("POLARITON_PIN|", "POLARITON_PIN_WINDOW|")
+        .replace("|json=0", &format!("|P2_over_N2_ppm={share}|json=0"))
+}
+
 fn pin_chain(n: u64, u: Q, x: Q, krylov: usize) -> Vec<String> {
+    pin_chain_with(n, u, x, krylov, pin_row)
+}
+
+fn pin_chain_with(n: u64, u: Q, x: Q, krylov: usize, make: RowMaker) -> Vec<String> {
     let space = Space::full(n);
     let big = i128::from(n);
     let mut rows = Vec::new();
@@ -839,7 +874,7 @@ fn pin_chain(n: u64, u: Q, x: Q, krylov: usize) -> Vec<String> {
             t.elapsed().as_millis()
         );
         let s_text = Q { n: sn, d: sd }.text();
-        rows.push(pin_row(&space, par, &ground, bits, &y.text(), &s_text));
+        rows.push(make(&space, par, &ground, bits, &y.text(), &s_text));
         start = ground.vector;
     }
     rows
@@ -918,6 +953,56 @@ fn run_pin() {
         let op = build(&space, par, bits);
         let ground = lanczos(&op, even_start(&space), 6, (1i128 << 20) >> bits, 200);
         println!("{}", pin_row(&space, par, &ground, bits, &y.text(), "hand"));
+    }
+}
+
+/// The pinned ground state across the window: inside it, and on the plane-wave side.
+fn run_window() {
+    let everywhere = [
+        (q(1, 4), q(-1, 4)),
+        (q(1, 4), q(0, 1)),
+        (q(3, 4), q(0, 1)),
+        (q(3, 4), q(1, 8)),
+        (q(1, 2), q(1, 4)),
+        (q(1, 1), q(-1, 4)),
+        (q(1, 1), q(-1, 8)),
+        (q(1, 2), q(-1, 4)),
+        (q(3, 4), q(-1, 8)),
+    ];
+    let small = [(q(1, 4), q(-1, 4)), (q(3, 4), q(0, 1)), (q(1, 1), q(-1, 4))];
+    let mut jobs: Vec<(u64, Q, Q, usize)> = Vec::new();
+    for &(n, krylov) in &[(3u64, 60usize), (9, 60)] {
+        for &(u, x) in &small {
+            jobs.push((n, u, x, krylov));
+        }
+    }
+    for &(n, krylov) in &[(81u64, 160usize), (243, 200)] {
+        for &(u, x) in &everywhere {
+            jobs.push((n, u, x, krylov));
+        }
+    }
+    let rows = parallel(jobs.len(), WORKERS, |i| {
+        let (n, u, x, krylov) = jobs[i];
+        pin_chain_with(n, u, x, krylov, window_row)
+    });
+    for chain in &rows {
+        for row in chain {
+            println!("{row}");
+        }
+    }
+    let top = [
+        (q(1, 4), q(-1, 4)),
+        (q(3, 4), q(0, 1)),
+        (q(1, 1), q(-1, 4)),
+        (q(1, 2), q(-1, 4)),
+    ];
+    let rows = parallel(top.len(), 3, |i| {
+        pin_chain_with(729, top[i].0, top[i].1, 240, window_row)
+    });
+    for chain in &rows {
+        for row in chain {
+            println!("{row}");
+        }
     }
 }
 
@@ -1247,6 +1332,101 @@ fn run_quench_pin() {
     }
 }
 
+/// A quench with the field on, read with everything the conversion needs at 10^-9.
+fn conversion_chain(
+    n: u64,
+    delta: Q,
+    y: Q,
+    s_text: &str,
+    times: &[i128],
+    k: u32,
+    tag: &str,
+) -> Vec<String> {
+    let par = Params {
+        x: add(delta, q(-1, 1)),
+        u: q(1, 1),
+        y,
+        no_bose: false,
+    };
+    let space = Space::full(n);
+    let op = build(&space, par, k);
+    let size = space.states.len();
+    let (mut a, mut b, mut w) = (vec![0i64; size], vec![0i64; size], vec![0i64; size]);
+    a[space.index(0, 0).unwrap()] = 1i64 << SCALE;
+    let mut rows = Vec::new();
+    let mut now = 0i128;
+    for &t in times {
+        advance(&op, &mut a, &mut b, &mut w, ((t - now) << k) as u64);
+        now = t;
+        let r = read(&space, &a, &b);
+        let big = space.n;
+        let wk = r.n0_pairs + 2 * r.re_p;
+        let c1 = 2 * wk / (big * (big - 1));
+        let c2 = 2 * r.np_nm / (big * (big - 1));
+        let energy = (r.pairs * par.x.n) / par.x.d
+            + ((r.n0_pairs + r.np_nm) * par.u.n) / (par.u.d * big)
+            + (2 * r.re_p) / big
+            - (2 * r.a * par.y.n) / par.y.d;
+        rows.push(format!(
+            "{tag}|N={big}|u={}|x={}|y={}|s={s_text}|delta={}|dt=2^-{k}|t={t}|jbar_ppb={}|f_ppb={}|A_ppb={}|B_ppb={}|C1_ppb={}|C2_ppb={}|energy_off_1e-9={}|norm_off_1e-9={}|json=0",
+            par.u.text(),
+            par.x.text(),
+            par.y.text(),
+            delta.text(),
+            ppb(r.pairs / 2),
+            ppb(r.pairs / big),
+            ppb(r.a),
+            ppb(r.b),
+            ppb(c1),
+            ppb(c2),
+            ppb(energy),
+            ppb(r.norm - (1i128 << SCALE))
+        ));
+    }
+    rows
+}
+
+fn run_conversion() {
+    let fields = [(1i128, 4i128), (1, 2), (1, 1), (2, 1), (4, 1)];
+    let mut jobs: Vec<(u64, Q, Q, Q, Vec<i128>)> = Vec::new();
+    for &(n, root) in &[(81u64, 9i128), (243, 16), (729, 27)] {
+        for &delta in &[q(0, 1), q(1, 2)] {
+            for &(sn, sd) in &fields {
+                let s = q(sn, sd);
+                jobs.push((n, delta, q(sn, sd * root), s, vec![1, 2, 3]));
+            }
+        }
+    }
+    for &(sn, sd) in &[(1i128, 2i128), (1, 1)] {
+        jobs.push((2187, q(0, 1), q(sn, sd * 47), q(sn, sd), vec![1, 2]));
+    }
+    let rows = parallel(jobs.len(), WORKERS, |i| {
+        let (n, delta, y, s, times) = &jobs[i];
+        let t = Instant::now();
+        let out = conversion_chain(
+            *n,
+            *delta,
+            *y,
+            &s.text(),
+            times,
+            time_bits(*n),
+            "POLARITON_QUENCH_CONVERSION",
+        );
+        eprintln!(
+            "TIMING|conversion_N={n}|delta={}|y={}|ms={}",
+            delta.text(),
+            y.text(),
+            t.elapsed().as_millis()
+        );
+        out
+    });
+    for chain in &rows {
+        for row in chain {
+            println!("{row}");
+        }
+    }
+}
+
 fn run_reversal() {
     let mut cases: Vec<(u64, bool, Q)> = vec![(243, true, q(1, 1024))];
     for &n in &[81u64, 243, 729, 2187] {
@@ -1356,6 +1536,18 @@ fn run_taylor() {
             ppb(r.a)
         );
     }
+    // The conversion's read-out against the exact series.
+    let more: [(u64, Q, Q, i128); 4] = [
+        (27, q(0, 1), q(1, 5), 1),
+        (27, q(0, 1), q(1, 5), 2),
+        (27, q(1, 2), q(2, 5), 1),
+        (9, q(0, 1), q(1, 3), 2),
+    ];
+    for &(n, delta, y, t) in &more {
+        for row in conversion_chain(n, delta, y, "taylor", &[t], 16, "POLARITON_TAYLOR_CONVERT") {
+            println!("{row}");
+        }
+    }
 }
 
 fn run_control() {
@@ -1394,6 +1586,8 @@ fn main() -> Result<(), String> {
         Some("wavevector") => run_wavevector(),
         Some("taylor") => run_taylor(),
         Some("control") => run_control(),
+        Some("window") => run_window(),
+        Some("conversion") => run_conversion(),
         Some("all") => {
             run_taylor();
             run_reversal();
@@ -1404,8 +1598,10 @@ fn main() -> Result<(), String> {
             run_pin();
             run_rotor();
             run_sector();
+            run_window();
+            run_conversion();
         }
-        _ => return Err("usage = polariton_three_mode sector | rotor | pin | quench | quench_pin | reversal | wavevector | taylor | control | all".into()),
+        _ => return Err("usage = polariton_three_mode sector | rotor | pin | quench | quench_pin | reversal | wavevector | taylor | control | window | conversion | all".into()),
     }
     eprintln!("TIMING|whole|ms={}", start.elapsed().as_millis());
     println!("POLARITON_DONE|json=0");
