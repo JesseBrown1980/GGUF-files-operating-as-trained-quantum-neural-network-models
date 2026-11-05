@@ -1,0 +1,60 @@
+name: Three-mode polariton test
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/bin/polariton_three_mode.rs"
+      - "polariton/**"
+      - ".github/workflows/polariton.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/bin/polariton_three_mode.rs"
+      - "polariton/**"
+      - ".github/workflows/polariton.yml"
+permissions:
+  contents: read
+jobs:
+  polariton:
+    name: The whole receipt, its read against the frozen predictions, and the exact route
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Rust 1.81 and lints
+        run: rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
+      - name: Format, Clippy, build
+        run: |
+          set -euo pipefail
+          cargo +1.81.0 fmt --all -- --check
+          cargo +1.81.0 clippy --locked --offline --bin polariton_three_mode -- -D warnings
+          cargo +1.81.0 build --release --locked --offline --bin polariton_three_mode
+      - name: The 29 prediction rows hash to their value at fce08f9
+        run: test "$(head -n 29 polariton/PREDICTION.hbp | sha256sum | cut -d' ' -f1)" = "91d6a6e706c606be959cd8deb590f973a315fc923cf7589095aff8e489371f4e"
+      - name: The receipt is the one the README reads
+        run: test "$(sha256sum polariton/RECEIPT.hbp | cut -d' ' -f1)" = "393b093336443fb1bc64ccc5181ba9e7f5d7cec360b1b631333c90bef05dd966"
+      - name: Every stage reproduces the receipt byte for byte
+        run: |
+          set -euo pipefail
+          : > receipt.hbp
+          for stage in taylor control reversal wavevector rotor quench_pin quench pin sector; do
+            /usr/bin/time -f "STAGE|$stage|seconds=%e" target/release/polariton_three_mode "$stage" > stage.out 2> stage.err
+            tail -1 stage.err
+            grep -v '^POLARITON_DONE' stage.out >> receipt.hbp
+          done
+          echo 'POLARITON_DONE|stages=taylor,control,reversal,wavevector,rotor,quench_pin,quench,pin,sector|json=0' >> receipt.hbp
+          cmp receipt.hbp polariton/RECEIPT.hbp
+      - name: The read against the frozen predictions is the one on file
+        run: |
+          set -euo pipefail
+          python3 -I -X utf8 polariton/read_prediction.py polariton/RECEIPT.hbp > read.hbp
+          cmp read.hbp polariton/READ.hbp
+      - name: The exact route, against the receipt
+        run: |
+          set -euo pipefail
+          python3 -I -X utf8 polariton/second_route.py hand > route.hbp
+          python3 -I -X utf8 polariton/second_route.py taylor_compare polariton/RECEIPT.hbp >> route.hbp
+          python3 -I -X utf8 polariton/second_route.py sector_compare polariton/RECEIPT.hbp 243 >> route.hbp
+          python3 -I -X utf8 polariton/second_route.py full_compare polariton/RECEIPT.hbp 9 >> route.hbp
+          cmp route.hbp polariton/SECOND-ROUTE.hbp
