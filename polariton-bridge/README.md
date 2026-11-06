@@ -204,7 +204,45 @@ same samples. Every `BRIDGE_AT` row prints its counts (`M_VNC`, `M_V1`, `M_V0`, 
   start index, so that each step of the staircase runs as its own batch (`BRIDGE_ENGINE_CHANGE`).
 - Cost: 5.050 x 10^9 variant-sample time units, 84.2 to 105 thread-hours at the ensemble lane's measured rate, about
   13.7 hours at the machine's measured floor of 102631 per second, two 3-thread processes together (CONJECTURE, scaled from
-  measured rates; a dedicated 8-thread rate OPEN).
+  measured rates; a dedicated 8-thread rate OPEN). The sampling amendment of November 6, 2026 (below) sets 5.897 x 10^9.
+
+## Sampling amendment of November 6, 2026 (f at y != 0)
+
+The operator approved, on November 6, 2026, one increase of the E4R sampling: f at y != 0 is sized by the plan's own
+4 x M3 rule (the E4R check's hold H2), at 1.168 times the E4R cost (94353772847/80806023906; the operator authorized 1.17). The amendment is
+recorded in its own dated file, [`AMENDMENT-2026-11-06-F-SAMPLING.hbp`](AMENDMENT-2026-11-06-F-SAMPLING.hbp), before any
+blind run. `PREDICTION.hbp` stays as frozen: sha256 `fadd84122e820cc03e9a4d6d5dd47fe7118ab4b16e1d4db93a601fb44c90b892`,
+873 lines, every value, band, verdict and tolerance as it was.
+
+- The rule: on each first-order `BRIDGE_AT` row with y != 0, the VNC requirement is the larger of its frozen requirement and
+  4 x M3_f, where M3_f is the smallest count at which f's plain 3-SE bound, at 1.04 times its leading-order sd (exact
+  Gaussian moments), fits tau(N). Each point's VNC staircase is then rebuilt by the plan's own rule.
+- 33 rows' M_VNC rise, each to its own 4 x M3_f, on 14 points' VNC staircases (one `BRIDGE_AMENDED_AT` row per row, with
+  its frozen line number, and one `BRIDGE_AMENDED_STAIRCASE` row per point, frozen and amended steps in M@t notation). The
+  largest is N = 81, delta = -3/5, y = 2/27, t = 1/16: 5475421080 to 6330267356.
+- Every other count equals the frozen rows: M_VNC on the other 319 rows, M_V1, M_V0, M_FLIP, M_LOCK, M_MODE0 and M_eint on
+  all 352 rows, M_ins = 57182, and the V1, V0, FLIP, LOCK and MODE0 staircases on all 28 points. The generator's own row
+  writers, rerun with the amended counts, match the frozen file on 11469 of the 11502 fields of the 352 rows; the 33 others
+  are those M_VNC values. 16 `BRIDGE_DIAGNOSTIC` precision fields and the `BRIDGE_SAMPLE_PLAN` steps of the 14 points also
+  print moved counts; for the run they read at the amendment's counts.
+- Expected reads at the amended counts: f at y != 0 has its 3-SE bound inside tau on 70 of 70 rows, and with a 3-SE
+  excursion also on 70 (frozen: 64 and 37). D2 keeps the original rule; it is read plain on the same VNC samples, so its
+  bound fits tau on 38 of 70 rows and with an excursion on 15 (frozen: 35 and 15); the expected read is NOT RESOLVED on the
+  32 rows where the bound lies outside tau, and each is reported as read. The f increase sizes f; D2's precision stays at
+  the original sampling level.
+- Every other sized check is as frozen: E_VNC with the control variate 223 of 223, the plain floor on 83 of 83, E_VNC_ZERO
+  f 13 of 13, E_PAIR 83 of 83, the diagnostic's V1 part 14 of 14, C_JFLIP 156 of 156, C_LOCK 57 of 57, and the 352 control
+  verdicts equal to the frozen ones. The plain bound of A1, C1 and V^2 now fits on 137 of 223 checks (52 with an
+  excursion), against 123 (47) frozen.
+- Cost: 94353772847/16 = 5.897 x 10^9 variant-sample time units (primary 5.469 x 10^9; e_int 1.139 x 10^8 and controls
+  3.141 x 10^8 as frozen), up from 5.050 x 10^9 by 13547748941/16 = 8.467 x 10^8, a ratio of 1.168; 98.3 to 123
+  thread-hours at the ensemble lane's measured rate, about 16.0 hours at the machine's measured floor of 102631 per
+  second, 2.3 hours more (CONJECTURE, scaled from measured rates; the duration of the amended workload is measured only
+  when it runs).
+- Check: the 33 rows, the 70 values of 4 x M3_f and the VNC work agree exactly with the E4R check's own forms
+  (`ix_extra.hbp`, option f: 33 rows, VNC 3.5995 x 10^9, increment 5.8401 x 10^9 - 4.9934 x 10^9 = 8.467 x 10^8). The
+  check priced the increment on its base before the e_int of the controls (hold H4, 5.697 x 10^7), which gives its
+  5.840 x 10^9 total; on the frozen plan the same increment gives 5.897 x 10^9.
 
 ## The quantum side
 
@@ -274,6 +312,8 @@ discrete, and which mechanism supplies decoherence, stay separate questions, OPE
 - [`PREDICTION.hbp`](PREDICTION.hbp), [`README.md`](README.md), [`SHA256SUMS`](SHA256SUMS) (sha256 of PREDICTION.hbp, README.md
   and .gitattributes), and [`.gitattributes`](.gitattributes) (`* text eol=lf`, as in `../polariton-first-correction/`),
   which keeps every file here LF on any checkout.
+- [`AMENDMENT-2026-11-06-F-SAMPLING.hbp`](AMENDMENT-2026-11-06-F-SAMPLING.hbp): the operator's sampling amendment of
+  November 6, 2026 (f at y != 0 by 4 x M3), 57 rows, recorded beside the frozen `PREDICTION.hbp`, which it leaves as frozen.
 - [`HOLDS-APPLIED.hbp`](HOLDS-APPLIED.hbp): one row per hold of the three checks, with what the generator did with it.
 - `design/trajectory/` FINDINGS.txt (sha256 `20d8101fe1bf5d38d4e1b0ce254be8e85575c78c7c28dccfb6eb2cb1148e1a70`, 178 lines) and PROPOSED-ROWS.hbp (sha256 `1479b6b8cbeaae79e96b40e4eb043688acbdbf43bb6ea4caf26544c990d2c0ec`, 172 rows), copied byte for byte from `C:/tmp/opus55/bridge-design-trajectory-20261105/`.
 - `design/ensemble/` FINDINGS.txt (sha256 `a604c711aa2b27eeffde6508b651ca25f3f80efacc67d84aabf5711b3e59aaea`, 254 lines) and PROPOSED-ROWS.hbp (sha256 `1f8e493fa7659e6a6b6b2d47483c95e160ef1961095438e5a346a6822e457630`, 155 rows), copied byte for byte from `C:/tmp/opus55/bridge-design-ensemble-20261105/`.
