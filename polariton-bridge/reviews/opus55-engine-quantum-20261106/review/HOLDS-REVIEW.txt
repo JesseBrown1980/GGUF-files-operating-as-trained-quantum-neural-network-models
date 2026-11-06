@@ -1,0 +1,93 @@
+HOLD H1 | file=polariton-first-correction/SHA256SUMS | severity=MEDIUM
+OLD<<<
+ad121216d53abb414016edecec2e44cfef1116394f957130e2b1de080ac8dfc5 ../src/bin/polariton_first_correction.rs
+>>>
+NEW<<<
+8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228 ../src/bin/polariton_first_correction.rs
+>>>
+REASON: For the dyadic change merged alone. The workflow's step "The frozen row, and this stage's files, at their pins" runs sha256sum --strict -c --quiet SHA256SUMS, which pins the engine source at its 38ce248 hash; the dyadic lane's holds leave this line as filed. Measured on copies of the 38ce248 files (out/SUMS-CHECK.hbp): exit 0 as filed, exit 1 with the dyadic source and the filed line ("../src/bin/polariton_first_correction.rs: FAILED"), exit 0 with NEW. With the streaming change merged too, the stream lane's H9 (ed75eca8...) takes this line instead.
+
+HOLD H2 | file=polariton-first-correction/SHA256SUMS | severity=LOW
+OLD<<<
+2567c54ea1098346cc4bb782dcc18e3dfc2873e7078f64779c3bb05a7448c42f route_first_correction.py
+>>>
+NEW<<<
+6ac43bcc06e67e69b55200cc41f23be570b2f25a02a70d6aa960c1333f72b5eb route_first_correction.py
+>>>
+REASON: Only with the dyadic lane's H12 (the route's tail floor). H12 applied to the 38ce248 route gives sha256 6ac43bcc... (holds-check/route-after-h12.py), and the pin step then fails on the route line (exit 1, "route_first_correction.py: FAILED"); with this line and H1's line it exits 0 (out/SUMS-CHECK.hbp). The dyadic lane's H12 reason names the SHA256SUMS change; this is its text.
+
+HOLD H3 | file=.github/workflows/polariton-first-correction.yml (after the stream lane's H10) | severity=MEDIUM
+OLD<<<
+          cmp <(strip baseline-stream.hbp) <(strip receipt-allowed-stream.hbp)
+>>>
+NEW<<<
+          cmp <(strip baseline-stream.hbp) <(strip receipt-allowed-stream.hbp)
+          # Many tiles and many sweeps, as the full space at N = 6561 takes them (7 tiles of 512 rows): the baseline's 8 runs at
+          # N = 729, K = 128 and 192 at tile = depth = 8 and at tile = depth = 3, every field but array_bytes as filed.
+          grep -E '^FC_RUN\|stage=baseline\|group=sweep\|N=729\|K=(128|192)\|' $D/PLAN.hbp > plan-small.hbp
+          grep -E '^POLARITON_FIRST_CORRECTION_READ\|N=729\|K=(128|192)\|' $D/RECEIPT-BASELINE.hbp > receipt-small.hbp
+          for opts in "depth=8 tile=8" "depth=3 tile=3"; do
+            printf '#!/usr/bin/env bash\nshift\nexec "%s" stream "$@" %s\n' "$PWD/target/release/polariton_first_correction" "$opts" > stream-small.sh
+            chmod +x stream-small.sh
+            python3 -I -X utf8 $D/run_stage.py ./stream-small.sh plan-small.hbp baseline small.hbp small-cost.hbp 4
+            grep -E '^POLARITON_FIRST_CORRECTION_READ' small.hbp > small-rows.hbp
+            cmp <(strip small-rows.hbp) <(strip receipt-small.hbp)
+          done
+          # The dyadic reads of RECEIPT-DYADIC.hbp in the streaming layout.
+          { ./stream-engine.sh point 100 40 1/2 1/20 6 1/64,1/2,33/64,3/2; ./stream-engine.sh point 243 243 -1/4 1/9 6 1/64,1/4,7/8,317/64; } > dyadic-stream.hbp
+          cmp <(strip dyadic-stream.hbp) <(strip $D/RECEIPT-DYADIC.hbp)
+>>>
+REASON: The stream step of the stream lane's H10 runs the grid and the baseline at the default layout, where the largest block (K = 1600, 801 rows per shell) takes 2 tiles; the full-space runs at N = 6561 take 7 tiles of 512 (3281 rows), and from the third tile on the strip buffers alternate in a way 2 tiles never reach. Mutant M7 (hand_on always saves into strip 0) passes all 7 filed rows at the default layout, the two-tile K = 1200 row among them, and fails these lines (exit 1, out/SIM-STEPS.hbp); M4 and M6 fail them too. With the reviewed binary d892971d they exit 0: 8 of 8 rows at each of the two layouts and 8 of 8 dyadic rows (MEASURED, every run behind this review's guard; the hosted run NOT_MEASURED). The 8 runs take 1 to 2 s each. The last three lines read H4's receipt; without H4 they go.
+
+HOLD H4 | file=polariton-first-correction/RECEIPT-DYADIC.hbp (new file) | severity=MEDIUM
+OLD<<<
+>>>
+NEW<<<
+POLARITON_FIRST_CORRECTION_READ|N=100|K=40|even_states=441|array_bytes=52920|u=1|x=-1/2|y=1/20|delta=1/2|t=1/64|window=2^-6|c=8|E=34|degree=14|reach=29|applies=14|elem_err_units=2|jbar_e18=302751810830722|f_e18=6055036216614|A_e18=-610356274489195|B_e18=61039590888579|C1_e18=4834289383689|C2_e18=48865836971|A1_e18=12207125489783|D2_e18=1220791817770|V2_e18=15412183766458|energy_e18=40954|norm_off_e18=0|eps_tail_e18=1160448|eps_poly_e18=0|eps_round_e18=131|eps_e18=1160583|C1_err_e18=48242044|A1_err_e18=4769111919|V2_lo_e18=15399989895183|V2_hi_e18=15424382585966|norm_B_s20=17125199|tail_max_e18=4547473|leak_max_e18=0|leak_sum_e18=0|float_used=0|json=0
+POLARITON_FIRST_CORRECTION_READ|N=100|K=40|even_states=441|array_bytes=52920|u=1|x=-1/2|y=1/20|delta=1/2|t=1/2|window=2^-6|c=8|E=34|degree=14|reach=29|applies=882|elem_err_units=2|jbar_e18=328461169913141419|f_e18=6569223398262828|A_e18=-629670249749194525|B_e18=67203938393884312|C1_e18=5269792677366743|C2_e18=93725400698740|A1_e18=12593404994983890|D2_e18=1344078767877686|V2_e18=15047446747652011|energy_e18=-73980440|norm_off_e18=4|eps_tail_e18=9554739772572074|eps_poly_e18=6|eps_round_e18=4218|eps_e18=9554739772576303|C1_err_e18=1516099676747523|A1_err_e18=6735217767220145|V2_lo_e18=2528654729891724|V2_hi_e18=49763747038178470|norm_B_s20=17125199|tail_max_e18=7129659162956158|leak_max_e18=132764279126|leak_sum_e18=4431364195|float_used=0|json=0
+POLARITON_FIRST_CORRECTION_READ|N=100|K=40|even_states=441|array_bytes=52920|u=1|x=-1/2|y=1/20|delta=1/2|t=33/64|window=2^-6|c=8|E=34|degree=14|reach=29|applies=910|elem_err_units=2|jbar_e18=350569020650187365|f_e18=7011380413003746|A_e18=-669935061315892286|B_e18=71790995589701858|C1_e18=5625862581352993|C2_e18=102935690085590|A1_e18=13398701226317845|D2_e18=1435819911794036|V2_e18=15955348353794696|energy_e18=-82388199|norm_off_e18=4|eps_tail_e18=11711004445022228|eps_poly_e18=6|eps_round_e18=4350|eps_e18=11711004445026589|C1_err_e18=1967748952757284|A1_err_e18=8435407220870842|V2_lo_e18=1622040268576398|V2_hi_e18=65160399605548171|norm_B_s20=17125199|tail_max_e18=8449798022866161|leak_max_e18=237519090839|leak_sum_e18=8142599990|float_used=0|json=0
+POLARITON_FIRST_CORRECTION_READ|N=100|K=40|even_states=441|array_bytes=52920|u=1|x=-1/2|y=1/20|delta=1/2|t=3/2|window=2^-6|c=8|E=34|degree=14|reach=29|applies=2674|elem_err_units=2|jbar_e18=4320870588338982046|f_e18=86417411766779640|A_e18=-5681200856624040127|B_e18=951977954461193104|C1_e18=68763584488576157|C2_e18=7049556969334256|A1_e18=113624017132480802|D2_e18=19039559089223861|V2_e18=93875394697226162|energy_e18=-510012504|norm_off_e18=13|eps_tail_e18=3520151971177197624|eps_poly_e18=20|eps_round_e18=12656|eps_e18=3520151971177210304|C1_err_e18=28553144640603720692|A1_err_e18=30722959373443991145|V2_lo_e18=0|V2_hi_e18=-1|norm_B_s20=17125199|tail_max_e18=526487552618618792|leak_max_e18=881051160019192369|leak_sum_e18=147192716337786695|float_used=0|json=0
+POLARITON_FIRST_CORRECTION_READ|N=243|K=243|even_states=15006|array_bytes=1800720|u=1|x=-5/4|y=1/9|delta=-1/4|t=1/64|window=2^-6|c=-123|E=185|degree=23|reach=47|applies=23|elem_err_units=2|jbar_e18=975697013342857|f_e18=8030428093356|A_e18=-8239863044763796|B_e18=732544788720350|C1_e18=5017815241565|C2_e18=8315794572|A1_e18=67817802837561|D2_e18=6029175215804|V2_e18=458292519781910|energy_e18=-1370066|norm_off_e18=0|eps_tail_e18=0|eps_poly_e18=0|eps_round_e18=1693|eps_e18=1697|C1_err_e18=8124665|A1_err_e18=1962533632|V2_lo_e18=458265253723151|V2_hi_e18=458319786696542|norm_B_s20=0|tail_max_e18=16598278|leak_max_e18=0|leak_sum_e18=0|float_used=0|json=0
+POLARITON_FIRST_CORRECTION_READ|N=243|K=243|even_states=15006|array_bytes=1800720|u=1|x=-5/4|y=1/9|delta=-1/4|t=1/4|window=2^-6|c=-123|E=185|degree=23|reach=47|applies=713|elem_err_units=2|jbar_e18=258915212474750554|f_e18=2130989403084366|A_e18=-2116955412995161794|B_e18=195603895237145771|C1_e18=1456214785043831|C2_e18=5384344315339|A1_e18=17423501341523964|D2_e18=1609908602774862|V2_e18=104235447310387623|energy_e18=-313269588|norm_off_e18=0|eps_tail_e18=0|eps_poly_e18=6|eps_round_e18=27103|eps_e18=27113|C1_err_e18=8148979|A1_err_e18=1962673047|V2_lo_e18=104235423243850692|V2_hi_e18=104235471376927470|norm_B_s20=0|tail_max_e18=16598278|leak_max_e18=0|leak_sum_e18=3|float_used=0|json=0
+POLARITON_FIRST_CORRECTION_READ|N=243|K=243|even_states=15006|array_bytes=1800720|u=1|x=-5/4|y=1/9|delta=-1/4|t=7/8|window=2^-6|c=-123|E=185|degree=23|reach=47|applies=2553|elem_err_units=2|jbar_e18=4502944973529581475|f_e18=37061275502301082|A_e18=-26808844831440095894|B_e18=3581940249839823258|C1_e18=42847838513727203|C2_e18=952503307693947|A1_e18=220648928653827949|D2_e18=29480989710615829|V2_e18=568126087626152859|energy_e18=221360248|norm_off_e18=-1|eps_tail_e18=0|eps_poly_e18=24|eps_round_e18=94861|eps_e18=94889|C1_err_e18=8422374|A1_err_e18=1963308987|V2_lo_e18=568126077404237151|V2_hi_e18=568126097848068662|norm_B_s20=0|tail_max_e18=16598278|leak_max_e18=0|leak_sum_e18=12|float_used=0|json=0
+POLARITON_FIRST_CORRECTION_READ|N=243|K=243|even_states=15006|array_bytes=1800720|u=1|x=-5/4|y=1/9|delta=-1/4|t=317/64|window=2^-6|c=-123|E=185|degree=23|reach=47|applies=14559|elem_err_units=2|jbar_e18=12824027854877149052|f_e18=105547554361128798|A_e18=-9911909779141928616|B_e18=-11765724811560247478|C1_e18=235770491176793358|C2_e18=10985070968810232|A1_e18=81579504355077601|D2_e18=96837241247409443|V2_e18=14113758464009152|energy_e18=12257098|norm_off_e18=-1|eps_tail_e18=0|eps_poly_e18=137|eps_round_e18=536984|eps_e18=537125|C1_err_e18=8913137|A1_err_e18=1963804646|V2_lo_e18=14113757783974917|V2_hi_e18=14113759144043405|norm_B_s20=0|tail_max_e18=16598278|leak_max_e18=0|leak_sum_e18=68|float_used=0|json=0
+>>>
+REASON: Every filed receipt reads at integer T, so the byte checks see the window count only at multiples of 64 windows. Mutant M5 (a dyadic read one window late) passes all 7 filed rows and fails a byte check of dyadic reads; mutant M9 (1/3 accepted at W = 6) passes both and fails only a refusal check (out/MUTANTS.hbp). These 8 rows are the reviewed dyadic binary cc75d83f at two allowed points: N = 100, K = 40, delta = 1/2, y = 1/20 at t = 1/64, 1/2, 33/64, 3/2 (a block with leak), and the full space N = 243, delta = -1/4, y = 1/9 at t = 1/64, 1/4, 7/8, 317/64 (317 windows). The streaming binary's point mode prints the same bytes and its stream mode the same but array_bytes (out/RECEIPT-DYADIC-CHECK.hbp). The file is these 8 rows with LF endings and a final LF: 5732 bytes, sha256 66e13a71d948dbadfc486d36b22015432e4e8eb92310b8492bb265ad53d94cf9. H5 is the step that reads it.
+
+HOLD H5 | file=.github/workflows/polariton-first-correction.yml | severity=MEDIUM
+OLD<<<
+      - name: The route builds the Hamiltonian in the full Fock space and meets the engine's rows, parity, bandwidth and interval
+        run: python3 -I -X utf8 polariton-first-correction/route_first_correction.py rows target/release/polariton_first_correction
+>>>
+NEW<<<
+      - name: The route builds the Hamiltonian in the full Fock space and meets the engine's rows, parity, bandwidth and interval
+        run: python3 -I -X utf8 polariton-first-correction/route_first_correction.py rows target/release/polariton_first_correction
+      - name: Reads at multiples of the window reproduce RECEIPT-DYADIC.hbp at two allowed points, and an off-grid time is refused
+        run: |
+          set -euo pipefail
+          E=target/release/polariton_first_correction
+          { $E point 100 40 1/2 1/20 6 1/64,1/2,33/64,3/2; $E point 243 243 -1/4 1/9 6 1/64,1/4,7/8,317/64; } > dyadic.hbp
+          cmp dyadic.hbp polariton-first-correction/RECEIPT-DYADIC.hbp
+          rc=0
+          $E point 100 40 1/2 1/20 6 1/2,1/3 > off-grid.hbp 2> off-grid.err || rc=$?
+          test "$rc" = 2
+          test ! -s off-grid.hbp
+>>>
+REASON: The step for H4's receipt, placed after the route's rows step; it applies before or after the lanes' H9 and H10, whose text it leaves as it is. Simulated with the engine behind this review's guard (out/SIM-STEPS.hbp): exit 0 with the dyadic binary cc75d83f and with the streaming binary d892971d; exit 1 with M5 (cmp differs at byte 161 of row 1, t = 1/64) and with M9 (the off-grid run exits 0 and prints 1496 bytes). The runs take under 5 s. Hosted run NOT_MEASURED.
+
+HOLD H6 | file=polariton-bridge/SHA256SUMS | severity=LOW
+OLD<<<
+1ce815d50a62a08d523c557be5444ec46cc2ba10cbe4504dbd499ba85ad354cc README.md
+>>>
+NEW<<<
+33fc48048de5319a5e2292120b5e4e40e6f0a3762a8137b27d18b3059db2f5e9 README.md
+>>>
+REASON: Only with the stream lane's H12 (the README paragraph). The stream lane's report prints its H13 NEW as 4c506f88a22480f4af6e11d3c4af71e890f5a0529c7ec147875569acdb44535c; H12 applied to the filed README (LF) gives 33fc48048de5319a5e2292120b5e4e40e6f0a3762a8137b27d18b3059db2f5e9 (holds-check/README-after-h12.md), the line the lane's own out/HOLDS.txt (sha256 43e98562...) carries. This line is the one to apply.
+
+HOLD H7 | file=polariton-bridge/ENGINE-CHANGES.hbp (after the lanes' H11 rows) | severity=MEDIUM
+OLD<<<
+>>>
+NEW<<<
+BRIDGE_ENGINE_REVIEW|engine=the_quantum_engine_src/bin/polariton_first_correction.rs|changes=dyadic_reads(source_8d8afe48,binary_cc75d83f)+streaming_layout(source_ed75eca8,binary_d892971d)|by=opus55,bridge-engine-review-quantum-20261106(BRIDGE_ORDER_step_4)|verdict=PASS_WITH_HOLDS|gate=fmt_--check_0,clippy_--release_-D_warnings_0,build_0_on_three_trees_in_fresh_targets,float_used=0|binaries_rebuilt=3_of_3_bit_identical_to_the_lanes'|stream_mode=78_of_78_allowed_rows_every_field_but_array_bytes|point_mode=27_of_27_dyadic_binary,27_of_27_streaming_binary,byte_for_byte,the_slowest_grid_and_baseline_rows_among_them|own_tests=70_of_70(full_space_N=6561_at_7_tiles,K=2400_at_3_tiles,dyadic_reads_to_317/64)|mutants=10_planted,10_caught,7_of_them_by_the_filed_receipts|RECEIPT-BASELINE.hbp_rows_of_plan_27,32=NOT_MEASURED(reason=RESERVED)|reserved_runs_started=0(this_review_485_runs;the_lanes_229_and_2550)|holds=H1_to_H6_of_bridge-engine-review-quantum-20261106/out/HOLDS-REVIEW.txt|tag=MEASURED|json=0
+>>>
+REASON: BRIDGE_ORDER step 4 is a second-seat review of the engines before the blind runs. This row files this review's result beside the lanes' BRIDGE_ENGINE_CHANGE_RESULT rows, so PREDICTION.hbp keeps its sha256 fadd8412.... Every number in it is a row of BRIDGE-ENGINE-REVIEW-QUANTUM.hbp.
