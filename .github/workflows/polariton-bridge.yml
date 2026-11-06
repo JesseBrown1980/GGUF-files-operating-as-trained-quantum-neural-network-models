@@ -1,0 +1,33 @@
+name: Polariton bridge, the frozen prediction and its stage files
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "polariton-bridge/**"
+      - ".github/workflows/polariton-bridge.yml"
+  push:
+    branches: [main]
+    paths:
+      - "polariton-bridge/**"
+      - ".github/workflows/polariton-bridge.yml"
+permissions:
+  contents: read
+jobs:
+  frozen:
+    name: The frozen prediction at its pin, every file of the stage at its sums, LF line endings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout, on a pull request its merge with the base
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: PREDICTION.hbp at its sha256 of the freeze, commit 38ce248
+        run: test "$(sha256sum polariton-bridge/PREDICTION.hbp | cut -d' ' -f1)" = "fadd84122e820cc03e9a4d6d5dd47fe7118ab4b16e1d4db93a601fb44c90b892"
+      - name: The stage's SHA256SUMS and each review folder's
+        run: |
+          set -euo pipefail
+          (cd polariton-bridge && sha256sum --strict -c --quiet SHA256SUMS)
+          for d in polariton-bridge/reviews/*/; do (cd "$d" && sha256sum --strict -c --quiet SHA256SUMS); done
+      - name: LF line endings in every file of the stage
+        run: |
+          set -euo pipefail
+          test "$(find polariton-bridge -type f -exec cat {} + | tr -cd '\r' | wc -c)" = "0"
