@@ -215,6 +215,12 @@ and K + N/16 within their certified widths, with the full space as its fallback.
 each value; V^2 read only where the certified lower bound of C1 is positive; the quantum rows and their sha256 are filed
 before any classical row at the same point is read (`BRIDGE_QUANTUM_PLAN` and the carried `BRIDGE_QUANTUM_GATE_*` rows).
 
+The quantum engine's streaming layout (`stream`, line 451) reproduces both first-correction receipts in every field
+but array_bytes. On the full space at N = 6561 (the allowed point delta = 1/2, y = 1/324) it ran 1.978 times as fast
+as `point` one run at a time (3 interleaved repeats, spread 1.940 to 2.006) and 1.928 times as fast four at a time
+(2 repeats, spread 1.862 to 1.993), MEASURED, at a peak of 1.04 GB against 1.29 GB per run. The hours above are at
+`point`'s rate.
+
 ## Order (`BRIDGE_ORDER`)
 
 1. This prediction is pushed.
