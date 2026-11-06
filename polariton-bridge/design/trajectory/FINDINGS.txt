@@ -1,0 +1,178 @@
+FINDINGS -- the single classical trajectory of the polariton bridge (QNN issue #9)
+Second seat opus55 for ACER-CLAUDE-FABLE5, 2026-11-05. Folder C:/tmp/opus55/bridge-design-trajectory-20261105/
+Tags: MEASURED (a number on disk from a named script) / DERIVED (proved by hand or by exact algebra) /
+NAMED (stated, not yet run) / CONJECTURE / CANNOT_SEE.
+
+Read first (data): issue #9 body and its 1 comment (gh issue view, 2026-11-05T20:05Z); polariton/PREDICTION.hbp lines 3, 4,
+39, 48; polariton-first-correction/README.md; contact lane FINDINGS F4 and F5, law.py, t5_firstcorr.py, tw/src/main.rs
+(copies in repo/). Writes: this folder only. GitHub: read only. Reserved points: no numerical run of any model touched
+delta = +-3/5 or y = 2/27 (traj_int.py refuses them by guard); at those points only closed forms and the hand series ran.
+
+======================================================================
+1. THE MEAN-FIELD MAP AND ITS OBSERVABLES. DERIVED.
+======================================================================
+Operator text (line 3) with JN = 1: J = 1/N, U = u/N, Delta = x, h = y; contact u = 1, x = delta - 1. The c-number
+substitution a_m -> c_m in the normal-ordered H gives, with i dc_m/dt = dH/dc_m*:
+   i dc+/dt = x c+ + (u/N)(|c0|^2 + |c-|^2) c+ + (1/N) conj(c-) c0^2 - y c0          (c- likewise, + <-> -)
+   i dc0/dt = (u/N)(|c+|^2 + |c-|^2) c0 + (2/N) conj(c0) c+ c- - y (c+ + c-)
+   start c0 = sqrt(N), c+ = c- = 0.
+z = c/sqrt(N) obeys the same equations with every N gone: the trajectory depends on (delta, u, y) only. One run per
+(delta, y) serves every N; at fixed y = 2/27 one trajectory serves N = 81, 729, 6561. Conserved: |z|^2 = 1, H = 0,
+and z+ = z- at every t (exchange symmetry and uniqueness). These are the equations in the contact lane's tw/src/main.rs.
+Weyl symbol: H_W = H_normal - (u/N)(total number) + const, so the Weyl flow is the normal flow times e^(iut/N), a global
+phase. MEASURED exact, s4_weyl.py: 3000 of 3000 random complex-rational points, 0 mismatches (out/s4_weyl.txt). So the
+classical map C is one map; the start amplitude is the one free choice (sqrt(N) here; sqrt(N + 1/2), the Wigner mean,
+multiplies (u, pair) by 1 + 1/(2N)).
+
+Observables in the quantum read's normalisation (line 4), on c-numbers, with w = z+ = z-:
+   A = conj(c0) c+ + conj(c-) c0 = 2N Re(conj(z0) w) (real),  A1 = 2|A|/N,
+   C1 = 2[|c0|^2(|c+|^2 + |c-|^2) + 2Re(conj(c+) conj(c-) c0^2)]/(N(N-1)),  f = (|c+|^2 + |c-|^2)/N,  D2 = 2|conj(c-) c+|/N = f.
+
+======================================================================
+2. V^2 = (N-1)/N ON THE TRAJECTORY. DERIVED exact; the "every t" refined.
+======================================================================
+Identity: |c0|^2(|c+|^2 + |c-|^2) + 2Re(conj(c+) conj(c-) c0^2) = |A|^2 for every complex triple. MEASURED exact,
+s1_checks.py, 2000 of 2000 random complex rationals. Hence C1_traj = 2|A|^2/(N(N-1)), A1^2 = 4|A|^2/N^2 and
+   V2_traj = A1^2/(2 C1) = (N-1)/N   wherever A != 0,
+for any Hamiltonian, any delta, y, t. With the normalisation N^2 in place of N(N-1) it reads 1.
+Where A = 0 (DERIVED, time free): on the trajectory E = 0 with
+   E/N = x f + u f(1 - 3f/4) + f(1-f) cos 2phi - 4y sqrt(f(1-f)/2) cos phi,  f = 2|w|^2,  phi = arg w - arg z0.
+At cos phi = 0 this is f(delta - 1 + f(1 - 3u/4)) < 0 for 0 < f < 1, u = 1, delta < 3/4; and f = 1 needs delta = 3/4.
+So for delta < 3/4, A = 0 exactly when w = 0: at t = 0 and at each return t = kT. There V2 is 0/0; at y = 0 it is 0/0
+at every t. Everywhere else V2_traj = (N-1)/N exactly. Return bound (DERIVED): |d|w|/dt| <= |w| + |y| gives
+   T >= 2 ln(1 + sqrt(fmax/2)/|y|),  fmax = largest root in (0,1) of f(1+delta) - (7/4) f^2 + 4|y| sqrt(f(1-f)/2).
+Every proposed time at all 24 blind points lies below this bound (s3_blind.hbp, all_times_below_T_lb=1), so V2_traj is
+exactly (N-1)/N at every proposed time.
+MEASURED at allowed points (s2_validate, integer Taylor integrator of the full three-mode equations, order 28,
+h = 1/32, 2^-256 fixed point, independent code): |A2/X - 1| <= 1.4e-67 at delta = 1/2, -1/2, 3/4 for t <= 10, five y
+each, including f = 2.3e-7 beside a return; energy conserved to 2e-51; A kept its sign on every grid; grid peaks of f
+met the algebraic fmax (0.876 vs 0.879, 0.924 vs 0.925, 0.364 vs 0.365, ...); returns at t = 4.5 to 10 above the
+bounds 3.0 to 7.0. At delta = 3/4, the theorem's edge, f reached 0.999996 and A/(Ny) dipped to -3.7e-4.
+Against the issue table: V2_traj reads (N-1)/N, and its error against the law is 1/(1+Y) - 1/N exactly; at N = 81 the
+-1/N is 12% of the error at Y = 80/9.
+
+======================================================================
+3. LINEARISED TRAJECTORY, EXACT. DERIVED.
+======================================================================
+c = (c+ + c-)/sqrt2, d = (c+ - c-)/sqrt2, c0 = sqrt(N): i dc/dt = delta c + conj(c) - sqrt(2N) y, d = 0.
+   c(t) = sqrt(2N) y [ -(cosh(gt) - 1)/(1+delta) + i sinh(gt)/g ],  g^2 = 1 - delta^2.
+   A1_lin = 4|y|(cosh(gt) - 1)/(1+delta) = A1_law exactly;  <A> < 0 at y > 0.
+   f_lin = 2y^2[(cosh(gt)-1)^2/(1+delta)^2 + sinh^2(gt)/g^2] = n_coh/N;   D2_lin = f_lin = D2_law.
+   C1_lin = N/(N-1) * A1_law^2/2.
+Against the law: C1_lin/C1_law - 1 = (1 + Y - N)/((N-1)(1+Y)) (missing 4 sinh^2(gt)/((1+delta)N), share 1/(1+Y));
+f_lin - f_law = -2J0/N, f_lin/f_law - 1 = -1/(1+Z), Z = s^2[1 + ((1-delta)/(1+delta)) tanh^2(gt/2)], share 1/(1+s^2)
+as t -> 0+; eps_V2 = 1/(1+Y) - 1/N.
+Accuracy, MEASURED at delta = +-1/2 against the integrator: A1_lin's relative error is 0.6 f to 1.0 f, so
+f_lin <= 1/100 keeps A1 within about 1% and f_lin <= 1/20 within about 5%.
+
+======================================================================
+4. AGAINST LAW PLUS FIRST CORRECTION. MEASURED exact algebra + DERIVED.
+======================================================================
+The trajectory's <A>/(Ny) = sum_k y^(2k) W_k(t), built exactly (exact.py: exponential polynomials over Q(delta)[gamma][i],
+Duhamel solve order by order; norm and energy conserved identically at every order built).
+s1_checks.py, symbolic in t and delta, frozen text of line 48 parsed as committed:
+   W0 = w0 identically;  W1 = w11 identically;  C12 = 4 w0 w11 identically.
+   Mutation controls: 5 of 5 single-term changes of the frozen text detected. Spot: W1(delta=0, t=1) = 2.01961384669580
+   on both sides. Repeated in Q(i) at delta = +-3/5, gamma = 4/5 (s3_blind.hbp: W1_equals_frozen_w11=1).
+So the trajectory carries the s^2 w11/N part of the quantum first correction exactly and lacks w10/N. Structure
+(DERIVED from the N-free scaled equations): the trajectory is the top power of s at every order of the quantum double
+expansion; C12 = 4 w0 w11 is that statement for C1 at first order, and the frozen forms satisfy it.
+Exact failure forms:
+   V2:  eps_V2 = (N-1)/N - V2_q;  law: 1/(1+Y) - 1/N;  law + first: (N-1)/N - A1_first^2/(2 C1_first).
+   A1:  A1_traj/A1_first - 1 = -(w10/N)/(w0 + (w10 + s^2 w11)/N) + O(N^-2);  large gt: (5-2delta)e^(2gt)/(8g^4 N).
+   C1:  C1_traj/C1_q = (A1_traj/A1_q)^2 V2_q/V2_traj exactly (any state), and
+        C1_first - C1_traj = 4 sinh^2(gt)/((1+delta)N) + [C10 + s^2(C11 - 2w0^2)]/N^2 + O(N^-3).
+   Fixed s: the V2, C1, f failures stay as N grows at fixed t; A1's falls as 1/N. Fixed y: all fall as 1/N;
+   N eps_V2 -> (1+delta)/(2y^2 tanh^2(gt/2)) - 1.
+   y = 0: z = (1,0,0) at every t; A1 = C1 = f = 0; V2_traj 0/0; quantum <A> = <B> = 0 exactly, C1_law = 4 sinh^2/((1+delta)N),
+   V2_q = 0; relative failure on C1 and f exactly -1 at every t > 0.
+   Controls: a wrong coupling shows on A1, f, D2 (pair strength k: A1_lin = 4|y|(cosh(g_k t)-1)/(k+delta), g_k^2 = k^2 -
+   delta^2, small-t change (k-1)/(1-delta) = 1/4 at k = 11/10, delta = 3/5) and leaves V2_traj at (N-1)/N; a changed
+   initial phase leaves every trajectory observable unchanged (U(1), c+- = 0 at start); one trajectory carries no sampling.
+
+======================================================================
+5. VALUES AT THE BLIND POINTS. DERIVED closed forms only, s3_blind.py; 133 rows in out/s3_blind.hbp.
+======================================================================
+Times: t_e = last 1/8-grid time with law f <= 1/200 (anchor); t_pre = t_q^- - 1; t_q^-, t_q^+ = floor(8 t_q)/8 + {0, 1/8};
+t_tr^-, t_tr^+ likewise; brackets by exact interval comparison. eps = eps_V2 against the law, 1/(1+Y) - 1/N.
+Anchor columns: eps against law + first, R_C = C1_traj/C1_first - 1, R_A = A1_traj/A1_first - 1.
+
+delta = 3/5 (g = 4/5)
+ N    s    t_q    t_tr   times                          eps at the times                                anchor: eps_first R_C R_A
+ 81   1/3  2.9590 4.2741 3/8,15/8,23/8,3,17/4,35/8        .98459 .93460 .90267 .89963 .87930 .87806     .98454437 -.996814 +5.813e-3
+ 81   2/3  2.7641 3.4076 1/4,7/4,11/4,23/8,27/8,7/2       .98217 .81896 .72512 .71678 .68969 .68429     .98208453 -.994332 +2.535e-3
+ 81   4/3  2.3090 2.5412 1/4,5/4,9/4,19/8,5/2,21/8        .96606 .66582 .45490 .43888 .42454 .41169     .96571583 -.977674 +2.544e-3
+ 729  1/3  4.3323 5.6473 1,13/4,17/4,35/8,45/8,23/4       .97897 .90514 .89027 .88904 .88136 .88092     .97897496 -.980104 +5.456e-3
+ 729  2/3  4.1374 4.7809 1,25/8,33/8,17/4,19/4,39/8       .92438 .71303 .67461 .67153 .66176 .65985     .92433073 -.924785 +5.463e-3
+ 729  4/3  3.6823 3.9145 3/4,21/8,29/8,15/4,31/8,4        .83997 .42267 .35798 .35316 .34882 .34492     .83961724 -.839872 +2.818e-3
+ 6561 1/3  5.7055 7.0206 9/4,37/8,45/8,23/4,7,57/8        .93333 .88810 .88258 .88214 .87947 .87932     .93335686 -.932632 +6.501e-3
+ 6561 2/3  5.5107 6.1542 17/8,9/2,11/2,45/8,49/8,25/4     .79016 .66739 .65390 .65284 .64951 .64887     .78999476 -.787897 +5.271e-3
+ 6561 4/3  5.0555 5.2877 13/8,4,5,41/8,21/4,43/8          .57914 .34614 .32609 .32456 .32318 .32193     .57860488 -.576842 +2.194e-3
+ fixed y = 2/27: N=81 is the (81, 2/3) row; N=729 (s=2): t_q 3.2937, t_tr 3.4076, times 1/2,9/4,13/4,27/8,7/2,
+   eps .83560 .27910 .21081 .20610 .20191, anchor .83520543 -.835968 +1.176e-3;
+   N=6561 (s=6): t_q 3.3939, t_tr 3.4076, times 5/8,19/8,27/8,7/2, eps .27017 .038868 .028113 .027416,
+   anchor .26956286 -.269282 +2.202e-4.
+delta = -3/5 (g = 4/5)
+ 81   1/3  1.8977 2.5412 3/8,7/8,15/8,2,5/2,21/8          .97549 .92851 .80457 .79089 .74395 .73416     .97541409 -.987534 +2.933e-3
+ 81   2/3  1.4426 1.6748 1/4,3/8,11/8,3/2,13/8,7/4        .96606 .94071 .63003 .59706 .56695 .53963     .96594681 -.977966 +1.247e-3
+ 81   4/3  0.7417 0.8083 1/4,5/8,3/4,7/8                  .90652 .63988 .55767 .48622                   .90604294 -.917162 +1.250e-3
+ 729  1/3  3.2710 3.9145 1,9/4,13/4,27/8,31/8,4           .92438 .77681 .70657 .70066 .68174 .67801     .92415565 -.924905 +3.483e-3
+ 729  2/3  2.8158 3.0480 7/8,7/4,11/4,23/8,3,25/8         .79771 .55060 .41117 .40087 .39165 .38338     .79715016 -.797272 +2.408e-3
+ 729  4/3  2.1150 2.1816 5/8,1,2,17/8,9/4                 .65086 .43661 .20190 .18928 .17846            .65017315 -.650347 +1.030e-3
+ 6561 1/3  4.6442 5.2877 17/8,29/8,37/8,19/4,21/4,43/8    .79016 .69155 .66508 .66298 .65636 .65507     .78945318 -.787326 +5.325e-3
+ 6561 2/3  4.1891 4.4213 15/8,25/8,33/8,17/4,35/8,9/2     .52714 .38460 .34263 .33947 .33663 .33406     .52578017 -.522841 +3.179e-3
+ 6561 4/3  3.4882 3.5549 11/8,19/8,27/8,7/2,29/8          .30975 .17036 .12820 .12536 .12283            .30882007 -.307442 +1.030e-3
+ fixed y = 2/27: N=81 is the (81, 2/3) row; N=729 (s=2): t_q 1.6443, t_tr 1.6748, times 1/2,5/8,13/8,7/4,
+   eps .56070 .45324 .13132 .11903, anchor .55994289 -.560171 +6.151e-4;
+   N=6561 (s=6): t_q 1.6713, t_tr 1.6748, times 1/2,5/8,13/8,7/4, eps .12466 .084613 .016563 .014830,
+   anchor .12440399 -.124300 +6.998e-5.
+Scaling seen in the table: fixed s at t_q^- (delta = 3/5, s = 1/3): .90267, .89027, .88258 toward 36/41 - 1/N = .878;
+fixed y at t_q^- (delta = 3/5): N eps = 58.7, 153.7, 184.4 toward 189.8 = (1+delta)/(2y^2 tanh^2) - 1 at t = 27/8.
+
+Linearised trajectory valid (its own f_lin <= 1/100; <= 1/20 in brackets), last 1/8-grid time:
+ delta = 3/5:  N=81: 11/8 (9/4), 3/4 (3/2), 3/8 (7/8);  N=729: 21/8 (29/8), 15/8 (11/4), 9/8 (2);
+               N=6561: 4 (5), 25/8 (33/8), 9/4 (13/4);  fixed y: 3/4 (3/2) at every N.
+ delta = -3/5: N=81: 9/8 (7/4), 3/4 (5/4), 3/8 (3/4);  N=729: 17/8 (23/8), 3/2 (17/8), 1 (3/2);
+               N=6561: 13/4 (33/8), 5/2 (27/8), 7/4 (21/8);  fixed y: 3/4 (5/4) at every N.
+ So among the proposed times the linearised trajectory holds at the anchors (f_lin <= 3e-3 there), holds within a few
+ percent at most t_pre, and at the clocks its depletion is 0.1 to 1.4 by the linear form.
+Where the clocks sit: at delta = 3/5 the law's own f at t_q is about 1/(2(1-delta)) = 5/4, so law and first
+correction are outside their range at t_q and t_tr (law f 1.06 to 12 there); at delta = -3/5 it is about 5/16 (law f
+0.13 to 0.99). The trajectory's own series (to y^11) converges at the clocks for delta = -3/5 (last term 1e-6 to 2e-2,
+orbit fmax 0.24 to 0.48) and at delta = 3/5 only at s = 1/3 through t_q^+ (last term <= 3e-5); elsewhere at delta = 3/5
+(orbit fmax 0.92 to 0.96) it diverges.
+
+======================================================================
+6. WHAT RAN, WHERE. MEASURED unless noted.
+======================================================================
+ src/exact.py            exact algebra: Q(delta) rational functions, Q(gamma)[i], Q[i]; exponential polynomials; Duhamel;
+                         the trajectory series; outward-rounded rational intervals at 2^-320; exp enclosures.
+ src/s1_checks.py        out/s1_checks.txt  sha256 2fdb9e4c...6b83   symbolic identities and mutations, algebra only.
+ src/traj_int.py         integer Taylor integrator of the three-mode equations; refuses delta = +-3/5 and y = +-2/27.
+ src/s2_validate.py      out/s2_validate_d1o2.txt e889958b...f576, _dm1o2.txt bd4a3b90...56bf, _d3o4.txt 8a5caf2e...a282.
+                         Runs: delta = 1/2, -1/2, 3/4; y = 1/27, 4/27, 1/81, 4/81, 1/243; t = 1/4..10 step 1/4.
+ src/s3_blind.py         out/s3_blind_v1.hbp 9258d484...9326 (first table), out/s3_blind.hbp 8f27ee62...6e72 (the same
+                         values to v1's digits, worst relative difference 4.9e-6, printed to 8 and 10 digits);
+                         closed forms and the y^11 series at delta = +-3/5, gamma = 4/5.
+ src/s4_weyl.py          out/s4_weyl.txt 9d62f96f...4f0a.
+ src/s5_rows.py          PROPOSED-ROWS.hbp 1479b6b8...c0ec (+ .sha256), generated from out/s3_blind.hbp.
+ Transcription: every number typed in section 5 (229 eps, eps_first, R_C, t_q, t_tr items and 24 R_A items) was matched
+ against out/s3_blind.hbp by script, 0 missing.
+ Python 3.13 (Windows, -I -B -X utf8), Fractions and integers only, float_used=0. This lane used Python only.
+ Exposure audit: numerical trajectory runs touched only delta in {1/2, -1/2, 3/4}; y values 1/27, 4/27, 1/81, 4/81,
+ 1/243 coincide with blind y values and ran only at those allowed delta.
+
+======================================================================
+7. OPEN.
+======================================================================
+ - CANNOT_SEE: the quantum V2, A1, C1 at the blind points (reserved; the quantum route is the frozen run's).
+ - CANNOT_SEE: the trajectory's own A1 and f at delta = 3/5 clocks with s >= 2/3 and at every delta = 3/5 t_tr time,
+   where the series diverges; the frozen run measures them. The exact first-return time T at delta = +-3/5 (a
+   quadrature at a reserved point); the bound holds.
+ - CONJECTURE: the anchor tolerances assume the quantum read stays within 1/200 of law + first at law f <= 1/200; the
+   first-correction remainder was measured at 1.2 to 1.8 times the square of the first-order size at N = 6561, t = 2,
+   delta in [-1/4, 1/2], and at delta = +-3/5, N = 81, 729 it is unmeasured.
+ - CONJECTURE: the clock band V2_q/V2_law in [3/4, 5/4] at t_pre and t_q^+- for N = 729, 6561 rests on the contact lane's
+   F4.2 (0.865 to 1.168 at the f peak, N = 243, 729, delta = 0, +-1/2).
+ - OPEN: N = 81 at the clocks and every t_tr time are read and reported with the V2 identity as the frozen clause.
+ - The ensemble's rows and the controls' sampling rows are other seats' lanes.
