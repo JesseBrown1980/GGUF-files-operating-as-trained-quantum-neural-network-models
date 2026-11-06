@@ -121,7 +121,7 @@ The J flip and the pair-locked seeds read against the quantum with tau = 1/20 (t
 insufficient-sampling control reads with each row's own tau(N) (1/200 at N = 81, 1/1000 at N = 729 and 6561); the fixed
 mode-0 phase reads against the uniform-phase ensemble within 10^-7; the noiseless control reads against the trajectory
 engine within the two integration bounds. The J flip and the pair-locked seeds run on each point's staircase: at every row
-at least the count each of its frozen MISS components needs, and 2^20 on read-and-report rows; the fixed mode-0 phase runs
+at least the count each of its frozen MISS components needs, and 2^20 on read-and-report rows; the uniform-phase partner of VNC's fixed mode-0 phase (MODE0) runs
 on the first 2^16 samples and the insufficient-sampling control on the first 57182; each row prints its counts. Every
 predicted control outcome lies inside the law's range
 (96 rows, `BRIDGE_CHECK`); C_MODE0 and C_NOISELESS are exact identities and stand on every row.
@@ -191,7 +191,7 @@ same samples. Every `BRIDGE_AT` row prints its counts (`M_VNC`, `M_V1`, `M_V0`, 
 - Rows past the first-order range read every variant at 2^20 samples.
 - The integration error is estimated on the first 2^16 samples of each variant, rerun at half the step.
 - The J flip and the pair-locked seeds run at each point's thresholds for its frozen MISS rows, through the last of them,
-  and at 2^20 on later rows; the fixed mode-0 phase on the first 2^16 samples; the insufficient-sampling control on the
+  and at 2^20 on later rows; the uniform-phase partner of VNC's fixed mode-0 phase (MODE0) on the first 2^16 samples; the insufficient-sampling control on the
   first 57182.
 - The generator recomputes every count from the cost lane's closed forms and matches the cost lane's own rows; at each
   row's count it checks every 3-SE bound the plan sizes, and it reads the control verdicts by exact comparison, equal to
@@ -200,8 +200,8 @@ same samples. Every `BRIDGE_AT` row prints its counts (`M_VNC`, `M_V1`, `M_V0`, 
   standard errors at the row's count; V^2 by the delta method with the covariance from the same samples. The
   control-variate estimator, the ensemble lane's exact linear trajectory as that lane froze it, is the one read for E_VNC,
   E_VNC_ZERO and the diagnostic; the plain estimator for E_PAIR and C_INSUFF; both are printed on every row.
-- Before any run the ensemble integrator gains a variant mask, the per-record sums of f^2, B_W, Re Z times X and (Re Z - Re Z_lin)(X - X_lin), and a
-  start index, so that each step of the staircase runs as its own batch (`BRIDGE_ENGINE_CHANGE`).
+- Before any run the ensemble integrator gains a variant mask, the per-record sums of f^2, B_W, Re Z times X and (Re Z - Re Z_lin)(X - X_lin), exact sums of squares
+  for every variance, and a start index, so that each step of the staircase runs as its own batch (`BRIDGE_ENGINE_CHANGE`).
 - Cost: 5.050 x 10^9 variant-sample time units, 84.2 to 105 thread-hours at the ensemble lane's measured rate, about
   13.7 hours at the machine's measured floor of 102631 per second, two 3-thread processes together (CONJECTURE, scaled from
   measured rates; a dedicated 8-thread rate OPEN). The sampling amendment of November 6, 2026 (below) sets 5.897 x 10^9.
@@ -258,6 +258,41 @@ but array_bytes. On the full space at N = 6561 (the allowed point delta = 1/2, y
 as `point` one run at a time (3 interleaved repeats, spread 1.940 to 2.006) and 1.928 times as fast four at a time
 (2 repeats, spread 1.862 to 1.993), MEASURED, at a peak of 1.04 GB against 1.29 GB per run. The hours above are at
 `point`'s rate.
+
+## The engines and their corrections (November 6, 2026)
+
+The engine changes of `BRIDGE_ENGINE_CHANGE` (lines 445 to 451) are filed beside the frozen file, which keeps its bytes
+(sha256 `fadd84122e820cc03e9a4d6d5dd47fe7118ab4b16e1d4db93a601fb44c90b892`).
+
+- [`engines/ensemble/`](engines/ensemble/) is the ensemble integrator twens 0.3.0 (Rust 1.81, integers only, float_used=0),
+  source `src/main.rs` sha256 `723b36745af6c926849ff7a6da74d8c82007dfc4071761795bb639fcd8d4a609`. It carries the variant
+  mask, the per-record sums with exact sums of squares, the start index, the per-sample rounding bound printed beside every
+  row (`TWB_ROUND`, `TWB_PAIR_ROUND`), the noiseless path NL, and the sha256 of its source in its head row. On Windows it
+  links with /Brepro, so a rebuild of that source gives the same binary: `ac7ff8f41279f55a57f5c47823950c225c8aa111573f52832d52bd6a0e5ca44f`
+  (x86_64-pc-windows-msvc) at three paths and `75530df9c7414b9a1b28f7408cbacd512f35d48836e2a6823beefb4941b9598d`
+  (x86_64-unknown-linux-gnu) at three (MEASURED). The second seat's round-2 holds H1 to H7 take MODE0's start bound against
+  its drawn integer unit vector and set the stage region from max + min/2 of each mode's components; with them all seven
+  variants run to t = 493/64 at N = 6561, delta = 1/2, y = 1/243, where the earlier source e5682f1d stopped with exit 4
+  (MEASURED, three runs each).
+- [`engines/trajectory/`](engines/trajectory/) is the trajectory integrator (`traj_int.py`, sha256
+  `c08a0c75bf7d089875d2e6017b731bac767fb93fff849464f9af9d9849afb504`), with its line-446 gate, tests, audit and float scan,
+  its README.md and its SHA256SUMS.
+- [`CORRECTIONS.hbp`](CORRECTIONS.hbp) holds 28 readings of frozen lines from the engine rounds' holds (ensemble-1 to
+  ensemble-27, trajectory-1). Each frozen_text is a byte-for-byte substring of its frozen line and occurs once on it; every
+  row has values_moved=0.
+- C_MODE0 (ensemble-26 and ensemble-27, kind READ_DETAIL): the read rule's e carries the engine's rigorous rounding bound,
+  and on C_MODE0's paired difference that bound lies above the 10^-7 tolerance from t = 1/2 on (1.08 to 2.0 x 10^5 times on
+  the worst of A1, C1, f and D2 at allowed analogs, MEASURED), so C_MODE0 is expected to read NOT RESOLVED from t = 1/2 on.
+  Beside each row the read prints, for information only, the measured difference of the row's first 2^10 samples against a
+  2^-120 run of them. The frozen prediction and its tolerances stay as frozen (the operator's decision of November 6, 2026).
+- [`ENGINE-CHANGES.hbp`](ENGINE-CHANGES.hbp) holds one row per engine change's result and per second-seat check: 3 for the
+  quantum engine, 7 for the ensemble integrator, 5 for the trajectory integrator.
+- The workflow `.github/workflows/polariton-bridge.yml` runs three jobs: `frozen` (PREDICTION.hbp at its pin, every
+  SHA256SUMS, LF line endings), `ensemble` (the Rust 1.81 gate, the float scan, binary provenance, the guard's refusals,
+  TEST-RUNS-T1B.hbp byte for byte) and `trajectory` (the engine's sums, the reserved check, the tests with and without
+  -O, the float scan, the audit, the line-446 gate).
+- [`reviews/opus55-engines-round2-20261106/`](reviews/opus55-engines-round2-20261106/) holds the four round-2 reports, the
+  stage check's report and the disposition of every hold (`HOLDS-APPLIED.hbp`).
 
 ## Order (`BRIDGE_ORDER`)
 
@@ -319,3 +354,9 @@ discrete, and which mechanism supplies decoherence, stay separate questions, OPE
 - `design/ensemble/` FINDINGS.txt (sha256 `a604c711aa2b27eeffde6508b651ca25f3f80efacc67d84aabf5711b3e59aaea`, 254 lines) and PROPOSED-ROWS.hbp (sha256 `1f8e493fa7659e6a6b6b2d47483c95e160ef1961095438e5a346a6822e457630`, 155 rows), copied byte for byte from `C:/tmp/opus55/bridge-design-ensemble-20261105/`.
 - `design/clocks/` FINDINGS.txt (sha256 `02be8a4028d257e1c4308a3731c8c31252689ac059c6c7f8d0c8b0c420038560`, 312 lines) and PROPOSED-ROWS.hbp (sha256 `92bc50b0f6861a8ab86c33546c5a39f8e14c0048f50f66199f2d6b259b963ff4`, 91 rows), copied byte for byte from `C:/tmp/opus55/bridge-design-clocks-20261105/`.
 - `design/controls/` FINDINGS.txt (sha256 `9755bb3a46f35eba28500750ebf2163d6c9d5de6c4b4c608b9fbd0b05b133b66`, 287 lines) and PROPOSED-ROWS.hbp (sha256 `9091896d690d0ccd8ac779137c5eec522665bc79ee930a6f704bf78c3a9430b5`, 33 rows), copied byte for byte from `C:/tmp/opus55/bridge-design-controls-20261105/`.
+- [`ENGINE-CHANGES.hbp`](ENGINE-CHANGES.hbp) and [`CORRECTIONS.hbp`](CORRECTIONS.hbp): the engine changes' results and
+  reviews, and the readings of frozen lines from the engine rounds' holds; PREDICTION.hbp keeps its bytes.
+- [`engines/ensemble/`](engines/ensemble/) (twens 0.3.0, `src/main.rs` sha256 `723b36745af6c926849ff7a6da74d8c82007dfc4071761795bb639fcd8d4a609`)
+  and [`engines/trajectory/`](engines/trajectory/) (`traj_int.py` sha256 `c08a0c75bf7d089875d2e6017b731bac767fb93fff849464f9af9d9849afb504`,
+  with its README.md and SHA256SUMS); the workflow's `ensemble` and `trajectory` jobs run them.
+- [`reviews/`](reviews/): the second seat's reports, one folder per piece of work, each with its SHA256SUMS.

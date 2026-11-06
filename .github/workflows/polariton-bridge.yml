@@ -31,3 +31,93 @@ jobs:
         run: |
           set -euo pipefail
           test "$(find polariton-bridge -type f -exec cat {} + | tr -cd '\r' | wc -c)" = "0"
+  ensemble:
+    name: The ensemble integrator twens 0.3.0, its toolchain gate, and TEST-RUNS-T1B.hbp reproduced byte for byte
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: polariton-bridge/engines/ensemble
+    steps:
+      - name: Checkout, on a pull request its merge with the base
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Rust 1.81 and lints
+        run: rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
+      - name: Format, Clippy in both forms, unit tests, build
+        run: |
+          set -euo pipefail
+          cargo +1.81.0 fmt -- --check
+          cargo +1.81.0 clippy --locked --offline --release -- -D warnings
+          cargo +1.81.0 clippy --locked --offline --release --all-targets -- -D warnings
+          cargo +1.81.0 test --locked --offline --release
+          cargo +1.81.0 build --locked --offline --release
+      - name: Integer types only in the engine's source (float_used=0, the second seat's lexer-based scan, its self-test first)
+        run: |
+          set -euo pipefail
+          python3 -I -X utf8 tools/floatscan.py selftest | tee scan-self.hbp
+          grep -q '^RV_FLOATSCAN_SELFTEST|literals_found=6|expected=6|types_found=1|expected=1|' scan-self.hbp
+          python3 -I -X utf8 tools/floatscan.py src src/main.rs src/sha256.rs | tee scan.hbp
+          grep -q '^RV_FLOATSCAN_SRC_DONE|files=2|code_uses=0|float_used=0|' scan.hbp
+      - name: The binary names the source it was compiled from, and that source is this one
+        run: |
+          set -euo pipefail
+          ./target/release/twens version | tee version.hbp
+          grep -q "|source_sha256=main.rs:$(sha256sum src/main.rs | cut -d' ' -f1),sha256.rs:$(sha256sum src/sha256.rs | cut -d' ' -f1)|" version.hbp
+          grep -q "|binary_sha256=$(sha256sum target/release/twens | cut -d' ' -f1)|" version.hbp
+      - name: The guard refuses its neighbourhood bands before any model code (zero samples, no exact reserved point started), and lifts only on lift_reserved_guard=1
+        run: |
+          set -euo pipefail
+          K="u=1 seed=1 start=0 count=0 dtden=64 threads=1 steps=0 ctrl=1099511627776:0:0"
+          for pt in "N=81 delta=29/50 y=1/18" "N=6561 delta=-31/50 y=0" "N=729 delta=1/2 y=71/1000"; do
+            for mask in VNC NL; do
+              rc=0
+              ./target/release/twens run $pt $K mask=$mask > refused.hbp 2> refused.err || rc=$?
+              test "$rc" = 3
+              test ! -s refused.hbp
+              grep -q '^TWB_REFUSED|' refused.err
+            done
+          done
+          rc=0
+          ./target/release/twens run N=81 delta=1/2 y=1/18 $K mask=VNC lift_reserved_guard=yes > lift.hbp 2> lift.err || rc=$?
+          test "$rc" = 2
+          ./target/release/twens run N=81 delta=1/2 y=1/18 $K mask=VNC lift_reserved_guard=1 > lift1.hbp
+          head -1 lift1.hbp | grep -q '|reserved=0|guard=lifted|'
+          ./target/release/twens run N=81 delta=1/2 y=1/18 $K mask=VNC > nolift.hbp
+          head -1 nolift.hbp | grep -q '|reserved=0|guard=active|'
+      - name: TEST-RUNS-T1B.hbp of the controls lane (its four twctl runs, PREDICTION.hbp BRIDGE_ENGINE_CHANGE lines 447 to 450), byte for byte
+        run: |
+          set -euo pipefail
+          for d in 1/2 -1/2; do
+            for ph in fixed random30; do
+              ./target/release/twens twctl 6561 $d 1 1/162 1 vac $ph 240000 20261105 64 4 64,128 | grep '^TWCTL|'
+            done
+          done > TEST-RUNS-T1B.hbp
+          test "$(sha256sum TEST-RUNS-T1B.hbp | cut -d' ' -f1)" = "8aee3a7fe77cb6cd6f0daf3291e12b917823e694b83e797bbf78e9cd0958bd0d"
+          test "$(tr -cd '\r' < TEST-RUNS-T1B.hbp | wc -c)" = "0"
+  trajectory:
+    name: The trajectory engine, its guard and step tests, float scan, the audit at one point and the line-446 byte gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout, on a pull request its merge with the base
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: The engine folder at its sums, and the interpreter
+        run: |
+          set -euo pipefail
+          (cd polariton-bridge/engines/trajectory && sha256sum --strict -c --quiet SHA256SUMS)
+          python3 --version
+      - name: The tools' reserved-point check, predicate only
+        run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/reserved.py
+      - name: The guard and step tests (the review's 172 and the round-2 tests), with and without python -O
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/trajectory"
+          cd polariton-bridge/engines/trajectory
+          python3 -I -B -X utf8 test_engine.py traj_int.py "$RUNNER_TEMP/trajectory" engine
+          python3 -O -I -B -X utf8 test_engine.py traj_int.py "$RUNNER_TEMP/trajectory" engine_O
+      - name: float_used=0 by the static scan and the two dynamic scans
+        run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/float_scan.py polariton-bridge/engines/trajectory/traj_int.py "$RUNNER_TEMP/trajectory" engine
+      - name: The audit of the printed bounds at delta = 1/2, y = 1/27, 320 steps and a half-step read
+        run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/check_audit.py polariton-bridge/engines/trajectory/traj_int.py 1/2 1/27 320 d1o2_y1o27 "$RUNNER_TEMP/trajectory"
+      - name: The line-446 byte gate, three runs against the sha256 values line 446 names
+        run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/gate446.py "$RUNNER_TEMP/trajectory/gate446"
