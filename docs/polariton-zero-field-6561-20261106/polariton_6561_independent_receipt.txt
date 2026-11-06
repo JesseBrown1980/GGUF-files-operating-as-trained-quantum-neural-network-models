@@ -1,0 +1,9 @@
+delta=  -2  spectral_seconds=   0.528  filed_local_seconds=19.163  reads=6  PASS
+delta=  -1  spectral_seconds=   0.566  filed_local_seconds=19.337  reads=6  PASS
+delta=-1/2  spectral_seconds=   0.688  filed_local_seconds=18.321  reads=6  PASS
+delta=   0  spectral_seconds=   1.024  filed_local_seconds=19.700  reads=6  PASS
+delta= 1/2  spectral_seconds=   1.208  filed_local_seconds=19.380  reads=6  PASS
+delta=   1  spectral_seconds=   1.176  filed_local_seconds=19.484  reads=6  PASS
+delta=   2  spectral_seconds=   0.926  filed_local_seconds=19.811  reads=6  PASS
+TOTAL|rows=42|observables=126|independent_elapsed_seconds=6.115|historical_local_seconds=135.196|speed_ratio_cross_machine=22.109|max_pair_relative=1.202e-08|max_C1_absolute_ppm=0.98491|max_C2_absolute_ppm=0.99168|status=PASS
+CSV_SHA256|daeca5243ab8b89e1f954003aa0924f8312fefc04463b0cc21c20723773b5764|path=polariton_6561_independent_replay.csv
