@@ -1,0 +1,11 @@
+BASE|thread_invariant=1|json=0
+CMP_DONE|parts=2|rows=114|integer_fields_compared=1722|result=EQUAL|json=0
+CMP_DONE|parts=3|rows=164|integer_fields_compared=2648|result=EQUAL|json=0
+CONTROL|CMP_FAIL|check=count_differs:('TWB', '0', 'V1')|json=0
+CONTROL|CMP_FAIL|check=sum_differs:xnc:('TWB', '0', 'V1')|json=0
+CONTROL|CMP_FAIL|check=index_ranges_not_disjoint_or_not_covering|json=0
+CONTROL|CMP_FAIL|check=index_ranges_not_disjoint_or_not_covering|json=0
+CONTROL|CMP_FAIL|check=field_set_differs:('TWB', '0', 'V1')|json=0
+CMP_DONE|mode=stair|rows=114|counts=40,96|fields_compared=2928|result=EQUAL|json=0
+CONTROL|CMP_FAIL|check=stair_row_differs:f:(('TWENS', '32', 'V0'),)|json=0
+BASE_DONE|json=0

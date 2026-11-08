@@ -1,5 +1,16 @@
-//! twens 0.3.0: the bridge's ensemble integrator for the three-mode contact model from |N,0,0>, integers only
+//! twens 0.4.0: the bridge's ensemble integrator for the three-mode contact model from |N,0,0>, integers only
 //! (float_used=0). Rust 1.81, std only, no dependencies.
+//!
+//! 0.4.0 over 0.3.0 (723b3674): count-weighted reuse, the key memo=1 of run and the trailing argument memo=1 of twens.
+//! The noise is a 4096-coin binomial, so a batch's starts repeat: VNC, V1, RN and FLIP read the four integer noise values
+//! (c0, c1, c2, c3), c_i = g_i / 2^35 (K4); LOCK reads (c0, c1) (K2). With memo=1 the engine draws the batch's starts,
+//! counts each K4 start inside the 4-ball sum c_i^2 <= 88^2 (one byte per cell, wraps carried exactly) and each K2 start
+//! inside the box |c0|, |c1| <= 255, integrates each distinct start once and adds its per-record contributions times its
+//! count; the starts outside those cores, V0, MODE0, and every variant that shares a pair row with V0 or MODE0 are
+//! integrated sample by sample as in 0.3.0. Every summed field is an integer sum of per-sample terms that depend only on
+//! the start, so w copies of a term add to w times the term: the rows equal the plain path's byte for byte (the
+//! maxima eps_max are maxima over the same set). memo=0 or no key is the 0.3.0 path, operation for operation; the
+//! counts and the integrations done are printed on stderr in one TWB_MEMO row, so stdout is the plain path's.
 //!
 //! 0.3.0 over 0.2.0 (the round-1 build with the second seat's holds R2, R3, R5, R7): the per-sample fixed-point rounding
 //! bound of BRIDGE_ERRORS rounding_ensemble (derived below, printed in TWB_ROUND and TWB_PAIR_ROUND rows beside every
@@ -50,8 +61,10 @@
 
 mod sha256;
 
+use std::collections::HashMap;
 use std::env;
 use std::io::Write;
+use std::sync::atomic::{AtomicU64, AtomicU8, AtomicUsize, Ordering};
 use std::thread;
 
 const Q: u32 = 40;
@@ -60,7 +73,7 @@ const ONE128: i128 = 1i128 << Q;
 const FNV: u64 = 0x1000_0000_01B3;
 const PHASE_XOR: u64 = 0x5DEE_CE66_D1CE_F00D;
 const PHASE_MUL: u64 = 0x9E37_79B9;
-const VERSION: &str = "0.3.0";
+const VERSION: &str = "0.4.0";
 /// The two source files this binary was compiled from, as compiled.
 const SRC_MAIN: &[u8] = include_bytes!("main.rs");
 const SRC_SHA256: &[u8] = include_bytes!("sha256.rs");
@@ -972,15 +985,41 @@ fn uv_of(sp: [i64; 4]) -> [i64; 4] {
 }
 
 fn ens_sample(job: &EnsJob, idx: u64, out: &mut Sample) {
+    let (g, r30) = ens_draw(job, idx);
+    ens_build(job, g, r30, &job.on, out);
+    ens_integrate(job, &job.on, out);
+}
+
+/// The draws of sample `idx` (BRIDGE_SAMPLING per_sample): the six Gaussians, then MODE0's unit vector when MODE0 is
+/// on (the same stream, after g5), else (1, 0) with eta 0.
+fn ens_draw(job: &EnsJob, idx: u64) -> ([i64; 6], (i64, i64, u128)) {
     let mut rng = Rng::sample(job.seed, idx);
-    for g in out.g.iter_mut() {
-        *g = rng.gauss::<64, 5>();
+    let mut g = [0i64; 6];
+    for x in g.iter_mut() {
+        *x = rng.gauss::<64, 5>();
     }
-    let g = out.g;
+    let r30 = if job.on[MODE0] {
+        rng.unit30x()
+    } else {
+        (ONE, 0, 0)
+    };
+    (g, r30)
+}
+
+/// Every start of one sample from its draws: the starts, control seeds and start errors of the variants in `need`
+/// (VNC's sharp start when VNC, FLIP or MODE0 is needed; LOCK's when LOCK is), the others' from the same formulas.
+fn ens_build(
+    job: &EnsJob,
+    g: [i64; 6],
+    r30: (i64, i64, u128),
+    need: &[bool; NV],
+    out: &mut Sample,
+) {
+    out.g = g;
     let h = job.h;
     let (rp, ip, rm, im) = (m(g[0], h), m(g[1], h), m(g[2], h), m(g[3], h));
     let nsum = m(rp, rp) + m(ip, ip) + m(rm, rm) + m(im, im);
-    let on = &job.on;
+    let on = need;
     let psi_vn = if on[VNC] || on[FLIP] || on[MODE0] {
         sharp(nsum, job.n)
     } else {
@@ -999,11 +1038,7 @@ fn ens_sample(job: &EnsJob, idx: u64, out: &mut Sample) {
         0
     };
     out.init[LOCK] = [psi_l, 0, lp, lip, lm, lim];
-    let (c30, s30, eta30) = if on[MODE0] {
-        rng.unit30x()
-    } else {
-        (ONE, 0, 0)
-    };
+    let (c30, s30, eta30) = r30;
     out.rot = (c30, s30);
     out.eta = eta30;
     out.init[MODE0] = rot(&out.init[VNC], out.rot.0, out.rot.1);
@@ -1049,11 +1084,15 @@ fn ens_sample(job: &EnsJob, idx: u64, out: &mut Sample) {
     for (v, sb) in out.sb.iter_mut().enumerate() {
         *sb = if v == LOCK { 2 * ep } else { ep + em };
     }
+}
+
+/// Integrate the built starts of the variants in `sel` to every record, with the rounding bound.
+fn ens_integrate(job: &EnsJob, sel: &[bool; NV], out: &mut Sample) {
     let flip = Par {
         kappa: -1,
         ..job.par
     };
-    for (v, &is_on) in on.iter().enumerate() {
+    for (v, &is_on) in sel.iter().enumerate() {
         if !is_on {
             continue;
         }
@@ -1117,9 +1156,27 @@ fn lin(job: &EnsJob, r: usize, uv: &[i64; 4]) -> (i64, i64, i64) {
 }
 
 fn ens_accumulate(job: &EnsJob, smp: &Sample, rec: &mut EnsRec) {
+    ens_accumulate_w(job, smp, rec, 1, &job.on, &[true; NPAIR]);
+    rec.count += 1;
+}
+
+/// The contributions of one sample's variants in `vsel` and its pair rows in `psel` (a pair also needs both variants
+/// on), each taken `w` times: every field is a sum of integer terms, so w equal terms add to w times the term, and a
+/// maximum over w equal values is that value. rec.count is the caller's. Inlined, so the plain path's w = 1 folds away.
+#[inline(always)]
+fn ens_accumulate_w(
+    job: &EnsJob,
+    smp: &Sample,
+    rec: &mut EnsRec,
+    w: u64,
+    vsel: &[bool; NV],
+    psel: &[bool; NPAIR],
+) {
+    let wi = i128::from(w);
+    let wu = u128::from(w);
     for r in 0..job.steps.len() {
-        for v in 0..NV {
-            if !job.on[v] {
+        for (v, &vs) in vsel.iter().enumerate() {
+            if !(job.on[v] && vs) {
                 continue;
             }
             let (zc_re, zc_im, xc) = lin(job, r, &smp.uv[v]);
@@ -1133,32 +1190,32 @@ fn ens_accumulate(job: &EnsJob, smp: &Sample, rec: &mut EnsRec) {
                 a.s.iter_mut()
                     .zip([zr, zi, d_zr, d_zi, xw, d_xw, xnc, d_xnc, f])
             {
-                *acc += i128::from(val);
+                *acc += wi * i128::from(val);
             }
             for (acc, val) in a.q.iter_mut().zip([d_zr, d_xw, d_xnc, zr, xw, xnc, d_zi]) {
-                *acc += (i128::from(val) * i128::from(val)) >> Q;
+                *acc += wi * ((i128::from(val) * i128::from(val)) >> Q);
             }
-            let w = |p: i64, q: i64| i128::from(p) * i128::from(q);
+            let pw = |p: i64, q: i64| i128::from(p) * i128::from(q);
             let new = [
-                w(f, f),
+                pw(f, f),
                 i128::from(br),
                 i128::from(bi),
-                w(br, br),
-                w(bi, bi),
-                w(br, bi),
-                w(zr, xw),
-                w(zr, xnc),
-                w(d_zr, d_xw),
-                w(d_zr, d_xnc),
+                pw(br, br),
+                pw(bi, bi),
+                pw(br, bi),
+                pw(zr, xw),
+                pw(zr, xnc),
+                pw(d_zr, d_xw),
+                pw(d_zr, d_xnc),
             ];
             for (acc, val) in a.x.iter_mut().zip(new) {
-                *acc += val;
+                *acc += wi * val;
             }
             for (acc, val) in
                 a.e.iter_mut()
                     .zip([zr, zi, d_zr, d_zi, xw, d_xw, xnc, d_xnc])
             {
-                *acc += w(val, val);
+                *acc += wi * pw(val, val);
             }
             let fb = field_bounds(
                 job,
@@ -1169,28 +1226,27 @@ fn ens_accumulate(job: &EnsJob, smp: &Sample, rec: &mut EnsRec) {
                 (zc_re, zc_im),
             );
             for (acc, val) in a.rb.iter_mut().zip(fb) {
-                *acc += val;
+                *acc += wu * val;
             }
             a.epsmax = a.epsmax.max(smp.eps[r * NV + v]);
         }
         for (k, &(va, oa, vb, ob, _)) in PAIRS.iter().enumerate() {
-            if !(job.on[va] && job.on[vb]) {
+            if !(psel[k] && job.on[va] && job.on[vb]) {
                 continue;
             }
             let d = smp.vals[r * NV + va][oa] - smp.vals[r * NV + vb][ob];
             let ps = &mut rec.p[r][k];
-            ps.d += i128::from(d);
-            ps.q += (i128::from(d) * i128::from(d)) >> Q;
-            ps.d2 += i128::from(d) * i128::from(d);
+            ps.d += wi * i128::from(d);
+            ps.q += wi * ((i128::from(d) * i128::from(d)) >> Q);
+            ps.d2 += wi * (i128::from(d) * i128::from(d));
             // the pair's bound: the two observables' bounds added
             let bd = smp.ob[r * NV + va].o[oa] + smp.ob[r * NV + vb].o[ob];
             let ad = uabs(d);
-            ps.rb[0] += bd;
-            ps.rb[1] += cu(2 * ad, bd) + cu(bd, bd) + 1;
-            ps.rb[2] += 2 * ad * bd + bd * bd;
+            ps.rb[0] += wu * bd;
+            ps.rb[1] += wu * (cu(2 * ad, bd) + cu(bd, bd) + 1);
+            ps.rb[2] += wu * (2 * ad * bd + bd * bd);
         }
     }
-    rec.count += 1;
 }
 
 /// The per-sample bound of each of the NRB fields of a TWB row (RB_NAMES order): the observables' bounds, the linear
@@ -1281,6 +1337,533 @@ fn ens_run(job: &EnsJob, start: u64, count: u64, threads: u64) -> EnsRec {
     total
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Count-weighted reuse (memo=1, 0.4.0). A start is keyed by its integer noise values c_i = g_i / 2^35 (g_i is
+// (popcount - 2048) << 35, so the shift is exact): K4 = (c0, c1, c2, c3) for VNC, V1, RN, FLIP; K2 = (c0, c1) for LOCK.
+// Phase 1 draws each sample once (four Gaussians, or two for a LOCK-only batch, the same prefix of its stream; all six
+// and MODE0's vector when a variant runs sample by sample) and counts its keys; phase 2 integrates each counted key once
+// and adds its contributions times its count.
+
+/// The memo's cores and the counts from which a class is memoised.
+#[derive(Clone, Copy)]
+struct MemoCfg {
+    /// K4 core: the 4-ball c0^2 + c1^2 + c2^2 + c3^2 <= r * r, one byte per cell (295937937 cells at r = 88).
+    r: i64,
+    /// K2 core: the box |c0|, |c1| <= b2, one u64 per cell.
+    b2: i64,
+    /// K4 is memoised from this count up (below it each sample runs alone), K2 from k2_min up.
+    k4_min: u64,
+    k2_min: u64,
+}
+
+const MEMO: MemoCfg = MemoCfg {
+    r: 88,
+    b2: 255,
+    k4_min: 1 << 22,
+    k2_min: 1 << 10,
+};
+
+/// The 4-ball's cells in a dense index: for each row (c0, c1, c2) of the box [-r, r]^3, the index of its cell c3 = 0 and
+/// its half-width hw (cells c3 in [-hw, hw]), or hw = -1 for a row outside the ball.
+struct Ball {
+    r: i64,
+    w: usize,
+    off: Vec<u32>,
+    half: Vec<i16>,
+    cells: usize,
+}
+
+impl Ball {
+    fn new(r: i64) -> Self {
+        let w = (2 * r + 1) as usize;
+        let r2 = r * r;
+        let mut off = vec![0u32; w * w * w];
+        let mut half = vec![-1i16; w * w * w];
+        let mut next: u64 = 0;
+        for c0 in -r..=r {
+            for c1 in -r..=r {
+                for c2 in -r..=r {
+                    let s = c0 * c0 + c1 * c1 + c2 * c2;
+                    if s > r2 {
+                        continue;
+                    }
+                    let hw = isqrt((r2 - s) as u128) as i64;
+                    let i = Self::row_of(r, w, c0, c1, c2);
+                    off[i] = u32::try_from(next + hw as u64).expect("ball index above u32");
+                    half[i] = hw as i16;
+                    next += (2 * hw + 1) as u64;
+                }
+            }
+        }
+        Self {
+            r,
+            w,
+            off,
+            half,
+            cells: usize::try_from(next).expect("cells"),
+        }
+    }
+    #[inline]
+    fn row_of(r: i64, w: usize, c0: i64, c1: i64, c2: i64) -> usize {
+        (((c0 + r) as usize * w) + (c1 + r) as usize) * w + (c2 + r) as usize
+    }
+    /// The cell of a key, or None outside the ball.
+    #[inline]
+    fn index(&self, c: [i64; 4]) -> Option<usize> {
+        let r = self.r;
+        if c[0].abs() > r || c[1].abs() > r || c[2].abs() > r {
+            return None;
+        }
+        let i = Self::row_of(r, self.w, c[0], c[1], c[2]);
+        let hw = i64::from(self.half[i]);
+        if hw < 0 || c[3].abs() > hw {
+            return None;
+        }
+        Some((i64::from(self.off[i]) + c[3]) as usize)
+    }
+}
+
+/// One-byte counters shared by the threads: a wrap 255 -> 0 is recorded by the thread that made it, and each recorded
+/// wrap carries 256 back in, so every count is exact.
+struct Counter8 {
+    c: Vec<AtomicU8>,
+}
+
+impl Counter8 {
+    fn new(n: usize) -> Self {
+        Self {
+            c: (0..n).map(|_| AtomicU8::new(0)).collect(),
+        }
+    }
+    /// Count one; true when this increment wrapped the cell (its true count gained 256 beyond the stored byte).
+    #[inline]
+    fn inc(&self, i: usize) -> bool {
+        self.c[i].fetch_add(1, Ordering::Relaxed) == u8::MAX
+    }
+    #[inline]
+    fn get(&self, i: usize, wraps: &HashMap<usize, u64>) -> u64 {
+        u64::from(self.c[i].load(Ordering::Relaxed)) + 256 * wraps.get(&i).copied().unwrap_or(0)
+    }
+}
+
+/// Which variants and pair rows run where in a memo batch.
+struct MemoPlan {
+    /// sample by sample: V0, MODE0, the variants that share an on pair row with them (closed under the pair rows),
+    /// and a class whose count is below its threshold
+    ps: [bool; NV],
+    ps_pairs: [bool; NPAIR],
+    /// memoised on K4, with the pair rows among them
+    k4: [bool; NV],
+    k4_pairs: [bool; NPAIR],
+    k4_on: bool,
+    /// memoised on K2 (LOCK)
+    k2: [bool; NV],
+    k2_on: bool,
+}
+
+const K4_VARIANTS: [usize; 4] = [VNC, V1, RN, FLIP];
+
+fn memo_plan(job: &EnsJob, count: u64, cfg: &MemoCfg) -> MemoPlan {
+    let on = job.on;
+    let mut ps = [false; NV];
+    ps[V0] = on[V0];
+    ps[MODE0] = on[MODE0];
+    // close under the on pair rows: a pair row is summed from both variants of one sample
+    loop {
+        let mut grew = false;
+        for &(va, _, vb, _, _) in PAIRS.iter() {
+            if on[va] && on[vb] && (ps[va] != ps[vb]) {
+                ps[va] = true;
+                ps[vb] = true;
+                grew = true;
+            }
+        }
+        if !grew {
+            break;
+        }
+    }
+    let mut k4 = [false; NV];
+    for &v in K4_VARIANTS.iter() {
+        k4[v] = on[v] && !ps[v];
+    }
+    let k4_on = k4.iter().any(|&b| b) && count >= cfg.k4_min;
+    if !k4_on {
+        for v in 0..NV {
+            ps[v] |= k4[v];
+            k4[v] = false;
+        }
+    }
+    let mut k2 = [false; NV];
+    k2[LOCK] = on[LOCK];
+    let k2_on = on[LOCK] && count >= cfg.k2_min;
+    if !k2_on {
+        ps[LOCK] |= k2[LOCK];
+        k2[LOCK] = false;
+    }
+    let mut ps_pairs = [false; NPAIR];
+    let mut k4_pairs = [false; NPAIR];
+    for (k, &(va, _, vb, _, _)) in PAIRS.iter().enumerate() {
+        if !(on[va] && on[vb]) {
+            continue;
+        }
+        if ps[va] && ps[vb] {
+            ps_pairs[k] = true;
+        } else if k4[va] && k4[vb] {
+            k4_pairs[k] = true;
+        } else {
+            // a pair row split across two classes cannot be summed: the closure above rules it out
+            eprintln!(
+                "TWB_FAULT|reason=memo_pair_split|pair={}|json=0",
+                PAIRS[k].4
+            );
+            std::process::exit(6);
+        }
+    }
+    MemoPlan {
+        ps,
+        ps_pairs,
+        k4,
+        k4_pairs,
+        k4_on,
+        k2,
+        k2_on,
+    }
+}
+
+/// What a memo batch did, for the TWB_MEMO row.
+#[derive(Default)]
+struct MemoStats {
+    k4_in_core: u64,
+    k4_distinct: u64,
+    k4_outside: u64,
+    k4_wraps: u64,
+    k2_in_core: u64,
+    k2_distinct: u64,
+    k2_outside: u64,
+    ps_samples: u64,
+    /// integrations (one variant, one start, to the last record) done, and the plain path's for the same batch
+    integrations: u64,
+    plain_integrations: u64,
+}
+
+#[inline]
+fn key_c(g: i64) -> i64 {
+    g >> (Q - 5)
+}
+
+/// Phase 1 for one contiguous chunk: draw, count the keys in the cores, integrate the rest one by one.
+fn memo_phase1(
+    job: &EnsJob,
+    mp: &MemoPlan,
+    cfg: &MemoCfg,
+    cores: (Option<&Ball>, Option<&Counter8>, Option<&[AtomicU64]>),
+    first: u64,
+    count: u64,
+) -> (EnsRec, Vec<usize>, [u64; 4]) {
+    let (ball, c4, c2) = cores;
+    let nr = job.steps.len();
+    let mut rec = EnsRec::new(nr);
+    let mut smp = Sample::new(nr);
+    let mut wraps: Vec<usize> = Vec::new();
+    let any_ps = mp.ps.iter().any(|&b| b);
+    let ng = if mp.k4_on { 4 } else { 2 };
+    let k2w = (2 * cfg.b2 + 1) as usize;
+    let mut sel_lock = [false; NV];
+    sel_lock[LOCK] = true;
+    // [k4 outside the core, k2 outside the core, sample-by-sample samples, integrations]
+    let mut tally = [0u64; 4];
+    let nps = mp.ps.iter().filter(|&&b| b).count() as u64;
+    let nk4 = mp.k4.iter().filter(|&&b| b).count() as u64;
+    for idx in first..first + count {
+        let g = if any_ps {
+            let (g, r30) = ens_draw(job, idx);
+            ens_build(job, g, r30, &mp.ps, &mut smp);
+            ens_integrate(job, &mp.ps, &mut smp);
+            ens_accumulate_w(job, &smp, &mut rec, 1, &mp.ps, &mp.ps_pairs);
+            tally[2] += 1;
+            tally[3] += nps;
+            g
+        } else if mp.k4_on || mp.k2_on {
+            let mut rng = Rng::sample(job.seed, idx);
+            let mut g = [0i64; 6];
+            for x in g.iter_mut().take(ng) {
+                *x = rng.gauss::<64, 5>();
+            }
+            g
+        } else {
+            [0i64; 6]
+        };
+        if mp.k4_on {
+            let c = [key_c(g[0]), key_c(g[1]), key_c(g[2]), key_c(g[3])];
+            match ball.and_then(|b| b.index(c)) {
+                Some(i) => {
+                    if c4.map(|ct| ct.inc(i)).unwrap_or(false) {
+                        wraps.push(i);
+                    }
+                }
+                None => {
+                    ens_build(job, g, (ONE, 0, 0), &mp.k4, &mut smp);
+                    ens_integrate(job, &mp.k4, &mut smp);
+                    ens_accumulate_w(job, &smp, &mut rec, 1, &mp.k4, &mp.k4_pairs);
+                    tally[0] += 1;
+                    tally[3] += nk4;
+                }
+            }
+        }
+        if mp.k2_on {
+            let (a, b) = (key_c(g[0]), key_c(g[1]));
+            if a.abs() <= cfg.b2 && b.abs() <= cfg.b2 {
+                let i = (a + cfg.b2) as usize * k2w + (b + cfg.b2) as usize;
+                if let Some(ct) = c2 {
+                    ct[i].fetch_add(1, Ordering::Relaxed);
+                }
+            } else {
+                ens_build(job, g, (ONE, 0, 0), &sel_lock, &mut smp);
+                ens_integrate(job, &sel_lock, &mut smp);
+                ens_accumulate_w(job, &smp, &mut rec, 1, &sel_lock, &[false; NPAIR]);
+                tally[1] += 1;
+                tally[3] += 1;
+            }
+        }
+    }
+    (rec, wraps, tally)
+}
+
+/// Phase 2 for one unit of work: K4 unit u < 2r + 1 is the slab c0 = u - r of the ball; K2 unit is the row c0 of the
+/// box. Each counted key is built from its c values (g4 = g5 = 0 and MODE0's vector (1, 0): read by no memoised
+/// variant), integrated once and added count times.
+struct Phase2<'a> {
+    job: &'a EnsJob,
+    mp: &'a MemoPlan,
+    cfg: &'a MemoCfg,
+    ball: Option<&'a Ball>,
+    c4: Option<&'a Counter8>,
+    wraps: &'a HashMap<usize, u64>,
+    c2: Option<&'a [AtomicU64]>,
+}
+
+impl Phase2<'_> {
+    /// Returns (sum of counts, distinct keys, integrations) of the unit into rec.
+    fn unit(&self, u: usize, rec: &mut EnsRec, smp: &mut Sample) -> (u64, u64, u64) {
+        let (job, mp) = (self.job, self.mp);
+        let mut tot = (0u64, 0u64, 0u64);
+        let nk4 = mp.k4.iter().filter(|&&b| b).count() as u64;
+        let units4 = match self.ball {
+            Some(b) if mp.k4_on => (2 * b.r + 1) as usize,
+            _ => 0,
+        };
+        if u < units4 {
+            let (b, ct) = match (self.ball, self.c4) {
+                (Some(b), Some(ct)) => (b, ct),
+                _ => return tot,
+            };
+            let r = b.r;
+            let c0 = u as i64 - r;
+            for c1 in -r..=r {
+                for c2 in -r..=r {
+                    let i = Ball::row_of(r, b.w, c0, c1, c2);
+                    let hw = i64::from(b.half[i]);
+                    for c3 in -hw..=hw {
+                        let cell = (i64::from(b.off[i]) + c3) as usize;
+                        let w = ct.get(cell, self.wraps);
+                        if w == 0 {
+                            continue;
+                        }
+                        let s = Q - 5;
+                        let g = [c0 << s, c1 << s, c2 << s, c3 << s, 0, 0];
+                        ens_build(job, g, (ONE, 0, 0), &mp.k4, smp);
+                        ens_integrate(job, &mp.k4, smp);
+                        ens_accumulate_w(job, smp, rec, w, &mp.k4, &mp.k4_pairs);
+                        tot.0 += w;
+                        tot.1 += 1;
+                        tot.2 += nk4;
+                    }
+                }
+            }
+            return tot;
+        }
+        let Some(ct) = self.c2 else {
+            return tot;
+        };
+        if !mp.k2_on {
+            return tot;
+        }
+        let b2 = self.cfg.b2;
+        let k2w = (2 * b2 + 1) as usize;
+        let row = u - units4;
+        let a = row as i64 - b2;
+        let mut sel_lock = [false; NV];
+        sel_lock[LOCK] = true;
+        for bb in -b2..=b2 {
+            let w = ct[row * k2w + (bb + b2) as usize].load(Ordering::Relaxed);
+            if w == 0 {
+                continue;
+            }
+            let s = Q - 5;
+            let g = [a << s, bb << s, 0, 0, 0, 0];
+            ens_build(job, g, (ONE, 0, 0), &sel_lock, smp);
+            ens_integrate(job, &sel_lock, smp);
+            ens_accumulate_w(job, smp, rec, w, &sel_lock, &[false; NPAIR]);
+            tot.0 += w;
+            tot.1 += 1;
+            tot.2 += 1;
+        }
+        tot
+    }
+}
+
+/// The batch [start, start + count) with count-weighted reuse: the same sums as ens_run.
+fn ens_run_memo(
+    job: &EnsJob,
+    start: u64,
+    count: u64,
+    threads: u64,
+    cfg: &MemoCfg,
+) -> (EnsRec, MemoStats) {
+    let nr = job.steps.len();
+    let mp = memo_plan(job, count, cfg);
+    let ball = if mp.k4_on {
+        Some(Ball::new(cfg.r))
+    } else {
+        None
+    };
+    let c4 = ball.as_ref().map(|b| Counter8::new(b.cells));
+    let k2w = (2 * cfg.b2 + 1) as usize;
+    let c2: Option<Vec<AtomicU64>> = if mp.k2_on {
+        Some((0..k2w * k2w).map(|_| AtomicU64::new(0)).collect())
+    } else {
+        None
+    };
+    let mut total = EnsRec::new(nr);
+    let mut st = MemoStats::default();
+    let mut wrap_list: Vec<usize> = Vec::new();
+    let mut tally = [0u64; 4];
+    thread::scope(|sc| {
+        let mut hs = Vec::new();
+        for (first, c) in chunks(start, count, threads) {
+            let (mpr, b, ct4, ct2) = (&mp, ball.as_ref(), c4.as_ref(), c2.as_deref());
+            hs.push(sc.spawn(move || memo_phase1(job, mpr, cfg, (b, ct4, ct2), first, c)));
+        }
+        for hh in hs {
+            let (part, wr, t) = hh.join().expect("thread");
+            total.add(&part);
+            wrap_list.extend(wr);
+            for (x, y) in tally.iter_mut().zip(t) {
+                *x += y;
+            }
+        }
+    });
+    let mut wraps: HashMap<usize, u64> = HashMap::new();
+    for i in wrap_list {
+        *wraps.entry(i).or_insert(0) += 1;
+    }
+    st.k4_wraps = wraps.values().sum();
+    st.k4_outside = tally[0];
+    st.k2_outside = tally[1];
+    st.ps_samples = tally[2];
+    st.integrations = tally[3];
+    let units4 = if mp.k4_on {
+        (2 * cfg.r + 1) as usize
+    } else {
+        0
+    };
+    let units2 = if mp.k2_on { k2w } else { 0 };
+    let units = units4 + units2;
+    let next = AtomicUsize::new(0);
+    let p2 = Phase2 {
+        job,
+        mp: &mp,
+        cfg,
+        ball: ball.as_ref(),
+        c4: c4.as_ref(),
+        wraps: &wraps,
+        c2: c2.as_deref(),
+    };
+    // [k4 counts, k4 distinct, k2 counts, k2 distinct, integrations]
+    let mut t2 = [0u64; 5];
+    thread::scope(|sc| {
+        let mut hs = Vec::new();
+        for _ in 0..threads {
+            let (p2r, nx) = (&p2, &next);
+            hs.push(sc.spawn(move || {
+                let mut rec = EnsRec::new(nr);
+                let mut smp = Sample::new(nr);
+                let mut t = [0u64; 5];
+                loop {
+                    let u = nx.fetch_add(1, Ordering::Relaxed);
+                    if u >= units {
+                        break;
+                    }
+                    let (w, d, k) = p2r.unit(u, &mut rec, &mut smp);
+                    let o = if u < units4 { 0 } else { 2 };
+                    t[o] += w;
+                    t[o + 1] += d;
+                    t[4] += k;
+                }
+                (rec, t)
+            }));
+        }
+        for hh in hs {
+            let (part, t) = hh.join().expect("thread");
+            total.add(&part);
+            for (x, y) in t2.iter_mut().zip(t) {
+                *x += y;
+            }
+        }
+    });
+    st.k4_in_core = t2[0];
+    st.k4_distinct = t2[1];
+    st.k2_in_core = t2[2];
+    st.k2_distinct = t2[3];
+    st.integrations += t2[4];
+    st.plain_integrations = count * job.on.iter().filter(|&&b| b).count() as u64;
+    // every sample is counted once in each class it belongs to; any other total stops the run (fail closed)
+    let ok_ps = !mp.ps.iter().any(|&b| b) || st.ps_samples == count;
+    let ok4 = !mp.k4_on || st.k4_in_core + st.k4_outside == count;
+    let ok2 = !mp.k2_on || st.k2_in_core + st.k2_outside == count;
+    if !(ok_ps && ok4 && ok2) {
+        eprintln!(
+            "TWB_FAULT|reason=memo_count_check|count={count}|ps={}|k4={}+{}|k2={}+{}|json=0",
+            st.ps_samples, st.k4_in_core, st.k4_outside, st.k2_in_core, st.k2_outside
+        );
+        std::process::exit(6);
+    }
+    total.count = i128::from(count);
+    (total, st)
+}
+
+fn sel_text(sel: &[bool; NV]) -> String {
+    let v: Vec<&str> = (0..NV).filter(|&i| sel[i]).map(|i| VNAME[i]).collect();
+    if v.is_empty() {
+        "none".to_string()
+    } else {
+        v.join(",")
+    }
+}
+
+/// The memo batch's counts on stderr (stdout stays the plain path's).
+fn memo_report(job: &EnsJob, count: u64, st: &MemoStats, cfg: &MemoCfg) {
+    let mp = memo_plan(job, count, cfg);
+    eprintln!(
+        "TWB_MEMO|count={count}|per_sample={}|k4={}|k4_core=ball_r{}|k4_in_core={}|k4_distinct={}|k4_outside={}|k4_wraps={}|k2={}|k2_core=box_{}|k2_in_core={}|k2_distinct={}|k2_outside={}|ps_samples={}|integrations={}|plain_integrations={}|json=0",
+        sel_text(&mp.ps),
+        sel_text(&mp.k4),
+        cfg.r,
+        st.k4_in_core,
+        st.k4_distinct,
+        st.k4_outside,
+        st.k4_wraps,
+        sel_text(&mp.k2),
+        cfg.b2,
+        st.k2_in_core,
+        st.k2_distinct,
+        st.k2_outside,
+        st.ps_samples,
+        st.integrations,
+        st.plain_integrations
+    );
+}
+
 /// What the rows print besides the sums.
 struct Meta {
     cli: &'static str,
@@ -1294,6 +1877,8 @@ struct Meta {
     threads: u64,
     reserved: bool,
     lifted: bool,
+    /// count-weighted reuse (memo=1)
+    memo: bool,
 }
 
 fn binary_sha256() -> String {
@@ -1659,7 +2244,7 @@ fn need<'a>(p: &'a [(String, String)], k: &str) -> &'a str {
     get(p, k).unwrap_or_else(|| fail(&format!("missing_key:{k}")))
 }
 
-const RUN_KEYS: [&str; 14] = [
+const RUN_KEYS: [&str; 15] = [
     "N",
     "delta",
     "u",
@@ -1674,6 +2259,7 @@ const RUN_KEYS: [&str; 14] = [
     "ctrl",
     "mask",
     "lift_reserved_guard",
+    "memo",
 ];
 
 /// Parse a run or dump batch, apply the guard before anything is computed, and build the job.
@@ -1690,6 +2276,11 @@ fn ens_from_kv(args: &[String], cli: &'static str) -> (EnsJob, Meta, u64) {
         None => false,
         Some("1") => true,
         Some(v) => fail(&format!("lift_reserved_guard_takes_1_only:{v}")),
+    };
+    let memo = match get(&p, "memo") {
+        None | Some("0") => false,
+        Some("1") => true,
+        Some(v) => fail(&format!("memo_takes_0_or_1:{v}")),
     };
     let reason = guard_reason(n, &delta, &y);
     if let Some(r) = &reason {
@@ -1739,13 +2330,20 @@ fn ens_from_kv(args: &[String], cli: &'static str) -> (EnsJob, Meta, u64) {
         threads,
         reserved: reason.is_some(),
         lifted,
+        memo,
     };
     (job, mt, threads)
 }
 
 fn cmd_run(args: &[String]) {
     let (job, mt, threads) = ens_from_kv(args, "run");
-    let total = ens_run(&job, mt.start, mt.count, threads);
+    let total = if mt.memo {
+        let (t, st) = ens_run_memo(&job, mt.start, mt.count, threads, &MEMO);
+        memo_report(&job, mt.count, &st, &MEMO);
+        t
+    } else {
+        ens_run(&job, mt.start, mt.count, threads)
+    };
     let nl = if job.nl { Some(nl_run(&job)) } else { None };
     let stdout = std::io::stdout();
     let mut out = std::io::BufWriter::new(stdout.lock());
@@ -1761,6 +2359,9 @@ fn cmd_run(args: &[String]) {
 /// The same batch on one thread, printing every sample's draws, starts, controls and observables (for the tests).
 fn cmd_dump(args: &[String]) {
     let (job, mt, _) = ens_from_kv(args, "dump");
+    if mt.memo {
+        fail("memo_is_for_run_and_twens");
+    }
     if mt.count > 4096 {
         fail("dump_count_above_4096");
     }
@@ -1822,10 +2423,11 @@ fn cmd_dump(args: &[String]) {
     }
 }
 
-/// twens N delta u y samples seed dtden threads steps(k1,k2,..) ctrl(C:RS:mz;...): the old engine's arguments; every
+/// twens N delta u y samples seed dtden threads steps(k1,k2,..) ctrl(C:RS:mz;...) [memo=1]: the old engine's arguments; every
 /// variant on, start index 0, count = floor(samples/threads)*threads as the old engine processed; the guard is not liftable.
 fn cmd_twens(a: &[String]) {
-    if a.len() != 10 {
+    let memo = a.len() == 11 && a[10] == "memo=1";
+    if a.len() != 10 && !memo {
         fail("usage:twens_N_delta_u_y_samples_seed_dtden_threads_steps_ctrl");
     }
     let n: i64 = num(&a[0], "N");
@@ -1865,8 +2467,15 @@ fn cmd_twens(a: &[String]) {
         threads,
         reserved: false,
         lifted: false,
+        memo,
     };
-    let total = ens_run(&job, 0, count, threads);
+    let total = if memo {
+        let (t, st) = ens_run_memo(&job, 0, count, threads, &MEMO);
+        memo_report(&job, count, &st, &MEMO);
+        t
+    } else {
+        ens_run(&job, 0, count, threads)
+    };
     let stdout = std::io::stdout();
     let mut out = std::io::BufWriter::new(stdout.lock());
     let r = ens_head(&mut out, &job, &mt)
@@ -2011,7 +2620,7 @@ fn cmd_guard(args: &[String]) {
 
 fn usage() -> ! {
     eprintln!(
-        "usage:\n  twens run N= delta= u= y= (seed=|seed_string=) start= count= dtden= threads= steps=k1,k2,.. ctrl=C:RS:mz;.. mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL (any subset) [lift_reserved_guard=1]\n  twens dump <the same keys, count <= 4096>\n  twens twens N delta u y samples seed dtden threads steps ctrl\n  twens twctl N delta u y kappa vac|none|lock0 fixed|random|random30 samples seed dtden threads steps\n  twens seed <seed string>\n  twens guard N= delta= y=\n  twens version"
+        "usage:\n  twens run N= delta= u= y= (seed=|seed_string=) start= count= dtden= threads= steps=k1,k2,.. ctrl=C:RS:mz;.. mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL (any subset) [lift_reserved_guard=1] [memo=0|1]\n  twens dump <the same keys but memo, count <= 4096>\n  twens twens N delta u y samples seed dtden threads steps ctrl [memo=1]\n  twens twctl N delta u y kappa vac|none|lock0 fixed|random|random30 samples seed dtden threads steps\n  twens seed <seed string>\n  twens guard N= delta= y=\n  twens version"
     );
     std::process::exit(2);
 }
@@ -2332,6 +2941,186 @@ mod tests {
         let (on, nl) = parse_mask("V1");
         assert!(!nl && on[V1]);
         assert_eq!(mask_text(&on, true), "V1,NL");
+    }
+
+    fn mask_of(bits: u32) -> [bool; NV] {
+        let mut on = [false; NV];
+        for (v, o) in on.iter_mut().enumerate() {
+            *o = bits & (1 << v) != 0;
+        }
+        on
+    }
+
+    #[test]
+    fn memo_equals_plain_on_every_mask_and_core() {
+        // every subset of the seven variants, two cores (mostly outside, about half inside), 1 and 3 threads
+        for bits in 0..(1u32 << NV) {
+            let job = tiny(mask_of(bits));
+            let plain = flat(&ens_run(&job, 11, 300, 2));
+            for (r, threads) in [(12, 1), (40, 3)] {
+                let cfg = MemoCfg {
+                    r,
+                    b2: 40,
+                    k4_min: 0,
+                    k2_min: 0,
+                };
+                let (memo, st) = ens_run_memo(&job, 11, 300, threads, &cfg);
+                assert_eq!(flat(&memo), plain, "mask bits {bits:07b}, r={r}");
+                let mp = memo_plan(&job, 300, &cfg);
+                assert_eq!(mp.k4_on, mp.k4.iter().any(|&b| b));
+                if mp.k4_on {
+                    assert_eq!(st.k4_in_core + st.k4_outside, 300);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn memo_below_its_thresholds_runs_sample_by_sample_with_the_same_sums() {
+        let job = tiny([true; NV]);
+        let plain = flat(&ens_run(&job, 0, 200, 3));
+        let (memo, st) = ens_run_memo(&job, 0, 200, 3, &MEMO);
+        assert_eq!(flat(&memo), plain);
+        // 200 < 2^10 and 2^22: every variant sample by sample
+        assert_eq!((st.ps_samples, st.k4_in_core, st.k2_in_core), (200, 0, 0));
+        assert_eq!(st.integrations, st.plain_integrations);
+    }
+
+    #[test]
+    fn memo_carries_k4_repeats_with_their_counts() {
+        // 2^18 draws hold about 207 repeated K4 starts (DERIVED: C(n,2) S^4); the weighted sums equal the plain ones
+        let mut job = EnsJob::new(
+            81,
+            "1/2",
+            "1",
+            "1/18",
+            64,
+            vec![0, 1],
+            vec![(ONE, 0, 0), (ONE + 1000, 3000, -5000)],
+        );
+        job.seed = sha256::seed_u64("twens_memo_test");
+        job.on = mask_of((1 << VNC) | (1 << V1) | (1 << FLIP) | (1 << LOCK));
+        let n = 1u64 << 18;
+        let plain = flat(&ens_run(&job, 0, n, 2));
+        let cfg = MemoCfg {
+            r: 60,
+            b2: 255,
+            k4_min: 0,
+            k2_min: 0,
+        };
+        let (memo, st) = ens_run_memo(&job, 0, n, 2, &cfg);
+        assert_eq!(flat(&memo), plain);
+        assert!(
+            st.k4_distinct + 100 < st.k4_in_core,
+            "{} {}",
+            st.k4_distinct,
+            st.k4_in_core
+        );
+        assert!(st.k2_distinct * 4 < st.k2_in_core);
+        assert_eq!(st.k2_in_core + st.k2_outside, n);
+    }
+
+    #[test]
+    fn accumulate_w_is_w_copies() {
+        let job = tiny([true; NV]);
+        let mut smp = Sample::new(3);
+        ens_sample(&job, 5, &mut smp);
+        let mut once = EnsRec::new(3);
+        for _ in 0..7 {
+            ens_accumulate_w(&job, &smp, &mut once, 1, &job.on, &[true; NPAIR]);
+        }
+        let mut w7 = EnsRec::new(3);
+        ens_accumulate_w(&job, &smp, &mut w7, 7, &job.on, &[true; NPAIR]);
+        assert_eq!(flat(&once), flat(&w7));
+    }
+
+    #[test]
+    fn counter8_carries_its_wraps() {
+        let ct = Counter8::new(3);
+        let wr: Vec<usize> = thread::scope(|sc| {
+            let hs: Vec<_> = (0..2)
+                .map(|_| {
+                    sc.spawn(|| {
+                        let mut w = Vec::new();
+                        for _ in 0..1000 {
+                            if ct.inc(1) {
+                                w.push(1);
+                            }
+                        }
+                        for _ in 0..300 {
+                            if ct.inc(2) {
+                                w.push(2);
+                            }
+                        }
+                        w
+                    })
+                })
+                .collect();
+            hs.into_iter().flat_map(|h| h.join().expect("t")).collect()
+        });
+        let mut wraps: HashMap<usize, u64> = HashMap::new();
+        for i in wr {
+            *wraps.entry(i).or_insert(0) += 1;
+        }
+        assert_eq!(ct.get(0, &wraps), 0);
+        assert_eq!(ct.get(1, &wraps), 2000);
+        assert_eq!(ct.get(2, &wraps), 600);
+        // the counts next to a wrap, one thread: 255 (no wrap), 256 (one), 511 (one), 512 (two)
+        for n in [255u64, 256, 511, 512] {
+            let ct = Counter8::new(1);
+            let mut wraps: HashMap<usize, u64> = HashMap::new();
+            for _ in 0..n {
+                if ct.inc(0) {
+                    *wraps.entry(0).or_insert(0) += 1;
+                }
+            }
+            assert_eq!(ct.get(0, &wraps), n, "n={n}");
+        }
+    }
+
+    #[test]
+    fn ball_index_is_a_bijection_onto_its_cells() {
+        let r = 5;
+        let b = Ball::new(r);
+        let mut seen = vec![false; b.cells];
+        let mut inside = 0usize;
+        for c0 in -r - 1..=r + 1 {
+            for c1 in -r - 1..=r + 1 {
+                for c2 in -r - 1..=r + 1 {
+                    for c3 in -r - 1..=r + 1 {
+                        let s = c0 * c0 + c1 * c1 + c2 * c2 + c3 * c3;
+                        match b.index([c0, c1, c2, c3]) {
+                            Some(i) => {
+                                assert!(s <= r * r && !seen[i]);
+                                seen[i] = true;
+                                inside += 1;
+                            }
+                            None => assert!(s > r * r),
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(inside, b.cells);
+        assert!(seen.iter().all(|&x| x));
+    }
+
+    #[test]
+    fn memo_plan_keeps_each_pair_row_in_one_class() {
+        let cfg = MemoCfg {
+            k4_min: 0,
+            k2_min: 0,
+            ..MEMO
+        };
+        let plan = |bits: u32| memo_plan(&tiny(mask_of(bits)), 10, &cfg);
+        let p = plan((1 << V0) | (1 << V1) | (1 << VNC) | (1 << FLIP));
+        assert!(p.ps[V0] && p.ps[V1] && p.ps[VNC] && !p.ps[FLIP] && p.k4[FLIP]);
+        let p = plan((1 << MODE0) | (1 << V1));
+        assert!(p.ps[MODE0] && !p.ps[V1] && p.k4[V1]);
+        let p = plan((1 << MODE0) | (1 << V1) | (1 << VNC) | (1 << LOCK));
+        assert!(p.ps[MODE0] && p.ps[V1] && p.ps[VNC] && p.k2[LOCK] && !p.k4_on);
+        let p = plan((1 << VNC) | (1 << V1) | (1 << RN));
+        assert!(p.k4[VNC] && p.k4[V1] && p.k4[RN] && p.k4_pairs[0] && !p.ps.iter().any(|&b| b));
     }
 
     #[test]

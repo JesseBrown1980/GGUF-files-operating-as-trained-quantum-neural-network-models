@@ -244,6 +244,49 @@ blind run. `PREDICTION.hbp` stays as frozen: sha256 `fadd84122e820cc03e9a4d6d5dd
   check priced the increment on its base before the e_int of the controls (hold H4, 5.697 x 10^7), which gives its
   5.840 x 10^9 total; on the frozen plan the same increment gives 5.897 x 10^9.
 
+## Count-weighted reuse amendment of November 6, 2026 (the ensemble engine)
+
+The operator decided on November 6, 2026 (decision 2) that the ensemble engine reuses repeated starts by their count
+before the ensemble phase runs: its saving measured at plan scale first, then built with a byte-for-byte gate against
+the plain engine, a second-seat review and an amendment row. The amendment is its own dated file,
+[`AMENDMENT-2026-11-06-G-MEMO.hbp`](AMENDMENT-2026-11-06-G-MEMO.hbp). `PREDICTION.hbp` and the F amendment keep their
+bytes, and every count, seed, read and tolerance stays as they set it.
+
+- Why starts repeat: each Gaussian of a sample is a 4096-coin binomial, (popcount - 2048) x 2^35, so a sample's noise
+  takes integer values c. VNC, V1, RN and FLIP start from (c0, c1, c2, c3) and LOCK from (c0, c1). At the plan's
+  largest batch (N = 81, 427423138 samples, t = 1/16) the expected number of distinct starts is [209540485.469,209540485.470]
+  (DERIVED in exact rationals from the binomial law), and the batch drawn at an allowed seed has 209546936
+  (MEASURED); about half the integrations of that batch repeat an earlier one.
+- The engine: twens 0.4.0 with `memo=1` counts each K4 start inside the 4-ball sum c_i^2 <= 88^2 (one byte per cell,
+  every wrap carried, so each count is exact) from 2^22 samples up, and each LOCK start inside |c0|, |c1| <= 255 from
+  2^10 up. It integrates each distinct start once and adds its terms times its count. V0, MODE0, the variants that share
+  a pair row with them and the starts outside the cores run sample by sample. Every summed field is an integer sum of
+  per-sample terms fixed by the start, so the printed rows are the plain path's, byte for byte; the counts go to stderr
+  in one `TWB_MEMO` row. Without `memo=1` the engine runs the 0.3.0 path.
+- The saving over the 347 ensemble launches of the blind plan: [1019102161.2,1019102162.3] of 5897110802.9
+  variant-sample time units, [17.28,17.29] percent (DERIVED; full-batch keying of every variant would
+  save [1027032947.3,1027032951.9]). It is VNC and V1 on the large batches and LOCK.
+- At plan scale, on allowed analogs of the plan's largest launch of every mask at 2 threads (MEASURED): the wall time of
+  0.4.0 with `memo=1` over 0.3.0's is 0.568 at the largest (order 254, VNC, 427423138 samples: 1571167 ms
+  to 893000 ms), 0.875 at order 285 (VNC and V1, 267096311 samples, against 0.3.0 on the batch's two
+  halves), 0.849 and 0.902 at the largest N = 6561 batches, 0.109 on the LOCK batch; the work
+  ratios (integrations done over the plain path's) are 0.495, 0.592, 0.849, 0.916 and
+  0.094. Every row after the head equals 0.3.0's on 10 of 10 (order 285 on its two halves
+  run by both engines, and on the whole batch against an earlier 0.3.0 run of it). The resident peak is
+  319144 kB with the K4 core against 12212 kB.
+- The gate (MEASURED): the 31 raw receipts of the design lane's `LANE-RECEIPT.hbp` reproduced by 0.3.0, by 0.4.0 and by
+  0.4.0 with `memo=1` (93 of 93 byte-equal reproductions), `TEST-RUNS.hbp` and `TEST-RUNS-T1B.hbp` by both
+  engines (4 of 4), four allowed batches equal to 0.3.0's rows, Rust 1.81 fmt and clippy in both
+  forms, 21 of 21 tests, float_used=0; 11 planted mutants, 11 caught by the tests and
+  9 by the batches. The workflow's `ensemble` job runs the four batches with the rows pinned to 0.3.0's.
+- The blind plan's 347 ensemble launches name the 0.4.0 binary and end with `memo=1`; every other field stays.
+- Second-seat review of twens 0.4.0 and this amendment (November 8, 2026), in
+  [`reviews/opus55-review-memo-20261108/`](reviews/opus55-review-memo-20261108/): verdict PASS_WITH_HOLDS, the holds
+  being the placement of these files. The build lane's files are in
+  [`reviews/opus55-count-memo-20261106/`](reviews/opus55-count-memo-20261106/). The cloud seat's acceptance gate, run on this engine before the push
+  (`result=EQUAL` in union and staircase modes, its controls and two planted reuse faults failing by name), and the
+  rebase onto the jets head are in [`reviews/fable5-reuse-landing-20261108/`](reviews/fable5-reuse-landing-20261108/).
+
 ## The quantum side
 
 The full exchange-even space at N = 81 and 729 at every frozen time, and at N = 6561 for delta = +3/5 (the operator's word
@@ -278,11 +321,14 @@ account, the basis in the wrong order, a run at y != 0 with the refusal lifted) 
 The engine changes of `BRIDGE_ENGINE_CHANGE` (lines 445 to 451) are filed beside the frozen file, which keeps its bytes
 (sha256 `fadd84122e820cc03e9a4d6d5dd47fe7118ab4b16e1d4db93a601fb44c90b892`).
 
-- [`engines/ensemble/`](engines/ensemble/) is the ensemble integrator twens 0.3.0 (Rust 1.81, integers only, float_used=0),
-  source `src/main.rs` sha256 `723b36745af6c926849ff7a6da74d8c82007dfc4071761795bb639fcd8d4a609`. It carries the variant
+- [`engines/ensemble/`](engines/ensemble/) is the ensemble integrator twens 0.4.0 (Rust 1.81, integers only, float_used=0),
+  source `src/main.rs` sha256 `1d768fa9aba719d0439625f08ea2711cc0d28a5e751b25a81667b4b3d5fcacbb`: twens 0.3.0 (source
+  `723b36745af6c926849ff7a6da74d8c82007dfc4071761795bb639fcd8d4a609`) with the count-weighted reuse of the amendment
+  above, switched on by `memo=1`; without the key it runs the 0.3.0 path. Its binaries: `33e62fbe0837aeddc916a57d67848338cbc258aa1dfb85a01cfba53fb8a4e03f`
+  (x86_64-unknown-linux-gnu) and `483ffa29ca55352fbe27b28bb02ddf9d9aeb0c63c637b090a2f21ee247721981` (x86_64-pc-windows-msvc, /Brepro), MEASURED. It carries the variant
   mask, the per-record sums with exact sums of squares, the start index, the per-sample rounding bound printed beside every
   row (`TWB_ROUND`, `TWB_PAIR_ROUND`), the noiseless path NL, and the sha256 of its source in its head row. On Windows it
-  links with /Brepro, so a rebuild of that source gives the same binary: `ac7ff8f41279f55a57f5c47823950c225c8aa111573f52832d52bd6a0e5ca44f`
+  links with /Brepro, so a rebuild of a source gives the same binary; for 0.3.0: `ac7ff8f41279f55a57f5c47823950c225c8aa111573f52832d52bd6a0e5ca44f`
   (x86_64-pc-windows-msvc) at three paths and `75530df9c7414b9a1b28f7408cbacd512f35d48836e2a6823beefb4941b9598d`
   (x86_64-unknown-linux-gnu) at three (MEASURED). The second seat's round-2 holds H1 to H7 take MODE0's start bound against
   its drawn integer unit vector and set the stage region from max + min/2 of each mode's components; with them all seven
@@ -309,11 +355,12 @@ The engine changes of `BRIDGE_ENGINE_CHANGE` (lines 445 to 451) are filed beside
   the worst of A1, C1, f and D2 at allowed analogs, MEASURED), so C_MODE0 is expected to read NOT RESOLVED from t = 1/2 on.
   Beside each row the read prints, for information only, the measured difference of the row's first 2^10 samples against a
   2^-120 run of them. The frozen prediction and its tolerances stay as frozen (the operator's decision of November 6, 2026).
-- [`ENGINE-CHANGES.hbp`](ENGINE-CHANGES.hbp) holds one row per engine change's result and per second-seat check: 3 for the
-  quantum engine, 7 for the ensemble integrator, 5 for the trajectory integrator, 1 for the flow-map jet.
+- [`ENGINE-CHANGES.hbp`](ENGINE-CHANGES.hbp) holds one row per engine change's result and per second-seat check: 4 for the
+  quantum engine, 8 for the ensemble integrator, 5 for the trajectory integrator, 1 for the flow-map jet.
 - The workflow `.github/workflows/polariton-bridge.yml` runs four jobs: `frozen` (PREDICTION.hbp at its pin, every
   SHA256SUMS, LF line endings), `ensemble` (the Rust 1.81 gate, the float scan, binary provenance, the guard's refusals,
-  TEST-RUNS-T1B.hbp byte for byte) and `trajectory` (the engine's sums, the reserved check, the tests with and without
+  TEST-RUNS-T1B.hbp byte for byte, and `memo=1` against the plain path on four allowed batches with the rows pinned to
+  twens 0.3.0's) and `trajectory` (the engine's sums, the reserved check, the tests with and without
   -O, the float scan, the audit, the line-446 gate) and `jet` (the Rust 1.81 gate, the float scan, binary provenance, the
   guard's refusals, the driver's dry run, one analog jet byte for byte).
 - [`reviews/opus55-engines-round2-20261106/`](reviews/opus55-engines-round2-20261106/) holds the four round-2 reports, the

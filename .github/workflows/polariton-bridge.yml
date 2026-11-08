@@ -32,9 +32,9 @@ jobs:
           set -euo pipefail
           test "$(find polariton-bridge -type f -exec cat {} + | tr -cd '\r' | wc -c)" = "0"
   ensemble:
-    name: The ensemble integrator twens 0.3.0, its toolchain gate, and TEST-RUNS-T1B.hbp reproduced byte for byte
+    name: The ensemble integrator twens 0.4.0, its toolchain gate, TEST-RUNS-T1B.hbp reproduced byte for byte, and count-weighted reuse against the plain path
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: polariton-bridge/engines/ensemble
@@ -94,6 +94,26 @@ jobs:
           done > TEST-RUNS-T1B.hbp
           test "$(sha256sum TEST-RUNS-T1B.hbp | cut -d' ' -f1)" = "8aee3a7fe77cb6cd6f0daf3291e12b917823e694b83e797bbf78e9cd0958bd0d"
           test "$(tr -cd '\r' < TEST-RUNS-T1B.hbp | wc -c)" = "0"
+      - name: Count-weighted reuse (memo=1, AMENDMENT-2026-11-06-G-MEMO.hbp) byte for byte against the plain path on four allowed batches, the rows pinned to twens 0.3.0's
+        run: |
+          set -euo pipefail
+          K="N=81 delta=1/2 u=1 y=1/27 dtden=64 threads=2"
+          C2="ctrl=1099511627776:0:0;1099511628776:3000:-5000"
+          C3="ctrl=1099511627776:0:0;1099511628776:3000:-5000;1099511636776:7000:-9000"
+          check() {
+            b="$1"; pin="$2"; memo_row="$3"; shift 3
+            ./target/release/twens "$@" > "plain-$b.hbp" 2> "plain-$b.err"
+            ./target/release/twens "$@" memo=1 > "memo-$b.hbp" 2> "memo-$b.err"
+            test ! -s "plain-$b.err"
+            cmp "plain-$b.hbp" "memo-$b.hbp"
+            test "$(tail -n +2 "memo-$b.hbp" | sha256sum | cut -d' ' -f1)" = "$pin"
+            test "$(cat "memo-$b.err")" = "$memo_row"
+            test "$(cat "plain-$b.hbp" "memo-$b.hbp" | tr -cd '\r' | wc -c)" = "0"
+          }
+          check A b9ded2c9471319f419e6a3d69cacd1346a64fe8d5f66626d90616ee80d98f5fb 'TWB_MEMO|count=4194311|per_sample=none|k4=VNC,V1|k4_core=ball_r88|k4_in_core=3736377|k4_distinct=3683893|k4_outside=457934|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=4194311|k2_distinct=45415|k2_outside=0|ps_samples=0|integrations=8329069|plain_integrations=12582933|json=0' run $K seed_string=count-memo-rr-batchA start=7 count=4194311 steps=0,4 "$C2" mask=VNC,V1,LOCK
+          check B 43b6f63dc2d0a077e5c2ecfaf745f7ed74bf178d25e969d7f03abe6e6e0ba687 'TWB_MEMO|count=4194304|per_sample=VNC,V1,V0|k4=FLIP|k4_core=ball_r88|k4_in_core=3735524|k4_distinct=3683316|k4_outside=458780|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=4194304|k2_distinct=45537|k2_outside=0|ps_samples=4194304|integrations=16770545|plain_integrations=20971520|json=0' run $K seed_string=count-memo-rr-batchB start=0 count=4194304 steps=0,4 "$C2" mask=VNC,V1,V0,FLIP,LOCK
+          check C 236a53f92c386ac3deff499f0eb20bb557834e21587a532e0f4972dfe36ea6f4 'TWB_MEMO|count=20000|per_sample=VNC,V1,V0,RN,FLIP,MODE0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=20000|k2_distinct=11046|k2_outside=0|ps_samples=20000|integrations=131046|plain_integrations=140000|json=0' run $K seed_string=count-memo-rr-batchC start=0 count=20000 steps=0,8,16 "$C3" mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL
+          check D 549a15d6aded94f80760b5f583c98459616942d1886ac62bd388f2925f2deef6 'TWB_MEMO|count=19998|per_sample=VNC,V1,V0,RN,FLIP,MODE0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=19998|k2_distinct=11122|k2_outside=0|ps_samples=19998|integrations=131110|plain_integrations=139986|json=0' twens 81 1/2 1 1/27 20000 20261108 64 3 32,64 '1204211555720:283548732622:0;1538251237657:621098771141:0'
   trajectory:
     name: The trajectory engine, its guard and step tests, float scan, the audit at one point and the line-446 byte gate
     runs-on: ubuntu-24.04
