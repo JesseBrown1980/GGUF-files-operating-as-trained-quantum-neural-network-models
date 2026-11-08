@@ -1,0 +1,7 @@
+E1_UNION_NEW|CMP_DONE|parts=2|rows=57|integer_fields_compared=1284|result=EQUAL|json=0
+E1_WHOLE_NEW|CMP_DONE|parts=1|rows=57|integer_fields_compared=1284|result=EQUAL|json=0
+E2_NEW|CMP_DONE|parts=1|rows=82|integer_fields_compared=1324|result=EQUAL|json=0
+E3_NEW|CMP_DONE|parts=1|rows=21|integer_fields_compared=684|result=EQUAL|json=0
+FAULT_NEW|N1_k4_reused_weight_plus1|CMP_FAIL|check=sum_differs:zr:('TWENS', '0', 'V1')|json=0
+FAULT_NEW|N6_k4_key_c3_sign|CMP_FAIL|check=sum_differs:zi:('TWENS', '0', 'V1')|json=0
+FAULT_NEW|N2|CMP_FAIL|check=sum_differs:zr:('TWB', '0', 'LOCK')|json=0

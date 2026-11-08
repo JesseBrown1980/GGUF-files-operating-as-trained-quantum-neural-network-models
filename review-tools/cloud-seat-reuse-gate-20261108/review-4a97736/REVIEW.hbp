@@ -1,0 +1,29 @@
+BIN|name=mut-N1_k4_reused_weight_plus1|sha256=628893fe0be8a5d3aea43c23fe637d1740db8a7ea82a96e77e1f8443118ca03c|json=0
+BIN|name=mut-N2_k2_reused_weight_plus1|sha256=1b427d4dcd121cdbf548166c1c83c6cd7e4583b13d73ff8ea0b290e7181a9c84|json=0
+BIN|name=mut-N5_k4_count_dropped|sha256=98617450c8ad10b121a8268fb6f40afc287e05d8e0cdcf2ed2a7c2ce5d66de87|json=0
+BIN|name=mut-N6_k4_key_c3_sign|sha256=0d0b2600f801a9541d23c9e48e9bb91c11dcc0b9b07b97b5542a25af4268a2d7|json=0
+BIN|name=mut-N7_k2_count_dropped|sha256=a26cb8b69c6a29ed3bda9086b068a1f119cb6493da8e3d2d053e4ddca1ab58f7|json=0
+BIN|name=twens03|sha256=75530df9c7414b9a1b28f7408cbacd512f35d48836e2a6823beefb4941b9598d|json=0
+BIN|name=twens04|sha256=33e62fbe0837aeddc916a57d67848338cbc258aa1dfb85a01cfba53fb8a4e03f|json=0
+GUARD|N=81 delta=1/2 y=1/18|TWB_GUARD|N=81|delta=1/2|y=1/18|verdict=allowed|reason=none|computed=0|json=0 |json=0
+GUARD|N=81 delta=1/2 y=1/27|TWB_GUARD|N=81|delta=1/2|y=1/27|verdict=allowed|reason=none|computed=0|json=0 |json=0
+GUARD|N=729 delta=-1/4 y=1/27|TWB_GUARD|N=729|delta=-1/4|y=1/27|verdict=allowed|reason=none|computed=0|json=0 |json=0
+CI_BATCH|batch=A|plain_eq_memo=1|pin_ok=1|v03_body_eq=1|plain_err_bytes=0|memo_err=TWB_MEMO|count=4194311|per_sample=none|k4=VNC,V1|k4_core=bal|json=0
+CI_BATCH|batch=B|plain_eq_memo=1|pin_ok=1|v03_body_eq=1|plain_err_bytes=0|memo_err=TWB_MEMO|count=4194304|per_sample=VNC,V1,V0|k4=FLIP|k4_core=|json=0
+CI_BATCH|batch=C|plain_eq_memo=1|pin_ok=1|v03_body_eq=1|plain_err_bytes=0|memo_err=TWB_MEMO|count=20000|per_sample=VNC,V1,V0,RN,FLIP,MODE0|k4=n|json=0
+CI_BATCH|batch=D|plain_eq_memo=1|pin_ok=1|v03_body_eq=1|plain_err_bytes=0|memo_err=TWB_MEMO|count=19998|per_sample=VNC,V1,V0,RN,FLIP,MODE0|k4=n|json=0
+BODY_EQUAL|E1_whole_v03_vs_memo|sha256=9a85522351c83b0df23cf303d2f4b1a92e2564261aa72832badde27963eb1006|json=0
+E1_MEMO|count=8388619|per_sample=none|k4=VNC,V1,RN,FLIP|k4_core=ball_r88|k4_in_core=7474637|k4_distinct=7269908|k4_outside=913982|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=8388619|k2_distinct=49972|k2_outside=0|ps_samples=0|integrations=32785532|plain_integrations=41943095|json=0
+E1_UNION|CMP_DONE|parts=2|rows=57|integer_fields_compared=1284|result=EQUAL|json=0 |json=0
+BODY_EQUAL|E2_v03_vs_memo_t4|sha256=03e8cd3fa7a3495b24e2e00c8e69ce319583018ea3087402c09fc723f3495b76|json=0
+BODY_EQUAL|E2_v03_vs_memo_t1|sha256=03e8cd3fa7a3495b24e2e00c8e69ce319583018ea3087402c09fc723f3495b76|json=0
+E2_MEMO|count=4194305|per_sample=VNC,V1,V0,MODE0|k4=RN,FLIP|k4_core=ball_r88|k4_in_core=3736807|k4_distinct=3684413|k4_outside=457498|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=4194305|k2_distinct=45346|k2_outside=0|ps_samples=4194305|integrations=25106388|plain_integrations=29360135|json=0
+BODY_EQUAL|E3_k2_only_v03_vs_memo|sha256=8d9a128fa8c48b04c9b0bcc81080a8c079c9e4afa977b489bf80adbdcbded0c8|json=0
+E3_MEMO|count=1500|per_sample=V1,FLIP|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=1500|k2_distinct=1405|k2_outside=0|ps_samples=1500|integrations=4405|plain_integrations=4500|json=0
+FAULT|name=N1_k4_reused_weight_plus1|engine_rc=0|engine_fault=|comparator=CMP_FAIL|check=sum_differs:zr:('TWENS', '0', 'V1')|json=0 |json=0
+FAULT|name=N5_k4_count_dropped|engine_rc=6|engine_fault=reason=memo_count_check|comparator=CMP_FAIL|check=no_TWB_HEAD:mut-N5_k4_count_dropped.hbp|json=0 |json=0
+FAULT|name=N6_k4_key_c3_sign|engine_rc=0|engine_fault=|comparator=CMP_FAIL|check=sum_differs:zi:('TWENS', '0', 'V1')|json=0 |json=0
+FAULT|name=N2_k2_reused_weight_plus1|engine_rc=0|engine_fault=|comparator=CMP_FAIL|check=sum_differs:zr:('TWB', '0', 'LOCK')|json=0 |json=0
+FAULT|name=N7_k2_count_dropped|engine_rc=6|engine_fault=reason=memo_count_check|comparator=CMP_FAIL|check=no_TWB_HEAD:mut-N7_k2_count_dropped.hbp|json=0 |json=0
+CORRECT_ENGINE|comparator=CMP_DONE|parts=1|rows=57|integer_fields_compared=1284|result=EQUAL|json=0 |json=0
+REVIEW_DONE|json=0
