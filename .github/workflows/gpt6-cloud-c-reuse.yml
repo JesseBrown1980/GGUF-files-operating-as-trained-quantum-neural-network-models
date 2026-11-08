@@ -45,7 +45,8 @@ jobs:
           python3 -I -B "$V" --union "$W/ref.hbp" "$W/p1.hbp" "$W/p2.hbp"
           { grep '^TWB_HEAD|' "$W/ref.hbp"; grep '^TWB_NL|' "$W/ref.hbp" || :; grep -E '^(TWB|TWB_ROUND|TWB_PAIR|TWB_PAIR_ROUND|TWENS|TWPAIR)\|' "$W/ref.hbp" | grep '|step=0|'; grep -E '^(TWB|TWB_ROUND|TWB_PAIR|TWB_PAIR_ROUND|TWENS|TWPAIR)\|' "$W/p1.hbp" | grep '|step=4|'; } > "$W/stair.hbp"
           python3 -I -B "$V" --stair "$W/stair.hbp" "$W/ref.hbp" "$W/p1.hbp"
-          grep -v '^TWB|step=4|variant=LOCK|' "$W/stair.hbp" > "$W/missing.hbp"
+          awk '!(/^TWB[|]/ && /[|]step=4[|]/ && /[|]variant=LOCK[|]/)' "$W/stair.hbp" > "$W/missing.hbp"
+          test "$(( $(wc -l < "$W/stair.hbp") - $(wc -l < "$W/missing.hbp") ))" -eq 1
           if python3 -I -B "$V" --stair "$W/missing.hbp" "$W/ref.hbp" "$W/p1.hbp" > "$W/negative.hbp"; then
             echo 'CLOUD_C_CONTROL_WRONGLY_ACCEPTED|missing_row|json=0'; exit 1
           fi
