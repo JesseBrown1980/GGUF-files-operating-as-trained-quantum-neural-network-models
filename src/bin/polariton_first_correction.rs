@@ -35,8 +35,20 @@
 //! integer sum is the same in any order. So every printed field is the same, but array_bytes, which counts this
 //! layout's arrays; the COST row prints it beside the `point` layout's count.
 //!
+//! The Q = 0 sector (`sector`, a `BRIDGE_ENGINE_CHANGE` of polariton-bridge/PREDICTION.hbp for a memory-layout change):
+//! at y = 0, H keeps Q = n+ - n-, and |N,0,0> has Q = 0. In the even basis Q = p - m, so the sector is one state per
+//! even shell, (q, m) = (2j, j), j = 0..=K/2, joined only by the diagonal and the pair term (2j, j) -> (2j + 2, j + 1).
+//! In `point` at y = 0 every linear element is 0 and every amplitude off the sector stays exactly 0, since it only ever
+//! receives products with 0. So `sector` keeps the K/2 + 1 sector amplitudes and computes each from the same products
+//! `step` adds into that row. Everything `point` takes from the whole block, it takes from the whole block too, shell
+//! by shell with no array of the block's size: c and E (the Gershgorin pass of `build`), the elements' rounding bound,
+//! norm(B), the tail norm's 1 per state, and the terms the read adds for each state of amplitude 0. So every printed
+//! field is the one `point` prints, but array_bytes, which counts this layout's arrays; the COST row prints it beside
+//! the `point` layout's count. It refuses y != 0 (exit 2, no row), where Q is not conserved.
+//!
 //! usage: polariton_first_correction point N K DELTA Y W T[,T2,...] [sabotage=NAME]
 //!        polariton_first_correction stream N K DELTA Y W T[,T2,...] [depth=D] [tile=M] [sabotage=NAME]
+//!        polariton_first_correction sector N K DELTA 0 W T[,T2,...] [sabotage=NAME]
 //!        polariton_first_correction bessel NUM/DEN
 //!        polariton_first_correction rows N K DELTA Y
 //! W: the window is 2^-W. Each T is an integer or a/2^b with b <= W, a multiple of the window. A sabotage breaks the
@@ -64,6 +76,31 @@ struct Sabotage {
     norm_drift: bool,
     /// The even basis loses its factor 2 under the root at p = m.
     drop_even_root: bool,
+    /// `sector`: c, E and the elements' rounding bound from the Q = 0 chain alone, every coupling of the Q != 0
+    /// states dropped from the whole block's account.
+    drop_off_sector_couplings: bool,
+    /// `sector`: the chain's rows in descending shell order, while the start and the read take ascending order.
+    wrong_basis_order: bool,
+    /// `sector`: the y = 0 refusal lifted, so the Q = 0 chain runs at y != 0 without the linear rows into Q = 1.
+    run_at_nonzero_y: bool,
+}
+
+/// The sector mode's negative controls; the sabotages of `point` and `stream` are refused there.
+fn parse_sector_sabotage(name: &str) -> Sabotage {
+    let mut s = Sabotage {
+        name: name.to_string(),
+        ..Sabotage::default()
+    };
+    match name {
+        "drop_off_sector_couplings" => s.drop_off_sector_couplings = true,
+        "wrong_basis_order" => s.wrong_basis_order = true,
+        "run_at_nonzero_y" => s.run_at_nonzero_y = true,
+        _ => {
+            eprintln!("unknown sector sabotage {name}");
+            std::process::exit(2);
+        }
+    }
+    s
 }
 
 fn parse_sabotage(name: &str) -> Sabotage {
@@ -757,6 +794,256 @@ fn tail_norm(block: &Block, r: usize, re: &[i64], im: &[i64]) -> i128 {
     i128::try_from(isqrt(u128::try_from(total).unwrap())).unwrap() + 1
 }
 
+/// The terms `read` adds for a state of amplitude 0 (w = 0, so w64 = 1), at (q, m) with p = q - m != m: xd, xu, xl, sa, sb.
+fn zero_state_terms(n0: i128, q: usize, mi: usize, t: &mut [i128; 5]) {
+    let qi = i128::try_from(q).unwrap();
+    let (pi, mm) = (i128::try_from(q - mi).unwrap(), i128::try_from(mi).unwrap());
+    t[0] += (n0 * qi) * (n0 * qi);
+    t[1] += (pi + 1) * (mm + 1) * n0 * (n0 - 1).max(0);
+    t[2] += pi * mm * (n0 + 1) * (n0 + 2);
+    t[3] += (pi + mm + 2) * n0 / 2 + 1;
+    t[4] += (pi + mm) * (n0 + 1) / 2 + 1;
+}
+
+/// `build` for the sector: the same c, E and elements' rounding bound, from the whole block shell by shell (a ring
+/// of three shells' Gershgorin sums: shell q is complete once shells q - 2, q - 1 and q have raised into it), the
+/// rows of the Q = 0 states (index j for (2j, j); d and pair, the linear rows reaching off the sector), and the read's
+/// terms of every state off the sector. With `sector_only` (a negative control) the Q != 0 states are left out of
+/// the Gershgorin discs and the elements' bound.
+fn sector_build(block: &Block, x: Rat, u: Rat, y: Rat, sector_only: bool) -> (Op, [i128; 5]) {
+    let k = block.k;
+    let cap = k / 2 + 1;
+    let skip = |q: usize, mi: usize| sector_only && q - mi != mi;
+    let mut ring = [vec![0i128; cap], vec![0i128; cap], vec![0i128; cap]];
+    let (mut lo, mut hi) = (i128::MAX, i128::MIN);
+    for q in 0..=k {
+        for mi in 0..=q / 2 {
+            if skip(q, mi) {
+                continue;
+            }
+            if q + 2 <= k {
+                let v = raise_up20(pair_raise(block, q, mi));
+                ring[q % 3][mi] += v;
+                ring[(q + 2) % 3][mi + 1] += v;
+            }
+            if q < k {
+                let va = raise_up20(a_raise(block, y, q, mi));
+                ring[q % 3][mi] += va;
+                ring[(q + 1) % 3][mi] += va;
+                let vb = raise_up20(b_raise(block, y, q, mi));
+                if vb != 0 {
+                    ring[q % 3][mi] += vb;
+                    ring[(q + 1) % 3][mi + 1] += vb;
+                }
+            }
+        }
+        for mi in 0..=q / 2 {
+            if skip(q, mi) {
+                continue;
+            }
+            let (num, den) = diag_rat(block, x, u, q, mi);
+            let down = (num << 20).div_euclid(den);
+            let s = ring[q % 3][mi];
+            lo = lo.min(down - s);
+            hi = hi.max(down + 1 + s);
+        }
+        ring[q % 3].fill(0);
+    }
+    let c = (lo + hi).div_euclid(2) >> 20;
+    let half_hi = (hi - (c << 20)).max((c << 20) - lo);
+    let e = (half_hi >> 20) + 2;
+    let mut op = Op {
+        d: vec![0; cap],
+        pair: vec![0; cap],
+        a: Vec::new(),
+        b: Vec::new(),
+        c,
+        e,
+        elem_err_units: 1,
+    };
+    let eu = u128::try_from(e).unwrap();
+    let mut worst = 1u128;
+    let mut off = [0i128; 5];
+    for q in 0..=k {
+        for mi in 0..=q / 2 {
+            let on = q - mi == mi;
+            if !on {
+                zero_state_terms(block.n0(q), q, mi, &mut off);
+            }
+            if skip(q, mi) {
+                continue;
+            }
+            if on {
+                let (num, den) = diag_rat(block, x, u, q, mi);
+                let shifted = num - c * den;
+                op.d[mi] = i64::try_from((shifted << Q).div_euclid(den * e)).expect("diag");
+            }
+            if q + 2 <= k {
+                let r = pair_raise(block, q, mi);
+                let (v, err) = scaled_element(r.m, r.mul, r.den * eu);
+                if on {
+                    op.pair[mi] = v;
+                }
+                worst = worst.max(err);
+            }
+            if q < k {
+                let r = a_raise(block, y, q, mi);
+                worst = worst.max(scaled_element(r.m, r.mul, r.den * eu).1);
+                let r = b_raise(block, y, q, mi);
+                worst = worst.max(scaled_element(r.m, r.mul, r.den * eu).1);
+            }
+        }
+    }
+    op.elem_err_units = worst;
+    (op, off)
+}
+
+/// `step` on the Q = 0 sector: row j gets the diagonal and the pair elements joining it to j - 1 and j + 1, the products
+/// `step` adds into row (2j, j); every other product `step` adds there is an element times an amplitude 0, or a linear
+/// element 0 at y = 0.
+fn sector_step(
+    op: &Op,
+    v: &[i64],
+    minus: Option<&[i64]>,
+    scale_two: bool,
+    sum: &mut [i128],
+    out: &mut [i64],
+) {
+    sum.fill(0);
+    let n = v.len();
+    for j in 0..n {
+        let vj = i128::from(v[j]);
+        sum[j] += i128::from(op.d[j]) * vj;
+        if j + 1 < n {
+            let e = i128::from(op.pair[j]);
+            sum[j] += e * i128::from(v[j + 1]);
+            sum[j + 1] += e * vj;
+        }
+    }
+    let shift = if scale_two { Q - 1 } else { Q };
+    for j in 0..n {
+        let w = i64::try_from(sum[j] >> shift).expect("amplitude");
+        out[j] = match minus {
+            Some(m) => w - m[j],
+            None => w,
+        };
+    }
+}
+
+/// `read` of the full-block state that is 0 off the sector: the sector's terms, and `off`, the terms of the states of
+/// amplitude 0. The linear and lateral dot products each pair a sector state with one off it, (0 + 2^53) >> 54 = 0, so
+/// a and b stay 0.
+fn sector_read(block: &Block, re: &[i64], im: &[i64], off: &[i128; 5]) -> Reads {
+    let k = block.k;
+    let mut r = Reads {
+        norm: 0,
+        q: 0,
+        pm: 0,
+        n0q: 0,
+        re_p: 0,
+        a: 0,
+        b: 0,
+        x_up: 0,
+        s_up: 0,
+    };
+    let [mut xd, mut xu, mut xl, mut sa, mut sb] = *off;
+    for j in 0..re.len() {
+        let q = 2 * j;
+        let n0 = block.n0(q);
+        let qi = i128::try_from(q).unwrap();
+        let pm = i128::try_from(j).unwrap();
+        let w =
+            (i128::from(re[j]) * i128::from(re[j]) + i128::from(im[j]) * i128::from(im[j])) >> 40;
+        r.norm += w;
+        r.q += qi * w;
+        r.pm += pm * pm * w;
+        r.n0q += n0 * qi * w;
+        let w64 = (w >> 20) + 1;
+        xd += (n0 * qi) * (n0 * qi) * w64;
+        xu += (pm + 1) * (pm + 1) * n0 * (n0 - 1).max(0) * w64;
+        xl += pm * pm * (n0 + 1) * (n0 + 2) * w64;
+        sa += (pm + 1) * n0 * w64;
+        sb += pm * (n0 + 1) * w64;
+        if q + 2 <= k && n0 >= 2 {
+            let root = root24(u128::try_from((pm + 1) * (pm + 1) * n0 * (n0 - 1)).unwrap());
+            r.re_p += root * dot_shift(re, im, j, j + 1);
+        }
+    }
+    r.x_up = i128::try_from(isqrt(u128::try_from(xd).unwrap())).unwrap()
+        + i128::try_from(isqrt(u128::try_from(xu).unwrap())).unwrap()
+        + i128::try_from(isqrt(u128::try_from(xl).unwrap())).unwrap()
+        + 3;
+    r.s_up = 2
+        * (i128::try_from(isqrt(u128::try_from(sa).unwrap())).unwrap()
+            + i128::try_from(isqrt(u128::try_from(sb).unwrap())).unwrap())
+        + 4;
+    r
+}
+
+/// `leak` of the full-block state that is 0 off the sector: of shells K - 1 and K only the even one holds a sector
+/// state, and each row above the block it raises into has no other source of nonzero amplitude.
+fn sector_leak(block: &Block, y: Rat, re: &[i64], im: &[i64]) -> i128 {
+    let k = block.k;
+    let n = usize::try_from(block.n).unwrap();
+    if k >= n {
+        return 0;
+    }
+    let base = block.start[k + 1];
+    let size = block.start[k + 3] - base;
+    let (mut rr, mut ri) = (vec![0i128; size], vec![0i128; size]);
+    let linear_sign: i128 = if y.n > 0 { -1 } else { 1 };
+    for q in k.saturating_sub(1)..=k {
+        if q % 2 == 1 {
+            continue;
+        }
+        let mi = q / 2;
+        let mut add = |t: usize, r: Raise, sign: i128| {
+            if r.mul != 0 {
+                let v = sign * (root24(r.m) * i128::try_from(r.mul).unwrap())
+                    / i128::try_from(r.den).unwrap();
+                rr[t - base] += (v * i128::from(re[mi])) >> 34;
+                ri[t - base] += (v * i128::from(im[mi])) >> 34;
+            }
+        };
+        if q + 2 > k {
+            add(block.start[q + 2] + mi + 1, pair_raise(block, q, mi), 1);
+        }
+        if q + 1 > k {
+            add(
+                block.start[q + 1] + mi,
+                a_raise(block, y, q, mi),
+                linear_sign,
+            );
+            add(
+                block.start[q + 1] + mi + 1,
+                b_raise(block, y, q, mi),
+                linear_sign,
+            );
+        }
+    }
+    let mut total = 0u128;
+    for (a, b) in rr.iter().zip(ri.iter()) {
+        total += u128::try_from(a * a + b * b).unwrap();
+    }
+    i128::try_from(isqrt(total)).unwrap() << 10
+}
+
+/// `tail_norm` of the full-block state that is 0 off the sector: 1 for every state at or above shell K + 1 - R, and the
+/// weights of the sector states there.
+fn sector_tail_norm(block: &Block, r: usize, re: &[i64], im: &[i64]) -> i128 {
+    if r > block.k {
+        return 1i128 << 42;
+    }
+    let first_shell = block.k + 1 - r;
+    let mut total = i128::try_from(block.dim - block.start[first_shell]).unwrap();
+    for (j, (&a, &b)) in re.iter().zip(im.iter()).enumerate() {
+        if 2 * j >= first_shell {
+            total += (i128::from(a) * i128::from(a) + i128::from(b) * i128::from(b)) >> 40;
+        }
+    }
+    i128::try_from(isqrt(u128::try_from(total).unwrap())).unwrap() + 1
+}
+
 fn e18_s60(v: i128) -> i128 {
     let whole = v >> 60;
     let frac = v - (whole << 60);
@@ -776,12 +1063,18 @@ fn peak_rss_text() -> String {
     "CANNOT_SEE".to_string()
 }
 
-/// Which arrays a run keeps: `point`'s full vectors, or the streaming sweeps of `depth` levels.
+/// Which arrays a run keeps: `point`'s full vectors, the streaming sweeps of `depth` levels, or the Q = 0 sector's
+/// K/2 + 1 states at y = 0.
 #[derive(Clone, Copy)]
 enum Layout {
     Dense,
     Stream { depth: usize, tile: usize },
+    Sector,
 }
+
+/// Bytes per state of the sector layout's arrays, counted as `point` counts its 120: the rows d and pair, the state
+/// (32 per state), the sum (16), the two Jacobi-Anger sums (32) and the three Chebyshev levels (24).
+const SECTOR_BYTES_PER_STATE: usize = 104;
 
 /// Shells a level keeps in the streaming layout: one written at sweep position s is read up to position s + 4.
 const RING: usize = 5;
@@ -1520,7 +1813,18 @@ fn point(
     let block = Block::new(n, k, sab.drop_even_root);
     let u = rat(1, 1);
     let x = rat(delta.n - delta.d, delta.d);
-    let op = build(&block, x, u, y);
+    let sector = matches!(layout, Layout::Sector);
+    let (op, off) = if sector {
+        let (mut op, off) = sector_build(&block, x, u, y, sab.drop_off_sector_couplings);
+        if sab.wrong_basis_order {
+            let links = op.pair.len() - 1;
+            op.d.reverse();
+            op.pair[..links].reverse();
+        }
+        (op, off)
+    } else {
+        (build(&block, x, u, y), [0i128; 5])
+    };
     let window_den = 1i128 << w;
     let table = bessel(op.e, window_den);
     let mut majorant_m = 1usize;
@@ -1551,12 +1855,15 @@ fn point(
         + ((op.e >> w) + 1) * 8 * i128::try_from(op.elem_err_units).unwrap()
         + (degree_i + 1) * 2 * 2 * 4;
 
-    let (mut re, mut im) = (vec![0i64; block.dim], vec![0i64; block.dim]);
+    // The amplitudes a run holds: the whole block's, or the sector's K/2 + 1.
+    let states = if sector { op.d.len() } else { block.dim };
+    let (mut re, mut im) = (vec![0i64; states], vec![0i64; states]);
     re[0] = i64::try_from(ONE).unwrap();
     // The point layout's work vectors; the streaming layout keeps its own arrays and leaves these empty.
     let dense = match layout {
         Layout::Dense => block.dim,
         Layout::Stream { .. } => 0,
+        Layout::Sector => states,
     };
     let mut sum = vec![0i128; dense];
     let (mut acc_re, mut acc_im) = (vec![0i128; dense], vec![0i128; dense]);
@@ -1564,6 +1871,7 @@ fn point(
     let mut stream = match layout {
         Layout::Stream { depth, tile } => Some(Stream::new(&block, depth, tile, run_degree)),
         Layout::Dense => None,
+        Layout::Sector => None,
     };
     let ctx = Ctx {
         block: &block,
@@ -1580,11 +1888,27 @@ fn point(
     let mut done = 0i128;
     let total_windows = times.iter().map(|&(windows, _)| windows).max().unwrap();
     let mut next_read = 0usize;
+    // One Chebyshev level: `step` on the whole block, or on the sector.
+    let apply = |v: &[i64], minus: Option<&[i64]>, two: bool, sum: &mut [i128], out: &mut [i64]| {
+        if sector {
+            sector_step(&op, v, minus, two, sum, out);
+        } else {
+            step(&block, &op, v, minus, two, sum, out);
+        }
+    };
     while done < total_windows {
         // The certificate over the window that starts here.
-        let tail = tail_norm(&block, reach, &re, &im); // at 2^42
+        let tail = if sector {
+            sector_tail_norm(&block, reach, &re, &im)
+        } else {
+            tail_norm(&block, reach, &re, &im)
+        }; // at 2^42
         tail_max = tail_max.max(tail);
-        let lk = leak(&block, y, &re, &im);
+        let lk = if sector {
+            sector_leak(&block, y, &re, &im)
+        } else {
+            leak(&block, y, &re, &im)
+        };
         leak_max = leak_max.max(lk);
         leak_sum += (lk >> w) + 1;
         // h norm(B) (b + rho): norm(B) at 2^20, b at 2^42 -> 2^62, rho at 2^62.
@@ -1630,16 +1954,16 @@ fn point(
                         break;
                     }
                     if kk == 0 {
-                        step(&block, &op, &p0, None, false, &mut sum, &mut p1);
+                        apply(&p0, None, false, &mut sum, &mut p1);
                     } else {
-                        step(&block, &op, &p1, Some(&p0), true, &mut sum, &mut p2);
+                        apply(&p1, Some(&p0), true, &mut sum, &mut p2);
                         std::mem::swap(&mut p0, &mut p1);
                         std::mem::swap(&mut p1, &mut p2);
                     }
                     applies += 1;
                 }
             }
-            for i in 0..block.dim {
+            for i in 0..states {
                 re[i] = i64::try_from(acc_re[i] >> (Q - 16)).expect("re");
                 im[i] = i64::try_from(acc_im[i] >> (Q - 16)).expect("im");
                 if sab.norm_drift {
@@ -1650,7 +1974,11 @@ fn point(
         }
         done += 1;
         while next_read < times.len() && times[next_read].0 == done {
-            let r = read(&block, &re, &im);
+            let r = if sector {
+                sector_read(&block, &re, &im, &off)
+            } else {
+                read(&block, &re, &im)
+            };
             let big = block.n;
             let nn = big * (big - 1);
             // Observables at 2^60.
@@ -1704,6 +2032,13 @@ fn point(
                         "|layout=stream|depth={}|tile={}|array_bytes_point_layout={}",
                         st.geom.depth,
                         st.geom.tile,
+                        block.dim * 120
+                    ),
+                ),
+                None if sector => (
+                    states * SECTOR_BYTES_PER_STATE,
+                    format!(
+                        "|layout=sector|sector=Q0|sector_states={states}|array_bytes_point_layout={}",
                         block.dim * 120
                     ),
                 ),
@@ -1884,6 +2219,34 @@ fn main() {
                 Layout::Stream { depth, tile },
             );
         }
+        "sector" => {
+            let n: i128 = get(2).parse().expect("N");
+            let k: usize = get(3).parse().expect("K");
+            let delta = parse_rat(get(4));
+            let y = parse_rat(get(5));
+            let w: u32 = get(6).parse().expect("W");
+            let mut times: Vec<(i128, Rat)> =
+                get(7).split(',').map(|v| window_time(v, w)).collect();
+            times.sort_unstable_by_key(|&(windows, _)| windows);
+            let mut sab = Sabotage::default();
+            for extra in args.iter().skip(8) {
+                match extra.strip_prefix("sabotage=") {
+                    Some(rest) => sab = parse_sector_sabotage(rest),
+                    None => {
+                        eprintln!("unknown argument {extra}");
+                        std::process::exit(2);
+                    }
+                }
+            }
+            if y.n != 0 && !sab.run_at_nonzero_y {
+                eprintln!(
+                    "sector mode needs y = 0, where H keeps Q = n+ - n-; y = {} is refused",
+                    y.text()
+                );
+                std::process::exit(2);
+            }
+            point(n, k, delta, y, &times, w, &sab, Layout::Sector);
+        }
         "bessel" => {
             let z = parse_rat(get(2));
             for (k, v) in bessel(z.n, z.d).iter().enumerate() {
@@ -1896,7 +2259,7 @@ fn main() {
             rows(n, k, parse_rat(get(4)), parse_rat(get(5)));
         }
         _ => {
-            eprintln!("usage: polariton_first_correction point N K DELTA Y W T[,T2,...] [sabotage=NAME] | stream N K DELTA Y W T[,T2,...] [depth=D] [tile=M] [sabotage=NAME] | bessel NUM/DEN | rows N K DELTA Y");
+            eprintln!("usage: polariton_first_correction point N K DELTA Y W T[,T2,...] [sabotage=NAME] | stream N K DELTA Y W T[,T2,...] [depth=D] [tile=M] [sabotage=NAME] | sector N K DELTA 0 W T[,T2,...] [sabotage=NAME] | bessel NUM/DEN | rows N K DELTA Y");
             std::process::exit(2);
         }
     }

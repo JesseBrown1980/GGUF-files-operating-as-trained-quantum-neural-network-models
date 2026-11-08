@@ -159,3 +159,46 @@ jobs:
           # The dyadic reads of RECEIPT-DYADIC.hbp in the streaming layout.
           { ./stream-engine.sh point 100 40 1/2 1/20 6 1/64,1/2,33/64,3/2; ./stream-engine.sh point 243 243 -1/4 1/9 6 1/64,1/4,7/8,317/64; } > dyadic-stream.hbp
           cmp <(strip dyadic-stream.hbp) <(strip $D/RECEIPT-DYADIC.hbp)
+      - name: The Q = 0 sector mode at y = 0 meets point mode in every field but array_bytes, each sabotage fails the checks CONTROLS-SECTOR.hbp names, and y != 0 is refused
+        run: |
+          set -euo pipefail
+          D=polariton-first-correction
+          E=target/release/polariton_first_correction
+          printf '#!/usr/bin/env bash\nshift\nexec "%s" sector "$@"\n' "$PWD/target/release/polariton_first_correction" > sector-engine.sh
+          chmod +x sector-engine.sh
+          # Point rows at the plan's allowed y = 0 points (N = 81 to 6561, K = N and K < N, odd and even K), as filed.
+          python3 -I -X utf8 $D/run_stage.py $E $D/PLAN-SECTOR.hbp sector sector-point.hbp sector-point-cost.hbp 4
+          cmp sector-point.hbp $D/RECEIPT-SECTOR.hbp
+          python3 -I -X utf8 $D/run_stage.py ./sector-engine.sh $D/PLAN-SECTOR.hbp sector sector.hbp sector-cost.hbp 4
+          cat sector-cost.hbp
+          python3 -I -X utf8 $D/check_sector.py sector $D/RECEIPT-SECTOR.hbp sector.hbp
+          # The controls' point rows, as filed; the real sector mode passes every check at them.
+          python3 -I -X utf8 $D/run_stage.py $E $D/PLAN-SECTOR.hbp sector_control point-control.hbp point-control-cost.hbp 4
+          cmp point-control.hbp $D/RECEIPT-SECTOR-CONTROL.hbp
+          python3 -I -X utf8 $D/run_stage.py $E $D/PLAN-SECTOR.hbp sector_control_y point-control-y.hbp point-control-y-cost.hbp 4
+          cmp point-control-y.hbp $D/RECEIPT-SECTOR-CONTROL-Y.hbp
+          python3 -I -X utf8 $D/run_stage.py ./sector-engine.sh $D/PLAN-SECTOR.hbp sector_control real-sector.hbp real-sector-cost.hbp 4
+          python3 -I -X utf8 $D/check_sector.py sector_control $D/RECEIPT-SECTOR-CONTROL.hbp real-sector.hbp
+          # Each sabotage: a sector mode that drops the Q != 0 couplings from the whole block's account, one with the
+          # wrong basis order, one run at y != 0 with the refusal lifted. Each fails exactly the checks on file.
+          for name in drop_off_sector_couplings wrong_basis_order run_at_nonzero_y; do
+            stage=sector_control
+            receipt=$D/RECEIPT-SECTOR-CONTROL.hbp
+            if [ "$name" = run_at_nonzero_y ]; then
+              stage=sector_control_y
+              receipt=$D/RECEIPT-SECTOR-CONTROL-Y.hbp
+            fi
+            python3 -I -X utf8 $D/run_stage.py ./sector-engine.sh $D/PLAN-SECTOR.hbp $stage sab.hbp sab-cost.hbp 4 sabotage=$name
+            rc=0
+            python3 -I -X utf8 $D/check_sector.py $stage $receipt sab.hbp > sab-read.hbp || rc=$?
+            test "$rc" = 1
+            grep -E '^FC_SECTOR_DONE' sab-read.hbp
+            cmp <(grep -E '^FC_SECTOR_DONE' sab-read.hbp) <(grep -E "^FC_SECTOR_CONTROL_EXPECT\|sabotage=$name\|" $D/CONTROLS-SECTOR.hbp | cut -d'|' -f3-)
+          done
+          # y != 0 is refused before any model code: exit 2 and no row.
+          for y in 1/27 -1/27; do
+            rc=0
+            $E sector 81 81 1/2 $y 6 1 > refused.hbp 2> refused.err || rc=$?
+            test "$rc" = 2
+            test ! -s refused.hbp
+          done

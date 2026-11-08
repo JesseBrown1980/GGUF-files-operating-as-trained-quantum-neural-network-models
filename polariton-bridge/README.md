@@ -259,6 +259,20 @@ as `point` one run at a time (3 interleaved repeats, spread 1.940 to 2.006) and 
 (2 repeats, spread 1.862 to 1.993), MEASURED, at a peak of 1.04 GB against 1.29 GB per run. The hours above are at
 `point`'s rate.
 
+The quantum engine's Q = 0 sector layout (`sector`, line 451) runs the points at y = 0. There H keeps Q = n+ - n-,
+and |N,0,0> has Q = 0, so the run holds its amplitude on one state per even shell, (q, m) = (2j, j): K/2 + 1 states,
+3,281 of the 10,768,242 at N = K = 6561. What `point` takes from the whole block (c, E, the elements' rounding bound,
+norm(B), the tail norm and the read's terms of the states at amplitude 0) the sector layout takes from the whole block
+too, shell by shell, and it prints every field `point` prints but array_bytes, which it counts for its own layout:
+17 of 17 READ rows at 10 allowed points from N = 81 to 6561, at K = N and at blocks K < N with odd and even K
+(`polariton-first-correction/RECEIPT-SECTOR.hbp`), and, at the frozen y = 0 time list to t = 207/32 (N = 6561,
+delta = 1/2), the output of a separately written sector implementation (the Use lane's), byte for byte, MEASURED;
+`point` at that length is projected at about 4.3 h on this machine. The sector run took 13.5 s at a peak of 2.5 MB; `point` at N = K = 6561 took
+41.2 s for the first of its 414 windows and 89.6 to 104.3 s for the first two at a peak of 1.26 GB, two runs at a time
+on the same machine, MEASURED. Three sabotaged sector modes (the Q != 0 couplings dropped from the whole block's
+account, the basis in the wrong order, a run at y != 0 with the refusal lifted) each fail the checks
+`polariton-first-correction/CONTROLS-SECTOR.hbp` names, and the mode refuses y != 0 with exit 2 and no row.
+
 ## The engines and their corrections (November 6, 2026)
 
 The engine changes of `BRIDGE_ENGINE_CHANGE` (lines 445 to 451) are filed beside the frozen file, which keeps its bytes
