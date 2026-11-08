@@ -1,0 +1,53 @@
+name: GPT-6 Cloud C independent count-weighted reuse
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/gpt6-cloud-c-reuse.yml'
+      - 'review-tools/gpt6-cloud-c-reuse-20261108/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cloud-c:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Independent comparator and nine planted controls
+        run: python3 -I -B -X utf8 review-tools/gpt6-cloud-c-reuse-20261108/test_strict_reuse.py
+      - name: Rust 1.81, source pin, Clippy, tests, and no floats
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
+          cd polariton-bridge/engines/ensemble
+          test "$(sha256sum src/main.rs | cut -d' ' -f1)" = "1d768fa9aba719d0439625f08ea2711cc0d28a5e751b25a81667b4b3d5fcacbb"
+          cargo +1.81.0 fmt -- --check
+          cargo +1.81.0 clippy --locked --offline --release --all-targets -- -D warnings
+          cargo +1.81.0 test --locked --offline --release
+          cargo +1.81.0 build --locked --offline --release
+          python3 -I -B tools/floatscan.py src src/main.rs src/sha256.rs > /tmp/cloud-c-scan.hbp
+          grep -q 'code_uses=0|float_used=0' /tmp/cloud-c-scan.hbp
+      - name: Independent K2 replay, exact union, staircase, and missing-row rejection
+        run: |
+          set -euo pipefail
+          cd polariton-bridge/engines/ensemble
+          W="$RUNNER_TEMP/cloud-c"
+          mkdir -p "$W"
+          set -- N=81 delta=1/2 u=1 y=1/18 seed_string=cloud-c-20261108 dtden=64 steps=0,4 "ctrl=1099511627776:0:0;1099511627776:0:0" mask=VNC,LOCK,NL
+          ./target/release/twens run "$@" start=0 count=2048 threads=2 > "$W/ref.hbp" 2> "$W/ref.err"
+          ./target/release/twens run "$@" start=0 count=2048 threads=2 memo=1 > "$W/memo.hbp" 2> "$W/memo.err"
+          test ! -s "$W/ref.err"
+          grep -q '^TWB_MEMO|count=2048|' "$W/memo.err"
+          cmp "$W/ref.hbp" "$W/memo.hbp"
+          ./target/release/twens run "$@" start=0 count=1024 threads=1 > "$W/p1.hbp"
+          ./target/release/twens run "$@" start=1024 count=1024 threads=3 > "$W/p2.hbp"
+          V=../../../review-tools/gpt6-cloud-c-reuse-20261108/strict_reuse.py
+          python3 -I -B "$V" --union "$W/ref.hbp" "$W/p1.hbp" "$W/p2.hbp"
+          { grep '^TWB_HEAD|' "$W/ref.hbp"; grep '^TWB_NL|' "$W/ref.hbp" || :; grep -E '^(TWB|TWB_ROUND|TWB_PAIR|TWB_PAIR_ROUND|TWENS|TWPAIR)\|' "$W/ref.hbp" | grep '|step=0|'; grep -E '^(TWB|TWB_ROUND|TWB_PAIR|TWB_PAIR_ROUND|TWENS|TWPAIR)\|' "$W/p1.hbp" | grep '|step=4|'; } > "$W/stair.hbp"
+          python3 -I -B "$V" --stair "$W/stair.hbp" "$W/ref.hbp" "$W/p1.hbp"
+          grep -v '^TWB|step=4|variant=LOCK|' "$W/stair.hbp" > "$W/missing.hbp"
+          if python3 -I -B "$V" --stair "$W/missing.hbp" "$W/ref.hbp" "$W/p1.hbp" > "$W/negative.hbp"; then
+            echo 'CLOUD_C_CONTROL_WRONGLY_ACCEPTED|missing_row|json=0'; exit 1
+          fi
+          grep -q '^CLOUD_C_FAIL|reason=row_set_differs:missing=1:' "$W/negative.hbp"
+          echo 'CLOUD_C_ACCEPTANCE|K2=PASS|union=PASS|stair=PASS|missing_row=REFUSED|json=0'
