@@ -1,0 +1,2 @@
+DRV_START|mode=dry-run|when=2026-11-08T09:32:50-0300|plan=../../PLAN-JETS.hbp|plan_sha256=6950d41c83abb392afdfa84172b482fa1539cff2ff6cac4179cb72433275aa95|binary=target/release/jetens|jobs=1|timeout_s=2700|opt_in=absent|json=0
+DRV_FAIL|reason=missing_input|what=binary|path=target/release/jetens|json=0

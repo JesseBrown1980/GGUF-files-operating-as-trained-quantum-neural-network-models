@@ -291,6 +291,16 @@ The engine changes of `BRIDGE_ENGINE_CHANGE` (lines 445 to 451) are filed beside
 - [`engines/trajectory/`](engines/trajectory/) is the trajectory integrator (`traj_int.py`, sha256
   `c08a0c75bf7d089875d2e6017b731bac767fb93fff849464f9af9d9849afb504`), with its line-446 gate, tests, audit and float scan,
   its README.md and its SHA256SUMS.
+- [`engines/jet/`](engines/jet/) is the flow-map jet jetens 0.2.0 (Rust 1.81, integers only, float_used=0), source
+  `src/main.rs` sha256 `ac5672374f95e9b9f44c1675ef1e2ea028ac702d2bbe27c0ee5880f077d53fb8`, binary
+  `334dddec67fc557ee66a8b7259f91c25b178c86f2ed4bcb343babb63486cec1e` (x86_64-unknown-linux-gnu). It is the ensemble engine's
+  own RK4 map at dt = 1/64 expanded in the start noise, so its exact average under the engine's own noise law (the
+  popcount Binomial(4096, 1/2) moments, the ideal Gaussian's printed beside it) is the number the frozen Monte Carlo
+  estimates up to the order-P truncation, with no sampling error. [`PLAN-JETS.hbp`](PLAN-JETS.hbp) runs it on the 83 first-order `BRIDGE_AT` rows (VNC and
+  V1; C1, A1, V2, f, D2, the sign of E[Re Z] and the pair N^2(C1_V1 - C1_VNC)), keyed by each row's line and with the
+  amendment's M_VNC on its 33 rows, beside the Monte Carlo as an independent second answer filed by hash before the Monte
+  Carlo runs (the operator's decision of November 6, 2026). `tools/drive_jets.py` runs the plan: a dry run, the proof at
+  allowed analogs, and the reserved points only with `--opt-in=RUN_THE_RESERVED_JETS_FOR_THE_SEAT`.
 - [`CORRECTIONS.hbp`](CORRECTIONS.hbp) holds 28 readings of frozen lines from the engine rounds' holds (ensemble-1 to
   ensemble-27, trajectory-1). Each frozen_text is a byte-for-byte substring of its frozen line and occurs once on it; every
   row has values_moved=0.
@@ -300,11 +310,12 @@ The engine changes of `BRIDGE_ENGINE_CHANGE` (lines 445 to 451) are filed beside
   Beside each row the read prints, for information only, the measured difference of the row's first 2^10 samples against a
   2^-120 run of them. The frozen prediction and its tolerances stay as frozen (the operator's decision of November 6, 2026).
 - [`ENGINE-CHANGES.hbp`](ENGINE-CHANGES.hbp) holds one row per engine change's result and per second-seat check: 3 for the
-  quantum engine, 7 for the ensemble integrator, 5 for the trajectory integrator.
-- The workflow `.github/workflows/polariton-bridge.yml` runs three jobs: `frozen` (PREDICTION.hbp at its pin, every
+  quantum engine, 7 for the ensemble integrator, 5 for the trajectory integrator, 1 for the flow-map jet.
+- The workflow `.github/workflows/polariton-bridge.yml` runs four jobs: `frozen` (PREDICTION.hbp at its pin, every
   SHA256SUMS, LF line endings), `ensemble` (the Rust 1.81 gate, the float scan, binary provenance, the guard's refusals,
   TEST-RUNS-T1B.hbp byte for byte) and `trajectory` (the engine's sums, the reserved check, the tests with and without
-  -O, the float scan, the audit, the line-446 gate).
+  -O, the float scan, the audit, the line-446 gate) and `jet` (the Rust 1.81 gate, the float scan, binary provenance, the
+  guard's refusals, the driver's dry run, one analog jet byte for byte).
 - [`reviews/opus55-engines-round2-20261106/`](reviews/opus55-engines-round2-20261106/) holds the four round-2 reports, the
   stage check's report and the disposition of every hold (`HOLDS-APPLIED.hbp`).
 
@@ -373,4 +384,7 @@ discrete, and which mechanism supplies decoherence, stay separate questions, OPE
 - [`engines/ensemble/`](engines/ensemble/) (twens 0.3.0, `src/main.rs` sha256 `723b36745af6c926849ff7a6da74d8c82007dfc4071761795bb639fcd8d4a609`)
   and [`engines/trajectory/`](engines/trajectory/) (`traj_int.py` sha256 `c08a0c75bf7d089875d2e6017b731bac767fb93fff849464f9af9d9849afb504`,
   with its README.md and SHA256SUMS); the workflow's `ensemble` and `trajectory` jobs run them.
+- [`PLAN-JETS.hbp`](PLAN-JETS.hbp) and [`engines/jet/`](engines/jet/) (jetens 0.2.0, `src/main.rs` sha256
+  `ac5672374f95e9b9f44c1675ef1e2ea028ac702d2bbe27c0ee5880f077d53fb8`, with its reader, driver and plan generator): the jets
+  beside the ensemble's first-order rows; the workflow's `jet` job runs its gate, its guard and its driver's dry run.
 - [`reviews/`](reviews/): the second seat's reports, one folder per piece of work, each with its SHA256SUMS.

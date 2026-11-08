@@ -121,3 +121,66 @@ jobs:
         run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/check_audit.py polariton-bridge/engines/trajectory/traj_int.py 1/2 1/27 320 d1o2_y1o27 "$RUNNER_TEMP/trajectory"
       - name: The line-446 byte gate, three runs against the sha256 values line 446 names
         run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/gate446.py "$RUNNER_TEMP/trajectory/gate446"
+  jet:
+    name: The flow-map jet jetens 0.2.0, its toolchain gate, its guard, its driver's dry run and one analog jet byte for byte
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: polariton-bridge/engines/jet
+    steps:
+      - name: Checkout, on a pull request its merge with the base
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Rust 1.81 and lints
+        run: rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
+      - name: Format, Clippy in three forms, unit tests, build
+        run: |
+          set -euo pipefail
+          cargo +1.81.0 fmt -- --check
+          cargo +1.81.0 clippy --locked --offline --release -- -D warnings
+          cargo +1.81.0 clippy --locked --offline --release --all-targets -- -D warnings
+          cargo +1.81.0 clippy --locked --offline -- -D warnings
+          cargo +1.81.0 test --locked --offline --release
+          cargo +1.81.0 build --locked --offline --release
+      - name: Integer types only in the engine's source (the ensemble engine's lexer-based scan, its self-test first)
+        run: |
+          set -euo pipefail
+          python3 -I -X utf8 ../ensemble/tools/floatscan.py selftest | tee scan-self.hbp
+          grep -q '^RV_FLOATSCAN_SELFTEST|literals_found=6|expected=6|types_found=1|expected=1|' scan-self.hbp
+          python3 -I -X utf8 ../ensemble/tools/floatscan.py src src/main.rs ../ensemble/src/sha256.rs | tee scan.hbp
+          grep -q '^RV_FLOATSCAN_SRC_DONE|files=2|code_uses=0|float_used=0|' scan.hbp
+      - name: The binary names the source it was compiled from, and that source is this one
+        run: |
+          set -euo pipefail
+          ./target/release/jetens version | tee version.hbp
+          grep -q "|source_sha256=main.rs:$(sha256sum src/main.rs | cut -d' ' -f1),sha256.rs:$(sha256sum ../ensemble/src/sha256.rs | cut -d' ' -f1)|" version.hbp
+          grep -q "|binary_sha256=$(sha256sum target/release/jetens | cut -d' ' -f1)|" version.hbp
+          grep -q "|source_sha256=main.rs:$(sha256sum src/main.rs | cut -d' ' -f1),sha256.rs:" ../../PLAN-JETS.hbp
+      - name: The jet guard refuses its bands at every N before any step (p=2, steps=0), and lifts only on lift_reserved_guard=1
+        run: |
+          set -euo pipefail
+          K="p=2 q=64 dtden=64 steps=0"
+          for pt in "delta=29/50 y=0 for_n=243" "delta=-31/50 y=0 for_n=243" "delta=1/2 y=71/1000 for_n=243" "delta=0 y=1/16 for_n=2187"; do
+            rc=0
+            ./target/release/jetens jet $pt $K > refused.hbp 2> refused.err || rc=$?
+            test "$rc" = 3
+            test ! -s refused.hbp
+            grep -q '^JET_REFUSED|' refused.err
+          done
+          rc=0
+          ./target/release/jetens jet delta=1/2 y=1/18 for_n=81 $K lift_reserved_guard=yes > lift.hbp 2> lift.err || rc=$?
+          test "$rc" = 2
+          ./target/release/jetens jet delta=1/2 y=1/18 for_n=81 $K lift_reserved_guard=1 > lift1.hbp
+          head -1 lift1.hbp | grep -q '|reserved=0|guard=lifted|'
+          ./target/release/jetens jet delta=1/2 y=1/18 for_n=81 $K > nolift.hbp
+          head -1 nolift.hbp | grep -q '|reserved=0|guard=active|'
+      - name: The driver's dry run over PLAN-JETS.hbp (every byte it names verified; nothing launched)
+        run: |
+          set -euo pipefail
+          python3 -I -B -X utf8 tools/drive_jets.py dry-run --plan=../../PLAN-JETS.hbp --plan-sha256="$(sha256sum ../../PLAN-JETS.hbp | cut -d' ' -f1)" --root="$RUNNER_TEMP/jets" --binary=target/release/jetens --prediction=../../PREDICTION.hbp --amendment=../../AMENDMENT-2026-11-06-F-SAMPLING.hbp > dry.hbp || { tail -3 dry.hbp; exit 1; }
+          tail -1 dry.hbp | grep -q '^DRV_END|mode=dry-run|launches_listed=80|reads_listed=83|launched=0|read=0|'
+      - name: The plan's first analog jet (delta = 1/2, y = 1/27, P = 10, steps 0,24,32) byte for byte, its head and time rows aside
+        run: |
+          set -euo pipefail
+          ./target/release/jetens jet delta=1/2 y=1/27 for_n=81 p=10 q=64 dtden=64 steps=0,24,32 > analog1.hbp
+          test "$(grep -v '^JET_TIME|' analog1.hbp | grep -v '^JET_HEAD|' | sha256sum | cut -d' ' -f1)" = "70b06f2882fc94d22801466de33ec0654396a7674d71ce7e7ca8282f00b9ee94"
