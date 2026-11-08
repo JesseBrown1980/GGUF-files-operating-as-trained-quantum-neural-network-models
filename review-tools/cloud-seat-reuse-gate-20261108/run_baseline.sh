@@ -51,4 +51,14 @@ python3 -I "$H/ens_merge_check.py" --stair "$O/a_stair.hbp" "$O/a_ref.hbp" "$O/a
 sed '0,/|step=32|variant=V0|/{s/\(|step=32|variant=V0|.*|f=\)\(-\?[0-9]\+\)/\1999/}' "$O/a_stair.hbp" > "$O/a_stair_bad.hbp"
 if python3 -I "$H/ens_merge_check.py" --stair "$O/a_stair_bad.hbp" "$O/a_ref.hbp" "$O/a_p1.hbp" > "$O/ctl.out"; then echo "CONTROL_ACCEPTED_WRONGLY|stair"; exit 1; fi
 echo "CONTROL|$(cat "$O/ctl.out")"
+# completeness controls (added 2026-11-08 after Cloud C's report on PR #15): a staircase missing one real row, a
+# reference count no row uses, and a union part missing its noiseless rows; each must fail by its name
+sctl() { if python3 -I "$H/ens_merge_check.py" "$@" > "$O/ctl.out"; then echo "CONTROL_ACCEPTED_WRONGLY|$*"; exit 1; fi; echo "CONTROL|$(cat "$O/ctl.out")"; }
+grep -v '^TWB|.*|step=64|variant=LOCK|' "$O/a_stair.hbp" > "$O/a_stair_drop.hbp"
+[ "$(wc -l < "$O/a_stair_drop.hbp")" = "$(( $(wc -l < "$O/a_stair.hbp") - 1 ))" ]
+sctl --stair "$O/a_stair_drop.hbp" "$O/a_ref.hbp" "$O/a_p1.hbp"
+"$T" run $J1 start=0 count=50 threads=1 > "$O/a_c50.hbp"
+sctl --stair "$O/a_stair.hbp" "$O/a_ref.hbp" "$O/a_p1.hbp" "$O/a_c50.hbp"
+grep -v '^TWB_NL|' "$O/a_p2.hbp" > "$O/a_p2_nonl.hbp"
+sctl "$O/a_ref.hbp" "$O/a_p1.hbp" "$O/a_p2_nonl.hbp"
 echo "BASE_DONE|json=0"

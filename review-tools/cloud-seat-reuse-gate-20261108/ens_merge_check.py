@@ -3,7 +3,9 @@
 #        python3 -I ens_merge_check.py --stair REUSE.hbp NOREUSE_1.hbp [NOREUSE_2.hbp ...]
 #   --stair: REUSE is one run whose records may sum different sample counts (a count per record, from one start).
 #   Every summed row of REUSE must equal, field for field, the same row of the no-reuse run with that row's count n
-#   and the same start; fails by name: stair_no_reference_for_count, stair_start_differs, stair_row_differs:<field>.
+#   and the same start, and REUSE must carry exactly the references' row set; fails by name: stair_row_set_differs,
+#   stair_reference_row_sets_differ, stair_reference_unused, stair_reference_count_repeated,
+#   stair_no_reference_for_count, stair_start_differs, stair_row_differs:<field>.
 #   Adds the per-record sums of the PART runs (disjoint sample-index ranges of one job) and compares them with
 #   REFERENCE, one run over the union. Exit 0 and CMP_DONE|result=EQUAL only if every keyed row agrees exactly.
 #   Fails by name: index_ranges_not_disjoint_or_not_covering, job_fields_differ, row_set_differs, count_differs,
@@ -54,7 +56,20 @@ def stair():
         for k in ('N', 'delta', 'u', 'y', 'seed', 'seed_string', 'dtden', 'q', 'sums', 'rounding'):
             if h.get(k) != reuse_head.get(k):
                 fail('job_fields_differ:%s' % k)
+        for k in ('steps', 'mask'):
+            if h.get(k) != reuse_head.get(k):
+                fail('job_fields_differ:%s' % k)
+        if int(h['count']) in refs:
+            fail('stair_reference_count_repeated:%s' % h['count'])
         refs[int(h['count'])] = rows
+    if not refs:
+        fail('no_parts')
+    # completeness: every reference run carries one row set, and REUSE carries exactly that set (none missing, none extra)
+    row_sets = {frozenset(rows) for rows in refs.values()}
+    if len(row_sets) != 1:
+        fail('stair_reference_row_sets_differ')
+    if set(reuse_rows) != set(next(iter(row_sets))):
+        fail('stair_row_set_differs')
     compared, counts = 0, set()
     for key, row in reuse_rows.items():
         n = int(row.get('n', row.get('samples', -1)))
@@ -70,6 +85,8 @@ def stair():
             if ref[fname] != v:
                 fail('stair_row_differs:%s:%s' % (fname, (key,)))
             compared += 1
+    if counts != set(refs):
+        fail('stair_reference_unused:%s' % ','.join(str(c) for c in sorted(set(refs) - counts)))
     print('CMP_DONE|mode=stair|rows=%d|counts=%s|fields_compared=%d|result=EQUAL|json=0' % (
         len(reuse_rows), ','.join(str(c) for c in sorted(counts)), compared))
 
@@ -98,7 +115,7 @@ def main():
         if set(rows) != set(ref_rows):
             fail('row_set_differs')
     for _, _, nl in parts:
-        if nl and nl != ref_nl:
+        if nl != ref_nl:
             fail('nl_rows_differ')
     for _, rows, _ in parts:
         for key, ref in ref_rows.items():

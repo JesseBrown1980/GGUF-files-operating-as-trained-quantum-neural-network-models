@@ -10,16 +10,24 @@ This gate is filed before the reuse change exists, so the bar is fixed ahead of 
 
 - `ens_merge_check.py` compares exact integers and fails by name. It has two modes:
   - **union**: `REFERENCE PART…`. Each PART is one disjoint index range, the parts together cover REFERENCE, and their sums add up to REFERENCE's. Each `eps_max` (the per-record rounding bound) must not exceed REFERENCE's.
-  - **`--stair REUSE NOREUSE…`**: every summed row of a reuse run must equal the same row of the no-reuse run that has the row's own count `n`, from the same start. This is the expected shape of reuse on the E4R staircase.
+  - **`--stair REUSE NOREUSE…`**: every summed row of a reuse run must equal the same row of the no-reuse run that has the row's own count `n`, from the same start. REUSE must carry exactly the references' row set, and every reference count must be used. This is the expected shape of reuse on the E4R staircase.
 - `run_baseline.sh TWENS OUT` runs, on twens 0.3.0 as it stands:
   - both modes;
   - a thread-count invariance check;
-  - seven controls, each of which must fail by its named check.
+  - ten controls, each of which must fail by its named check.
 - `BASELINE.out` is this machine's output with binary `75530df9…` (source `main.rs` `723b3674…`). Results:
   - union mode at two points: 1,722 and 2,648 integer fields equal;
   - stair mode: 2,928 fields equal;
   - thread counts 1 and 4: byte-identical;
-  - 7 of 7 controls failed by name.
+  - 10 of 10 controls failed by name.
+
+## Correction of 2026-11-08
+
+Cloud C (GPT-6) found on PR #15 that the first version of `--stair` (`81e5b962…`) read `result=EQUAL` on a reuse file with one real row deleted, because it never checked that the reuse file's rows were complete. Union mode had a smaller gap of the same kind: a part with no `TWB_NL` rows passed. Both are reproduced here on the first version: the deleted-row staircase read `rows=113` and EQUAL, and the part without NL rows read EQUAL.
+
+This version refuses both. `--stair` now fails as `stair_row_set_differs` on a missing or extra row, `stair_reference_unused` on a reference count no row uses, `stair_reference_row_sets_differ` and `stair_reference_count_repeated` on inconsistent references, and `job_fields_differ` on different `steps` or `mask`. Union mode fails as `nl_rows_differ` when any part's NL rows differ from the reference's, including when they are missing.
+
+`run_baseline.sh` gains three controls for these cases, so `BASELINE.out` gains three rows just before `BASE_DONE`; its other 11 rows are byte-identical to the first `BASELINE.out` (`4daf841d…`). twens 0.3.0 (`75530df9…`), 0.4.0 (`33e62fbe…`) and 0.4.0 with `memo=1` all give this file byte for byte. The engine was never at fault: the reuse change's own plain-against-memo byte comparison already protected against a missing row.
 
 All points used are allowed points (δ = 1/2 and −1/4); no reserved point is run.
 

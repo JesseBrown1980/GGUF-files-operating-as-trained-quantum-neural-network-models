@@ -8,4 +8,7 @@ CONTROL|CMP_FAIL|check=index_ranges_not_disjoint_or_not_covering|json=0
 CONTROL|CMP_FAIL|check=field_set_differs:('TWB', '0', 'V1')|json=0
 CMP_DONE|mode=stair|rows=114|counts=40,96|fields_compared=2928|result=EQUAL|json=0
 CONTROL|CMP_FAIL|check=stair_row_differs:f:(('TWENS', '32', 'V0'),)|json=0
+CONTROL|CMP_FAIL|check=stair_row_set_differs|json=0
+CONTROL|CMP_FAIL|check=stair_reference_unused:50|json=0
+CONTROL|CMP_FAIL|check=nl_rows_differ|json=0
 BASE_DONE|json=0
