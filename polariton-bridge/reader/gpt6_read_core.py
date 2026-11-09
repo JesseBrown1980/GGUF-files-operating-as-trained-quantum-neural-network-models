@@ -25,7 +25,7 @@ CORRECTIONS_SHA = "9bfdd27d9b418cb71835a870e527f8e4c83f412aab8bd148c56539af597e9
 # Git object IDs commit to the complete bytes. The exact SHA-256 also
 # must match the separately independently reported frozen b9cf4641… pin.
 HOLDS_GIT_BLOB_SHA = "954e8ee3b149f75016f7d2ff50163494fe903ada"
-HOLDS_SHA256_PREFIX = "b9cf4641"
+HOLDS_SHA256 = "b9cf464102c304184ff0efefcad6468e7865f85ac8d29ebe4f9e6f82986dd90d"
 REQUIRED_ERRORS = ("3SE", "e_int", "e_round", "e_q", "e_trunc")
 SCALE = 1 << 40
 
@@ -234,7 +234,7 @@ def preflight():
     blob = hashlib.sha1(b"blob " + str(len(hraw)).encode("ascii") + b"\0" + hraw).hexdigest()
     need(blob == HOLDS_GIT_BLOB_SHA, "holds_git_object")
     h_sha = hashlib.sha256(hraw).hexdigest()
-    need(h_sha.startswith(HOLDS_SHA256_PREFIX), "holds_sha256_prefix")
+    need(h_sha == HOLDS_SHA256, "holds_sha256")
     need(holds[0]["PREDICTION.hbp_sha256"] == FROZEN_SHA, "holds_wrong_prediction")
     need(holds[0]["holds"].startswith("40("), "holds_count")
     need(len([r for r in holds if r["_tag"] == "HOLD"]) == 40, "holds_inventory")
@@ -265,7 +265,9 @@ def exact_prefix(parts, goal, *, allow_variant=False):
     need(base.get("_tag") in ("TWB", "TWB_PAIR"), "prefix_source_tag")
     kind = "variant" if base["_tag"] == "TWB" else "pair"
     for r in parts:
-        need(all(k in r for k in identity) and kind in r, "prefix_missing_identity")
+        need(all(k in r and isinstance(r[k], str) and bool(r[k]) for k in identity)
+             and kind in r and isinstance(r[kind], str) and bool(r[kind]),
+             "prefix_missing_identity")
         need(all(r[k] == base[k] for k in identity), "prefix_identity")
         need(r.get("_tag") == base["_tag"], "prefix_mixed_source_types")
         need(allow_variant or r[kind] == base[kind], "prefix_variant_or_pair")
@@ -418,7 +420,7 @@ def main():
             print("BRIDGE_READER_CORE|synthetic_faults_rejected=%d|actual_outputs_opened=0|json=0" % selftest())
         else:
             ats, pts, changed, amend_sha = preflight()
-            print("BRIDGE_PRECHECK|frozen_sha256=%s|rows=873|points=%d|at=%d|F_sampling_changes=%d|F_sha256=%s|actual_outputs_opened=0|status=READER_NOT_READY|json=0"
+            print("BRIDGE_PRECHECK|frozen_sha256=%s|rows=873|points=%d|at=%d|F_sampling_changes=%d|HOLDS_sha256=%s|actual_outputs_opened=0|status=READER_NOT_READY|json=0"
                   % (FROZEN_SHA, len(pts), len(ats), len(changed), amend_sha))
     except (StopRead, ValueError, KeyError, UnicodeError, OSError) as exc:
         print("BRIDGE_READER_REFUSED|reason=%s|json=0" % str(exc), file=sys.stderr)
