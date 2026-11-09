@@ -278,7 +278,7 @@ class CallBlock:
 class CallFile:
     """What a call file holds: a block, or a stage A STOP row, and the rc trailer."""
 
-    __slots__ = ("path", "sha256", "point", "call", "block", "stop", "rc", "rc_reader")
+    __slots__ = ("path", "sha256", "point", "call", "block", "stop", "stop_line", "rc", "rc_reader")
 
 
 def read_call_file(path, spec, call, require_reader_rc=True, side_dir=None):
@@ -290,6 +290,7 @@ def read_call_file(path, spec, call, require_reader_rc=True, side_dir=None):
     cf.call = call
     cf.block = None
     cf.stop = None
+    cf.stop_line = None
     lines = read_lines(path)
     if not lines:
         raise StageBStop("call_file_empty", "%s call %d" % (spec.id, call))
@@ -303,6 +304,7 @@ def read_call_file(path, spec, call, require_reader_rc=True, side_dir=None):
     body = lines[:-1]
     if len(body) == 1 and body[0].startswith("STOP|"):
         cf.stop = _parse_stop(body[0], spec, call)
+        cf.stop_line = body[0]
         engine_stop = cf.rc == 4 and cf.stop["reason"] == "empty_stream" and cf.rc_reader in (None, 3)
         if not engine_stop:
             raise StageBStop("reader_stop", "%s call %d: rc=%d reason=%s" % (spec.id, call, cf.rc, cf.stop["reason"]))
@@ -687,12 +689,78 @@ class Point:
         return len(self.sides())
 
 
+# The files of a point directory: <call>.hbp (stage A's output and the trailer), <call>.err (stage A's stderr),
+# <call>.eng.err (the engine's stderr), <call>.side, and the earlier tries of a stopped call under
+# <call>.attempt<k>.hbp, .err and .eng.err (rule STOP). SHA256SUMS lists every one but the side files, whose sha256
+# the blocks carry.
+_POINT_FILE = re.compile(r"(0|[1-9][0-9]*)(?:\.attempt([1-9][0-9]*))?\.(hbp|err|eng\.err|side)\Z")
+_SUMMED = ("hbp", "err", "eng.err")
+
+# What twens prints on stderr when it exits 4 (polariton-bridge/engines/ensemble/src/main.rs, bound_fault and sharp):
+# one TWB_FAULT row per thread that stopped, with these reasons and keys.
+EXIT4_FAULTS = {
+    "rounding_bound_state_bound_above_2^50_ulps": ("reason",),
+    "rounding_bound_hL_above_1/2": ("reason",),
+    "rounding_bound_rhs_rounding_above_8_dtden": ("reason",),
+    "rounding_bound_sharp_argument_low_end_not_positive": ("reason",),
+    "sharp_mode0_argument_not_positive": ("reason", "arg"),
+}
+
+
+def engine_stop_reasons(path, what):
+    """The TWB_FAULT reasons of an engine's stderr after exit 4: one row or more, each an exit-4 fault, nothing else."""
+    if not os.path.exists(path):
+        raise StageBStop("stop_engine_stderr", "%s: no %s" % (what, os.path.basename(path)))
+    lines = read_lines(path)
+    if not lines:
+        raise StageBStop("stop_engine_stderr", "%s: exit 4 without a TWB_FAULT row" % what)
+    out = []
+    for ln in lines:
+        try:
+            kind, f = parse_row(ln)
+            d = fields_dict(f)
+            keys = EXIT4_FAULTS.get(d.get("reason"))
+            if kind != "TWB_FAULT" or keys is None:
+                raise RowError("not an exit-4 TWB_FAULT row")
+            parse_row(ln, "TWB_FAULT", keys)
+            if "arg" in d:
+                canon_int(d["arg"])
+        except (RowError, ExactError) as e:
+            raise StageBStop("stop_engine_stderr", "%s: %s: %s" % (what, e, ln[:60])) from e
+        out.append(d["reason"])
+    return out
+
+
+def check_engine_quiet(path, what):
+    """A completed dump's engine stderr is empty (twens writes stderr only when it stops)."""
+    if not os.path.exists(path):
+        raise StageBStop("stop_engine_stderr", "%s: no %s" % (what, os.path.basename(path)))
+    if read_lines(path):
+        raise StageBStop("stop_engine_stderr", "%s: engine stderr on a completed call" % what)
+
+
+def _check_reader_err(path, cf, what):
+    """Stage A's stderr, when filed: empty beside a block, its STOP row beside a STOP."""
+    if not os.path.exists(path):
+        return
+    lines = read_lines(path)
+    want = [] if cf.block is not None else [cf.stop_line]
+    if lines != want:
+        raise StageBStop("reader_stderr", "%s: stage A stderr differs from its output" % what)
+
+
 def write_sha256sums(agg_dir):
-    """SHA256SUMS of the call files of a point directory, in sha256sum's format (the run's receipt)."""
-    names = sorted(n for n in os.listdir(agg_dir) if re.match(r"(0|[1-9][0-9]*)(\.attempt[0-9]+)?\.hbp\Z", n))
+    """SHA256SUMS of a point directory's text receipts (call files, attempts and both stderr files), in sha256sum's
+    format (the run's receipt)."""
+    names = sorted(n for n in os.listdir(agg_dir) if _summed(n))
     text = "".join("%s  %s\n" % (file_sha256(os.path.join(agg_dir, n)), n) for n in names)
     with open(os.path.join(agg_dir, "SHA256SUMS"), "wb") as f:
         f.write(text.encode("ascii"))
+
+
+def _summed(name):
+    m = _POINT_FILE.match(name)
+    return bool(m) and m.group(3) in _SUMMED
 
 
 def check_sha256sums(agg_dir, names):
@@ -713,35 +781,92 @@ def check_sha256sums(agg_dir, names):
             raise StageBStop("sha256sums", "sha256 of " + n)
 
 
-def load_point(agg_dir, spec, require_reader_rc=True, side_dir=None, require_sums=False):
+def read_attempt_file(path, spec, call):
+    """An earlier try of a call (rule STOP): it must be an engine stop of this point and call, rc=4 rc_reader=3, with
+    stage A's empty_stream STOP row naming the point and the call."""
+    what = "%s call %d %s" % (spec.id, call, os.path.basename(path))
+    try:
+        cf = read_call_file(path, spec, call, True)
+    except StageBStop as e:
+        raise StageBStop("stop_attempt_file", "%s: %s %s" % (what, e.reason, e.detail)) from e
+    if cf.block is not None or (cf.rc, cf.rc_reader) != (4, 3) or "point" not in cf.stop:
+        raise StageBStop("stop_attempt_file", "%s: not an engine stop (rc=4 rc_reader=3, empty_stream)" % what)
+    return cf
+
+
+def check_call_files(agg_dir, spec, i, tries, require_reader_rc=True, side_dir=None, require_engine_err=True):
+    """Rule STOP for call i of a point folder, whose attempts are numbered `tries`: the call file, both stderr files,
+    and attempts 1..k as the rerun procedure leaves them (load_point). Returns the call file."""
+    what = "%s call %d" % (spec.id, i)
+    cf = read_call_file(os.path.join(agg_dir, "%d.hbp" % i), spec, i, require_reader_rc, side_dir or agg_dir)
+    _check_reader_err(os.path.join(agg_dir, "%d.err" % i), cf, what)
+    eng = os.path.join(agg_dir, "%d.eng.err" % i)
+    if cf.block is None:
+        if require_engine_err:
+            engine_stop_reasons(eng, what)
+        want = len(spec.steps) - 1
+    else:
+        if require_engine_err:
+            check_engine_quiet(eng, what)
+        want = len(spec.steps) - len(cf.block.steps)
+    got = sorted(tries)
+    if got != list(range(1, want + 1)):
+        raise StageBStop("stop_attempt_count", "%s: attempts %s, rule STOP needs 1..%d (%s)" % (
+            what, ",".join(map(str, got)) or "none", want,
+            "no try completed" if cf.block is None else "%d of %d records" % (len(cf.block.steps), len(spec.steps))))
+    for k in got:
+        a = read_attempt_file(os.path.join(agg_dir, "%d.attempt%d.hbp" % (i, k)), spec, i)
+        _check_reader_err(os.path.join(agg_dir, "%d.attempt%d.err" % (i, k)), a, what)
+        if require_engine_err:
+            engine_stop_reasons(os.path.join(agg_dir, "%d.attempt%d.eng.err" % (i, k)), "%s attempt %d" % (what, k))
+    return cf
+
+
+def load_point(agg_dir, spec, require_reader_rc=True, side_dir=None, require_sums=False, require_engine_err=True):
     """Read agg_dir/<call>.hbp for every call 0..calls-1 of the point and pool them.
 
     Rule SEED: every call present, no other call file, one seed and disjoint starts (checked per block).
-    Rule STOP: an engine stop (rc=4, stage A empty_stream) loses that call's indices (NOT_MEASURED); the point keeps
-    the records every read call reached, the later records are NOT_MEASURED. Anything else is a StageBStop."""
+    Rule STOP: a call file is a block, or an engine stop (rc=4, stage A empty_stream, the engine's TWB_FAULT row in
+    <call>.eng.err), which loses that call's indices (NOT_MEASURED). The earlier tries of a call, each an engine stop
+    with its TWB_FAULT row, are <call>.attempt1..k: k = (records of the point) - (records of the block), or
+    (records of the point) - 1 when no try completed; a complete block has none. The point keeps the records every
+    read call reached, the later records are NOT_MEASURED. Anything else is a StageBStop."""
     pt = Point(spec)
     names = sorted(os.listdir(agg_dir)) if os.path.isdir(agg_dir) else []
-    pat = re.compile(r"(0|[1-9][0-9]*)\.hbp\Z")
-    seen = {}
+    seen, tries, summed = {}, {}, []
     for nm in names:
-        m = pat.match(nm)
-        if m:
-            seen[int(m.group(1))] = os.path.join(agg_dir, nm)
-        elif re.match(r"(0|[1-9][0-9]*)\.attempt[0-9]+\.hbp\Z", nm):
-            pt.attempts.append(nm)
-        elif not (nm == "SHA256SUMS" or re.match(r"(0|[1-9][0-9]*)\.(side|err)\Z", nm)):
+        m = _POINT_FILE.match(nm)
+        if nm == "SHA256SUMS":
+            continue
+        if not m or (m.group(2) is not None and m.group(3) == "side"):
             raise StageBStop("seed_extra_file", "%s: %s" % (spec.id, nm))
+        i, k, ext = int(m.group(1)), m.group(2), m.group(3)
+        if ext in _SUMMED:
+            summed.append(nm)
+        if ext != "hbp":
+            continue
+        if k is None:
+            seen[i] = os.path.join(agg_dir, nm)
+        else:
+            tries.setdefault(i, []).append(int(k))
+            pt.attempts.append(nm)
+    for nm in names:
+        m = _POINT_FILE.match(nm)
+        if m and m.group(3) != "hbp":
+            stem = "%s%s.hbp" % (m.group(1), "" if m.group(2) is None else ".attempt" + m.group(2))
+            if stem not in names:
+                raise StageBStop("seed_extra_file", "%s: %s without %s" % (spec.id, nm, stem))
     if require_sums:
-        check_sha256sums(agg_dir, [os.path.basename(p) for p in seen.values()] + pt.attempts)
+        check_sha256sums(agg_dir, summed)
     missing = [i for i in range(spec.calls) if i not in seen]
-    extra = [i for i in seen if i >= spec.calls]
+    extra = [i for i in set(seen) | set(tries) if i >= spec.calls]
     if missing:
         raise StageBStop("seed_dropped_call", "%s: calls %s" % (spec.id, _ranges(missing)))
     if extra:
         raise StageBStop("seed_extra_call", "%s: calls %s" % (spec.id, _ranges(extra)))
     streams = {}
     for i in range(spec.calls):
-        cf = read_call_file(seen[i], spec, i, require_reader_rc, side_dir or agg_dir)
+        cf = check_call_files(agg_dir, spec, i, tries.get(i, []), require_reader_rc, side_dir, require_engine_err)
         pt.files[i] = cf
         if cf.block is None:
             pt.lost.append((i, "engine_stop_rc4"))
@@ -996,24 +1121,48 @@ class Band:
         return ("(" if self.lo_open else "[") + a + "," + b + (")" if self.hi_open else "]")
 
     def holds_interval(self, lo, hi):
-        lo_ok = self.lo is None or ((lo > self.lo) if self.lo_open else (lo >= self.lo))
-        hi_ok = self.hi is None or ((hi < self.hi) if self.hi_open else (hi <= self.hi))
+        """[lo, hi] inside the band; lo None is -inf, hi None is +inf."""
+        if self.lo is None:
+            lo_ok = True
+        else:
+            lo_ok = lo is not None and ((lo > self.lo) if self.lo_open else (lo >= self.lo))
+        if self.hi is None:
+            hi_ok = True
+        else:
+            hi_ok = hi is not None and ((hi < self.hi) if self.hi_open else (hi <= self.hi))
         return lo_ok and hi_ok
 
     def disjoint(self, lo, hi):
-        below = self.lo is not None and ((hi <= self.lo) if self.lo_open else (hi < self.lo))
-        above = self.hi is not None and ((lo >= self.hi) if self.hi_open else (lo > self.hi))
+        """[lo, hi] and the band share no point; lo None is -inf, hi None is +inf."""
+        below = self.lo is not None and hi is not None and ((hi <= self.lo) if self.lo_open else (hi < self.lo))
+        above = self.hi is not None and lo is not None and ((lo >= self.hi) if self.hi_open else (lo > self.hi))
         return below or above
 
 
 def read3_interval(lo, hi, band):
-    """Interval [lo, hi] against a band: MET inside, MISS disjoint, else NOT_RESOLVED. lo, hi may be Rad."""
-    lo, hi = Rad.of(lo), Rad.of(hi)
-    if lo > hi:
+    """Interval [lo, hi] against a band: MET inside, MISS disjoint, else NOT_RESOLVED. lo, hi may be Rad, and None
+    for -inf (lo) or +inf (hi): a half-line [a, +inf) is MISS when a lies above the band."""
+    lo = None if lo is None else Rad.of(lo)
+    hi = None if hi is None else Rad.of(hi)
+    if lo is not None and hi is not None and lo > hi:
         raise StageBStop("read3", "empty interval")
     if band.holds_interval(lo, hi):
         return MET
     if band.disjoint(lo, hi):
+        return MISS
+    return NOT_RESOLVED
+
+
+def read3_pieces(pieces, band):
+    """Rule READ3 for a value known to lie in a union of intervals of the extended line (exact.Ext pieces, the ratio
+    of a denominator that reaches 0): MET if every piece lies in the band, MISS if every piece is disjoint from it,
+    else NOT_RESOLVED."""
+    outs = [read3_interval(p.lo, p.hi, band) for p in pieces]
+    if not outs:
+        raise StageBStop("read3", "no piece")
+    if all(o == MET for o in outs):
+        return MET
+    if all(o == MISS for o in outs):
         return MISS
     return NOT_RESOLVED
 
@@ -1277,15 +1426,25 @@ class ReadFile:
 
 
 def check_guard_file(path, triples):
-    """Every (N, delta, y) has a TWB_GUARD verdict=allowed line, and no line refuses."""
-    seen = set()
+    """Rule GUARD on the filed TWB_GUARD lines. `triples` holds one (N, delta, y) per guarded command (a QE command,
+    a dump point or a run point), repeated as often as the plan guards it: each needs that many verdict=allowed
+    lines. A refusal at a plan triple stops stage B; a line at a triple outside the plan is not a command of the
+    plan and is not read."""
+    need = {}
+    for t in triples:
+        need[(t[0], t[1], t[2])] = need.get((t[0], t[1], t[2]), 0) + 1
+    seen = {}
     for ln in read_lines(path):
         _, f = parse_row(ln, "TWB_GUARD", ("N", "delta", "y", "verdict", "reason", "computed"))
         d = fields_dict(f)
+        key = (canon_int(d["N"]), d["delta"], d["y"])
+        if key not in need:
+            continue
         if d["verdict"] != "allowed" or d["reason"] != "none" or d["computed"] != "0":
             raise StageBStop("guard", "refused: " + ln[:80])
-        seen.add((int(d["N"]), d["delta"], d["y"]))
-    missing = [t for t in triples if (t[0], t[1], t[2]) not in seen]
-    if missing:
-        raise StageBStop("guard", "no guard line for %s" % (missing[:3],))
+        seen[key] = seen.get(key, 0) + 1
+    short = [(t, n, seen.get(t, 0)) for t, n in sorted(need.items()) if seen.get(t, 0) < n]
+    if short:
+        raise StageBStop("guard", "guard lines short of the commands: %s" % (
+            ";".join("%s:%d_of_%d" % ("_".join(map(str, t)), got, n) for t, n, got in short[:3])))
     return True

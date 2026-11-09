@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# The sabotage suite of the stripe-phase reader: seven planted faults, each of which the reader must catch. Every case
-# prints CAUGHT or MISSED; the suite exits 0 only when all seven are CAUGHT. No engine runs here: the streams are
+# The sabotage suite of the stripe-phase reader: nine planted faults, each of which the reader must catch. Every case
+# prints CAUGHT or MISSED; the suite exits 0 only when all nine are CAUGHT. No engine runs here: the streams are
 # synthetic (the stage A emulator) and the campaign is fabricated (reader/b/tests/campaign.py).
 #
 #   CARGO_TARGET_DIR=<outside the repo> reader/sabotage/run.sh
@@ -29,7 +29,7 @@ rm -rf "$WORK/streams"
   emit_streams_for_the_independent_check -- --ignored >/dev/null) || { echo "stream emitter failed" >&2; exit 2; }
 CAMPAIGN=${STRIPES_CAMPAIGN:-$WORK/campaign}
 [ -d "$CAMPAIGN/agg" ] || $PY -I "$READER/b/tests/campaign.py" --out "$CAMPAIGN" >/dev/null || exit 2
-inputs() { echo --agg "$1/agg" --runs "$1/run" --qe "$1/QE.hbp" --cost "$1/QE-COST.hbp" --guard "$1/GUARD.hbp"; }
+inputs() { echo --agg "$1/agg" --runs "$1/run" --qe "$1/QE.hbp" --cost "$1/QE-COST.hbp" --qe-rc "$1/QE-RC.hbp" --guard "$1/GUARD.hbp"; }
 copy() { rm -rf "$WORK/$1"; cp -al "$CAMPAIGN" "$WORK/$1"; echo "$WORK/$1"; }
 
 # stop WANT CMD...: CMD exits 3 with one STOP row whose reason is WANT.
@@ -109,6 +109,36 @@ stop falsifier $PY -I "$HERE/patch.py" falsify_report $(inputs "$CAMPAIGN") --ou
 $EDIT read --in "$CLEAN" --out "$WORK/r7b.hbp" --op falsify && stop falsifier $PY -I "$B" audit --read "$WORK/r7b.hbp" || r=1
 report $r falsifier_on_report_read "a module naming E17's read-and-report pi_t1 as a falsifier is refused (falsifier); so is a READ file whose E17 VERDICT does (falsifier)"
 
-for d in c1c c1d c2a c2b c3a c3b c5; do rm -rf "${WORK:?}/$d"; done
-echo "SABOTAGE|cases=7|caught=$((7 - MISSED))|missed=$MISSED|engine_runs=0|json=0"
+# 8. Rule STOP without its evidence: a record or a batch dropped with no exit 4 filed, data already seen filed as an
+# attempt, an attempt that is not a row, an exit 4 without its TWB_FAULT row, a crash taken for an engine stop.
+r=0
+for op_want in dump_no_attempt:stop_attempt_count dump_block_as_attempt:stop_attempt_file \
+               dump_garbage_attempt:stop_attempt_count dump_garbage_attempt_short:stop_attempt_file \
+               dump_stop_without_fault:stop_engine_stderr run_empty_no_attempt:stop_attempt_count \
+               run_truncated_no_attempt:stop_attempt_count run_crash:run_rc; do
+  op=${op_want%%:*}; want=${op_want#*:}
+  C=$(copy c8); $EDIT stop --campaign "$C" --op "$op" && stop "$want" $PY -I "$B" read $(inputs "$C") --out "$WORK/r8.hbp" || { echo "    case 8 $op" >&2; r=1; }
+done
+report $r stop_without_evidence "probes A (P05 call 7 cut to 3 records, no attempt: stop_attempt_count), B (the complete block filed as attempt1: stop_attempt_file) and C (an attempt holding 'anything': stop_attempt_count beside the complete block, stop_attempt_file beside a rerun); an exit 4 with an empty engine stderr (stop_engine_stderr); an R2 batch empty or cut with no attempts (stop_attempt_count); rc=137 (run_rc)"
+
+# 9. QE: a panic with rc=101 leaves that command's reads NOT_MEASURED and the read goes on; the same panic text filed
+# with rc=0 stops (qe_stderr); an altered B turns Q02 NOT_MET; QE-RC.hbp short of a command stops (qe_rc).
+r=0
+C=$(copy c9a); $EDIT qe --campaign "$C" --op panic_rc101
+if $PY -I "$B" read $(inputs "$C") --out "$WORK/r9a.hbp" > /dev/null; then
+  for k in 09 10 11 12; do grep -q "^STRIPES_READ|row=Q01|read=zero$k|.*|verdict=NOT_MEASURED|" "$WORK/r9a.hbp" || r=1; done
+  grep -q "^STRIPES_READ|row=Q01|read=zero08|.*|verdict=MET|" "$WORK/r9a.hbp" || r=1
+  grep -q "^STRIPES_READ_NOTE|label=qe_rc|text=[^|]*sector_6561_[^|]*rc=101" "$WORK/r9a.hbp" || r=1
+  $PY -I "$B" audit --read "$WORK/r9a.hbp" > /dev/null || r=1
+else r=1; fi
+C=$(copy c9b); $EDIT qe --campaign "$C" --op panic_rc0 && stop qe_stderr $PY -I "$B" read $(inputs "$C") --out "$WORK/r9b.hbp" || r=1
+C=$(copy c9c); $EDIT qe --campaign "$C" --op altered_B
+if $PY -I "$B" read $(inputs "$C") --out "$WORK/r9c.hbp" > /dev/null; then
+  verdict_of "$WORK/r9c.hbp" Q02 | grep -q "|falsifier=par3:[^|]*|verdict=NOT_MET|" || r=1
+else r=1; fi
+C=$(copy c9d); $EDIT qe --campaign "$C" --op rc_row_missing && stop qe_rc $PY -I "$B" read $(inputs "$C") --out "$WORK/r9d.hbp" || r=1
+report $r qe_exit_and_altered_B "a 6561 sector panic with rc=101 leaves its 4 reads NOT_MEASURED (zero09-zero12) and the READ file passes audit; the panic text with rc=0 is a STOP qe_stderr; B at (81, -1/54, t=2) moved by 1e-5 turns Q02 NOT_MET (falsifier par3); QE-RC.hbp short of a row is a STOP qe_rc"
+
+for d in c1c c1d c2a c2b c3a c3b c5 c8 c9a c9b c9c c9d; do rm -rf "${WORK:?}/$d"; done
+echo "SABOTAGE|cases=9|caught=$((9 - MISSED))|missed=$MISSED|engine_runs=0|json=0"
 [ "$MISSED" = 0 ]

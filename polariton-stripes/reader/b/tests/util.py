@@ -53,8 +53,15 @@ def rehash(agg_text):
     return "\n".join(body + ["|".join(end)]) + "\n"
 
 
-def point_dir(tmp, files):
-    """tmp/<name> for {name: text}; returns tmp."""
+ENGINE_FAULT = "TWB_FAULT|reason=rounding_bound_hL_above_1/2|json=0\n"
+
+
+def point_dir(tmp, files, engine_err=True):
+    """tmp/<name> for {name: text}; returns tmp. With engine_err, each call file <stem>.hbp not given its
+    <stem>.eng.err gets the one the run script files: empty after a completed call, a TWB_FAULT row after rc=4."""
     for name, text in files.items():
         write(os.path.join(tmp, name), text)
+        if engine_err and name.endswith(".hbp") and name[:-4] + ".eng.err" not in files:
+            stop = text.split("\n")[-2].startswith("rc=4 ")
+            write(os.path.join(tmp, name[:-4] + ".eng.err"), ENGINE_FAULT if stop else "")
     return tmp

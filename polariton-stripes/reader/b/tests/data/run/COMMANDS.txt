@@ -14,3 +14,4 @@ CMD|XR0|4|run N=27 delta=1/4 u=1 y=0 start=2048 count=512 steps=32,64|rc=0
 CMD|XR0|5|run N=27 delta=1/4 u=1 y=0 start=2560 count=512 steps=32,64|rc=0
 CMD|XR0|6|run N=27 delta=1/4 u=1 y=0 start=3072 count=512 steps=32,64|rc=0
 CMD|XR0|7|run N=27 delta=1/4 u=1 y=0 start=3584 count=512 steps=32,64|rc=0
+XR1.<j>.rc, XR0.<j>.rc: the rc column above, filed one file per batch as the run wrapper files it (rule STOP).

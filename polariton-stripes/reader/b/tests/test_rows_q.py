@@ -166,6 +166,134 @@ class Faults(unittest.TestCase):
         self.assertEqual(vs["Q07"].verdict, c.NOT_MET)
 
 
+def set_fields(text, n, y, t, **fields):
+    """The synthetic QE file with fields of the READ row at (point, N, y, t) replaced."""
+    out = []
+    for ln in text.split("\n"):
+        if ln.startswith(qe.READ_KIND + "|N=%d|" % n) and "|y=%s|" % y in ln and "|t=%s|" % t in ln:
+            parts = ln.split("|")
+            for k, part in enumerate(parts):
+                key = part.split("=", 1)[0]
+                if k and key in fields:
+                    parts[k] = "%s=%s" % (key, fields[key])
+            ln = "|".join(parts)
+        out.append(ln)
+    return "\n".join(out)
+
+
+def reads_of(v):
+    return {r.rid: r for r in v.reads}
+
+
+class Unbounded(unittest.TestCase):
+    """Rule READ3 where an interval reaches 0 or infinity: the failure branches of the prediction (review B1, B2)."""
+
+    def test_q04_certified_negative_denominator(self):
+        # probe P1: B(729, 1/27, t=1/4) scaled by 0.95, so D(1/4) is about -0.008, certified
+        vs = run_rows(synth_file(edit=lambda k: {"b_scale": fr(95, 100)} if k == ("point", 729, "1/27", "1/4")
+                                 else {}))
+        r = reads_of(vs["Q04"])["ratio_a_N729"]
+        self.assertTrue(r.scored)
+        self.assertEqual(r.outcome, c.MISS)
+        self.assertTrue(r.hi < 0)  # a bounded negative ratio
+        self.assertEqual(vs["Q04"].verdict, c.NOT_MET)
+        self.assertEqual(vs["Q04"].falsifier, "ratio_a_N729:" + frozen.load().predict("Q04")["falsifier"])
+
+    def test_q04_denominator_across_zero(self):
+        # |B| = 1/16 at (729, 1/27, t=1/4): D(1/4) = 16|B| - 1 holds 0 inside +-16 e_B; D(1/8)/D(1/4) is then
+        # (-inf, a] or [b, +inf) with a < 0 and b far above 3/10: MISS
+        text = set_fields(synth_file(), 729, "1/27", "1/4", B_e18=str(E18 // 16), D2_e18=str(E18 // 8 // 729))
+        vs = run_rows(text)
+        r = reads_of(vs["Q04"])["ratio_a_N729"]
+        self.assertEqual((r.outcome, r.lo, r.hi, r.value), (c.MISS, "-inf", "+inf", "unbounded"))
+        self.assertIn("_or_", dict(r.detail)["interval"])
+        self.assertEqual(vs["Q04"].verdict, c.NOT_MET)
+        # the pieces themselves
+        d4 = rows_q.q04_D(parse_text(text)[("point", 729, "-1/4", "1/27", "1/4")], "1/27", "1/4")
+        self.assertTrue(d4.lo < 0 < d4.hi)
+
+    def test_q07_and_q03_vanishing_B(self):
+        # probe P2: B_e18 = 0 at the scored point (729, 1/108, t=1)
+        vs = run_rows(set_fields(synth_file(), 729, "1/108", "1", B_e18="0", D2_e18="0"))
+        ns = reads_of(vs["Q07"])["ns_y1/108_t1"]
+        self.assertEqual((ns.scored, ns.outcome, ns.hi), (True, c.MISS, "+inf"))
+        self.assertEqual(vs["Q07"].verdict, c.NOT_MET)
+        self.assertIn("ns_y1/108_t1", vs["Q07"].falsifier)
+        r12 = reads_of(vs["Q03"])["R12"]  # (729, 1/108 -> 1/216, t=1): [a, +inf), a far above the band
+        self.assertEqual((r12.scored, r12.outcome, r12.hi), (True, c.MISS, "+inf"))
+        self.assertEqual(vs["Q03"].verdict, c.NOT_MET)
+        self.assertEqual(reads_of(vs["Q06"])["c_y1/108_t1"].outcome, c.MISS)  # the literal falsifier B_e18 <= 0
+
+    def test_q05_vanishing_B(self):
+        vs = run_rows(set_fields(synth_file(), 729, "1/54", "1", B_e18="0", D2_e18="0"))
+        d3 = reads_of(vs["Q05"])["dR3"]  # (729, 1/54 -> 1/108, t=1): R - 1/4 in [a, +inf)
+        self.assertEqual((d3.scored, d3.outcome, d3.hi), (True, c.MISS, "+inf"))
+        self.assertEqual(vs["Q05"].verdict, c.NOT_MET)
+        self.assertEqual(reads_of(vs["Q03"])["R11"].outcome, c.MISS)
+
+    def test_richardson_unbounded(self):
+        # B(1/108) = 0 at t=2: R(1/108) = [a, +inf), so L = (4 R(1/108) - R(1/54))/3 is a half-line too; L is
+        # read-and-report (X08), so the row stays MET
+        vs = run_rows(set_fields(synth_file(), 729, "1/108", "2", B_e18="0", D2_e18="0"))
+        rs = reads_of(vs["Q03"])
+        self.assertEqual((rs["L"].scored, rs["L"].outcome, rs["L"].hi), (False, c.MISS, "+inf"))
+        self.assertEqual(vs["Q03"].verdict, c.MET)
+
+    def test_q06_positive_B_inside_its_certificate(self):
+        # probe probe_q06.py: B_e18 = 1 at the scored read (729, 1/108, t=1/2): c near -1/kappa_q, certified outside
+        vs = run_rows(set_fields(synth_file(), 729, "1/108", "1/2", B_e18="1", D2_e18="0"))
+        r = reads_of(vs["Q06"])["c_y1/108_t1/2"]
+        self.assertEqual((r.scored, r.outcome), (True, c.MISS))
+        self.assertTrue(fr(1543, 1) < r.lo < r.hi < fr(1544, 1))
+        self.assertEqual(vs["Q06"].verdict, c.NOT_MET)
+        self.assertEqual(vs["Q06"].falsifier, "c_y1/108_t1/2:" + frozen.load().predict("Q06")["falsifier"])
+
+    def test_extended_arithmetic(self):
+        from stripes_read_b.exact import Ext, Iv, quotient
+        self.assertEqual(len(quotient(Iv(1, 2), Iv(1, 4))), 1)
+        (p,) = quotient(Iv(1, 2), Iv(0, 4))
+        self.assertEqual((p.lo, p.hi), (fr(1, 4), None))
+        (p,) = quotient(Iv(-2, -1), Iv(-4, -1))
+        self.assertEqual((p.lo, p.hi), (fr(1, 4), 2))
+        a, b = quotient(Iv(1, 2), Iv(-1, 4))
+        self.assertEqual((a.lo, a.hi, b.lo, b.hi), (None, -1, fr(1, 4), None))
+        a, b = quotient(Iv(-2, -1), Iv(-1, 4))
+        self.assertEqual((a.lo, a.hi, b.lo, b.hi), (1, None, None, fr(-1, 4)))
+        (p,) = quotient(Iv(-1, 1), Iv(-1, 1))
+        self.assertEqual((p.lo, p.hi), (None, None))
+        band = c.Band(fr(1, 5), fr(3, 10))
+        self.assertEqual(c.read3_pieces([Ext(fr(1, 2), None)], band), c.MISS)
+        self.assertEqual(c.read3_pieces([Ext(fr(1, 4), None)], band), c.NOT_RESOLVED)
+        self.assertEqual(c.read3_pieces([Ext(None, -1), Ext(fr(1, 2), None)], band), c.MISS)
+        self.assertEqual(c.read3_pieces([Ext(None, fr(1, 4)), Ext(fr(1, 2), None)], band), c.NOT_RESOLVED)
+        self.assertEqual(c.read3_pieces([Ext(fr(1, 4), fr(1, 4))], band), c.MET)
+        self.assertEqual(c.read3_pieces([Ext(0, None)], c.Band(0, None)), c.MET)
+        x = (Ext(1, None).scale(4) - Ext(0, 1)).scale(fr(1, 3))
+        self.assertEqual((x.lo, x.hi), (1, None))
+        self.assertEqual((Ext(1, None).scale(-2).lo, Ext(1, None).scale(-2).hi), (None, -2))
+        y = Ext(-1, None).times_pos(Iv(2, 3))
+        self.assertEqual((y.lo, y.hi), (-3, None))
+
+
+def parse_text(text):
+    """The QE reads of a synthetic QE file (parse_qe reads it whole, so the file goes with the folder)."""
+    with TempDir() as d:
+        p = os.path.join(d, "QE.hbp")
+        write(p, text)
+        return qe.parse_qe(p)
+
+
+class NormalOrder(unittest.TestCase):
+    def test_reports_the_named_quantity(self):
+        # "normal-order (Q_W-1/4)/<B>^2-1 read and report": the value is that quantity, its ratio to n*_lin beside
+        vs = base()
+        r = reads_of(vs["Q07"])["nsno_y1/54_t1"]
+        q = parse_text(synth_file())[("point", 729, "-1/4", "1/54", "1")]
+        nn = rows_q.q07_nstar_normal(q)
+        self.assertEqual((r.lo, r.hi, r.scored), (nn.lo, nn.hi, False))
+        self.assertIn("over_nstar_lin-1", dict(r.detail))
+
+
 class ReadFile(unittest.TestCase):
     def test_file(self):
         fz = frozen.load()

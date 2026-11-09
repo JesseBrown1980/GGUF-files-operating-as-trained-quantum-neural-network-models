@@ -56,7 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           STRIPES_CAMPAIGN="$WORK/e2e/campaign" STRIPES_SABOTAGE_WORK="$WORK/sabotage" polariton-stripes/reader/sabotage/run.sh | tee "$WORK/sabotage.txt"
-          test "$(grep -c '^CAUGHT ' "$WORK/sabotage.txt")" = 7
+          test "$(grep -c '^CAUGHT ' "$WORK/sabotage.txt")" = 9
       - name: The independent check of stage A on synthetic streams only (check_a.py against stripes-read-a)
         run: |
           set -euo pipefail

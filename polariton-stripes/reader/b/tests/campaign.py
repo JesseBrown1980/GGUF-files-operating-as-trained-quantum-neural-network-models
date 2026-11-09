@@ -3,8 +3,10 @@
     python3 -I campaign.py --out DIR
 
 writes DIR/agg/P01..P14/<call>.hbp (stage A blocks of AGG-FORMAT.md with the run script's trailer line, one file per
-call of the point table), the side files of P08 and P13, a SHA256SUMS per point, DIR/run/R1..R4.<j>.hbp and .err (the
-64 batches of each run point), DIR/QE.hbp and DIR/QE-COST.hbp (the 15 QE commands, QR1-QR5) and DIR/GUARD.hbp.
+call of the point table) and <call>.eng.err (the engine's stderr, empty), the side files of P08 and P13, a SHA256SUMS
+per point, DIR/run/R1..R4.<j>.hbp, .err and .rc (the 64 batches of each run point), DIR/QE.hbp, DIR/QE-COST.hbp and
+DIR/QE-RC.hbp (the 15 QE commands, QR1-QR5, and the wrapper's receipt) and DIR/GUARD.hbp (one line per guarded
+command).
 
 The values are small fabricated integers, internally consistent where stage B checks them: each call's AGG_END hash
 and nl_sha256, the AGG_VR, AGG_SUM, AGG_BLK and AGG_CMP identities, the point table, the seeds and the stream
@@ -317,9 +319,21 @@ def make_point(root, pid, steps=None):
             text0, call0 = cache[key]
             text, side = rebase(text0, spec, call0, call), None
         write(os.path.join(d, "%d.hbp" % call), text + "rc=0 rc_reader=0\n")
+        write(os.path.join(d, "%d.eng.err" % call), "")
         if side is not None:
             write(os.path.join(d, "%d.side" % call), side)
     c.write_sha256sums(d)
+
+
+ENGINE_FAULT = "TWB_FAULT|reason=rounding_bound_hL_above_1/2|json=0\n"
+
+
+def engine_stop_call(pid, call):
+    """What the run script files for a dump call whose engine stopped: stage A's empty_stream STOP and both exit
+    codes (<call>.hbp), and the engine's TWB_FAULT row (<call>.eng.err)."""
+    e = hashlib.sha256(b"").hexdigest()
+    return ("STOP|reader=stripes-read-a|reader_version=0.1.0|point=%s|call=%d|reason=empty_stream|line=0|detail=none"
+            "|stdin_bytes=0|stdin_lines=0|stdin_sha256=%s|json=0\nrc=4 rc_reader=3\n" % (pid, call, e)), ENGINE_FAULT
 
 
 def rebase(text, spec, call0, call):
@@ -393,6 +407,7 @@ def make_run(root, rid):
         write(os.path.join(d, "%s.%d.hbp" % (rid, j)), "".join(x + "\n" for x in lines))
         memo = [("count", n), ("per_sample", VNC)] + [(k, 0) for k in runs_mod.MEMO_KEYS[2:]]
         write(os.path.join(d, "%s.%d.err" % (rid, j)), row("TWB_MEMO", memo) + "\n")
+        write(os.path.join(d, "%s.%d.rc" % (rid, j)), "rc=0\n")
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -431,13 +446,23 @@ def make_qe(root):
             costs.append(k)
     write(os.path.join(root, "QE.hbp"), "".join(x + "\n" for x in reads))
     write(os.path.join(root, "QE-COST.hbp"), "".join(x + "\n" for x in costs))
+    write(os.path.join(root, "QE-RC.hbp"), qe_rc_text())
+
+
+def qe_rc_text(rcs=None):
+    """QE-RC.hbp as the wrapper files it: the QE binary's sha256, then each command's rc after it ran."""
+    rcs = rcs or {}
+    return row(qe_mod.BINARY_KIND, [("sha256", qe_mod.LANE_BINARY_SHA256)]) + "\n" + "".join(
+        row(qe_mod.RC_KIND, [("argv", qe_mod.argv_text(cmd)), ("rc", rcs.get(qe_mod.argv_text(cmd), 0))]) + "\n"
+        for cmd in qe_mod.PLAN)
 
 
 def guard_triples():
-    t = set(qe_mod.plan_triples())
-    t |= {(p.N, p.delta, p.y) for p in c.DUMP_POINTS.values()}
-    t |= {(p.N, p.delta, p.y) for p in c.RUN_POINTS.values()}
-    return sorted(t)
+    """One line per guarded command, in run order: each QE command, then each run point, then each dump point."""
+    t = list(qe_mod.plan_guards())
+    t += [(p.N, p.delta, p.y) for p in c.RUN_POINTS.values()]
+    t += [(p.N, p.delta, p.y) for p in c.DUMP_POINTS.values()]
+    return t
 
 
 def make_guard(root):

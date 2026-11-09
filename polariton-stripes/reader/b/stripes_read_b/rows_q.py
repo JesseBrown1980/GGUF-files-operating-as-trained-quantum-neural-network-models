@@ -7,7 +7,6 @@ from .common import (
     MET,
     MISS,
     NOT_MEASURED,
-    NOT_RESOLVED,
     Band,
     Read,
     Scoring,
@@ -19,11 +18,12 @@ from .common import (
     check_exposure_text,
     read3_exact,
     read3_interval,
+    read3_pieces,
     report,
     scored,
     square_root,
 )
-from .exact import ExactError, dec, fmt, fr, ipow, parse_rat, rat_text
+from .exact import Ext, ExactError, dec, fmt, fr, ipow, parse_rat, quotient, rat_text
 
 D = "-1/4"
 TWO_E18 = fr(2, ipow(10, 18))
@@ -47,11 +47,9 @@ def _nm(row, rid, at, kind, scoring, why="missing_QE_row"):
 
 
 def _ratio(num, den):
-    """|B_num|/|B_den| as an interval, None if the denominator's interval reaches 0."""
-    a, b = num.absB_iv(), den.absB_iv()
-    if b.lo <= 0:
-        return None
-    return a * b.inv()
+    """|B_num|/|B_den| as an Ext: bounded when |B_den| is certified above 0, else the half-line [lo, +inf)."""
+    (piece,) = quotient(num.absB_iv(), den.absB_iv())
+    return piece
 
 
 def _sign_text(r):
@@ -95,7 +93,8 @@ def q02_parity(rp, rm):
 
 
 def q03_ratio(r_half, r_full):
-    """R = D2(y/2)/D2(y) = |B(y/2)|/|B(y)|, interval [(B2-e2)/(B1+e1), (B2+e2)/(B1-e1)]."""
+    """R = D2(y/2)/D2(y) = |B(y/2)|/|B(y)|, interval [(B2-e2)/(B1+e1), (B2+e2)/(B1-e1)], or [(B2-e2)/(B1+e1), +inf)
+    when B1 - e1 <= 0."""
     return _ratio(r_half, r_full)
 
 
@@ -103,9 +102,7 @@ def q03_richardson(r216, r108, r54):
     """L = (4 R(1/108) - R(1/54))/3."""
     a = _ratio(r216, r108)
     b = _ratio(r108, r54)
-    if a is None or b is None:
-        return None
-    return (a * 4 - b) * fr(1, 3)
+    return (a.scale(4) - b).scale(fr(1, 3))
 
 
 def q04_D(r, y, t):
@@ -115,12 +112,13 @@ def q04_D(r, y, t):
 
 
 def q06_c(r, y, t):
-    """c = (D2_q/D2_law - 1 - y^2 b4/b2)/kappa_q, with D2_q = 2|B|/N."""
+    """c = (D2_q/D2_law - 1 - y^2 b4/b2)/kappa_q, with D2_q = 2B/N from the signed B interval (the frozen method
+    D2_q = 2B_e18/N): bounded at every B, since kappa_q is a nonzero constant."""
     yy, tt = parse_rat(y), parse_rat(t)
     law = series.d2_law(fr(-1, 4), yy, tt)
     b2, b4 = series.b2b4_iv(fr(-1, 4), tt)
     k = series.kappa_q(fr(-1, 4), tt, r.N)
-    ratio = r.D2_iv() * law.inv()
+    ratio = r.B_iv() * fr(2, r.N) * law.inv()
     num = ratio - 1 - b4 * b2.inv() * (yy * yy)
     return num * k.inv(), ratio - 1
 
@@ -131,27 +129,48 @@ def q07_qw_ratio(r, lawv):
 
 
 def q07_nstar(r):
-    """n*_Q = Q_W/<B>^2 - 1, None if the B interval reaches 0."""
-    b = r.absB_iv()
-    if b.lo <= 0:
-        return None
-    return r.QW_iv() * b.sq().inv() - 1
+    """n*_Q = Q_W/<B>^2 - 1 as an Ext: [Q_W.lo/(|B| + e_B)^2 - 1, +inf) when the |B| interval reaches 0."""
+    (piece,) = quotient(r.QW_iv(), r.absB_iv().sq())
+    return piece - 1
 
 
 def q07_nstar_normal(r):
-    """(Q_W - 1/4)/<B>^2 - 1."""
-    b = r.absB_iv()
-    if b.lo <= 0:
-        return None
-    return (r.QW_iv() - fr(1, 4)) * b.sq().inv() - 1
+    """(Q_W - 1/4)/<B>^2 - 1 as an Ext."""
+    (piece,) = quotient(r.QW_iv() - fr(1, 4), r.absB_iv().sq())
+    return piece - 1
+
+
+def q07_over_lin(ns, law):
+    """n*_Q/n*_lin - 1 for an Ext n*_Q and the law's n*_lin (positive at y != 0)."""
+    nl = law.nstar()
+    if not nl.pos():
+        raise StageBStop("rows_q", "n*_lin not positive")
+    return ns.times_pos(nl.inv()) - 1
+
+
+def _end_text(x, inf):
+    return inf if x is None else x
+
+
+def _pieces_text(pieces):
+    return "_or_".join("%s..%s" % ("-inf" if p.lo is None else fmt(p.lo, 8, "down"),
+                                   "+inf" if p.hi is None else fmt(p.hi, 8, "up")) for p in pieces)
 
 
 def _interval_read(row, rid, at, kind, scoring, iv, band, frozen="none", detail=()):
-    if iv is None:
-        return Read(row, rid, at, kind, scoring, NOT_RESOLVED, band=band, frozen=frozen,
-                    detail=tuple(detail) + (("interval", "unbounded"),))
-    return Read(row, rid, at, kind, scoring, read3_interval(iv.lo, iv.hi, band), value=iv.mid(), lo=iv.lo, hi=iv.hi,
-                band=band, frozen=frozen, detail=detail)
+    """READ3 of an interval, or of the union of half-lines a ratio is when its denominator reaches 0 (an Ext or a
+    list of Ext pieces): MISS when every piece is disjoint from the band."""
+    pieces = iv if isinstance(iv, list) else [Ext.of(iv)]
+    out = read3_pieces(pieces, band)
+    if len(pieces) == 1 and pieces[0].bounded():
+        p = pieces[0]
+        return Read(row, rid, at, kind, scoring, out, value=(p.lo + p.hi) * fr(1, 2), lo=p.lo, hi=p.hi, band=band,
+                    frozen=frozen, detail=detail)
+    lo = None if any(p.lo is None for p in pieces) else min(p.lo for p in pieces)
+    hi = None if any(p.hi is None for p in pieces) else max(p.hi for p in pieces)
+    return Read(row, rid, at, kind, scoring, out, value="unbounded", lo=_end_text(lo, "-inf"),
+                hi=_end_text(hi, "+inf"), band=band, frozen=frozen,
+                detail=tuple(detail) + (("interval", _pieces_text(pieces)),))
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -297,8 +316,7 @@ def row_q04(reads, fz):
                 rows.append(_nm("Q04", rid2, at, "interval", sc))
                 continue
             da, db = q04_D(ra, y, ta), q04_D(rb, y, tb)
-            iv = None if db.lo <= 0 else da * db.inv()
-            rows.append(_interval_read("Q04", rid2, at, "interval", sc, iv, band_r, frozen=frz))
+            rows.append(_interval_read("Q04", rid2, at, "interval", sc, quotient(da, db), band_r, frozen=frz))
         at = _at(n, y, "1/8")
         sc = _value_scoring_pair(fz, "Q04", n, (y,), "1/8", None)
         if r8 is None:
@@ -328,8 +346,7 @@ def row_q05(reads, fz):
         if rh is None or rf is None:
             rows.append(_nm("Q05", "dR%d" % i, at, "interval", sc))
             continue
-        iv = q03_ratio(rh, rf)
-        rows.append(_interval_read("Q05", "dR%d" % i, at, "interval", sc, None if iv is None else iv - fr(1, 4), band,
+        rows.append(_interval_read("Q05", "dR%d" % i, at, "interval", sc, q03_ratio(rh, rf) - fr(1, 4), band,
                                    frozen=text))
     _count(fz, "Q05", rows, 5, 2, phrase)
     return rows
@@ -361,12 +378,8 @@ def row_q06(reads, fz):
                 continue
             c, dv = q06_c(r, y, t)
             det = (("B_e18", r.v["B_e18"]), ("B_sign", _sign_text(r)))
-            if r.v["B_e18"] <= 0:
-                out = MISS
-            elif r.B() <= r.e_B():
-                out = NOT_RESOLVED
-            else:
-                out = read3_interval(c.lo, c.hi, band)
+            # the literal falsifier B_e18 <= 0, else READ3 on c (bounded at every B: no certificate on B is needed)
+            out = MISS if r.v["B_e18"] <= 0 else read3_interval(c.lo, c.hi, band)
             rows.append(Read("Q06", rid, at, "interval", sc, out, value=c.mid(), lo=c.lo, hi=c.hi, band=band,
                              frozen=frz, detail=det))
             dev.append(Read("Q06", "dev_y%s_t%s" % (y, t), at, "interval", rr_dev, MET, value=dv.mid(), lo=dv.lo,
@@ -409,14 +422,12 @@ def row_q07(reads, fz):
         rows.append(_interval_read("Q07", "QW_y%s_t%s" % (y, t), at, "interval", sc, q07_qw_ratio(r, law), bq,
                                    frozen="EB2_lin=" + Q07_EB2[(t, y)]))
         if y != "0":
-            ns = q07_nstar(r)
-            nl = law.nstar()
-            iv = None if ns is None else ns * nl.inv() - 1
-            rows.append(_interval_read("Q07", "ns_y%s_t%s" % (y, t), at, "interval", sc, iv, bn,
-                                       frozen="n*_lin=" + Q07_NSTAR[(t, y)]))
+            rows.append(_interval_read("Q07", "ns_y%s_t%s" % (y, t), at, "interval", sc,
+                                       q07_over_lin(q07_nstar(r), law), bn, frozen="n*_lin=" + Q07_NSTAR[(t, y)]))
+            # the named quantity (Q_W - 1/4)/<B>^2 - 1, its ratio to n*_lin beside
             nn = q07_nstar_normal(r)
-            iv = None if nn is None else nn * nl.inv() - 1
-            extra.append(_interval_read("Q07", "nsno_y%s_t%s" % (y, t), at, "interval", rr_norm, iv, Band(None, None)))
+            extra.append(_interval_read("Q07", "nsno_y%s_t%s" % (y, t), at, "interval", rr_norm, nn, Band(None, None),
+                                        detail=(("over_nstar_lin-1", _pieces_text([q07_over_lin(nn, law)])),)))
         if t == "2":
             q = r.QW_iv() - law.EB2
             extra.append(Read("Q07", "above_y%s" % y, at, "interval", rr_above, MET, value=q.mid(), lo=q.lo, hi=q.hi,
@@ -442,21 +453,23 @@ ROWS = (("Q01", row_q01), ("Q02", row_q02), ("Q03", row_q03), ("Q04", row_q04), 
         ("Q07", row_q07))
 
 
-def read_q(qe_path, cost_path=None, guard_path=None, fz=None):
-    """Verdicts of Q01-Q07 from the filed QE stdout (and, when given, its COST rows and the guard lines)."""
+def read_q(qe_path, cost_path=None, guard_path=None, fz=None, rc_path=None):
+    """Verdicts of Q01-Q07 from the filed QE stdout (and, when given, its COST rows, the guard lines and the
+    wrapper's QE-RC.hbp, whose nonzero rc leaves every read of that command NOT_MEASURED: rule STOP)."""
     fz = fz or frozen_mod.load()
     qe_mod.check_plan(fz)
     check_exposure_text(fz)
     if guard_path is not None:
-        check_guard_file(guard_path, qe_mod.plan_triples())
+        check_guard_file(guard_path, qe_mod.plan_guards())
     try:
-        reads = qe_mod.parse_qe(qe_path, qe_mod.PLAN, cost_path)
+        reads = qe_mod.parse_qe(qe_path, qe_mod.PLAN, cost_path, rc_path)
     except ExactError as e:
         raise StageBStop("qe_row", str(e)) from e
     out = []
     for rid, fn in ROWS:
         p = fz.predict(rid)
         rs = fn(reads, fz)
-        out.append(Verdict(rid, p["name"], p["tag"], rs))
+        fals = tuple(r.rid for r in rs if r.scored and r.outcome == MISS)
+        out.append(Verdict(rid, p["name"], p["tag"], rs, falsifier_reads=fals, falsifier_text=p["falsifier"]))
     return out, reads
 

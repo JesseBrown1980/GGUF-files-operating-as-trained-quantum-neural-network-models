@@ -6,7 +6,7 @@ This folder reads the runs of `PREDICTION-STRIPE-PHASE.hbp` (frozen at 1977d45, 
 - `AGG-FORMAT.md`: the full grammar of the aggregate block, the side file and the STOP row. Stage B reads only what it defines.
 - `b/`: stage B, `stripes-read-b` 0.1.0, Python 3 (int and `fractions.Fraction` only, run with `python3 -I`). It reads the aggregates, the run receipts and the QE receipts and applies every STRIPES_PREDICT row.
 - `check/`: the independent check of stage A (`check_a.py`, `compare.py`) and `no_float.sh`.
-- `sabotage/run.sh`: seven planted faults; the reader must catch each one.
+- `sabotage/run.sh`: nine planted faults; the reader must catch each one.
 - `.github/workflows/polariton-stripes.yml` (at the repo root): runs all of it on every push and pull request that touches `polariton-stripes/`.
 
 ## Stage A: one dump stream in, one aggregate block out
@@ -43,22 +43,25 @@ The 29 default tests need no engine. The three ignored tests read real dumps at 
 ```
 python3 -I polariton-stripes/reader/b/stripes_read_b/__main__.py read \
   --agg receipts/agg --runs receipts/run --qe receipts/QE.hbp --cost receipts/QE-COST.hbp \
-  --guard receipts/GUARD.hbp --out polariton-stripes/READ-STRIPE-PHASE.hbp
+  --qe-rc receipts/QE-RC.hbp --guard receipts/GUARD.hbp --out polariton-stripes/READ-STRIPE-PHASE.hbp
 ```
 
 `read` does, in order:
 
 1. Checks the frozen file's sha256, the point tables against the STRIPES_POINT rows, rule EXPOSED against X08 and the 15 QE commands against QR1-QR5.
-2. Requires a `TWB_GUARD ... verdict=allowed` line for every (N, delta, y) used (rule GUARD).
+2. Rule GUARD: a `TWB_GUARD ... verdict=allowed` line before each QE command and before each dump or run point, so at least as many lines at each (N, delta, y) as guarded commands there (33 in all), and no refusal at a plan triple.
 3. Loads P01-P14 under rules SEED and STOP:
-   - each point's SHA256SUMS against its call files;
+   - each point's SHA256SUMS against its receipts (every `.hbp`, `.err` and `.eng.err`);
    - every call file's trailer (`rc=E rc_reader=R`), AGG_END hash, `nl_sha256`, grammar and identities;
-   - one block per call, the side files' sha256;
-   - an engine stop (rc=4) loses that call's indices (NOT_MEASURED);
+   - one block per call, and every side file's size and sha256;
+   - the engine's stderr per call: empty beside a block, the TWB_FAULT row of an exit 4 beside an engine stop;
+   - an engine stop (rc=4, stage A empty_stream, a TWB_FAULT row) loses that call's indices (NOT_MEASURED);
+   - the earlier tries of a call, `<call>.attempt1..k`, each an engine stop of that point and call with its TWB_FAULT row, k = (records of the point) - (records of the block), or (records of the point) - 1 when no try completed; a complete block has none;
    - a point keeps only the records every call reached.
-4. Loads R1-R4 (64 batches each, with their TWB_MEMO stderr) and the QE rows.
-5. Applies Q01-Q07 (`rows_q.py`), E01-E08 (`rows_e_sym.py`) and E09-E19 (`rows_e_mom.py`) by rules READ3, H8, B16, SIGNFLIP, SE, STOP, SEED and EXPOSED.
-6. Writes the file: a head, the inputs with their sha256, notes (calls read and lost per point, batches per run, missing QE rows, and the readings below), one STRIPES_READ row per read, one STRIPES_VERDICT row per STRIPES_PREDICT row in frozen order, and an end row with the file's sha256.
+4. Loads R1-R4: 64 batches each, with their TWB_MEMO stderr and their exit code (`<id>.<j>.rc`). A batch that exited 4 has an empty stdout and a TWB_FAULT row on stderr, and its tries are kept as for the dump calls (`<id>.<j>.attempt<k>.hbp`, `.err`, `.rc`). Any other exit is a STOP.
+5. Loads the QE rows. QE-RC.hbp holds the QE binary's sha256 and one row per command, in plan order, with its exit code. A command that exited nonzero has every read of its rows NOT_MEASURED, and its stderr is kept out of the COST match.
+6. Applies Q01-Q07 (`rows_q.py`), E01-E08 (`rows_e_sym.py`) and E09-E19 (`rows_e_mom.py`) by rules READ3, H8, B16, SIGNFLIP, SE, STOP, SEED and EXPOSED.
+7. Writes the file: a head, the inputs with their sha256, notes (calls read and lost and attempts per point, batches per run, missing QE rows, the QE exit codes and binary, and the readings below), one STRIPES_READ row per read, one STRIPES_VERDICT row per STRIPES_PREDICT row in frozen order, and an end row with the file's sha256.
 
 The other commands:
 
@@ -73,37 +76,45 @@ The other commands:
 
 The split into scored and read-and-report reads follows from the frozen text and rule EXPOSED alone, never from data; a campaign with lost calls, batches, records and QE rows gives the same table. So a read promoted to scored, or demoted, changes the table and stops the read.
 
-Readings where the frozen text allows two (also written as STRIPES_READ_NOTE rows):
+Readings where the frozen text allows two, or says nothing (also written as STRIPES_READ_NOTE rows):
 
 - E06, "0 mismatches ... with abs(B)>=2^-20": MET only if there is no mismatch where either B is big, MISS if there is one where both are, else NOT_RESOLVED.
-- E16: the prediction names abs(Pi_V - Pi_VNC); the method's recipe (D+ - D-)/(2M) is half of it. MET only if both pass, MISS if the recipe fails, else NOT_RESOLVED.
-- E15, "a scored cross-read other than predicted": a falsifier when certified (the read is MISS). A cross-read left NOT_RESOLVED leaves the row NOT_RESOLVED.
+- E16: D+ = t1 and D- = t3, the certified discordant cells on the common non-atom samples, and SE_pair = sqrt(D+ + D-)/(2M) as frozen. The ambiguous cells and the atoms enter the bracket of the difference only. The prediction names abs(Pi_V - Pi_VNC); the method's recipe (D+ - D-)/(2M) is half of it. MET if the prediction passes at every placement (then the recipe passes too), MISS if the recipe fails at every placement (then the prediction fails too), else NOT_RESOLVED.
+- E15, "a scored cross-read other than predicted": a falsifier when certified (the read is MISS). A cross-read left NOT_RESOLVED leaves the row NOT_RESOLVED, since READ3 counts falsifiers on outcomes and NOT_RESOLVED is not certified.
 - E02 atom counts: the integer intervals are keyed by sample count and variant class. [0,51] is also read on the first-2^18 control set of each point, and a count is read only on its full nominal set.
 - E04 ratios: MET inside [1/4 - 1/100 - 4SE, 1/4 + 1/100 + 4SE], MISS outside (the frozen band and falsifier).
 - Pi_hat counts every sample, the atoms by their own sign states; H8 and B16 leave the atoms out.
+- E01: the Klein atom masses have no band, so they are read and reported.
+- E12 and the E13 tolerance reads: n = 4..4096 is every power of 2 from 4 to 4096 with at least 1024 blocks. The E13 bands take the frozen n = 4^k.
+- E18: E_VNC[abs(B_W)^2] = 0 is a ratio of 0, so MISS. E19: n* is not estimable when abs(Bbar)^2_u <= 0, so NOT_RESOLVED.
+- Q03, Q04, Q05, Q07: a ratio whose denominator's interval reaches 0 is the half-line [lo, +inf), or both half-lines when the denominator crosses 0. It is MISS when every piece is disjoint from the band (rule READ3), else NOT_RESOLVED.
+- Q06: c comes from the signed B interval (D2_q = 2B_e18/N), so it is bounded at every B. B_e18 <= 0 is MISS (the falsifier), else READ3 decides on c.
+- Rule STOP for QE: a command filed with rc != 0 leaves every read of its rows NOT_MEASURED, rows it printed before the exit included. Its stderr is kept out of the COST match. Stderr text other than COST rows while every command exited 0 is a STOP.
+- Rule STOP for the dumps and runs: a call or batch that exits 4 (nothing on stdout, a TWB_FAULT row on stderr) is kept as an attempt and rerun with its last record dropped. A block with r of R records needs attempts 1..R-r, and a lost call or batch needs 1..R-1. Any other exit is a STOP.
+- Rule GUARD: the guard is a function of (N, delta, y) alone. One allowed line is filed before each QE command and before each dump or run point, whose calls and batches follow it. A refusal counts only at a plan triple.
 
 Tests:
 
 ```
-python3 -I polariton-stripes/reader/b/run_tests.py     # 219 unit tests, about 20 s
-python3 -I polariton-stripes/reader/b/e2e.py           # the end-to-end test, about 2 min, about 0.3 GB of temporary files
+python3 -I polariton-stripes/reader/b/run_tests.py     # 260 unit tests, about 20 s
+python3 -I polariton-stripes/reader/b/e2e.py           # the end-to-end test, about 3 min, about 0.3 GB of temporary files
 ```
 
 `e2e.py` writes a synthetic campaign with `b/tests/campaign.py`:
 
-- every point P01-P14 (8000 call files and the P08 and P13 side files);
-- R1-R4 (64 batches each);
-- QR1-QR5 (the 15 QE commands);
-- the guard lines.
+- every point P01-P14 (8000 call files with their engine stderr, and the P08 and P13 side files);
+- R1-R4 (64 batches each, with stderr and exit code);
+- QR1-QR5 (the 15 QE commands) and QE-RC.hbp;
+- one guard line per guarded command.
 
-The values are small fabricated integers, not engine values. `read` must give one VERDICT row per STRIPES_PREDICT row, and `audit` and `verify` must pass. A second campaign then loses data in every way rule STOP allows:
+The values are small fabricated integers, not engine values. `read` must give one VERDICT row per STRIPES_PREDICT row, and `audit` and `verify` must pass. A second campaign then loses data in every way rule STOP allows, each loss with its evidence:
 
-- engine stops at P03 and P08;
-- a rerun of P05 call 7 without its last record;
-- an empty R2 batch;
-- two missing QE rows.
+- P03 call 500 and P08 call 10 lost: every try, down to one record, exited 4 (three attempts each and the last try);
+- P05 call 7 rerun without its last record (one attempt);
+- R2 batch 5 lost the same way (two attempts and the last try);
+- the QE command at (729, 1/108) killed after its t=1 row (rc=137), and the 6561 sector command panicked after its t=2 row (rc=101, the panic text on stderr).
 
-It must give the same rows and the same SCORING table, with NOT_MEASURED reads where data was lost.
+It must give the same rows and the same SCORING table, with NOT_MEASURED reads where data was lost, the losses in its notes, and `verify` equal.
 
 The part-1 commands of `b/run_b.py` (`tables`, `series`, `q`, `point`, `run`) check the tables, the frozen decimals and single inputs.
 
@@ -130,7 +141,7 @@ On this seat all 67 were equal, and so were the 4 real excluded dumps (71 of 71)
 CARGO_TARGET_DIR=/abs/path/outside/the/repo/ra polariton-stripes/reader/sabotage/run.sh
 ```
 
-It builds stage A, emits the synthetic streams, writes (or reuses, `STRIPES_CAMPAIGN`) the campaign, and checks first that the clean inputs read. Then it plants seven faults (`sabotage/edit.py` edits copies; `sabotage/patch.py` plants a fault in stage B's code). Each case prints CAUGHT or MISSED:
+It builds stage A, emits the synthetic streams, writes (or reuses, `STRIPES_CAMPAIGN`) the campaign, and checks first that the clean inputs read. Then it plants nine faults (`sabotage/edit.py` edits copies; `sabotage/patch.py` plants a fault in stage B's code). Each case prints CAUGHT or MISSED:
 
 1. The sign of bi flipped on one exchange atom:
    - bi=-0 on a LOCK atom is a STOP `bad_integer`;
@@ -145,6 +156,18 @@ It builds stage A, emits the synthetic streams, writes (or reuses, `STRIPES_CAMP
    - in a row module, stage B stops (`scoring_table`);
    - in a READ file, `audit` stops (`scored_read`, or `scoring_table` when its `why` is changed too).
 7. A falsifier evaluated on a read-and-report read: stage B stops (`falsifier`), in a row module and in a READ file.
+8. Rule STOP without its evidence (the review's probes A, B and C, and the runs). Each is a STOP:
+   - P05 call 7 cut to 3 records with no attempt (`stop_attempt_count`);
+   - the complete block filed as `7.attempt1.hbp` beside a 3-record rerun (`stop_attempt_file`);
+   - an attempt holding `anything`, beside the complete block (`stop_attempt_count`) and beside a rerun (`stop_attempt_file`);
+   - a lost call whose last try has an empty engine stderr (`stop_engine_stderr`);
+   - an R2 batch empty with rc=4, or cut to 2 records, with no attempts (`stop_attempt_count`);
+   - an R2 batch with rc=137 (`run_rc`).
+9. QE:
+   - a panic after the t=2 row of the 6561 sector command, filed with rc=101: the read goes on, the command's 4 reads are NOT_MEASURED, and the READ file passes audit;
+   - the same panic text filed with rc=0: a STOP `qe_stderr`;
+   - B at (81, -1/54, t=2) moved by 1e-5: Q02 NOT_MET, with falsifier `par3`;
+   - QE-RC.hbp short of a row: a STOP `qe_rc`.
 
 A forger who rewrites a block, its AGG_END and the point's SHA256SUMS together is not visible in the aggregates. The defense is to commit the aggregates and their sums with the run (run plan step 8), with the stream hashes stage A prints.
 
@@ -180,27 +203,35 @@ mkdir -p polariton-stripes/receipts/run && cd polariton-stripes/receipts
 g() { "$T" guard N=$1 delta=$2 y=$3 | tee -a GUARD.hbp | grep -q 'verdict=allowed'; }
 ```
 
-Run `g` before every twens and QE command (rule GUARD), and stop on any refusal. Never pass `lift_reserved_guard`.
+Run `g` before every QE command and before every dump or run point (rule GUARD), and stop on any refusal. Never pass `lift_reserved_guard`.
 
-Quantum (run plan step 4): 15 commands, stdout to QE.hbp, stderr (the COST rows) to QE-COST.hbp. `q MODE N K delta y W times` guards (N, delta, y) first:
-
-```
-q() { g $2 $4 $5 && "$QE" "$@" >> QE.hbp 2>> QE-COST.hbp; }
-for N in 81 729 6561; do q sector $N $N -1/4 0 6 1/2,1,2,4 || exit 1; done
-for N in 81 729; do q point $N $N -1/4 0 6 1/2,1,2,4 || exit 1; done
-for Y in 1/27 1/54 1/108 1/216; do q point 729 729 -1/4 $Y 6 1/8,1/4,1/2,1,2 || exit 1; done
-q point 729 729 -1/4 -1/54 6 1/2,1,2 || exit 1
-for Y in 1/27 1/108 1/216; do q point 81 81 -1/4 $Y 6 1/8,1/4,1/2,1 || exit 1; done
-q point 81 81 -1/4 1/54 6 1/8,1/4,1/2,1,2,4 || exit 1
-q point 81 81 -1/4 -1/54 6 1/2,1,2,4 || exit 1
-```
-
-Ensemble runs R1-R4 (run plan step 5), one at a time with threads=4:
+Quantum (run plan step 4): 15 commands, stdout to QE.hbp, stderr (the COST rows, and any panic or usage text) to QE-COST.hbp. The wrapper files the QE binary's sha256 first, then one QE_RC row with each command's exit code after it ran. `q MODE N K delta y W times` guards (N, delta, y) first. It exits only on a guard refusal; a QE exit is filed and the next command runs:
 
 ```
-run_pt() { id=$1 N=$2 d=$3 y=$4 C=$5 S=$6 K=$7; g $N $d $y || return 1
-  for j in $(seq 0 63); do
-    "$T" run N=$N delta=$d u=1 y=$y seed_string=stripes-ens-v1:N$N:d$d:y$y start=$((j*C/64)) count=$((C/64)) dtden=64 threads=4 steps=$S "ctrl=$K" mask=VNC memo=1 > run/$id.$j.hbp 2> run/$id.$j.err
+echo "QE_BINARY|sha256=$(sha256sum "$QE" | cut -d' ' -f1)|json=0" > QE-RC.hbp
+q() { local rc=0; g $2 $4 $5 || exit 1; "$QE" "$@" >> QE.hbp 2>> QE-COST.hbp || rc=$?
+  echo "QE_RC|argv=$(IFS=_; echo "$*")|rc=$rc|json=0" >> QE-RC.hbp; }
+for N in 81 729 6561; do q sector $N $N -1/4 0 6 1/2,1,2,4; done
+for N in 81 729; do q point $N $N -1/4 0 6 1/2,1,2,4; done
+for Y in 1/27 1/54 1/108 1/216; do q point 729 729 -1/4 $Y 6 1/8,1/4,1/2,1,2; done
+q point 729 729 -1/4 -1/54 6 1/2,1,2
+for Y in 1/27 1/108 1/216; do q point 81 81 -1/4 $Y 6 1/8,1/4,1/2,1; done
+q point 81 81 -1/4 1/54 6 1/8,1/4,1/2,1,2,4
+q point 81 81 -1/4 -1/54 6 1/2,1,2,4
+```
+
+Ensemble runs R1-R4 (run plan step 5), one at a time with threads=4. Each batch files its stdout, its stderr and its exit code. A batch that exits 4 is kept as an attempt and rerun with its last record and that record's ctrl entry dropped, until it completes or its one-record try exits 4 too (rule STOP):
+
+```
+run_pt() { local id=$1 N=$2 d=$3 y=$4 C=$5 S=$6 K=$7 j s k a x; g $N $d $y || return 1
+  for j in $(seq 0 63); do s=$S k=$K a=0
+    while :; do
+      "$T" run N=$N delta=$d u=1 y=$y seed_string=stripes-ens-v1:N$N:d$d:y$y start=$((j*C/64)) count=$((C/64)) dtden=64 threads=4 steps=$s "ctrl=$k" mask=VNC memo=1 > run/$id.$j.hbp 2> run/$id.$j.err
+      echo "rc=$?" > run/$id.$j.rc
+      [ "$(cat run/$id.$j.rc)" = rc=4 ] && [ "${s#*,}" != "$s" ] || break
+      a=$((a + 1)); for x in hbp err rc; do mv run/$id.$j.$x run/$id.$j.attempt$a.$x; done
+      s=${s%,*} k=${k%;*}
+    done
   done; }
 run_pt R1 729 -1/4 1/27  4194304  32,64,128 '0:0:0;0:0:0;0:0:0'
 run_pt R2 729 -1/4 1/54  4194304  32,64,128 '0:0:0;0:0:0;0:0:0'
@@ -227,18 +258,17 @@ P13 729 -1/4 -1/54 262144 64 64,128 0:0:0;0:0:0
 P14 729 -1/4 1/108 1048576 0 64,128 0:0:0;0:0:0
 ```
 
-Two fixes to the plan's `one()`:
+Three fixes to the plan's `one()`:
 
 - it passes `--side` at P08 and P13 for calls below 64;
-- it records both exit codes in one trailer line, the engine's and the reader's.
-
-The reader's stderr goes to `<call>.err`:
+- it records both exit codes in one trailer line, the engine's and the reader's;
+- it files the engine's stderr as `<call>.eng.err` (the TWB_FAULT row of an exit 4) and stage A's as `<call>.err`.
 
 ```
-one() { id=$1 N=$2 d=$3 y=$4 i=$5 A=$6 S=$7 K=$8
-  mask=VNC; [ "$i" -lt "$A" ] && mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL
-  side=(); case $id in P08|P13) [ "$i" -lt 64 ] && side=(--side "agg/$id/$i.side");; esac
-  "$T" dump N=$N delta=$d u=1 y=$y seed_string=stripes-ens-v1:N$N:d$d:y$y start=$((4096*i)) count=4096 dtden=64 threads=1 steps=$S "ctrl=$K" mask=$mask | "$RA" --point $id --call $i "${side[@]}" > agg/$id/$i.hbp 2> agg/$id/$i.err
+one() { local id=$1 N=$2 d=$3 y=$4 i=$5 A=$6 S=$7 K=$8 mask=VNC side=() st
+  [ "$i" -lt "$A" ] && mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL
+  case $id in P08|P13) [ "$i" -lt 64 ] && side=(--side "agg/$id/$i.side");; esac
+  { "$T" dump N=$N delta=$d u=1 y=$y seed_string=stripes-ens-v1:N$N:d$d:y$y start=$((4096*i)) count=4096 dtden=64 threads=1 steps=$S "ctrl=$K" mask=$mask 2> agg/$id/$i.eng.err < /dev/null; } | "$RA" --point $id --call $i "${side[@]}" > agg/$id/$i.hbp 2> agg/$id/$i.err
   st=("${PIPESTATUS[@]}"); echo "rc=${st[0]} rc_reader=${st[1]}" >> agg/$id/$i.hbp; }
 export -f one; export T RA
 while read id N d y M A S K; do g $N $d $y || exit 1; mkdir -p agg/$id
@@ -246,21 +276,40 @@ while read id N d y M A S K; do g $N $d $y || exit 1; mkdir -p agg/$id
 done < points.txt | xargs -P 4 -L 1 bash -c 'one "$@"' _
 ```
 
-This wiring was tried with a stand-in for the engine that printed synthetic streams (no engine ran): P13 calls 0 and 5 gave blocks with side files and `rc=0 rc_reader=0`, and an empty stream with exit 4 gave stage A's `empty_stream` STOP and `rc=4 rc_reader=3`. Stage B accepts that STOP as an engine stop.
+Rule STOP (run plan step 7). A call ending `rc=4 rc_reader=3` (the engine printed nothing and filed a TWB_FAULT row) keeps its three files as `<call>.attempt<k>.hbp`, `.err` and `.eng.err`, k = 1, 2, ..., and is rerun with the same keys, its last record and its ctrl entry dropped, until it completes or its one-record try exits 4 too:
 
-Rule STOP (run plan step 7):
+```
+redo() { local id=$1 N=$2 d=$3 y=$4 i=$5 A=$6 S=$7 K=$8 k=0 x
+  while [ "$(tail -n 1 agg/$id/$i.hbp)" = "rc=4 rc_reader=3" ] && [ "${S#*,}" != "$S" ]; do
+    k=$((k + 1)); for x in hbp err eng.err; do mv agg/$id/$i.$x agg/$id/$i.attempt$k.$x; done
+    S=${S%,*} K=${K%;*}; one $id $N $d $y $i $A $S $K
+  done; }
+while read id N d y M A S K; do g $N $d $y || exit 1
+  for i in $(seq 0 $((M/4096-1))); do
+    [ "$(tail -n 1 agg/$id/$i.hbp)" = "rc=4 rc_reader=3" ] && redo $id $N $d $y $i $A $S $K
+  done
+done < points.txt
+```
 
-- A call ending `rc=4 rc_reader=3` (the engine printed nothing) is renamed `<call>.attempt<k>.hbp` and rerun with the same keys, its last record and its ctrl entry dropped, until it completes. Stage B keeps the attempts in SHA256SUMS, keeps only the records every call reached, and marks the rest NOT_MEASURED.
-- Any other trailer, or a reader STOP on a complete stream (`rc=0 rc_reader=3`), is a fault to report, not to rerun. Stage B refuses it.
+Stage B checks every attempt against this procedure, keeps only the records every call reached, and marks the rest NOT_MEASURED. Any other trailer, or a reader STOP on a complete stream (`rc=0 rc_reader=3`), is a fault to report, not to rerun, and stage B refuses it. So does an attempt that is not an engine stop of its call, a count of attempts the procedure does not give, or an exit 4 without its TWB_FAULT row.
+
+The wiring of `one()`, `redo()`, `run_pt()` and `q()` was tried with stand-ins for the engines that print synthetic streams or exit 4 (no engine ran): see "The wiring, tried with stand-ins" below.
 
 Then file the sums and read:
 
 ```
-for d in agg/P*/; do (cd "$d" && sha256sum [0-9]*.hbp > SHA256SUMS); done
-$SB read --agg agg --runs run --qe QE.hbp --cost QE-COST.hbp --guard GUARD.hbp --out ../READ-STRIPE-PHASE.hbp
+for d in agg/P*/; do (cd "$d" && sha256sum [0-9]*.hbp [0-9]*.err > SHA256SUMS); done
+$SB read --agg agg --runs run --qe QE.hbp --cost QE-COST.hbp --qe-rc QE-RC.hbp --guard GUARD.hbp --out ../READ-STRIPE-PHASE.hbp
 $SB audit --read ../READ-STRIPE-PHASE.hbp
-$SB verify --read ../READ-STRIPE-PHASE.hbp --agg agg --runs run --qe QE.hbp --cost QE-COST.hbp --guard GUARD.hbp
+$SB verify --read ../READ-STRIPE-PHASE.hbp --agg agg --runs run --qe QE.hbp --cost QE-COST.hbp --qe-rc QE-RC.hbp --guard GUARD.hbp
 ```
+
+The wiring, tried with stand-ins. The blocks above that define `g`, `q`, `run_pt`, `one` and `redo` were run verbatim, with a stand-in for twens and one for QE that print synthetic streams and fabricated campaign rows or exit as the engines do (no engine ran), and with this seat's stage A:
+
+- QE: all 15 commands ran; the 6561 sector command printed 3 rows and exited 101 with a panic text. QE-RC.hbp filed 15 rows; stage B read 61 rows, left that command's 4 keys out and counted 2 stderr lines that are not COST rows.
+- Runs: R2 batch 5 exited 4 with 3 records and completed with 2 (one attempt); batch 9 exited 4 at every try (two attempts and the last try). Stage B read R2 as 63 batches, records 32 and 64, three attempts.
+- Dumps, P13 with 8 calls: call 0 completed with its side file; call 5 exited 4 with 2 records and completed with 1 (one attempt); the other six exited 4 at both tries (one attempt each). Stage B's per-call STOP check passed every call, and the README's `sha256sum` line gave a SHA256SUMS stage B accepts.
+- The guard file held 21 lines: 15 QE commands, 4 run points, and the dump point twice (before its calls and before its reruns).
 
 Storage, an open decision:
 

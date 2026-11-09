@@ -48,12 +48,97 @@ class Parse(unittest.TestCase):
     def test_plan_matches_frozen(self):
         self.assertTrue(qe.check_plan())
         self.assertEqual(len(qe.plan_triples()), 13)
+        self.assertEqual(len(qe.plan_guards()), 15)
+        self.assertEqual(qe.argv_text(qe.PLAN[0]), "sector_81_81_-1/4_0_6_1/2,1,2,4")
 
     def test_guard_file(self):
-        self.assertTrue(c.check_guard_file(os.path.join(QE9, "GUARD.hbp"),
-                                           sorted({(cm.N, cm.delta, cm.y) for cm in TEST_PLAN})))
+        g = os.path.join(QE9, "GUARD.hbp")
+        self.assertTrue(c.check_guard_file(g, qe.plan_guards(TEST_PLAN)))  # one line per command, 2 at y=0
         with self.assertRaises(c.StageBStop):
-            c.check_guard_file(os.path.join(QE9, "GUARD.hbp"), [(9, "1/3", "1/27")])
+            c.check_guard_file(g, [(9, "1/3", "1/27")])
+        with self.assertRaises(c.StageBStop) as e:
+            c.check_guard_file(g, qe.plan_guards(TEST_PLAN) + [(9, "1/3", "0")])  # 3 commands at y=0, 2 lines
+        self.assertEqual(e.exception.reason, "guard")
+        refused = "TWB_GUARD|N=9|delta=1/3|y=1/27|verdict=refused|reason=reserved|computed=0|json=0\n"
+        with TempDir() as d:
+            p = os.path.join(d, "GUARD.hbp")
+            write(p, read(g) + refused)
+            self.assertTrue(c.check_guard_file(p, qe.plan_guards(TEST_PLAN)))  # a refusal outside the plan
+            with self.assertRaises(c.StageBStop):
+                c.check_guard_file(p, qe.plan_guards(TEST_PLAN) + [(9, "1/3", "1/27")])
+
+
+def rc_text(plan, rcs=None, binary=qe.LANE_BINARY_SHA256):
+    """QE-RC.hbp as the wrapper files it: the binary's sha256, then one QE_RC row per command after it ran."""
+    rcs = rcs or [0] * len(plan)
+    return "QE_BINARY|sha256=%s|json=0\n" % binary + "".join(
+        "QE_RC|argv=%s|rc=%d|json=0\n" % (qe.argv_text(cm), rc) for cm, rc in zip(plan, rcs, strict=True))
+
+
+PANIC = ("thread 'main' panicked at src/bin/polariton_first_correction.rs:1967:57:\nre\n"
+         "note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n")
+
+
+class Stop(unittest.TestCase):
+    """Rule STOP for QE: a QE exit or a missing READ row leaves its reads NOT_MEASURED."""
+
+    def _parse(self, qe_text=None, cost_text=None, rc=None):
+        with TempDir() as d:
+            paths = {}
+            for name, text in (("QE.hbp", qe_text), ("QE-COST.hbp", cost_text), ("QE-RC.hbp", rc)):
+                paths[name] = os.path.join(d, name)
+                write(paths[name], read(os.path.join(QE9, name)) if text is None and name != "QE-RC.hbp" else
+                      (text if text is not None else rc_text(TEST_PLAN)))
+            return qe.parse_qe(paths["QE.hbp"], TEST_PLAN, paths["QE-COST.hbp"], paths["QE-RC.hbp"])
+
+    def test_every_command_exited_0(self):
+        r = self._parse()
+        self.assertEqual(len(r), 10)
+        self.assertEqual((r.failed, r.stderr_lines, r.binary), ([], 0, qe.LANE_BINARY_SHA256))
+
+    def test_panic_with_rc_101(self):
+        # point 9 9 1/3 1/9 printed its t=1/4 rows, then panicked: rc=101 and the panic text on stderr
+        reads = read(os.path.join(QE9, "QE.hbp")).split("\n")[:-1]
+        costs = read(os.path.join(QE9, "QE-COST.hbp")).split("\n")[:-1]
+        cut = [k for k, ln in enumerate(reads) if "|y=1/9|" in ln and "|t=1/2|" in ln][0]
+        qe_text = "".join(x + "\n" for k, x in enumerate(reads) if k != cut)
+        cost_text = "".join(x + "\n" for x in costs[:cut]) + PANIC + "".join(x + "\n" for x in costs[cut + 1:])
+        r = self._parse(qe_text, cost_text, rc_text(TEST_PLAN, [0, 0, 101, 0, 0]))
+        self.assertEqual(r.failed, [("point_9_9_1/3_1/9_6_1/4,1/2", 101)])
+        self.assertEqual(r.stderr_lines, 3)
+        self.assertEqual(len(r), 8)  # both reads of the command left out, the t=1/4 row it printed included
+        self.assertIsNone(qe.get(r, "point", 9, "1/3", "1/9", "1/4"))
+        self.assertEqual(sorted(qe.missing(r, TEST_PLAN)), [("point", 9, "1/3", "1/9", "1/2"),
+                                                            ("point", 9, "1/3", "1/9", "1/4")])
+        # a READ row printed without its COST row by the command that exited is left out of the match too
+        cost_text2 = "".join(x + "\n" for k, x in enumerate(costs) if k not in (cut - 1, cut)) + PANIC
+        self.assertEqual(len(self._parse(qe_text, cost_text2, rc_text(TEST_PLAN, [0, 0, 101, 0, 0]))), 8)
+
+    def test_stderr_text_with_every_rc_0(self):
+        cost = read(os.path.join(QE9, "QE-COST.hbp")) + PANIC
+        with self.assertRaises(c.StageBStop) as e:
+            self._parse(cost_text=cost)
+        self.assertEqual(e.exception.reason, "qe_stderr")
+        with TempDir() as d:
+            p = os.path.join(d, "QE-COST.hbp")
+            write(p, cost)
+            with self.assertRaises(c.StageBStop) as e:
+                qe.parse_qe(os.path.join(QE9, "QE.hbp"), TEST_PLAN, p)
+        self.assertEqual(e.exception.reason, "qe_stderr")
+
+    def test_cost_rows_still_match_for_the_commands_that_exited_0(self):
+        costs = read(os.path.join(QE9, "QE-COST.hbp")).split("\n")[:-1]
+        cost_text = "".join(x + "\n" for k, x in enumerate(costs) if k != 0)  # sector t=1/4 COST row lost
+        with self.assertRaises(c.StageBStop) as e:
+            self._parse(cost_text=cost_text, rc=rc_text(TEST_PLAN, [0, 0, 101, 0, 0]))
+        self.assertEqual(e.exception.reason, "qe_cost")
+
+    def test_rc_rows_follow_the_plan(self):
+        for bad in (rc_text(TEST_PLAN[:-1]), rc_text(TEST_PLAN[::-1]), rc_text(TEST_PLAN, binary="x" * 64),
+                    rc_text(TEST_PLAN).replace("|rc=0|", "|rc=00|", 1)):
+            with self.assertRaises(c.StageBStop) as e:
+                self._parse(rc=bad)
+            self.assertEqual(e.exception.reason, "qe_rc")
 
 
 class Faults(unittest.TestCase):
@@ -131,15 +216,22 @@ class Helpers(unittest.TestCase):
         r = reads()
         for t in ("1/4", "1/2"):
             iv = rows_q.q03_ratio(r[("point", 9, "1/3", "1/18", t)], r[("point", 9, "1/3", "1/9", t)])
+            self.assertTrue(iv.bounded())
             self.assertTrue(fr(24, 100) < iv.lo < iv.hi < fr(26, 100))
-            self.assertTrue(iv.width() < fr(1, 1000))
+            self.assertTrue(iv.hi - iv.lo < fr(1, 1000))
 
     def test_q07_moments(self):
         x = reads()[("point", 9, "1/3", "1/9", "1/2")]
         ns = rows_q.q07_nstar(x)
         nn = rows_q.q07_nstar_normal(x)
         self.assertTrue(nn.hi < ns.lo)  # the normal order is lower by 1/(4<B>^2)
-        self.assertIsNone(rows_q.q07_nstar(reads()[("point", 9, "1/3", "0", "1/2")]))
+        # B_e18 = 0 at y = 0: n*_Q is the half-line [Q_W.lo/e_B^2 - 1, +inf)
+        z = reads()[("point", 9, "1/3", "0", "1/2")]
+        ns0 = rows_q.q07_nstar(z)
+        b = z.absB_iv()
+        self.assertEqual((z.v["B_e18"], b.lo, ns0.hi), (0, 0, None))
+        self.assertTrue(ns0.lo > ipow(10, 9))
+        self.assertTrue((ns0.lo + 1) * b.hi * b.hi <= z.QW_iv().lo)
 
 
 if __name__ == "__main__":

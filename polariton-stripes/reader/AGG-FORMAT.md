@@ -200,7 +200,7 @@ What section 6 compared: samples, (sample, variant) starts rebuilt, (sample, var
 - Every field of every TWENS, TWPAIR, TWB (34 fields), TWB_ROUND (34 fields and eps_max), TWB_PAIR and TWB_PAIR_ROUND row equals the reader's own sum over the per-sample rows.
 - At a table point: N, delta, u=1, y, seed_string, start = 4096 call, count = 4096, dtden = 64, the mask of the call (section 9), steps a nonempty prefix of the point's steps (rule STOP drops last records), ctrl 0:0:0 on every record, and call < calls of the point.
 
-Stage A does not check across calls. Stage B checks: each point's SHA256SUMS against its call files, `agg_sha256`, each call's `nl_sha256` against its own AGG_NL rows, the AGG_CMP nesting (`mis_big_both <= mis_big_any <= mis <= cert2 <= common`, `cert2_big_both <= cert2_big_any <= cert2`), one block per call 0..calls-1 at each point (a dropped or repeated call), the side files' `sha256`, and rule STOP's record truncation. Whether `nl_sha256` is equal across the calls of a point with the same steps is row E05's read, not a STOP.
+Stage A does not check across calls. Stage B checks: each point's SHA256SUMS against its receipts (every `.hbp`, `.err` and `.eng.err`), `agg_sha256`, each call's `nl_sha256` against its own AGG_NL rows, the AGG_CMP nesting (`mis_big_both <= mis_big_any <= mis <= cert2 <= common`, `cert2_big_both <= cert2_big_any <= cert2`), one block per call 0..calls-1 at each point (a dropped or repeated call), the side files' size and `sha256`, and rule STOP's record truncation against the attempts filed (section 10). Whether `nl_sha256` is equal across the calls of a point with the same steps is row E05's read, not a STOP.
 
 ## 7. Side file
 
@@ -301,5 +301,7 @@ The P points total 8000 calls.
 
 - Everything is an integer. Form every mean, ratio and test in exact rationals; compare squares by cross-multiplying, as rule DECIMAL says.
 - Pooling a point: add the AGG_VR counts, the AGG_SUM sums and the AGG_BLK sums over its calls, record by record and variant by variant. The controls cover the calls below `all` only (the first 2^18 indices).
-- Rule STOP: if a call was rerun with its last record dropped, its block has fewer records. Keep only the records every call of the point reached; the later records of the other calls are discarded unread and marked NOT_MEASURED.
+- The files of call `i` in a point folder: `i.hbp` (this block, or a STOP row, then the trailer `rc=E rc_reader=R`), `i.err` (stage A's stderr: empty beside a block, the STOP row beside a STOP), `i.eng.err` (the engine's stderr: empty after a completed dump, one TWB_FAULT row after an exit 4) and `i.side`.
+- Rule STOP: a call whose engine exited 4 has `rc=4 rc_reader=3` and stage A's `empty_stream` STOP. Its files are kept as `i.attempt<k>.hbp`, `.err` and `.eng.err`, k = 1, 2, ..., and it is rerun with its last record and that record's ctrl entry dropped, until it completes or its one-record try exits 4 too. A block with r of the point's R records has attempts 1..R-r; a call that never completed has attempts 1..R-1 and a STOP in `i.hbp`; a complete block has none. Each attempt must be an engine stop of its point and call with its TWB_FAULT row.
+- Keep only the records every call of the point reached; the later records of the other calls are discarded unread and marked NOT_MEASURED.
 - A STOP block means the call is not read. Decide nothing from values.

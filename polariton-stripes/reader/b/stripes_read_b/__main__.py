@@ -1,12 +1,13 @@
 """stripes-read-b: python3 -I reader/b/stripes_read_b/__main__.py <command> ...
 
-  read   --agg D --runs D --qe P --cost P --guard P --out P [--no-sums]
+  read   --agg D --runs D --qe P --cost P --qe-rc P --guard P --out P [--no-sums]
          every STRIPES_PREDICT row from the per-call aggregates (D/P01..P14/<call>.hbp with each point's SHA256SUMS),
-         the run receipts (R1-R4, 64 batches each) and the QE receipts; writes READ-STRIPE-PHASE.hbp
+         the run receipts (R1-R4, 64 batches each) and the QE receipts (stdout, stderr and the wrapper's QE-RC.hbp);
+         writes READ-STRIPE-PHASE.hbp
   audit  --read P
          checks a READ file alone: its hash, one VERDICT per PREDICT row, every count and verdict from its READ rows,
          falsifiers on scored reads only, and the scored and read-and-report reads of each row against SCORING
-  verify --read P --agg D --runs D --qe P --cost P --guard P [--no-sums]
+  verify --read P --agg D --runs D --qe P --cost P --qe-rc P --guard P [--no-sums]
          rebuilds the READ file from the inputs and compares it line for line
   scoring --read P
          prints the SCORING table of a READ file (to review a change of the row modules)
@@ -73,14 +74,37 @@ SCORING = {
 READINGS = (
     ("reading_E06_sector", "0_mismatches_with_abs(B)>=2^-20:_MET_if_none_where_either_B_is_big,_MISS_if_one_where_both"
                            "_are,_else_NOT_RESOLVED"),
-    ("reading_E16", "abs(Pi_V-Pi_VNC)_and_the_recipe_(D+-D-)/(2M)_(half_of_it):_MET_if_both_pass,_MISS_if_the_recipe"
-                    "_fails,_else_NOT_RESOLVED"),
+    ("reading_E16", "D+=t1,_D-=t3,_the_certified_discordant_cells_on_the_common_non-atom_samples,_SE_pair=sqrt(D++D-)"
+                    "/(2M);_the_ambiguous_cells_and_the_atoms_enter_the_bracket_of_the_difference_only;_MET_if_the"
+                    "_prediction_abs(Pi_V-Pi_VNC)+3SE_pair<=Pi_VNC/20_holds_at_every_placement_(then_the_recipe_with"
+                    "_(D+-D-)/(2M),_half_of_it,_holds_too),_MISS_if_the_recipe_fails_at_every_placement_(then_the"
+                    "_prediction_fails_too),_else_NOT_RESOLVED"),
     ("reading_E15_cross", "a_scored_cross-read_other_than_predicted_is_a_falsifier_when_certified_(MISS);"
-                          "_NOT_RESOLVED_leaves_the_row_NOT_RESOLVED"),
+                          "_NOT_RESOLVED_leaves_the_row_NOT_RESOLVED,_since_READ3_counts_falsifiers_on_outcomes_and"
+                          "_NOT_RESOLVED_is_not_certified"),
     ("reading_E02_counts", "integer_intervals_keyed_by_sample_count_and_variant_class;_[0,51]_also_on_the_first_2^18"
                            "_controls;_read_only_on_the_full_nominal_set"),
     ("reading_E04_ratios", "MET_inside_[1/4-1/100-4SE,1/4+1/100+4SE],_MISS_outside,_the_frozen_band_and_falsifier"),
     ("reading_Pi_hat", "Pi_hat_counts_every_sample,_atoms_by_their_own_sign_states;_H8_and_B16_leave_atoms_out"),
+    ("reading_E01_atoms", "the_Klein_atom_masses_(about_3.108e-4_M,_0.042097_M)_have_no_band:_read_and_report"),
+    ("reading_E12_E13_n", "in_E12_and_the_E13_tolerance_reads_n=4..4096_is_every_power_of_2_from_4_to_4096_with_at"
+                          "_least_1024_blocks;_the_E13_bands_take_the_frozen_n=4^k"),
+    ("reading_E18_zero", "E_VNC[abs(B_W)^2]=0_is_a_ratio_of_0:_MISS"),
+    ("reading_E19_nstar", "n*_is_not_estimable_when_abs(Bbar)^2_u<=0_on_the_set_or_a_leave-one-out_set:_NOT_RESOLVED"),
+    ("reading_Q_unbounded", "a_ratio_whose_denominator_interval_reaches_0_is_read_as_the_half-line_[lo,+inf),_or_both"
+                            "_half-lines_when_the_denominator_crosses_0:_MISS_when_every_piece_is_disjoint_from_the"
+                            "_band,_else_NOT_RESOLVED"),
+    ("reading_Q06_c", "c_from_the_signed_B_interval_(D2_q=2B_e18/N);_B_e18<=0_is_MISS_(the_falsifier),_else_READ3_on"
+                      "_c"),
+    ("reading_QE_exit", "a_QE_command_filed_with_rc!=0_in_QE-RC.hbp_leaves_every_read_of_its_rows_NOT_MEASURED,"
+                        "_the_rows_it_printed_before_the_exit_included;_its_COST_rows_and_other_stderr_text_are_kept"
+                        "_out_of_the_COST_match;_stderr_text_other_than_COST_rows_with_every_rc=0_is_a_STOP"),
+    ("reading_STOP_tries", "a_dump_call_or_run_batch_exiting_4_(rc=4,_nothing_on_stdout,_a_TWB_FAULT_row_on_stderr)"
+                           "_is_kept_as_<call>.attempt<k>_and_rerun_with_its_last_record_dropped;_a_block_with_r_of_R"
+                           "_records_needs_attempts_1..R-r,_a_lost_call_or_batch_1..R-1;_any_other_exit_is_a_STOP"),
+    ("reading_GUARD", "the_guard_is_a_function_of_(N,delta,y)_alone:_one_allowed_line_is_filed_before_each_QE_command"
+                      "_and_before_each_dump_or_run_point,_whose_calls_and_batches_follow_it;_a_refusal_counts_only"
+                      "_at_a_plan_triple"),
 )
 
 
@@ -106,10 +130,11 @@ def _need(a, keys):
 
 
 def guard_triples():
-    """Every (N, delta, y) a twens or QE command of the campaign used (rule GUARD)."""
-    t = set(qe_mod.plan_triples())
-    t |= {(p.N, p.delta, p.y) for p in c.DUMP_POINTS.values()}
-    t |= {(p.N, p.delta, p.y) for p in c.RUN_POINTS.values()}
+    """One (N, delta, y) per guarded command of the campaign (rule GUARD): each QE command, each dump point (its
+    calls follow its guard line) and each run point (its batches follow it)."""
+    t = list(qe_mod.plan_guards())
+    t += [(p.N, p.delta, p.y) for p in c.DUMP_POINTS.values()]
+    t += [(p.N, p.delta, p.y) for p in c.RUN_POINTS.values()]
     return sorted(t)
 
 
@@ -129,8 +154,11 @@ def build(a):
     sums = "--no-sums" not in a
     points = {pid: c.load_point(os.path.join(a["--agg"], pid), spec, require_sums=sums)
               for pid, spec in c.DUMP_POINTS.items()}
+    for pt in points.values():
+        if pt.spec.side:
+            pt.verify_sides()  # every side file a block names, paired at E04 or not: its size and sha256
     run_points = runs.load_runs(a["--runs"])
-    qv, qe_reads = rows_q.read_q(a["--qe"], a["--cost"], a["--guard"], fz)
+    qv, qe_reads = rows_q.read_q(a["--qe"], a["--cost"], a["--guard"], fz, a["--qe-rc"])
     sv = rows_e_sym.read_e_sym(points, run_points, fz)
     mv = rows_e_mom.read_e_mom(rows_e_mom.Inputs(points, run_points, qe_reads), fz)
     verdicts = {v.row: v for v in qv + sv + mv}
@@ -140,6 +168,7 @@ def build(a):
     rf = c.ReadFile(fz)
     rf.add_input("QE", a["--qe"])
     rf.add_input("QE_COST", a["--cost"])
+    rf.add_input("QE_RC", a["--qe-rc"])
     rf.add_input("GUARD", a["--guard"])
     for pid in c.DUMP_POINTS:
         sp = os.path.join(a["--agg"], pid, "SHA256SUMS")
@@ -155,11 +184,16 @@ def build(a):
             ":".join(map(str, pt.steps)) or "none", ":".join(map(str, pt.not_measured)) or "none",
             len(pt.attempts))))
     for rid, r in run_points.items():
-        rf.notes.append(("run_" + rid, "batches=%d,read=%d,lost=%s,steps=%s,not_measured=%s" % (
+        rf.notes.append(("run_" + rid, "batches=%d,read=%d,lost=%s,steps=%s,not_measured=%s,attempts=%d" % (
             r.spec.batches, len(r.batches), ":".join(str(j) for j, _ in r.lost) or "none",
-            ":".join(map(str, r.steps)) or "none", ":".join(map(str, r.not_measured)) or "none")))
+            ":".join(map(str, r.steps)) or "none", ":".join(map(str, r.not_measured)) or "none", r.attempts)))
     miss = qe_mod.missing(qe_reads)
     rf.notes.append(("qe_rows", "%d_read,%d_missing_(NOT_MEASURED)" % (len(qe_reads), len(miss))))
+    rf.notes.append(("qe_rc", "commands=%d,rc_nonzero=%s,stderr_lines_not_COST=%d" % (
+        len(qe_mod.PLAN), ";".join("%s:rc=%d" % f for f in qe_reads.failed) or "none", qe_reads.stderr_lines)))
+    rf.notes.append(("qe_binary", "sha256=%s,lane_build_%s=%s" % (
+        qe_reads.binary, qe_mod.LANE_BINARY_SHA256[:8], "equal" if qe_reads.binary == qe_mod.LANE_BINARY_SHA256
+        else "differs")))
     rf.notes.extend(READINGS)
     for rid in order:
         rf.add(verdicts[rid])
@@ -282,7 +316,7 @@ def _row_verdict(scored_reads, falsifier):
 # ---------------------------------------------------------------------------------------------------------------------
 # Commands.
 
-INPUT_KEYS = ("--agg", "--runs", "--qe", "--cost", "--guard")
+INPUT_KEYS = ("--agg", "--runs", "--qe", "--cost", "--qe-rc", "--guard")
 
 
 def cmd_read(argv):

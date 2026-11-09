@@ -354,12 +354,55 @@ class Helpers(unittest.TestCase):
         self.assertEqual(m.n_list(1 << 18), (4, 8, 16, 32, 64, 128, 256))
 
     def test_e16_two_readings(self):
+        # (recipe, prediction), both with the frozen SE_pair: MET iff the prediction passes, MISS iff the recipe fails
         o = m.e16_outcome
         self.assertEqual(o(c.MET, c.MET), c.MET)
         self.assertEqual(o(c.MET, c.NOT_RESOLVED), c.NOT_RESOLVED)  # passes only at the recipe's half difference
         self.assertEqual(o(c.MET, c.MISS), c.NOT_RESOLVED)
         self.assertEqual(o(c.NOT_RESOLVED, c.MISS), c.NOT_RESOLVED)
         self.assertEqual(o(c.MISS, c.MISS), c.MISS)
+        for bad in ((c.NOT_RESOLVED, c.MET), (c.MISS, c.NOT_RESOLVED)):  # cannot happen with one SE_pair
+            with self.assertRaises(c.StageBStop):
+                o(*bad)
+
+    def _e16_point(self, pos_v, pos_r, dp, dm, amb=0):
+        mm = 1 << 18
+        vv, vr = vr_block(mm, 0), vr_block(mm, 0)
+        vv.update({"br_pos": pos_v, "br_neg": mm - pos_v - amb, "br_amb": amb})
+        vr.update({"br_pos": pos_r, "br_neg": mm - pos_r})
+        t = [pos_v - dp, dp, 0, dm, mm - pos_v - amb - dm, 0, 0, amb, 0]
+        return tiny_point(vv, vr, {"common": mm, "br": t, "bi": [mm] + [0] * 8}, "V1")
+
+    def test_e16_probe_both_texts_met(self):
+        # review probe e16_probe.py: Pi_V = Pi_VNC = 5243/2^18 (about 0.02), D+ = D- = 5000, no ambiguity; both
+        # frozen texts give 0 + 3 sqrt(10^4)/2^19 = 5.72e-4 <= Pi_VNC/20 = 1.0e-3, so the read is MET
+        mm = 1 << 18
+        pt = self._e16_point(mm // 2 + 5243, mm // 2 + 5243, 5000, 5000)
+        r = m._e16("pair_P04_V1_t1", "P04", 1, "V1", c.scored(), pt)
+        d = dict(r.detail)
+        self.assertEqual((r.outcome, d["recipe"], d["diff"]), (c.MET, c.MET, c.MET))
+        self.assertEqual(d["3SE_pair"], "5.723e-4")
+        self.assertEqual((m.e16_se_pair_e(pt.cmp(64, "V1"), mm) - c.se(fr(10000, 4 * mm * mm), 3)).sign(), 0)
+
+    def test_e16_recipe_and_prediction_apart(self):
+        # D+ - D- = 400 of 2^18 with D+ + D- = 1200: the recipe's half difference 400/2^19 = 7.6e-4 passes with
+        # 3SE_pair = 1.98e-4 against 1.0e-3, the prediction's 400/2^18 = 1.53e-3 fails: NOT_RESOLVED
+        mm = 1 << 18
+        pt = self._e16_point(mm // 2 + 5243 + 400, mm // 2 + 5243, 800, 400)
+        r = m._e16("x", "P04", 1, "V1", c.scored(), pt)
+        d = dict(r.detail)
+        self.assertEqual((r.outcome, d["recipe"], d["diff"]), (c.NOT_RESOLVED, c.MET, c.MISS))
+        # twice that difference: the recipe fails too, MISS
+        pt = self._e16_point(mm // 2 + 5243 + 1200, mm // 2 + 5243, 1600, 400)
+        self.assertEqual(m._e16("x", "P04", 1, "V1", c.scored(), pt).outcome, c.MISS)
+
+    def test_e16_ambiguity_in_the_bracket_only(self):
+        # 40 ambiguous V1 samples widen the bracket of the difference; SE_pair stays sqrt(D+ + D-)/(2M)
+        mm = 1 << 18
+        pt = self._e16_point(mm // 2 + 5243, mm // 2 + 5243, 5000, 5000, amb=40)
+        r = m._e16("x", "P04", 1, "V1", c.scored(), pt)
+        self.assertEqual(dict(r.detail)["3SE_pair"], "5.723e-4")
+        self.assertEqual(r.outcome, c.MET)
 
     def test_cross_outcome(self):
         co = m.cross_outcome
@@ -585,6 +628,15 @@ class NotMet(unittest.TestCase):
 
     def test_e18_qw_off(self):
         v = row("E18", qe_scale={("1/27", "1"): fr(11, 10)})
+        self.assertEqual(reads_of(v)["QW_y1/27_t1"].outcome, c.MISS)
+        self.assertEqual(v.verdict, c.NOT_MET)
+
+    def test_e18_zero_moment_is_a_miss(self):
+        # E_VNC[|B_W|^2] = 0 is a ratio of 0: abs(0 - 1) = 1 > 1/20 (review M7)
+        inp = inputs(run_edits={"R1": {}})
+        for b in inp.run("R1").batches:
+            b.rec[64]["br2"] = b.rec[64]["bi2"] = 0
+        v = verdicts(inp, rows=("E18",))["E18"]
         self.assertEqual(reads_of(v)["QW_y1/27_t1"].outcome, c.MISS)
         self.assertEqual(v.verdict, c.NOT_MET)
 

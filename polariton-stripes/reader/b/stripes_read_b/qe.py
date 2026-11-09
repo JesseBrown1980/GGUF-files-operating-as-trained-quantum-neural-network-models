@@ -1,6 +1,7 @@
 """The quantum engine's rows: POLARITON_FIRST_CORRECTION_READ, parsed against the command plan, and the certified
 errors of rule EB."""
 
+import re
 from fractions import Fraction
 
 from . import frozen as frozen_mod
@@ -82,8 +83,64 @@ def check_plan(fz=None):
 
 
 def plan_triples(plan=PLAN):
-    """The (N, delta, y) each command needs a guard line for (rule GUARD)."""
+    """The (N, delta, y) the commands use."""
     return sorted({(c.N, c.delta, c.y) for c in plan})
+
+
+def plan_guards(plan=PLAN):
+    """One (N, delta, y) per command: each QE command is guarded before it runs (rule GUARD)."""
+    return [(c.N, c.delta, c.y) for c in plan]
+
+
+RC_KIND = "QE_RC"
+BINARY_KIND = "QE_BINARY"
+LANE_BINARY_SHA256 = "6bf8ebf2309700cb5be4cce25d82e5c4ee70fbc49521d4d7686cfc1649aa0a21"
+_HEX64 = re.compile(r"[0-9a-f]{64}\Z")
+
+
+def argv_text(cmd):
+    """The wrapper's text of a command's arguments: joined by '_'."""
+    return "_".join(cmd.argv())
+
+
+def parse_rc(path, plan=PLAN):
+    """QE-RC.hbp, the wrapper's receipt: QE_BINARY|sha256= (sha256sum of the QE binary), then one QE_RC|argv=|rc= row
+    per command, after it ran, in plan order. Returns (binary sha256, [rc per command])."""
+    lines = read_lines(path)
+    if len(lines) != 1 + len(plan):
+        raise StageBStop("qe_rc", "%d rows, the plan has %d commands and the binary row" % (len(lines), len(plan)))
+    try:
+        b = fields_dict(parse_row(lines[0], BINARY_KIND, ("sha256",))[1])
+        if not _HEX64.match(b["sha256"]):
+            raise StageBStop("qe_rc", "binary sha256")
+        rcs = []
+        for cmd, ln in zip(plan, lines[1:], strict=True):
+            d = fields_dict(parse_row(ln, RC_KIND, ("argv", "rc"))[1])
+            if d["argv"] != argv_text(cmd):
+                raise StageBStop("qe_rc", "row %s, the plan's command %s" % (d["argv"][:60], argv_text(cmd)))
+            rcs.append(canon_int(d["rc"]))
+    except (RowError, ExactError) as e:
+        raise StageBStop("qe_rc", str(e)) from e
+    return b["sha256"], rcs
+
+
+class QeReads(dict):
+    """{key: QeRead} of the commands read, and what rule STOP left out: `failed` the (argv, rc) of each command that
+    exited nonzero, `stderr_lines` the stderr lines that are not COST rows, `binary` the QE binary's sha256."""
+
+    def __init__(self):
+        dict.__init__(self)
+        self.failed = []
+        self.stderr_lines = 0
+        self.binary = None
+
+
+def _cost_key(fields):
+    try:
+        return (fields.get("layout", "point"), canon_int(fields["N"]), rat_text(parse_rat(fields["delta"])),
+                rat_text(parse_rat(fields["y"])), rat_text(parse_rat(fields["t"])))
+    except (ExactError, KeyError) as e:
+        raise StageBStop("qe_cost", "COST row keys: %s" % e) from e
 
 
 class QeRead:
@@ -169,16 +226,27 @@ def _layout(d):
     raise StageBStop("qe_row", "array_bytes fits neither layout")
 
 
-def parse_qe(path, plan=PLAN, cost_path=None):
+def parse_qe(path, plan=PLAN, cost_path=None, rc_path=None):
     """{key: QeRead} of a concatenated QE stdout file; key = (layout, N, delta, y, t) in the engine's text.
 
     Every row must be an unsabotaged READ row of a planned command at the frozen keys (K = N, u = 1, x = delta - 1,
-    window 2^-6, float_used = 0), each key at most once. Missing rows are left out: their reads are NOT_MEASURED
-    (rule STOP). With cost_path, each READ row must have its COST row, in the same order."""
+    window 2^-6, float_used = 0), each key at most once. Rule STOP: missing rows are left out, and so is every row of
+    a command whose rc in rc_path (QE-RC.hbp) is not 0; their reads are NOT_MEASURED. With cost_path, the COST rows
+    of the commands that exited 0 must match their READ rows one for one, in order; the COST rows of a command that
+    exited nonzero, and stderr text that is not a COST row, are kept out of the match. Such text with every command
+    at rc=0 is a StageBStop."""
     want = {}
     for c in plan:
         for k in c.keys():
             want[k] = c
+    res = QeReads()
+    failed = set()
+    if rc_path is not None:
+        res.binary, rcs = parse_rc(rc_path, plan)
+        for cmd, rc in zip(plan, rcs, strict=True):
+            if rc != 0:
+                failed.add(id(cmd))
+                res.failed.append((argv_text(cmd), rc))
     out = {}
     order = []
     for ln in read_lines(path):
@@ -208,17 +276,31 @@ def parse_qe(path, plan=PLAN, cost_path=None):
     if cost_path is not None:
         costs = []
         for ln in read_lines(cost_path):
-            kind = ln.split("|", 1)[0]
-            if kind != COST_KIND:
-                raise StageBStop("qe_cost", "not a COST row: " + ln[:60])
-            fields = dict(p.split("=", 1) for p in ln.split("|")[1:])
+            if not ln.startswith(COST_KIND + "|"):
+                res.stderr_lines += 1
+                continue
+            try:
+                fields = fields_dict(parse_row(ln, COST_KIND)[1])
+            except RowError as e:
+                raise StageBStop("qe_cost", str(e)) from e
+            key = _cost_key(fields)
+            if key not in want:
+                raise StageBStop("qe_cost", "COST row of no planned command: %s" % (key,))
+            if id(want[key]) in failed:
+                continue
             costs.append(tuple(fields.get(x) for x in ("N", "K", "even_states", "array_bytes", "delta", "y", "t"))
-                         + (fields.get("layout", "point"),))
+                         + (key[0],))
+        if res.stderr_lines and not failed:
+            raise StageBStop("qe_stderr", "%d stderr lines that are not COST rows, and every command exited 0" % (
+                res.stderr_lines))
         reads = [tuple(out[k].d[x] for x in ("N", "K", "even_states", "array_bytes", "delta", "y", "t"))
-                 + (out[k].layout,) for k in order]
+                 + (out[k].layout,) for k in order if id(want[k]) not in failed]
         if costs != reads:
             raise StageBStop("qe_cost", "COST rows do not match the READ rows")
-    return out
+    for k in order:
+        if id(want[k]) not in failed:
+            res[k] = out[k]
+    return res
 
 
 def get(reads, layout, n, delta, y, t):

@@ -258,6 +258,97 @@ class Iv:
         return "Iv[%s, %s]" % (fmt(self.lo, 16, "down"), fmt(self.hi, 16, "up"))
 
 
+class Ext:
+    """A closed interval [lo, hi] of the extended line, None standing for -inf (lo) or +inf (hi): what a ratio is when
+    its denominator's interval reaches 0. Every operation encloses the exact result."""
+
+    __slots__ = ("lo", "hi")
+
+    def __init__(self, lo, hi):
+        self.lo = None if lo is None else Fraction(lo)
+        self.hi = None if hi is None else Fraction(hi)
+        if self.lo is not None and self.hi is not None and self.lo > self.hi:
+            raise ExactError("empty interval")
+
+    @staticmethod
+    def of(x):
+        if isinstance(x, Ext):
+            return x
+        x = Iv.of(x)
+        return Ext(x.lo, x.hi)
+
+    def bounded(self):
+        return self.lo is not None and self.hi is not None
+
+    def iv(self):
+        if not self.bounded():
+            raise ExactError("unbounded interval")
+        return Iv(self.lo, self.hi)
+
+    def __add__(self, o):
+        o = Ext.of(o)
+        lo = None if self.lo is None or o.lo is None else round_down(self.lo + o.lo)
+        hi = None if self.hi is None or o.hi is None else round_up(self.hi + o.hi)
+        return Ext(lo, hi)
+
+    __radd__ = __add__
+
+    def __neg__(self):
+        return Ext(None if self.hi is None else -self.hi, None if self.lo is None else -self.lo)
+
+    def __sub__(self, o):
+        return self + (-Ext.of(o))
+
+    def scale(self, k):
+        """k * self for a rational k."""
+        k = Fraction(k)
+        if k == 0:
+            return Ext(0, 0)
+        a = None if self.lo is None else self.lo * k
+        b = None if self.hi is None else self.hi * k
+        if k < 0:
+            a, b = b, a
+        return Ext(None if a is None else round_down(a), None if b is None else round_up(b))
+
+    def times_pos(self, iv):
+        """self * [p, q] for an interval with 0 < p <= q."""
+        iv = Iv.of(iv)
+        if iv.lo <= 0:
+            raise ExactError("times_pos takes a positive interval")
+        lo = None if self.lo is None else round_down(self.lo * (iv.lo if self.lo >= 0 else iv.hi))
+        hi = None if self.hi is None else round_up(self.hi * (iv.hi if self.hi >= 0 else iv.lo))
+        return Ext(lo, hi)
+
+    def __repr__(self):
+        a = "-inf" if self.lo is None else fmt(self.lo, 16, "down")
+        b = "+inf" if self.hi is None else fmt(self.hi, 16, "up")
+        return "Ext[%s, %s]" % (a, b)
+
+
+def quotient(a, b):
+    """{x/y : x in a, y in b, y != 0} for two intervals, enclosed in one or two Ext pieces: one bounded piece when b
+    keeps away from 0; a half-line, or a half-line on each side, when b reaches 0; the whole line when both reach 0."""
+    a, b = Iv.of(a), Iv.of(b)
+    if b.lo > 0 or b.hi < 0:
+        return [Ext.of(a * b.inv())]
+    if a.lo <= 0 <= a.hi:
+        return [Ext(None, None)]
+    out = []
+    if a.lo > 0:
+        if b.lo < 0:
+            out.append(Ext(None, round_up(div(a.lo, b.lo))))
+        if b.hi > 0:
+            out.append(Ext(round_down(div(a.lo, b.hi)), None))
+    else:
+        if b.lo < 0:
+            out.append(Ext(round_down(div(a.hi, b.lo)), None))
+        if b.hi > 0:
+            out.append(Ext(None, round_up(div(a.hi, b.hi))))
+    if not out:
+        raise ExactError("division by the interval [0, 0]")
+    return out
+
+
 def iv_abs(a):
     a = Iv.of(a)
     if a.lo >= 0:

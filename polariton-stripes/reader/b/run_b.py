@@ -2,7 +2,7 @@
 
   tables                       the point tables, X08 and the QE plan against the frozen file
   series                       every frozen decimal the closed forms and the y-series bracket
-  q --qe P [--cost P] [--guard P] [--out P]
+  q --qe P [--cost P] [--qe-rc P] [--guard P] [--out P]
                                rows Q01-Q07 from the filed QE stdout (READ and VERDICT rows)
   point --dir D --id Pnn [--sums]
                                one dump point's call files under rules SEED and STOP (a summary row)
@@ -62,13 +62,13 @@ def cmd_series(argv):
 
 
 def cmd_q(argv):
-    a = _args(argv, ("--qe", "--cost", "--guard", "--out"))
+    a = _args(argv, ("--qe", "--cost", "--qe-rc", "--guard", "--out"))
     if "--qe" not in a:
         raise common.StageBStop("usage", "--qe")
-    vs, reads = rows_q.read_q(a["--qe"], a.get("--cost"), a.get("--guard"))
+    vs, reads = rows_q.read_q(a["--qe"], a.get("--cost"), a.get("--guard"), rc_path=a.get("--qe-rc"))
     rf = common.ReadFile()
     rf.add_input("QE", a["--qe"])
-    for k in ("--cost", "--guard"):
+    for k in ("--cost", "--qe-rc", "--guard"):
         if k in a:
             rf.add_input(k[2:].upper(), a[k])
     miss = qe.missing(reads)

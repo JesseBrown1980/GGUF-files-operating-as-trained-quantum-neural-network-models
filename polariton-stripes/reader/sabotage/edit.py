@@ -6,6 +6,11 @@ campaign call file or a READ file; nothing is edited in place and no engine runs
                                              OP: xatom_bi_nz, swap_sec, version_030
   drop   --campaign D --point P --call I [--sums]
   read   --in F --out F --op OP              OP: promote, promote_why, falsify
+  stop   --campaign D --op OP                rule STOP without its evidence (SHA256SUMS rewritten each time):
+                                             dump_no_attempt, dump_block_as_attempt, dump_garbage_attempt,
+                                             dump_garbage_attempt_short, dump_stop_without_fault, run_empty_no_attempt,
+                                             run_truncated_no_attempt, run_crash
+  qe     --campaign D --op OP                OP: panic_rc101, panic_rc0, altered_B, rc_row_missing
 """
 
 import hashlib
@@ -147,11 +152,13 @@ def cmd_block(a):
 
 
 def cmd_drop(a):
+    """Every file of the call: its block, its stderr files and its side file."""
     d = os.path.join(a["--campaign"], "agg", a["--point"])
     os.remove(os.path.join(d, a["--call"] + ".hbp"))
-    side = os.path.join(d, a["--call"] + ".side")
-    if os.path.exists(side):
-        os.remove(side)
+    for ext in (".side", ".err", ".eng.err"):
+        p = os.path.join(d, a["--call"] + ext)
+        if os.path.exists(p):
+            os.remove(p)
     if "--sums" in a:
         os.remove(os.path.join(d, "SHA256SUMS"))
         c.write_sha256sums(d)
@@ -195,11 +202,110 @@ def cmd_read(a):
     replace_file(a["--out"], "".join(x + "\n" for x in end_row(lines)))
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Rule STOP without its evidence (the review's probes A, B and C, and the run batches).
+
+FAULT = "TWB_FAULT|reason=rounding_bound_hL_above_1/2|json=0\n"
+
+
+def _stage_b_tests():
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "b", "tests"))
+    import campaign  # noqa: E402
+
+    campaign.LOCK_Q = campaign.e.lock_q(frozen.load())
+    return campaign
+
+
+def _resum(d):
+    os.remove(os.path.join(d, "SHA256SUMS"))
+    c.write_sha256sums(d)
+
+
+def cmd_stop(a):
+    root, op = a["--campaign"], a["--op"]
+    if op.startswith("dump_"):
+        camp = _stage_b_tests()
+        d = os.path.join(root, "agg", "P05")
+        short, _ = camp.call_block(c.DUMP_POINTS["P05"], 7, [64, 128, 192], "agg/P05/7.side")
+        short += "rc=0 rc_reader=0\n"
+        stop_text, _ = camp.engine_stop_call("P05", 7)
+        if op == "dump_no_attempt":  # probe A: a record dropped with no exit 4 filed
+            replace_file(os.path.join(d, "7.hbp"), short)
+        elif op == "dump_block_as_attempt":  # probe B: the complete block filed as the attempt, a shorter rerun kept
+            os.rename(os.path.join(d, "7.hbp"), os.path.join(d, "7.attempt1.hbp"))
+            replace_file(os.path.join(d, "7.attempt1.eng.err"), FAULT)
+            replace_file(os.path.join(d, "7.hbp"), short)
+        elif op in ("dump_garbage_attempt", "dump_garbage_attempt_short"):  # probe C: an attempt that is not a row
+            replace_file(os.path.join(d, "7.attempt1.hbp"), "anything\n")
+            replace_file(os.path.join(d, "7.attempt1.eng.err"), FAULT)
+            if op.endswith("_short"):
+                replace_file(os.path.join(d, "7.hbp"), short)
+        elif op == "dump_stop_without_fault":  # every try filed, but the engine's stderr of the last one is empty
+            for k in (1, 2, 3):
+                replace_file(os.path.join(d, "7.attempt%d.hbp" % k), stop_text)
+                replace_file(os.path.join(d, "7.attempt%d.eng.err" % k), FAULT)
+            replace_file(os.path.join(d, "7.hbp"), stop_text)
+            replace_file(os.path.join(d, "7.eng.err"), "")
+        else:
+            raise SystemExit("edit.py: stop op " + op)
+        _resum(d)
+        return
+    d = os.path.join(root, "run")
+    if op == "run_empty_no_attempt":
+        replace_file(os.path.join(d, "R2.5.hbp"), "")
+        replace_file(os.path.join(d, "R2.5.err"), FAULT)
+        replace_file(os.path.join(d, "R2.5.rc"), "rc=4\n")
+    elif op == "run_truncated_no_attempt":
+        lines = read_text(os.path.join(d, "R2.5.hbp")).split("\n")[:-1]
+        head = set_field(lines[0], "steps", "32,64")
+        done = set_field(lines[-1], "records", "2")
+        replace_file(os.path.join(d, "R2.5.hbp"), "".join(x + "\n" for x in [head] + lines[1:7] + [done]))
+    elif op == "run_crash":
+        replace_file(os.path.join(d, "R2.5.hbp"), "")
+        replace_file(os.path.join(d, "R2.5.err"), "")
+        replace_file(os.path.join(d, "R2.5.rc"), "rc=137\n")
+    else:
+        raise SystemExit("edit.py: stop op " + op)
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# QE receipts.
+
+PANIC = ("thread 'main' panicked at src/bin/polariton_first_correction.rs:1967:57:\nre\n"
+         "note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n")
+
+
+def cmd_qe(a):
+    root, op = a["--campaign"], a["--op"]
+    qe_p, cost_p, rc_p = (os.path.join(root, x) for x in ("QE.hbp", "QE-COST.hbp", "QE-RC.hbp"))
+    reads = read_text(qe_p).split("\n")[:-1]
+    costs = read_text(cost_p).split("\n")[:-1]
+    rcs = read_text(rc_p).split("\n")[:-1]
+    if op in ("panic_rc101", "panic_rc0"):  # the 6561 sector command panics after its t=2 row
+        k = [i for i, r in enumerate(reads) if "|N=6561|" in r and "|t=4|" in r][0]
+        replace_file(qe_p, "".join(x + "\n" for i, x in enumerate(reads) if i != k))
+        replace_file(cost_p, "".join(x + "\n" + (PANIC if i + 1 == k else "") for i, x in enumerate(costs) if i != k))
+        if op == "panic_rc101":
+            j = [i for i, r in enumerate(rcs) if "|argv=sector_6561_" in r][0]
+            rcs[j] = set_field(rcs[j], "rc", "101")
+            replace_file(rc_p, "".join(x + "\n" for x in rcs))
+    elif op == "altered_B":  # B at (81, -1/54, t=2) moved by 10^-5: the parity of Q02 breaks
+        k = [i for i, r in enumerate(reads) if "|N=81|" in r and "|y=-1/54|" in r and "|t=2|" in r][0]
+        reads[k] = set_field(reads[k], "B_e18", str(int(field(reads[k], "B_e18")) + 10000000000000))
+        replace_file(qe_p, "".join(x + "\n" for x in reads))
+    elif op == "rc_row_missing":
+        replace_file(rc_p, "".join(x + "\n" for x in rcs[:-1]))
+    else:
+        raise SystemExit("edit.py: qe op " + op)
+
+
 COMMANDS = {
     "stream": (cmd_stream, ("--in", "--out", "--op"), ()),
     "block": (cmd_block, ("--campaign", "--point", "--call", "--op"), ("--rehash", "--sums")),
     "drop": (cmd_drop, ("--campaign", "--point", "--call"), ("--sums",)),
     "read": (cmd_read, ("--in", "--out", "--op"), ()),
+    "stop": (cmd_stop, ("--campaign", "--op"), ()),
+    "qe": (cmd_qe, ("--campaign", "--op"), ()),
 }
 
 

@@ -1025,31 +1025,42 @@ def row_e16(inp, fz):
 
 
 def e16_outcome(out_recipe, out_diff):
-    """E16 under its two frozen texts: the prediction names abs(Pi_V-Pi_VNC), the method's recipe (D+ - D-)/(2M) with
-    SE sqrt(D+ + D-)/(2M) is half of it. MET only when the difference itself passes (then the recipe passes too), MISS
-    only when the recipe fails (then the difference fails too), else NOT_RESOLVED."""
-    if out_diff == c.MET and out_recipe == c.MET:
+    """E16 under its two frozen texts, both with the frozen SE_pair = sqrt(D+ + D-)/(2M): the prediction names
+    abs(Pi_V-Pi_VNC) = abs(D+ - D-)/M, the method's recipe (D+ - D-)/(2M) is half of it. MET exactly when the
+    prediction passes (then the recipe passes too), MISS exactly when the recipe fails (then the prediction fails
+    too), else NOT_RESOLVED."""
+    if out_diff == c.MET:
+        if out_recipe != c.MET:
+            raise c.StageBStop("e16_rule", "the difference passes and its half does not")
         return c.MET
     if out_recipe == c.MISS:
+        if out_diff != c.MISS:
+            raise c.StageBStop("e16_rule", "the half of the difference fails and the difference does not")
         return c.MISS
     return c.NOT_RESOLVED
 
 
+def e16_se_pair_e(cm, m):
+    """3 SE_pair, SE_pair = sqrt(D+ + D-)/(2M) with D+ = t1 and D- = t3, the certified discordant cells of AGG_CMP on
+    the common non-atom samples (the ambiguous cells and the atoms enter the bracket of the difference only)."""
+    t = cm["br"]
+    return c.se(fr(t[1] + t[3], 4 * m * m), 3)
+
+
 def _e16(rid, pid, t, v, sc, pt):
-    lo, hi, se2, a, r, cm = paired(pt, c.step_of_t(t), v)
+    lo, hi, _, a, r, cm = paired(pt, c.step_of_t(t), v)
     xlo, xhi = div(lo, 2), div(hi, 2)
-    e = c.se(div(se2, 4), 3)
-    e_diff = c.se(se2, 3)
+    e = e16_se_pair_e(cm, a.M)
     plo, phi = r.bracket()
     out_recipe = sampled_bracket(xlo, xhi, 0, div(plo, 20), div(phi, 20), e)
-    out_diff = sampled_bracket(lo, hi, 0, div(plo, 20), div(phi, 20), e_diff)
+    out_diff = sampled_bracket(lo, hi, 0, div(plo, 20), div(phi, 20), e)
     return c.Read("E16", rid, at_text(pid, t, v), "sampled", sc, e16_outcome(out_recipe, out_diff),
                   value=mid(xlo, xhi), lo=Rad.of(xlo) - e, hi=Rad.of(xhi) + e,
                   band="abs(x)+3SE_pair<=Pi_VNC/20,Pi_VNC=" + fmt(r.x, 6),
                   detail=(("x", "(D+-D-)/(2M)"), ("recipe", out_recipe), ("Pi_hat_diff", "%s..%s" % (
                       fmt(lo, 4, "down"), fmt(hi, 4, "up"))), ("diff", out_diff), ("D+", cm["br"][1]),
-                          ("D-", cm["br"][3]), ("common", cm["common"]), ("M", a.M), ("3SE_pair", up(e)),
-                          ("3SE_diff", up(e_diff))) + loss(pt, "ctrl"))
+                          ("D-", cm["br"][3]), ("common", cm["common"]), ("M", a.M), ("3SE_pair", up(e)))
+                  + loss(pt, "ctrl"))
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1180,8 +1191,16 @@ def _e18(rid, at, sc, inp, y, t, src, law_text):
     q = None if inp.qe is None else qe_mod.get(inp.qe, "point", 729, "-1/4", y, t)
     if q is None:
         raise Lost("missing_QE_row")
-    if m <= 0:
-        return c.Read("E18", rid, at, "sampled", sc, c.NOT_RESOLVED, detail=(("moment", "not_positive"),))
+    if m < 0:
+        raise c.StageBStop("aggregate_identity", "E18: a negative sum of squares")
+    if m == 0 and q.QW_iv().lo > 0:
+        # every sample has B_W = 0: the ratio is 0, abs(0 - 1) = 1 > 1/20 with no error
+        return c.Read("E18", rid, at, "sampled", sc, c.MISS, value=0, lo=0, hi=0,
+                      band="abs(ratio-1)+4SE_rel+read_error<=1/20", frozen="EB2_lin=" + law_text,
+                      detail=(("moment", "zero"),) + lost)
+    if m == 0:
+        return c.Read("E18", rid, at, "sampled", sc, c.NOT_RESOLVED,
+                      detail=(("moment", "zero"), ("Q_W", "not_positive")) + lost)
     e = m * 729 * 729
     qw = q.QW_iv()
     x = qw.inv() * e

@@ -8,12 +8,28 @@ import unittest
 from stripes_read_b import common as c
 from stripes_read_b.hbp import parse_row, fields_dict
 
-from .util import AGG, X0, X1, TempDir, point_dir, read, rehash, with_trailer, write
+from .util import AGG, ENGINE_FAULT, X0, X1, TempDir, point_dir, read, rehash, with_trailer, write
 
 
 def x1_files(call1="X1.1.agg"):
     return {"0.hbp": with_trailer(read(os.path.join(AGG, "X1.0.agg"))),
             "1.hbp": with_trailer(read(os.path.join(AGG, call1)))}
+
+
+def engine_stop():
+    """What the run script files for a try of X1 call 1 whose engine stopped: stage A's empty_stream STOP, rc=4
+    rc_reader=3 (point_dir adds the engine's TWB_FAULT row as 1.eng.err or 1.attempt<k>.eng.err)."""
+    return with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=4, rc_reader=3)
+
+
+def stop_reason(files, **kw):
+    with TempDir() as d:
+        point_dir(d, files, **kw)
+        try:
+            c.load_point(d, X1)
+        except c.StageBStop as e:
+            return e.reason
+    return None
 
 
 class Parse(unittest.TestCase):
@@ -133,28 +149,127 @@ class Seed(unittest.TestCase):
 
 class Stop(unittest.TestCase):
     def test_truncated_record(self):
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = engine_stop()
         with TempDir() as d:
-            point_dir(d, x1_files("X1.1.steps64.agg"))
+            point_dir(d, f)
             pt = c.load_point(d, X1)
             self.assertEqual(pt.steps, (64,))
             self.assertEqual(pt.not_measured, (128,))
             self.assertFalse(pt.measured(128))
+            self.assertEqual(pt.attempts, ["1.attempt1.hbp"])
             with self.assertRaises(c.StageBStop) as e:
                 pt.vr(128, "VNC")
         self.assertEqual(e.exception.reason, "not_measured_record")
 
     def test_engine_stop_loses_the_call(self):
+        # X1 has 2 records: a lost call was tried with 2 records (attempt 1) and with 1 (the call file)
         f = x1_files()
-        f["1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=4, rc_reader=3)
-        f["1.attempt0.hbp"] = f["1.hbp"]
+        f["1.hbp"] = engine_stop()
+        f["1.attempt1.hbp"] = engine_stop()
         with TempDir() as d:
             point_dir(d, f)
             pt = c.load_point(d, X1)
         self.assertEqual(pt.lost, [(1, "engine_stop_rc4")])
-        self.assertEqual(pt.attempts, ["1.attempt0.hbp"])
+        self.assertEqual(pt.attempts, ["1.attempt1.hbp"])
         self.assertEqual(pt.M(), 4096)
         self.assertEqual(pt.lost_indices(), [(4096, 8192)])
         self.assertEqual(pt.steps, (64, 128))
+
+    def test_probe_a_truncated_call_without_its_attempt(self):
+        # a record dropped with no evidence of an exit 4 (review probe A)
+        self.assertEqual(stop_reason(x1_files("X1.1.steps64.agg")), "stop_attempt_count")
+
+    def test_probe_b_complete_block_filed_as_an_attempt(self):
+        # the complete block renamed to an attempt and a shorter rerun kept: data seen would be discarded (probe B)
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.agg")))
+        f["1.attempt1.eng.err"] = ENGINE_FAULT
+        self.assertEqual(stop_reason(f), "stop_attempt_file")
+
+    def test_probe_c_attempt_that_is_not_a_row(self):
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = "anything\n"
+        f["1.attempt1.eng.err"] = ENGINE_FAULT
+        self.assertEqual(stop_reason(f), "stop_attempt_file")
+
+    def test_attempts_on_a_complete_call(self):
+        f = x1_files()
+        f["1.attempt1.hbp"] = engine_stop()
+        self.assertEqual(stop_reason(f), "stop_attempt_count")
+
+    def test_lost_call_needs_every_try(self):
+        f = x1_files()
+        f["1.hbp"] = engine_stop()
+        self.assertEqual(stop_reason(f), "stop_attempt_count")  # no one-record try
+        f["1.attempt2.hbp"] = engine_stop()
+        self.assertEqual(stop_reason(f), "stop_attempt_count")  # attempts numbered from 1
+        f["1.attempt1.hbp"] = engine_stop()
+        self.assertEqual(stop_reason(f), "stop_attempt_count")  # one try too many
+
+    def test_attempt_of_another_call(self):
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = engine_stop().replace("|call=1|", "|call=0|")
+        self.assertEqual(stop_reason(f), "stop_attempt_file")
+
+    def test_attempt_with_another_exit(self):
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=2, rc_reader=3)
+        f["1.attempt1.eng.err"] = ENGINE_FAULT
+        self.assertEqual(stop_reason(f), "stop_attempt_file")
+
+    def test_engine_stderr(self):
+        # an exit 4 must file its TWB_FAULT row; a completed call files an empty engine stderr
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = engine_stop()
+        f["1.attempt1.eng.err"] = ""
+        self.assertEqual(stop_reason(f), "stop_engine_stderr")
+        f["1.attempt1.eng.err"] = "TWB_FAULT|reason=memo_count_check|count=1|ps=0|k4=0+0|k2=0+0|json=0\n"
+        self.assertEqual(stop_reason(f), "stop_engine_stderr")  # an exit-6 fault, not an exit 4
+        f["1.attempt1.eng.err"] = "TWB_FAULT|reason=sharp_mode0_argument_not_positive|arg=-5|json=0\n"
+        self.assertIsNone(stop_reason(f))
+        f["1.eng.err"] = ENGINE_FAULT
+        self.assertEqual(stop_reason(f), "stop_engine_stderr")
+        del f["1.eng.err"]
+        with TempDir() as d:
+            point_dir(d, f, engine_err=False)
+            for k in ("0.eng.err", "1.attempt1.eng.err"):
+                write(os.path.join(d, k), "")
+            with self.assertRaises(c.StageBStop) as e:
+                c.load_point(d, X1)
+        self.assertEqual(e.exception.reason, "stop_engine_stderr")  # 1.eng.err not filed
+
+    def test_stage_a_stderr(self):
+        f = x1_files()
+        f["0.err"] = ""
+        self.assertIsNone(stop_reason(f))
+        f["0.err"] = "x\n"
+        self.assertEqual(stop_reason(f), "reader_stderr")
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = engine_stop()
+        f["1.attempt1.err"] = read(os.path.join(AGG, "X1.1.empty.agg"))
+        self.assertIsNone(stop_reason(f))
+
+    def test_orphan_stderr_file(self):
+        f = x1_files()
+        f["1.attempt1.eng.err"] = ENGINE_FAULT
+        self.assertEqual(stop_reason(f), "seed_extra_file")
+
+    def test_sums_list_every_receipt(self):
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = engine_stop()
+        with TempDir() as d:
+            point_dir(d, f)
+            c.write_sha256sums(d)
+            listed = sorted(ln.split("  ")[1] for ln in read(os.path.join(d, "SHA256SUMS")).split("\n")[:-1])
+            self.assertEqual(listed, ["0.eng.err", "0.hbp", "1.attempt1.eng.err", "1.attempt1.hbp", "1.eng.err",
+                                      "1.hbp"])
+            self.assertEqual(c.load_point(d, X1, require_sums=True).steps, (64,))
+            write(os.path.join(d, "1.attempt1.eng.err"), "TWB_FAULT|reason=rounding_bound_hL_above_1/2|json=0\n"
+                  "TWB_FAULT|reason=rounding_bound_hL_above_1/2|json=0\n")
+            with self.assertRaises(c.StageBStop) as e:
+                c.load_point(d, X1, require_sums=True)
+        self.assertEqual(e.exception.reason, "sha256sums")
 
     def test_reader_stop_on_a_complete_stream_is_fatal(self):
         f = x1_files()
