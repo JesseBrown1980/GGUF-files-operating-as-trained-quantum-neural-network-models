@@ -6,6 +6,7 @@ It must remain read-disabled until independently reviewed and completed.
 No floats, Fractions, eval, or JSON; all arithmetic uses reduced integer pairs.
 """
 import hashlib
+import re
 import sys
 from math import gcd, isqrt
 from pathlib import Path
@@ -15,7 +16,17 @@ PRED = ROOT / "PREDICTION.hbp"
 AMEND_F = ROOT / "AMENDMENT-2026-11-06-F-SAMPLING.hbp"
 AMEND_G = ROOT / "AMENDMENT-2026-11-06-G-MEMO.hbp"
 CORRECTIONS = ROOT / "CORRECTIONS.hbp"
+HOLDS = ROOT / "HOLDS-APPLIED.hbp"
+SHA_FILE = ROOT / "SHA256SUMS"
 FROZEN_SHA = "fadd84122e820cc03e9a4d6d5dd47fe7118ab4b16e1d4db93a601fb44c90b892"
+F_SHA = "60c403d3cc55878fcea1859542bf80b7c72886e530204697df02fcc087e779ec"
+G_SHA = "9ca167ef7c63ce730e52e16b18fe24c19fb80138f8a67b532a979f86d589c6eb"
+CORRECTIONS_SHA = "9bfdd27d9b418cb71835a870e527f8e4c83f412aab8bd148c56539af597e9e99"
+# Git object IDs commit to the complete bytes. The exact SHA-256 also
+# must match the separately independently reported frozen b9cf4641… pin.
+HOLDS_GIT_BLOB_SHA = "954e8ee3b149f75016f7d2ff50163494fe903ada"
+HOLDS_SHA256_PREFIX = "b9cf4641"
+REQUIRED_ERRORS = ("3SE", "e_int", "e_round", "e_q", "e_trunc")
 SCALE = 1 << 40
 
 
@@ -70,26 +81,34 @@ def fmt(a):
     return str(a[0]) + "/" + str(a[1])
 
 
+def canon_int(s, *, positive=False):
+    """Exact canonical ASCII integer token; refuse punctuation and underscores."""
+    need(type(s) is str and bool(re.fullmatch(r"-?(?:0|[1-9][0-9]*)", s, flags=re.ASCII)),
+         "integer_syntax")
+    value = int(s)
+    need(not (s == "-0") and (not positive or value > 0), "integer_range")
+    return value
+
+
 def num(s):
-    """Parse a scientific decimal or a/b, exactly. No binary floating point."""
-    need(isinstance(s, str) and s and len(s) < 100, "number_syntax")
-    if "/" in s:
-        p = s.split("/")
-        need(len(p) == 2, "number_slashes")
-        return ratio(int(p[0]), int(p[1]))
-    q = s.lower().split("e")
-    need(len(q) <= 2, "number_exponent")
-    t = q[0]
-    sign = -1 if t.startswith("-") else 1
-    t = t.lstrip("+-")
-    p = t.split(".")
-    need(len(p) <= 2 and all(x.isdigit() for x in p) and any(p), "number_decimal")
-    digs = "".join(p)
-    places = len(p[1]) if len(p) == 2 else 0
-    exponent = int(q[1]) if len(q) == 2 else 0
+    """Canonical ASCII rational/scientific decimal, never a binary float."""
+    need(type(s) is str and 0 < len(s) <= 100, "number_syntax")
+    fraction = re.fullmatch(r"(-?(?:0|[1-9][0-9]*))/([1-9][0-9]*)", s,
+                            flags=re.ASCII)
+    if fraction:
+        return ratio(canon_int(fraction.group(1)), canon_int(fraction.group(2), positive=True))
+    decimal = re.fullmatch(
+        r"(-?(?:0|[1-9][0-9]*))(?:\\.([0-9]+))?(?:[eE]([+-]?(?:0|[1-9][0-9]*)))?",
+        s, flags=re.ASCII)
+    need(decimal is not None, "number_syntax")
+    whole, frac, exp = decimal.groups()
+    exponent = int(exp) if exp is not None else 0
     need(-200 <= exponent <= 200, "number_exponent_range")
-    shift = exponent - places
-    return ratio(sign * int(digs) * (10 ** max(shift, 0)), 10 ** max(-shift, 0))
+    sign = -1 if whole.startswith("-") else 1
+    digits = whole.lstrip("-") + (frac or "")
+    shift = exponent - len(frac or "")
+    return ratio(sign * int(digits) * (10 ** max(shift, 0)),
+                 10 ** max(-shift, 0))
 
 
 def ceiling_sqrt_pair(a, scale=10**18):
@@ -120,9 +139,11 @@ def verdict(d, terms, tol, undefined=False):
     if undefined:
         return "UNDEFINED"
     need(cmp(tol, ratio(0)) >= 0, "negative_tolerance")
-    need(bool(terms) and len(terms) == len(set(terms)), "missing_error_decomposition")
+    need(type(terms) is dict and set(terms) == set(REQUIRED_ERRORS),
+         "missing_error_decomposition")
     for key, value in terms.items():
-        need(key and cmp(value, ratio(0)) >= 0, "negative_or_unnamed_error")
+        need(key in REQUIRED_ERRORS and cmp(value, ratio(0)) >= 0,
+             "negative_or_unnamed_error")
     e = ratio(0)
     for value in terms.values():
         e = add(e, value)
@@ -185,7 +206,9 @@ def preflight():
     need(len(read) == 1 and read[0]["MET_if"] == "abs(d)+e<=tol"
          and read[0]["MISS_if"] == "abs(d)-e>tol"
          and read[0]["else"] == "NOT_RESOLVED", "frozen_rule_modified")
+    # Only frozen public sources; never inspect a blind output from preflight.
     fraw, fr = rows(AMEND_F)
+    need(hashlib.sha256(fraw).hexdigest() == F_SHA, "amendment_F_sha256")
     need(fr[0]["prediction_sha256"] == FROZEN_SHA, "amendment_wrong_prediction")
     changed = {}
     for r in fr:
@@ -200,11 +223,32 @@ def preflight():
         need(key(old) not in changed, "amendment_duplicate")
         changed[key(old)] = int(r["M_VNC_amended"])
     need(bool(changed), "missing_F_sampling_amendment")
-    _, gr = rows(AMEND_G)
+    graw, gr = rows(AMEND_G)
+    need(hashlib.sha256(graw).hexdigest() == G_SHA, "amendment_G_sha256")
+    need(gr[0]["prediction_sha256"] == FROZEN_SHA, "amendment_G_prediction")
     need(any(r["_tag"] == "BRIDGE_AMENDED_IDENTITY" for r in gr), "missing_G_memo_identity")
-    _, corr = rows(CORRECTIONS)
+    craw, corr = rows(CORRECTIONS)
+    need(hashlib.sha256(craw).hexdigest() == CORRECTIONS_SHA, "corrections_sha256")
     need(corr[0]["PREDICTION.hbp_sha256"] == FROZEN_SHA, "corrections_wrong_prediction")
-    return ats, pts, changed, hashlib.sha256(fraw).hexdigest()
+    hraw, holds = rows(HOLDS)
+    blob = hashlib.sha1(b"blob " + str(len(hraw)).encode("ascii") + b"\\0" + hraw).hexdigest()
+    need(blob == HOLDS_GIT_BLOB_SHA, "holds_git_object")
+    h_sha = hashlib.sha256(hraw).hexdigest()
+    need(h_sha.startswith(HOLDS_SHA256_PREFIX), "holds_sha256_prefix")
+    need(holds[0]["PREDICTION.hbp_sha256"] == FROZEN_SHA, "holds_wrong_prediction")
+    need(holds[0]["holds"].startswith("40("), "holds_count")
+    need(len([r for r in holds if r["_tag"] == "HOLD"]) == 40, "holds_inventory")
+    # We additionally verify the checked SHA256SUMS entries for F and G.
+    sums_raw = SHA_FILE.read_bytes()
+    need(b"\\r" not in sums_raw and sums_raw.endswith(b"\\n"), "sha256sums_format")
+    pairs = [line.split() for line in sums_raw.decode("ascii").splitlines() if line]
+    sums = {name: sha for sha, name in pairs if len(sha) == 64}
+    for path, digest in (("PREDICTION.hbp", FROZEN_SHA),
+                         ("AMENDMENT-2026-11-06-F-SAMPLING.hbp", F_SHA),
+                         ("AMENDMENT-2026-11-06-G-MEMO.hbp", G_SHA),
+                         ("CORRECTIONS.hbp", CORRECTIONS_SHA)):
+        need(sums.get(path) == digest, "sha256sums_missing_or_changed_" + path)
+    return ats, pts, changed, h_sha
 
 
 def exact_prefix(parts, goal, *, allow_variant=False):
@@ -218,14 +262,17 @@ def exact_prefix(parts, goal, *, allow_variant=False):
     need(type(goal) is int and goal > 0 and bool(parts), "prefix_empty")
     base = parts[0]
     identity = ("N", "delta", "y", "seed", "dtden", "step")
+    need(base.get("_tag") in ("TWB", "TWB_PAIR"), "prefix_source_tag")
+    kind = "variant" if base["_tag"] == "TWB" else "pair"
     for r in parts:
-        need(all(r.get(k) == base.get(k) for k in identity), "prefix_identity")
-        need(allow_variant or r.get("variant") == base.get("variant"), "prefix_variant")
-        need(r.get("_tag") in ("TWB", "TWB_PAIR"), "prefix_source_tag")
+        need(all(k in r for k in identity) and kind in r, "prefix_missing_identity")
+        need(all(r[k] == base[k] for k in identity), "prefix_identity")
+        need(r.get("_tag") == base["_tag"], "prefix_mixed_source_types")
+        need(allow_variant or r[kind] == base[kind], "prefix_variant_or_pair")
         need("start" in r and "count" in r, "prefix_no_batch_boundaries")
     cursor = 0
-    for r in sorted(parts, key=lambda x: int(x["start"])):
-        start, count = int(r["start"]), int(r["count"])
+    for r in sorted(parts, key=lambda x: canon_int(x["start"])):
+        start, count = canon_int(r["start"]), canon_int(r["count"], positive=True)
         need(start == cursor and count > 0, "prefix_gap_or_overlap")
         cursor += count
     need(cursor == goal, "prefix_count_mismatch")
