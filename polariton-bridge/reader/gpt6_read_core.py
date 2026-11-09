@@ -98,7 +98,7 @@ def num(s):
     if fraction:
         return ratio(canon_int(fraction.group(1)), canon_int(fraction.group(2), positive=True))
     decimal = re.fullmatch(
-        r"(-?(?:0|[1-9][0-9]*))(?:\\.([0-9]+))?(?:[eE]([+-]?(?:0|[1-9][0-9]*)))?",
+        r"(-?(?:0|[1-9][0-9]*))(?:\.([0-9]+))?(?:[eE]([+-]?(?:0|[1-9][0-9]*)))?",
         s, flags=re.ASCII)
     need(decimal is not None, "number_syntax")
     whole, frac, exp = decimal.groups()
@@ -231,7 +231,7 @@ def preflight():
     need(hashlib.sha256(craw).hexdigest() == CORRECTIONS_SHA, "corrections_sha256")
     need(corr[0]["PREDICTION.hbp_sha256"] == FROZEN_SHA, "corrections_wrong_prediction")
     hraw, holds = rows(HOLDS)
-    blob = hashlib.sha1(b"blob " + str(len(hraw)).encode("ascii") + b"\\0" + hraw).hexdigest()
+    blob = hashlib.sha1(b"blob " + str(len(hraw)).encode("ascii") + b"\0" + hraw).hexdigest()
     need(blob == HOLDS_GIT_BLOB_SHA, "holds_git_object")
     h_sha = hashlib.sha256(hraw).hexdigest()
     need(h_sha.startswith(HOLDS_SHA256_PREFIX), "holds_sha256_prefix")
@@ -240,7 +240,7 @@ def preflight():
     need(len([r for r in holds if r["_tag"] == "HOLD"]) == 40, "holds_inventory")
     # We additionally verify the checked SHA256SUMS entries for F and G.
     sums_raw = SHA_FILE.read_bytes()
-    need(b"\\r" not in sums_raw and sums_raw.endswith(b"\\n"), "sha256sums_format")
+    need(b"\r" not in sums_raw and sums_raw.endswith(b"\n"), "sha256sums_format")
     pairs = [line.split() for line in sums_raw.decode("ascii").splitlines() if line]
     sums = {name: sha for sha, name in pairs if len(sha) == 64}
     for path, digest in (("PREDICTION.hbp", FROZEN_SHA),
