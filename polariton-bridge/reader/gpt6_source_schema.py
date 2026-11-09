@@ -4,6 +4,9 @@
 Consume ONLY bytes supplied after the reader has been frozen/reviewed.
 No model computations or access to actual blind outputs in this module.
 """
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from gpt6_read_core import StopRead, need, fields, num, ratio, cmp
 
 TWB_NUMERIC = ("n", "zr", "zi", "dzr", "dzi", "xw", "dxw", "xnc", "dxnc",
@@ -102,6 +105,12 @@ def validate_ensemble(batch, *, required_pair=False):
             else:
                 for nm in ("rb_d", "rb_qd", "rb_d2"):
                     need(int(row[nm]) >= 0, "pair_negative_round")
+    on = set(head["mask"].split(","))
+    need(on <= {"VNC", "V1", "V0", "RN", "FLIP", "LOCK", "MODE0", "NL"},
+         "mask_unknown_variant")
+    for step in steps:
+        for variant in on - {"NL"}:
+            need((step, variant) in normals, "mask_variant_row_missing")
     for step, var in normals:
         need(("TWB_ROUND", step, var) in seen, "missing_variant_round")
     for step, pair in partners:
@@ -163,18 +172,22 @@ def source_selftest():
     pround = ("TWB_PAIR_ROUND|" + base + "|pair=V1xw-VNCxnc|n=2|"
               "rb_d=0|rb_qd=0|rb_d2=0|float_used=0|json=0")
     done = "TWB_DONE|n=2|records=1|mask=VNC,V1|float_used=0|json=0"
-    entries = [head, t, rb, pair, pround, done]
+    t1 = t.replace("variant=VNC", "variant=V1")
+    rb1 = rb.replace("variant=VNC", "variant=V1")
+    entries = [head, t, rb, t1, rb1, pair, pround, done]
     validate_ensemble([fields(s) for s in entries], required_pair=True)
     faults = [
-        [head, t, pair, pround, done],       # missing round
-        [head, t, rb, pair, done],           # missing paired round
-        [head, t, rb, pair, pair, pround, done],  # duplicate
-        [head.replace("guard=lifted", "guard=active"), t, rb, pair, pround, done],
-        [head, t.replace("count=2", "count=3"), rb, pair, pround, done],
-        [head, t.replace("n=2", "n=3"), rb, pair, pround, done],
-        [head, t, rb, pair.replace("pair=V1xw-VNCxnc", "pair=V1xw-VNCxw"),
+        [head, t, t1, rb1, pair, pround, done],       # missing VNC round
+        [head, t, rb, t1, rb1, pair, done],           # missing paired round
+        [head, t, rb, t1, rb1, pair, pair, pround, done],  # duplicate
+        [head.replace("guard=lifted", "guard=active"), t, rb, t1, rb1, pair, pround, done],
+        [head, t.replace("count=2", "count=3"), rb, t1, rb1, pair, pround, done],
+        [head, t.replace("n=2", "n=3"), rb, t1, rb1, pair, pround, done],
+        [head, t, rb, t1, rb1,
+         pair.replace("pair=V1xw-VNCxnc", "pair=V1xw-VNCxw"),
          pround.replace("pair=V1xw-VNCxnc", "pair=V1xw-VNCxw"), done],
-        [head, t, rb.replace("rb_f=0", "rb_f=-1"), pair, pround, done],
+        [head, t, rb.replace("rb_f=0", "rb_f=-1"), t1, rb1, pair, pround, done],
+        [head, t, rb, pair, pround, done],             # mask demands V1
     ]
     rejected = 0
     for v in faults:
@@ -184,3 +197,12 @@ def source_selftest():
             rejected += 1
     need(rejected == len(faults), "source_fault_suite")
     return rejected
+
+
+if __name__ == "__main__":
+    try:
+        need(sys.argv == [sys.argv[0], "--selftest"], "RAW_READ_DISABLED")
+        print("BRIDGE_RAW_SCHEMA|synthetic_faults_rejected=%d|actual_outputs_opened=0|json=0" % source_selftest())
+    except (StopRead, KeyError, ValueError) as exc:
+        print("BRIDGE_RAW_SCHEMA_REFUSED|reason=%s|json=0" % str(exc), file=sys.stderr)
+        sys.exit(3)
