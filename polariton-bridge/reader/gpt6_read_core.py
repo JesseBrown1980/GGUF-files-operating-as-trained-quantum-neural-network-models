@@ -138,11 +138,21 @@ def fields(line):
     parts = line.split("|")
     need(len(parts) >= 2 and parts[-1] == "json=0", "hbp_format")
     d = {"_tag": parts[0]}
+    bare = []
+    strictly_structured = parts[0] in (
+        "BRIDGE_AT", "BRIDGE_POINT", "BRIDGE_AMENDED_AT",
+        "BRIDGE_READ_RULE", "TWB", "TWB_PAIR"
+    )
     for part in parts[1:]:
-        need("=" in part, "hbp_missing_equal")
+        if "=" not in part:
+            need(not strictly_structured and bool(part), "hbp_unstructured_schema_row")
+            bare.append(part)   # Historical HBP prose may contain literal bare clauses.
+            continue
         key, value = part.split("=", 1)
         need(key not in d and key and value, "hbp_duplicate_or_empty")
         d[key] = value
+    if bare:
+        d["_bare"] = tuple(bare)
     return d
 
 
