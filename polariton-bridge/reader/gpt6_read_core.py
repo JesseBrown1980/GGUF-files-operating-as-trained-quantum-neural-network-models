@@ -139,6 +139,7 @@ def fields(line):
     need(len(parts) >= 2 and parts[-1] == "json=0", "hbp_format")
     d = {"_tag": parts[0]}
     bare = []
+    repeats = []
     strictly_structured = parts[0] in (
         "BRIDGE_AT", "BRIDGE_POINT", "BRIDGE_AMENDED_AT",
         "BRIDGE_READ_RULE", "TWB", "TWB_PAIR"
@@ -149,10 +150,16 @@ def fields(line):
             bare.append(part)   # Historical HBP prose may contain literal bare clauses.
             continue
         key, value = part.split("=", 1)
-        need(key not in d and key and value, "hbp_duplicate_or_empty")
+        need(bool(key) and bool(value), "hbp_empty_field")
+        if key in d:
+            need(not strictly_structured, "hbp_duplicate_schema_key")
+            repeats.append((key, value))  # Preserve repeated prose labels, not overwrite.
+            continue
         d[key] = value
     if bare:
         d["_bare"] = tuple(bare)
+    if repeats:
+        d["_repeats"] = tuple(repeats)
     return d
 
 
