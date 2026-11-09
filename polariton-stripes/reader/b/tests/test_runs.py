@@ -16,11 +16,18 @@ def copy_run(d, ids=("XR1",)):
             shutil.copy(os.path.join(RUN, nm), os.path.join(d, nm))
 
 
-def engine_stop(d, stem):
-    """A try of a batch whose engine exited 4: nothing on stdout, a TWB_FAULT row on stderr, rc=4."""
+def try_steps(stem):
+    """The steps rule STOP gives a try of an XR1 batch (3 records): attempt k ran the first 4 - k, the last try of a
+    lost batch ran one."""
+    k = int(stem.split(".attempt")[1]) if ".attempt" in stem else 3
+    return ",".join(("32", "64", "128")[: 4 - k])
+
+
+def engine_stop(d, stem, steps=None):
+    """A try of a batch whose engine exited 4: nothing on stdout, a TWB_FAULT row on stderr, rc=4 and its steps."""
     write(os.path.join(d, stem + ".hbp"), "")
     write(os.path.join(d, stem + ".err"), ENGINE_FAULT)
-    write(os.path.join(d, stem + ".rc"), "rc=4\n")
+    write(os.path.join(d, stem + ".rc"), "rc=4 steps=%s\n" % (try_steps(stem) if steps is None else steps))
 
 
 def truncate(d, j, records):
@@ -31,6 +38,7 @@ def truncate(d, j, records):
     head = lines[0].replace("|steps=32,64,128|", "|steps=%s|" % steps)
     done = lines[-1].replace("|records=3|", "|records=%d|" % records)
     write(p, "\n".join([head] + lines[1:1 + 3 * records] + [done]) + "\n")
+    write(os.path.join(d, "XR1.%d.rc" % j), "rc=0 steps=%s\n" % steps)
 
 
 def run_reason(d):
@@ -86,7 +94,13 @@ class Faults(unittest.TestCase):
             r = runs.load_run(d, XR1)
         self.assertEqual(r.lost, [(5, "engine_stop_rc4")])
         self.assertEqual(r.attempts, 2)
-        self.assertEqual(r.M(), 3584)
+        self.assertEqual(len(r.batches), 7)  # the other batches are still checked
+        # rule STOP: the point keeps only the records all 8 batches reached; the lost batch reached none
+        self.assertEqual(r.steps, ())
+        self.assertEqual(r.not_measured, (32, 64, 128))
+        with self.assertRaises(c.StageBStop) as e:
+            r.pooled(32)
+        self.assertEqual(e.exception.reason, "not_measured_record")
 
     def test_rerun_with_last_record_dropped(self):
         with TempDir() as d:
@@ -105,7 +119,7 @@ class Faults(unittest.TestCase):
             self.assertEqual(run_reason(d), "stop_attempt_count")
             engine_stop(d, "XR1.5.attempt1")
             self.assertEqual(run_reason(d), "stop_attempt_count")  # the one-record try is missing
-            write(os.path.join(d, "XR1.5.rc"), "rc=0\n")
+            write(os.path.join(d, "XR1.5.rc"), "rc=0 steps=32,64,128\n")
             self.assertEqual(run_reason(d), "run_rows")  # an empty stdout with rc=0
 
     def test_truncated_batch_without_its_attempt(self):
@@ -126,9 +140,9 @@ class Faults(unittest.TestCase):
             self.assertEqual(run_reason(d), "stop_engine_stderr")  # exit 4 without its TWB_FAULT row
             write(os.path.join(d, "XR1.3.attempt1.err"), ENGINE_FAULT + ENGINE_FAULT)
             self.assertIsNone(run_reason(d))  # one row per stopped thread (threads=4)
-            write(os.path.join(d, "XR1.3.attempt1.rc"), "rc=137\n")
+            write(os.path.join(d, "XR1.3.attempt1.rc"), "rc=137 steps=32,64,128\n")
             self.assertEqual(run_reason(d), "stop_attempt_file")
-            write(os.path.join(d, "XR1.3.attempt1.rc"), "rc=4\n")
+            write(os.path.join(d, "XR1.3.attempt1.rc"), "rc=4 steps=32,64,128\n")
             write(os.path.join(d, "XR1.3.attempt1.hbp"), read(os.path.join(RUN, "XR1.3.hbp")))
             self.assertEqual(run_reason(d), "stop_attempt_file")  # a complete batch filed as an attempt
             os.unlink(os.path.join(d, "XR1.3.attempt1.rc"))
@@ -139,13 +153,34 @@ class Faults(unittest.TestCase):
             copy_run(d)
             os.unlink(os.path.join(d, "XR1.2.rc"))
             self.assertEqual(run_reason(d), "run_rc")
-            write(os.path.join(d, "XR1.2.rc"), "rc=137\n")
+            write(os.path.join(d, "XR1.2.rc"), "rc=137 steps=32,64,128\n")
             self.assertEqual(run_reason(d), "run_rc")  # a crash or a kill is not an engine stop
-            write(os.path.join(d, "XR1.2.rc"), "rc=00\n")
+            write(os.path.join(d, "XR1.2.rc"), "rc=00 steps=32,64,128\n")
             self.assertEqual(run_reason(d), "run_rc")
             write(os.path.join(d, "XR1.2.rc"), "rc=0\n")
+            self.assertEqual(run_reason(d), "run_rc")  # no steps
+            write(os.path.join(d, "XR1.2.rc"), "rc=0 steps=32,64,128\n")
             write(os.path.join(d, "XR1.2.bak"), "")
             self.assertEqual(run_reason(d), "run_extra_file")
+
+    def test_steps_of_each_try(self):
+        with TempDir() as d:
+            copy_run(d)
+            truncate(d, 3, 2)
+            engine_stop(d, "XR1.3.attempt1", steps="32,64")
+            self.assertEqual(run_reason(d), "stop_attempt_steps")  # attempt 1 ran all 3 records
+            engine_stop(d, "XR1.3.attempt1")
+            self.assertIsNone(run_reason(d))
+            write(os.path.join(d, "XR1.3.rc"), "rc=0 steps=32,64,128\n")
+            self.assertEqual(run_reason(d), "stop_trailer_steps")  # the batch printed 2 records
+        with TempDir() as d:
+            copy_run(d)
+            for stem in ("XR1.5.attempt1", "XR1.5.attempt2"):
+                engine_stop(d, stem)
+            engine_stop(d, "XR1.5", steps="32,64")
+            self.assertEqual(run_reason(d), "stop_attempt_steps")  # the last try runs one record
+            engine_stop(d, "XR1.5")
+            self.assertIsNone(run_reason(d))
 
     def test_wrong_version(self):
         with TempDir() as d:

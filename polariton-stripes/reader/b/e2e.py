@@ -2,19 +2,24 @@
 
     python3 -I e2e.py [--work DIR] [--keep]
 
-1. tests/campaign.py writes every input of a run: P01-P14 (8000 call files and the P08, P13 side files), R1-R4
-   (64 batches each), the 15 QE commands of QR1-QR5 and the guard lines.
+1. tests/campaign.py writes every input of a run: P01-P14 (8000 call files, each trailer with its steps, and the
+   P08, P13 side files, each one's sums equal to its block's AGG_SUM and AGG_ATOMS), R1-R4 (64 batches each, each .rc
+   with its steps), the 15 QE commands of QR1-QR5 and the guard lines.
 2. `stripes_read_b read` writes READ-STRIPE-PHASE.hbp; it must hold one VERDICT row per STRIPES_PREDICT row, in the
    frozen order, and pass `audit`; `verify` must rebuild it line for line.
 3. A second campaign loses calls, batches, records and QE rows under rule STOP, each with the evidence the run script
-   files: P03 call 500 and P08 call 10 lost (every try down to one record exited 4), P05 call 7 rerun without its last
-   record, R2 batch 5 lost the same way, the QE command at (729, 1/108) killed after its t=1 row (rc=137) and the 6561
-   sector command panicked after its t=2 row (rc=101, the panic text on stderr). Its READ file must have the same
-   rows, the same scored and read-and-report reads (the SCORING table), and NOT_MEASURED reads where data was lost.
+   files, every try with the steps it ran: P03 call 500 and P08 call 10 lost (every try down to one record exited 4),
+   P05 call 7 rerun without its last record, R2 batch 5 lost the same way, the QE command at (729, 1/108) killed
+   after its t=1 row (rc=137) and the 6561 sector command panicked after its t=2 row (rc=101, the panic text on
+   stderr). Its READ file must have the same rows, the same scored and read-and-report reads (the SCORING table), and
+   NOT_MEASURED reads where data was lost. Rule STOP keeps only the records all 64 batches of a run point reached, and
+   the lost batch reached none: every read of R2 (E04, E18, E19) must be NOT_MEASURED and state the loss.
 
-Prints one E2E row; exit 0 when every check holds."""
+Stage B computes on checked integer pairs (stripes_read_b/qint.py). Prints one E2E row; exit 0 when every check
+holds."""
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -62,41 +67,44 @@ PANIC = ("thread 'main' panicked at src/bin/polariton_first_correction.rs:1967:5
          "note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n")
 
 
-def stop_call(d, pid, call, stem):
-    """A try of a dump call whose engine exited 4, filed as <stem>.hbp and <stem>.eng.err."""
-    text, err = campaign.engine_stop_call(pid, call)
+def stop_call(d, pid, call, stem, steps):
+    """A try of a dump call whose engine exited 4 while running `steps`, filed as <stem>.hbp and <stem>.eng.err."""
+    text, err = campaign.engine_stop_call(pid, call, steps)
     replace_file(os.path.join(d, stem + ".hbp"), text)
     replace_file(os.path.join(d, stem + ".eng.err"), err)
 
 
-def stop_batch(d, stem):
-    """A try of a run batch that exited 4: nothing on stdout, the TWB_FAULT row on stderr, rc=4."""
+def stop_batch(d, stem, steps):
+    """A try of a run batch that exited 4 while running `steps`: nothing on stdout, the TWB_FAULT row on stderr,
+    rc=4 and the steps in the .rc file."""
     replace_file(os.path.join(d, stem + ".hbp"), "")
     replace_file(os.path.join(d, stem + ".err"), campaign.ENGINE_FAULT)
-    replace_file(os.path.join(d, stem + ".rc"), "rc=4\n")
+    replace_file(os.path.join(d, stem + ".rc"), "rc=4 steps=%s\n" % ",".join(map(str, steps)))
 
 
 def lose(root):
     """The rule STOP campaign: data lost in every way the run plan allows, each loss with its evidence. Returns
     (QE rows absent from QE.hbp, QE commands with rc != 0)."""
     campaign.LOCK_Q = campaign.e.lock_q(frozen.load())
+    s4 = list(c.DUMP_POINTS["P03"].steps)
     for pid, call in (("P03", 500), ("P08", 10)):  # 4 records: tries with 4, 3 and 2 records, then the last with 1
         d = os.path.join(root, "agg", pid)
         for k in (1, 2, 3):
-            stop_call(d, pid, call, "%d.attempt%d" % (call, k))
-        stop_call(d, pid, call, str(call))
+            stop_call(d, pid, call, "%d.attempt%d" % (call, k), s4[: 5 - k])
+        stop_call(d, pid, call, str(call), s4[:1])
     os.remove(os.path.join(root, "agg", "P08", "10.side"))
     d = os.path.join(root, "agg", "P05")
-    stop_call(d, "P05", 7, "7.attempt1")
-    text, _ = campaign.call_block(c.DUMP_POINTS["P05"], 7, [64, 128, 192], "agg/P05/7.side")
-    replace_file(os.path.join(d, "7.hbp"), text + "rc=0 rc_reader=0\n")
+    stop_call(d, "P05", 7, "7.attempt1", s4)
+    text, _ = campaign.call_block(c.DUMP_POINTS["P05"], 7, s4[:3], "agg/P05/7.side")
+    replace_file(os.path.join(d, "7.hbp"), text + campaign.trailer(0, 0, s4[:3]))
     for pid in ("P03", "P05", "P08"):
         d = os.path.join(root, "agg", pid)
         os.remove(os.path.join(d, "SHA256SUMS"))
         c.write_sha256sums(d)
     d = os.path.join(root, "run")
-    for stem in ("R2.5.attempt1", "R2.5.attempt2", "R2.5"):  # 3 records: tries with 3, 2 and 1
-        stop_batch(d, stem)
+    s3 = list(c.RUN_POINTS["R2"].steps)
+    for stem, steps in (("R2.5.attempt1", s3), ("R2.5.attempt2", s3[:2]), ("R2.5", s3[:1])):  # tries with 3, 2, 1
+        stop_batch(d, stem, steps)
     reads = read_lines(os.path.join(root, "QE.hbp"))
     costs = read_lines(os.path.join(root, "QE-COST.hbp"))
     killed = [k for k, r in enumerate(reads) if "|N=729|" in r and "|y=1/108|" in r and "|t=2|" in r]
@@ -113,6 +121,16 @@ def lose(root):
             rcs[qe_mod.argv_text(cm)] = 137
     replace_file(os.path.join(root, "QE-RC.hbp"), campaign.qe_rc_text(rcs))
     return len(reads) - len(keep), sum(1 for v in rcs.values() if v)
+
+
+R2_AT = re.compile(r"(^|[^A-Z0-9])R2([^0-9]|$)")
+
+
+def run_reads(path, rid="R2"):
+    """The READ rows of a READ file whose `at` names the run point rid (E04, E18, E19)."""
+    pat = R2_AT if rid == "R2" else re.compile(r"(^|[^A-Z0-9])%s([^0-9]|$)" % rid)
+    rows = [fields_dict(parse_row(ln)[1]) for ln in read_lines(path) if ln.startswith("STRIPES_READ|")]
+    return [r for r in rows if pat.search(r["at"])]
 
 
 def verdict_rows(path):
@@ -190,20 +208,32 @@ def main(argv):
                     d = fields_dict(parse_row(ln)[1])
                     notes[d["label"]] = d["text"]
         want_notes = {"point_P03": "lost=500", "point_P05": "not_measured=256,attempts=1",
-                      "point_P08": "lost=10", "run_R2": "lost=5", "qe_rc": "rc=101"}
+                      "point_P08": "lost=10", "run_R2": "read=0,lost=5,steps=none,not_measured=32:64:128",
+                      "qe_rc": "rc=101"}
         for label, part in want_notes.items():
             if part not in notes.get(label, ""):
                 fails.append("note_" + label)
+        # rule STOP for runs: the records all 64 batches reached; R2's lost batch reached none
+        r2 = run_reads(out2) if rc2 == 0 else []
+        r2_clean = run_reads(out) if rc == 0 else []
+        if len(r2) != 11 or len(r2_clean) != 11:
+            fails.append("R2_reads_%d_%d" % (len(r2), len(r2_clean)))
+        for r in r2:
+            if r["verdict"] != c.NOT_MEASURED or "batch_lost" not in r["detail"]:
+                fails.append("R2_read_" + r["read"])
+        if any(r["verdict"] == c.NOT_MEASURED for r in r2_clean):
+            fails.append("R2_read_lost_in_the_clean_campaign")
         rc_v2, text_v2 = stage_b("verify", "--read", out2, *inputs(lost))
         if rc_v2 != 0:
             fails.append("verify_stop:" + text_v2[:200])
         if rc2 == 0 and [r for r in campaign_scoring(out) if r] != [r for r in campaign_scoring(out2) if r]:
             fails.append("scoring_table_stop")
         print("E2E|predict_rows=%d|verdict_rows=%d|verdicts=%s|audit=%s|verify=%s|stop_campaign_verdict_rows=%d|"
-              "stop_campaign_not_measured_scored=%d|qe_rows_absent=%d|qe_commands_rc_nonzero=%d|engine_runs=0|"
-              "result=%s|json=0" % (
+              "stop_campaign_not_measured_scored=%d|stop_campaign_R2_reads_not_measured=%d|qe_rows_absent=%d|"
+              "qe_commands_rc_nonzero=%d|engine_runs=0|result=%s|json=0" % (
                   len(order), len(vs), ",".join("%s:%d" % kv for kv in sorted(tally.items())),
-                  "pass" if rc_a == 0 else "fail", "equal" if rc_v == 0 else "differ", len(vs2), nm, nq, nfail,
+                  "pass" if rc_a == 0 else "fail", "equal" if rc_v == 0 else "differ", len(vs2), nm,
+                  sum(1 for r in r2 if r["verdict"] == c.NOT_MEASURED), nq, nfail,
                   "pass" if not fails else "fail:" + ";".join(f.replace("|", "/") for f in fails)))
     finally:
         if own and not keep:

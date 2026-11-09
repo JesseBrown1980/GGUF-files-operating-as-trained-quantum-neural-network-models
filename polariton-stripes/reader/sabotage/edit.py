@@ -8,9 +8,14 @@ campaign call file or a READ file; nothing is edited in place and no engine runs
   read   --in F --out F --op OP              OP: promote, promote_why, falsify
   stop   --campaign D --op OP                rule STOP without its evidence (SHA256SUMS rewritten each time):
                                              dump_no_attempt, dump_block_as_attempt, dump_garbage_attempt,
-                                             dump_garbage_attempt_short, dump_stop_without_fault, run_empty_no_attempt,
-                                             run_truncated_no_attempt, run_crash
+                                             dump_garbage_attempt_short, dump_stop_without_fault,
+                                             dump_attempt_wrong_steps, dump_lost_last_try_steps, run_empty_no_attempt,
+                                             run_truncated_no_attempt, run_crash, run_attempt_wrong_steps
   qe     --campaign D --op OP                OP: panic_rc101, panic_rc0, altered_B, rc_row_missing
+  side   --campaign D                        one br of P08 call 0's side file moved by 1, with every hash forged to
+                                             agree: AGG_SIDE bytes and sha256, AGG_END and SHA256SUMS
+  floats --work D                            writes D/qint_floats.py, D/fraction_floats.py (stray floats at run time)
+                                             and D/b (a copy of the live stage B with floats planted in its source)
 """
 
 import hashlib
@@ -223,12 +228,16 @@ def _resum(d):
 
 def cmd_stop(a):
     root, op = a["--campaign"], a["--op"]
+    s4 = list(c.DUMP_POINTS["P05"].steps)
     if op.startswith("dump_"):
         camp = _stage_b_tests()
         d = os.path.join(root, "agg", "P05")
-        short, _ = camp.call_block(c.DUMP_POINTS["P05"], 7, [64, 128, 192], "agg/P05/7.side")
-        short += "rc=0 rc_reader=0\n"
-        stop_text, _ = camp.engine_stop_call("P05", 7)
+        short, _ = camp.call_block(c.DUMP_POINTS["P05"], 7, s4[:3], "agg/P05/7.side")
+        short += camp.trailer(0, 0, s4[:3])
+
+        def stop_text(steps):
+            return camp.engine_stop_call("P05", 7, steps)[0]
+
         if op == "dump_no_attempt":  # probe A: a record dropped with no exit 4 filed
             replace_file(os.path.join(d, "7.hbp"), short)
         elif op == "dump_block_as_attempt":  # probe B: the complete block filed as the attempt, a shorter rerun kept
@@ -242,10 +251,20 @@ def cmd_stop(a):
                 replace_file(os.path.join(d, "7.hbp"), short)
         elif op == "dump_stop_without_fault":  # every try filed, but the engine's stderr of the last one is empty
             for k in (1, 2, 3):
-                replace_file(os.path.join(d, "7.attempt%d.hbp" % k), stop_text)
+                replace_file(os.path.join(d, "7.attempt%d.hbp" % k), stop_text(s4[: 5 - k]))
                 replace_file(os.path.join(d, "7.attempt%d.eng.err" % k), FAULT)
-            replace_file(os.path.join(d, "7.hbp"), stop_text)
+            replace_file(os.path.join(d, "7.hbp"), stop_text(s4[:1]))
             replace_file(os.path.join(d, "7.eng.err"), "")
+        elif op == "dump_attempt_wrong_steps":  # one attempt beside a 3-record rerun, filed with the rerun's steps
+            replace_file(os.path.join(d, "7.attempt1.hbp"), stop_text(s4[:3]))
+            replace_file(os.path.join(d, "7.attempt1.eng.err"), FAULT)
+            replace_file(os.path.join(d, "7.hbp"), short)
+        elif op == "dump_lost_last_try_steps":  # a lost call whose last try still ran two records
+            for k in (1, 2, 3):
+                replace_file(os.path.join(d, "7.attempt%d.hbp" % k), stop_text(s4[: 5 - k]))
+                replace_file(os.path.join(d, "7.attempt%d.eng.err" % k), FAULT)
+            replace_file(os.path.join(d, "7.hbp"), stop_text(s4[:2]))
+            replace_file(os.path.join(d, "7.eng.err"), FAULT)
         else:
             raise SystemExit("edit.py: stop op " + op)
         _resum(d)
@@ -254,16 +273,21 @@ def cmd_stop(a):
     if op == "run_empty_no_attempt":
         replace_file(os.path.join(d, "R2.5.hbp"), "")
         replace_file(os.path.join(d, "R2.5.err"), FAULT)
-        replace_file(os.path.join(d, "R2.5.rc"), "rc=4\n")
-    elif op == "run_truncated_no_attempt":
+        replace_file(os.path.join(d, "R2.5.rc"), "rc=4 steps=32,64,128\n")
+    elif op in ("run_truncated_no_attempt", "run_attempt_wrong_steps"):
         lines = read_text(os.path.join(d, "R2.5.hbp")).split("\n")[:-1]
         head = set_field(lines[0], "steps", "32,64")
         done = set_field(lines[-1], "records", "2")
         replace_file(os.path.join(d, "R2.5.hbp"), "".join(x + "\n" for x in [head] + lines[1:7] + [done]))
+        if op == "run_attempt_wrong_steps":  # the attempt beside a 2-record rerun, filed with the rerun's steps
+            replace_file(os.path.join(d, "R2.5.rc"), "rc=0 steps=32,64\n")
+            replace_file(os.path.join(d, "R2.5.attempt1.hbp"), "")
+            replace_file(os.path.join(d, "R2.5.attempt1.err"), FAULT)
+            replace_file(os.path.join(d, "R2.5.attempt1.rc"), "rc=4 steps=32,64\n")
     elif op == "run_crash":
         replace_file(os.path.join(d, "R2.5.hbp"), "")
         replace_file(os.path.join(d, "R2.5.err"), "")
-        replace_file(os.path.join(d, "R2.5.rc"), "rc=137\n")
+        replace_file(os.path.join(d, "R2.5.rc"), "rc=137 steps=32,64,128\n")
     else:
         raise SystemExit("edit.py: stop op " + op)
 
@@ -299,7 +323,102 @@ def cmd_qe(a):
         raise SystemExit("edit.py: qe op " + op)
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# A side file forged with every hash made to agree (ensemble review M4).
+
+
+def cmd_side(a):
+    d = os.path.join(a["--campaign"], "agg", "P08")
+    sp = os.path.join(d, "0.side")
+    with open(sp, "rb") as f:
+        data = bytearray(f.read())
+    nv, nrec = int.from_bytes(data[12:16], "little"), int.from_bytes(data[20:24], "little")
+    off = 64 + (8 + 16 * nv * nrec) * 100 + 8  # sample 100, VNC at step 64: its br
+    br = int.from_bytes(data[off : off + 8], "little", signed=True) + 1
+    data[off : off + 8] = br.to_bytes(8, "little", signed=True)
+    os.remove(sp)
+    with open(sp, "wb") as f:
+        f.write(bytes(data))
+    path = os.path.join(d, "0.hbp")
+    lines = read_text(path).split("\n")[:-1]
+    trailer, block = lines[-1], lines[:-1]
+    h = hashlib.sha256(bytes(data)).hexdigest()
+    edit_first(block, lambda ln: ln.startswith("AGG_SIDE|"),
+               lambda ln: set_field(set_field(ln, "bytes", str(len(data))), "sha256", h))
+    replace_file(path, "".join(x + "\n" for x in rehash(block) + [trailer]))
+    os.remove(os.path.join(d, "SHA256SUMS"))
+    c.write_sha256sums(d)
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Stray floats (the owner's ruling of 2026-11-09). The plants are text written to the work folder; nothing here
+# computes with a float.
+
+QINT_FLOATS = '''import sys
+sys.dont_write_bytecode = True
+sys.path.insert(0, sys.argv[1])
+from stripes_read_b import qint
+from stripes_read_b.exact import Iv, Rad, fmt, fr
+CASES = (
+    ("Q(1,3)*0.5", lambda: qint.make(1, 3) * 0.5),
+    ("0.5*Q(1,3)", lambda: 0.5 * qint.make(1, 3)),
+    ("make(0.1)", lambda: qint.make(0.1)),
+    ("fr(0.1)", lambda: fr(0.1)),
+    ("fr(1,3)+0.5", lambda: fr(1, 3) + 0.5),
+    ("fr(1,2)<0.5", lambda: fr(1, 2) < 0.5),
+    ("fr(1,2)==0.5", lambda: fr(1, 2) == 0.5),
+    ("sum([fr(1,2),0.5])", lambda: sum([fr(1, 2), 0.5])),
+    ("Iv(fr(1,3))*0.5", lambda: Iv(fr(1, 3)) * 0.5),
+    ("Rad(0.5)", lambda: Rad(0.5)),
+    ("fmt(0.25)", lambda: fmt(0.25)),
+    ("fr(True)", lambda: fr(True)),
+    ("Q(1,3)/2", lambda: qint.make(1, 3) / 2),
+)
+for name, fn in CASES:
+    try:
+        x = fn()
+        print("PASSED_THROUGH|case=%s|type=%s|json=0" % (name, type(x).__name__))
+    except TypeError as e:
+        print("REFUSED|case=%s|error=%s|json=0" % (name, type(e).__name__))
+'''
+
+FRACTION_FLOATS = '''from fractions import Fraction
+for name, fn in (("Fraction(1,3)*0.5", lambda: Fraction(1, 3) * 0.5), ("Fraction(0.1)", lambda: Fraction(0.1))):
+    x = fn()
+    print("PASSED_THROUGH|case=%s|type=%s|value=%s|json=0" % (name, type(x).__name__, x))
+'''
+
+# (file, the text appended): each plant a kind the source scan must find in the live stage B
+SOURCE_PLANTS = (
+    ("stripes_read_b/common.py", "\nHALF_AS_FLOAT = 1 " + "/ 2\n"),
+    ("stripes_read_b/exact.py", "\nTENTH = 0" + ".1\n"),
+    ("stripes_read_b/series.py", "\nfrom fractions import Fraction  # noqa\n"),
+    ("stripes_read_b/qint.py", "\nimport math  # noqa\n"),
+    ("stripes_read_b/rows_q.py", "\nWIDTH = fl" + "oat(3)\n"),
+    ("e2e.py", "\nX = rou" + "nd(7)\n"),
+)
+
+
+def cmd_floats(a):
+    import shutil
+
+    work = a["--work"]
+    os.makedirs(work, exist_ok=True)
+    for name, text in (("qint_floats.py", QINT_FLOATS), ("fraction_floats.py", FRACTION_FLOATS)):
+        replace_file(os.path.join(work, name), text)
+    b = os.path.join(work, "b")
+    if os.path.isdir(b):
+        shutil.rmtree(b)
+    shutil.copytree(os.path.join(os.path.dirname(HERE), "b"), b,
+                    ignore=shutil.ignore_patterns("__pycache__", "data"))
+    for rel, text in SOURCE_PLANTS:
+        with open(os.path.join(b, rel), "ab") as f:
+            f.write(text.encode("ascii"))
+
+
 COMMANDS = {
+    "side": (cmd_side, ("--campaign",), ()),
+    "floats": (cmd_floats, ("--work",), ()),
     "stream": (cmd_stream, ("--in", "--out", "--op"), ()),
     "block": (cmd_block, ("--campaign", "--point", "--call", "--op"), ("--rehash", "--sums")),
     "drop": (cmd_drop, ("--campaign", "--point", "--call"), ("--sums",)),

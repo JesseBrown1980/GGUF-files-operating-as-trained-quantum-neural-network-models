@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# no_float.sh: the reader uses integers and exact rationals only (rule DECIMAL). It greps
-#   - the Rust of stage A (reader/a/src, reader/a/tests), comments and string literals removed, for f32/f64, float
-#     literals (1.5, 1., 1e9) and float methods (sqrt, powf, exp, ln, sin, cos ...);
-#   - the Python of stage B, the checker and the sabotage suite (every .py under reader/), as tokens (strings and
-#     comments are not code), for float and complex literals, float(), complex, round, pow, math other than isqrt and
-#     gcd, numpy, cmath, statistics and random;
-# then runs the AST check of reader/b/tests/test_nofloat.py on every .py file, which also bans true division '/'
-# outside exact.div and '**'. A self-test first plants one fault of each kind and requires every one to be found.
+# no_float.sh: the reader uses integers and exact rationals only (rule DECIMAL); live stage B uses ints and checked
+# integer pairs only (the owner's ruling of 2026-11-09). It
+#   - checks every folder row of polariton-stripes/FLOAT-EVIDENCE.txt against its tree pin (float_evidence.py) and
+#     leaves those folders out of every scan below (reader/evidence/stage-b-fraction, the Fraction stage B);
+#   - greps the Rust of stage A (reader/a/src, reader/a/tests), comments and string literals removed, for f32/f64,
+#     float literals (1.5, 1., 1e9) and float methods (sqrt, powf, exp, ln, sin, cos ...);
+#   - scans every other .py under reader/ as tokens (strings and comments are not code) for float and complex
+#     literals, float(), complex, round, pow, math other than isqrt and gcd, numpy, cmath, statistics and random;
+#   - runs the AST check of reader/b/tests/test_nofloat.py: strict on stage B (reader/b: no fractions, decimal, math
+#     or numpy, no float(), round() or complex(), no float literal, no true division anywhere, no '**'), loose on the
+#     checker and the sabotage suite (math.isqrt, math.gcd and fractions allowed there, no '/' or '**').
+# A self-test first plants one fault of each kind, and a moved pin, and requires every one to be found.
 # Exit 0 when the tree is clean.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -75,17 +79,17 @@ sys.exit(1 if hits else 0)
 
 grep_python() { "$PY" -I -c "$PY_TOKENS" "$@"; }
 
+# ast_python STRICT_ROOT FILE...: the strict rules for files under STRICT_ROOT (stage B), the loose ones elsewhere.
 ast_python() {
   "$PY" -I - "$READER/b" "$@" <<'EOF'
-import sys
+import os, sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, sys.argv[1])
 from tests.test_nofloat import violations
+strict_root = os.path.join(os.path.abspath(sys.argv[2]), "")
 bad = []
-for p in sys.argv[2:]:
-    if p.endswith("test_nofloat.py"):
-        continue
-    bad += violations(p, allow_div_in=("div",) if "/stripes_read_b/" in p else ())
+for p in sys.argv[3:]:
+    bad += violations(p, strict=os.path.abspath(p).startswith(strict_root))
 for b in bad:
     print(b)
 sys.exit(1 if bad else 0)
@@ -102,21 +106,44 @@ printf 'x = 0.5\n' > "$T/a.py"
 printf 'x = float(3)\n' > "$T/b.py"
 printf 'import math\nx = math.sqrt(2)\n' > "$T/c.py"
 printf 'x = 3 / 4\n' > "$T/d.py"
+mkdir -p "$T/strict"
+printf 'from fractions import Fraction\n' > "$T/strict/e.py"
+printf 'import math\nx = math.isqrt(4)\n' > "$T/strict/f.py"
+printf 'def div(a, b):\n    return a / b\n' > "$T/strict/g.py"
+printf 'import math\nx = math.isqrt(4)\n' > "$T/h.py"
 ok=0
 for f in a b c; do grep_rust "$T/$f.rs" > /dev/null && { echo "SELF_TEST rust $f.rs not caught"; ok=1; }; done
 for f in a b c; do grep_python "$T/$f.py" > /dev/null && { echo "SELF_TEST python $f.py not caught"; ok=1; }; done
-ast_python "$T/d.py" > /dev/null && { echo "SELF_TEST python d.py ('/') not caught"; ok=1; }
+ast_python "$T/strict" "$T/d.py" > /dev/null && { echo "SELF_TEST python d.py ('/') not caught"; ok=1; }
+for f in e f g; do ast_python "$T/strict" "$T/strict/$f.py" > /dev/null && { echo "SELF_TEST strict $f.py not caught"; ok=1; }; done
+ast_python "$T/strict" "$T/h.py" > /dev/null || { echo "SELF_TEST loose h.py (math.isqrt) flagged"; ok=1; }
+# a moved pin: a listed folder in a scratch repository, then one byte edited
+R=$T/repo
+mkdir -p "$R/polariton-stripes/ev"
+git -C "$R" init -q
+printf 'x = 1\n' > "$R/polariton-stripes/ev/a.py"
+pin=$("$PY" -I "$HERE/float_evidence.py" --repo "$R" --pins polariton-stripes/ev/ | sed 's/^.*tree=\([0-9a-f]*\).*$/\1/')
+printf '# test\npolariton-stripes/ev/ | tree=%s | a test row\n' "$pin" > "$R/polariton-stripes/FLOAT-EVIDENCE.txt"
+"$PY" -I "$HERE/float_evidence.py" --repo "$R" > /dev/null || { echo "SELF_TEST pin of an unchanged folder refused"; ok=1; }
+printf 'x = 2\n' > "$R/polariton-stripes/ev/a.py"
+"$PY" -I "$HERE/float_evidence.py" --repo "$R" > /dev/null && { echo "SELF_TEST moved pin not caught"; ok=1; }
 printf 'fn ok(r: (u64, u64)) -> u64 { let s = "1.5e3"; r.0 + 2 + s.len() as u64 } // 0.5\n' > "$T/ok.rs"
 printf 'x = "0.5"  # 1.5\ny = 7 // 2\n' > "$T/ok.py"
 grep_rust "$T/ok.rs" > /dev/null || { echo "SELF_TEST rust ok.rs flagged"; ok=1; }
 grep_python "$T/ok.py" > /dev/null || { echo "SELF_TEST python ok.py flagged"; ok=1; }
 [ "$ok" = 0 ] || { echo "NO_FLOAT|result=self_test_failed|json=0"; exit 2; }
 
-mapfile -t RS < <(find "$READER/a/src" "$READER/a/tests" -name '*.rs' | sort)
-mapfile -t PYS < <(find "$READER" -name '*.py' -not -path '*/.ruff_cache/*' -not -path '*/__pycache__/*' | sort)
 r=0
+REPO=$(dirname "$(dirname "$READER")")
+"$PY" -I "$HERE/float_evidence.py" --repo "$REPO" || r=1
+mapfile -t LISTED < <("$PY" -I "$HERE/float_evidence.py" --repo "$REPO" --folders)
+prune=()
+for f in "${LISTED[@]}"; do prune+=(-not -path "$REPO/${f}*"); done
+mapfile -t RS < <(find "$READER/a/src" "$READER/a/tests" -name '*.rs' | sort)
+mapfile -t PYS < <(find "$READER" -name '*.py' -not -path '*/.ruff_cache/*' -not -path '*/__pycache__/*' "${prune[@]}" | sort)
+mapfile -t ALL_PYS < <(find "$READER" -name '*.py' -not -path '*/.ruff_cache/*' -not -path '*/__pycache__/*' | sort)
 grep_rust "${RS[@]}" || r=1
 grep_python "${PYS[@]}" || r=1
-ast_python "${PYS[@]}" || r=1
-echo "NO_FLOAT|rust_files=${#RS[@]}|python_files=${#PYS[@]}|self_test=pass|result=$([ $r = 0 ] && echo clean || echo float_found)|json=0"
+ast_python "$READER/b" "${PYS[@]}" || r=1
+echo "NO_FLOAT|rust_files=${#RS[@]}|python_files=${#PYS[@]}|listed_folders=${#LISTED[@]}|python_files_in_listed_folders=$((${#ALL_PYS[@]} - ${#PYS[@]}))|self_test=pass|result=$([ $r = 0 ] && echo clean || echo float_found)|json=0"
 exit $r

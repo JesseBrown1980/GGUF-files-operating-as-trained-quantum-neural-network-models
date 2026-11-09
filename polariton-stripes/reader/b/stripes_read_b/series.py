@@ -5,16 +5,14 @@ bracketed by its partial sum and a geometric bound on the tail. Every closed for
 polynomials in C and S, evaluated in outward-rounded intervals. The y-series is the port of closed_forms.py series():
 exact Taylor coefficients in t, 90 terms (rule EB), with a majorant bound on the truncation."""
 
-from fractions import Fraction
-
 from . import frozen as frozen_mod
-from .exact import Decimal, Iv, div, fr, ipow, isqrt_iv, parse_rat
+from .exact import HALF, ONE, ZERO, Decimal, Iv, div, fr, ipow, isqrt_iv, parse_rat
 
 BITS = 256
 
 
 def _tail_ok(term, ratio, bits):
-    return ratio < Fraction(1, 2) and term < fr(1, ipow(2, bits + 8))
+    return ratio < HALF and term < fr(1, ipow(2, bits + 8))
 
 
 def cosh_C(delta, t, bits=BITS):
@@ -22,7 +20,7 @@ def cosh_C(delta, t, bits=BITS):
     x = (1 - fr(delta) * fr(delta)) * fr(t) * fr(t)
     if x < 0:
         raise ValueError("gamma^2 t^2 < 0")
-    s, term, k = Fraction(0), Fraction(1), 0
+    s, term, k = ZERO, ONE, 0
     while True:
         s += term
         k += 1
@@ -36,7 +34,7 @@ def sinh_S(delta, t, bits=BITS):
     """S = sinh(gamma t)/gamma = t sum (gamma^2 t^2)^k/(2k+1)!."""
     t = fr(t)
     x = (1 - fr(delta) * fr(delta)) * t * t
-    s, term, k = Fraction(0), t, 0
+    s, term, k = ZERO, t, 0
     while True:
         s += term
         k += 1
@@ -67,7 +65,7 @@ class Law:
         S2 = S.sq()
         self.u2 = C.sq() + S2 * (d * d)
         self.v2 = S2
-        self.nf = (self.u2 + self.v2) * Fraction(1, 2)
+        self.nf = (self.u2 + self.v2) * HALF
         self.m2 = S2.sq() * (d * d) + C.sq() * S2
         re_g2_conj_m = (gr.sq() - gi.sq()) * S2 * (-d) - gr * gi * C * S * 2
         sg = self.sigma
@@ -150,7 +148,7 @@ def series(delta, u, K):
     """Taylor coefficients (exact rationals) of a1 = p + iq, z2 = r + iw, a3 = P + iQ: a port of closed_forms.series."""
     d = fr(delta)
     u = fr(u)
-    z = Fraction(0)
+    z = ZERO
     p = [z] * (K + 1)
     q = [z] * (K + 1)
     r = [z] * (K + 1)
@@ -181,8 +179,8 @@ def series(delta, u, K):
 
 def ev(c, t):
     t = fr(t)
-    s = Fraction(0)
-    tk = Fraction(1)
+    s = ZERO
+    tk = ONE
     for ck in c:
         s += ck * tk
         tk *= t
@@ -248,7 +246,7 @@ def lowest_terms(delta, K=12, u=1):
     p, q, r, w, P, Q = series(delta, u, K)
 
     def mul(a, b):
-        out = [Fraction(0)] * (K + 1)
+        out = [ZERO] * (K + 1)
         for i in range(K + 1):
             for j in range(K + 1 - i):
                 out[i + j] += a[i] * b[j]

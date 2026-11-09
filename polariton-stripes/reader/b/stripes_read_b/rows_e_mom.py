@@ -113,6 +113,10 @@ def calls_of(pt, step, v, scope):
 
 
 def run_step_ok(run, step):
+    """Rule STOP for runs: only the records all 64 batches reached are read, so a lost batch leaves every record of
+    its point NOT_MEASURED."""
+    if run.lost:
+        raise Lost("%s_batch_lost_%s" % (run.spec.id, "_".join(str(j) for j, _ in run.lost)))
     if step not in run.steps:
         raise Lost("record_not_measured")
 
@@ -197,7 +201,7 @@ def sampled_bracket(x_lo, x_hi, p, tol_lo, tol_hi, e):
 
 
 def up(x, sig=4):
-    """Upper decimal text of a Rad or Fraction (for the detail fields)."""
+    """Upper decimal text of a Rad or a Q (for the detail fields)."""
     if isinstance(x, Rad):
         x = x.iv().hi
     return fmt(x, sig, "up")
@@ -409,8 +413,17 @@ def paired(pt, step, v):
     diff = (a.pos - a.neg) - (r.pos - r.neg)
     lo = fr(diff - a.amb - r.amb, 2 * m)
     hi = fr(diff + a.amb + r.amb, 2 * m)
-    disc = t[1] + t[3] + t[2] + t[5] + t[6] + t[7] + t[8] + (m - cm["common"])
-    return lo, hi, fr(disc, m * m), a, r, cm
+    return lo, hi, fr(possibly_discordant(cm, m), m * m), a, r, cm
+
+
+def possibly_discordant(cm, m):
+    """An upper bound of D+ + D- on the M samples of a paired read: the certified discordant cells t1 and t3 of
+    AGG_CMP, every ambiguous cell (t2, t5, t6, t7, t8) and every sample outside the common non-atom set (the atoms,
+    whose concordance AGG_CMP does not give), each counted as possibly discordant."""
+    t = cm["br"]
+    if m < cm["common"]:
+        raise c.StageBStop("aggregate_identity", "AGG_CMP common above M")
+    return t[1] + t[3] + t[2] + t[5] + t[6] + t[7] + t[8] + (m - cm["common"])
 
 
 def mid(lo, hi):
@@ -523,6 +536,12 @@ def ratio_parts(a, b):
     return r, se2, max(r - iv.lo, iv.hi - r)
 
 
+def e10_not_above_zero(pi):
+    """E10's falsifier "P02 not resolved above 0 at 3 SE": the low end of the ambiguity bracket, (O+ - O- - A)/(2M),
+    minus 3 SE, is at or below 0 (ensemble review 2, M4; note reading_E10_falsifier)."""
+    return (Rad.of(pi.bracket()[0]) - c.se(pi.se2, 3)).sign() <= 0
+
+
 def row_e10(inp, fz):
     need(fz, "E10", E10_PI_TEXT, *[x for v in E10_PI.values() for x in v])
     need(fz, "E10", E10_RATIO_TEXT, *[x for _, _, v, tol in E10_RATIOS for x in v + (tol,)])
@@ -551,7 +570,7 @@ def row_e10(inp, fz):
             reads.append(r)
             if r.scored and r.outcome == c.MISS:
                 fals.append(rid)
-            elif r.scored and pid == "P02" and (Rad.of(pi.x) - pi.e()).sign() <= 0:
+            elif r.scored and pid == "P02" and e10_not_above_zero(pi):
                 fals.append(rid)
     if sum(1 for r in reads if r.rid.startswith("pi_")) != 12:
         raise c.StageBStop("rows_e", "E10 12 Pi reads")
@@ -1025,7 +1044,7 @@ def row_e16(inp, fz):
 
 
 def e16_outcome(out_recipe, out_diff):
-    """E16 under its two frozen texts, both with the frozen SE_pair = sqrt(D+ + D-)/(2M): the prediction names
+    """E16 under its two frozen texts, both with SE_pair = sqrt(D_max)/(2M) (e16_se_pair_e): the prediction names
     abs(Pi_V-Pi_VNC) = abs(D+ - D-)/M, the method's recipe (D+ - D-)/(2M) is half of it. MET exactly when the
     prediction passes (then the recipe passes too), MISS exactly when the recipe fails (then the prediction fails
     too), else NOT_RESOLVED."""
@@ -1041,10 +1060,10 @@ def e16_outcome(out_recipe, out_diff):
 
 
 def e16_se_pair_e(cm, m):
-    """3 SE_pair, SE_pair = sqrt(D+ + D-)/(2M) with D+ = t1 and D- = t3, the certified discordant cells of AGG_CMP on
-    the common non-atom samples (the ambiguous cells and the atoms enter the bracket of the difference only)."""
-    t = cm["br"]
-    return c.se(fr(t[1] + t[3], 4 * m * m), 3)
+    """3 SE_pair as an upper bound (the reader's conservative reading, note reading_E16): the frozen SE_pair =
+    sqrt(D+ + D-)/(2M) with D+ + D- replaced by possibly_discordant, which counts every ambiguous cell and every atom
+    as possibly discordant. At every placement of those samples the frozen SE_pair is at most this one."""
+    return c.se(fr(possibly_discordant(cm, m), 4 * m * m), 3)
 
 
 def _e16(rid, pid, t, v, sc, pt):
@@ -1059,7 +1078,8 @@ def _e16(rid, pid, t, v, sc, pt):
                   band="abs(x)+3SE_pair<=Pi_VNC/20,Pi_VNC=" + fmt(r.x, 6),
                   detail=(("x", "(D+-D-)/(2M)"), ("recipe", out_recipe), ("Pi_hat_diff", "%s..%s" % (
                       fmt(lo, 4, "down"), fmt(hi, 4, "up"))), ("diff", out_diff), ("D+", cm["br"][1]),
-                          ("D-", cm["br"][3]), ("common", cm["common"]), ("M", a.M), ("3SE_pair", up(e)))
+                          ("D-", cm["br"][3]), ("D_max", possibly_discordant(cm, a.M)), ("common", cm["common"]),
+                          ("M", a.M), ("3SE_pair", up(e)))
                   + loss(pt, "ctrl"))
 
 
@@ -1190,7 +1210,7 @@ def _e18(rid, at, sc, inp, y, t, src, law_text):
     m, se2, lost = e18_moment(inp, src, c.step_of_t(tt))
     q = None if inp.qe is None else qe_mod.get(inp.qe, "point", 729, "-1/4", y, t)
     if q is None:
-        raise Lost("missing_QE_row")
+        raise Lost("missing_QE_row" if inp.qe is None else qe_mod.lost_why(inp.qe, [("point", 729, "-1/4", y, t)]))
     if m < 0:
         raise c.StageBStop("aggregate_identity", "E18: a negative sum of squares")
     if m == 0 and q.QW_iv().lo > 0:
@@ -1290,8 +1310,11 @@ def _e19_lin(rid, sc, inp, rid_pt, t, text, half):
     y = parse_rat(spec.y)
     law = series.Law(fr(parse_rat(spec.delta)), spec.N * y * y, parse_rat(t)).nstar()
     e = c.se(se2a, 4)
-    lo = (Rad.of(a) - e).scale(div(1, law.hi)) - 1
-    hi = (Rad.of(a) + e).scale(div(1, law.lo)) - 1
+    # (n* -+ 4SE)/n*_lin over n*_lin in [law.lo, law.hi], law.lo > 0: each end's extreme is at one end of the
+    # bracket, which one by the sign of n* -+ 4SE (quantum review 2, M2)
+    a_lo, a_hi = Rad.of(a) - e, Rad.of(a) + e
+    lo = min(a_lo.scale(div(1, law.lo)), a_lo.scale(div(1, law.hi))) - 1
+    hi = max(a_hi.scale(div(1, law.lo)), a_hi.scale(div(1, law.hi))) - 1
     return c.Read("E19", rid, "%s_t%s" % (rid_pt, t), "interval", sc, c.read3_interval(lo, hi, band),
                   value=div(a, law.mid()) - 1, lo=lo, hi=hi, band=band, frozen="n*_lin=" + text,
                   detail=(("nstar", fmt(a, 6)), ("4SE", up(e)),

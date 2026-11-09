@@ -16,10 +16,11 @@ def x1_files(call1="X1.1.agg"):
             "1.hbp": with_trailer(read(os.path.join(AGG, call1)))}
 
 
-def engine_stop():
+def engine_stop(steps="64,128"):
     """What the run script files for a try of X1 call 1 whose engine stopped: stage A's empty_stream STOP, rc=4
-    rc_reader=3 (point_dir adds the engine's TWB_FAULT row as 1.eng.err or 1.attempt<k>.eng.err)."""
-    return with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=4, rc_reader=3)
+    rc_reader=3 and the steps the try ran with (point_dir adds the engine's TWB_FAULT row as 1.eng.err or
+    1.attempt<k>.eng.err). X1 has 2 records: attempt 1 ran 64,128; the last try of a lost call ran 64."""
+    return with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=4, rc_reader=3, steps=steps)
 
 
 def stop_reason(files, **kw):
@@ -165,7 +166,7 @@ class Stop(unittest.TestCase):
     def test_engine_stop_loses_the_call(self):
         # X1 has 2 records: a lost call was tried with 2 records (attempt 1) and with 1 (the call file)
         f = x1_files()
-        f["1.hbp"] = engine_stop()
+        f["1.hbp"] = engine_stop("64")
         f["1.attempt1.hbp"] = engine_stop()
         with TempDir() as d:
             point_dir(d, f)
@@ -200,7 +201,7 @@ class Stop(unittest.TestCase):
 
     def test_lost_call_needs_every_try(self):
         f = x1_files()
-        f["1.hbp"] = engine_stop()
+        f["1.hbp"] = engine_stop("64")
         self.assertEqual(stop_reason(f), "stop_attempt_count")  # no one-record try
         f["1.attempt2.hbp"] = engine_stop()
         self.assertEqual(stop_reason(f), "stop_attempt_count")  # attempts numbered from 1
@@ -214,7 +215,8 @@ class Stop(unittest.TestCase):
 
     def test_attempt_with_another_exit(self):
         f = x1_files("X1.1.steps64.agg")
-        f["1.attempt1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=2, rc_reader=3)
+        f["1.attempt1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=2, rc_reader=3,
+                                           steps="64,128")
         f["1.attempt1.eng.err"] = ENGINE_FAULT
         self.assertEqual(stop_reason(f), "stop_attempt_file")
 
@@ -273,7 +275,7 @@ class Stop(unittest.TestCase):
 
     def test_reader_stop_on_a_complete_stream_is_fatal(self):
         f = x1_files()
-        f["1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=0, rc_reader=3)
+        f["1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=0, rc_reader=3, steps="64,128")
         with TempDir() as d:
             point_dir(d, f)
             with self.assertRaises(c.StageBStop) as e:
@@ -282,7 +284,7 @@ class Stop(unittest.TestCase):
 
     def test_other_engine_exit_is_fatal(self):
         f = x1_files()
-        f["1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=2, rc_reader=3)
+        f["1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.empty.agg")), rc=2, rc_reader=3, steps="64,128")
         with TempDir() as d:
             point_dir(d, f)
             with self.assertRaises(c.StageBStop):
@@ -290,16 +292,169 @@ class Stop(unittest.TestCase):
 
     def test_trailer_required(self):
         f = x1_files()
-        f["1.hbp"] = read(os.path.join(AGG, "X1.1.agg")) + "rc=0\n"
+        f["1.hbp"] = read(os.path.join(AGG, "X1.1.agg")) + "rc=0 steps=64,128\n"
         with TempDir() as d:
             point_dir(d, f)
             with self.assertRaises(c.StageBStop) as e:
                 c.load_point(d, X1)
             self.assertEqual(e.exception.reason, "call_file_trailer")
             self.assertEqual(c.load_point(d, X1, require_reader_rc=False).steps, (64, 128))
+            write(os.path.join(d, "1.hbp"), read(os.path.join(AGG, "X1.1.agg")) + "rc=0 rc_reader=0\n")
+            with self.assertRaises(c.StageBStop) as e:
+                c.load_point(d, X1)
+            self.assertEqual(e.exception.reason, "call_file_trailer")  # no steps
             write(os.path.join(d, "1.hbp"), read(os.path.join(AGG, "X1.1.agg")))
             with self.assertRaises(c.StageBStop):
                 c.load_point(d, X1, require_reader_rc=False)
+
+
+class AttemptSteps(unittest.TestCase):
+    """The trailer files the steps of each try; rule STOP fixes them: attempt k ran the first R - k + 1 records, the
+    last try of a lost call ran one, and a block's trailer names the block's own steps."""
+
+    def test_attempt_ran_the_wrong_records(self):
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = engine_stop("64")
+        self.assertEqual(stop_reason(f), "stop_attempt_steps")
+
+    def test_last_try_of_a_lost_call(self):
+        f = x1_files()
+        f["1.hbp"] = engine_stop("64,128")
+        f["1.attempt1.hbp"] = engine_stop()
+        self.assertEqual(stop_reason(f), "stop_attempt_steps")
+        f["1.hbp"] = engine_stop("128")
+        self.assertEqual(stop_reason(f), "stop_attempt_steps")
+
+    def test_block_trailer_names_its_steps(self):
+        f = x1_files("X1.1.steps64.agg")
+        f["1.attempt1.hbp"] = engine_stop()
+        f["1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.steps64.agg")), steps="64,128")
+        self.assertEqual(stop_reason(f), "stop_trailer_steps")
+
+    def test_bad_steps_text(self):
+        f = x1_files()
+        f["1.hbp"] = with_trailer(read(os.path.join(AGG, "X1.1.agg")), steps="064,128")
+        self.assertEqual(stop_reason(f), "call_file_trailer")
+
+
+def tside_block(name):
+    """The real stage A block of a Tside fixture (count 64 at the excluded point N=27, delta=1/4) as the fields
+    check_side_sums reads: call 0, its steps, variants, AGG_ATOMS, AGG_SUM rows and y_zero."""
+    b = c.CallBlock()
+    b.point, b.call = name, 0
+    for ln in read(os.path.join(AGG, name + ".agg")).split("\n")[:-1]:
+        kind = ln.split("|", 1)[0]
+        if kind in ("AGG_TWB_HEAD", "AGG_NL"):
+            continue
+        d = fields_dict(parse_row(ln)[1])
+        if kind == "AGG_CALL":
+            b.call_row = d
+            b.steps = tuple(int(x) for x in d["steps"].split(","))
+            b.variants = tuple(d["variants"].split(","))
+        elif kind == "AGG_ATOMS":
+            b.atoms = {k: int(d[k]) for k in ("M", "nl_klein", "nl_exch", "lk_klein", "lk_exch")}
+        elif kind == "AGG_SUM":
+            b.sums[(int(d["step"]), d["variant"], d["set"])] = {k: int(d[k]) for k in c.AGG_KEYS["AGG_SUM"][5:]}
+    return b
+
+
+class SideSums(unittest.TestCase):
+    """Ensemble review M4: a side file must agree with its block's AGG_SUM and AGG_ATOMS (real stage A output)."""
+
+    def test_real_side_files_agree(self):
+        for name in ("Tside.0", "Tside0.0"):
+            b = tside_block(name)
+            self.assertTrue(c.check_side_sums(c.SideFile(os.path.join(AGG, name + ".side")), b))
+            flags, sums = c.side_sums(c.SideFile(os.path.join(AGG, name + ".side")), b.call_row["y_zero"] == "1")
+            self.assertEqual(sums[(64, "LOCK", "atom")]["m"], b.atoms["lk_exch" if name == "Tside.0" else "lk_klein"])
+
+    def _planted(self, edit_side=None, edit_block=None):
+        b = tside_block("Tside.0")
+        with TempDir() as d:
+            p = os.path.join(d, "Tside.0.side")
+            shutil.copy(os.path.join(AGG, "Tside.0.side"), p)
+            if edit_side:
+                with open(p, "r+b") as f:
+                    data = bytearray(f.read())
+                    edit_side(data)
+                    f.seek(0)
+                    f.write(bytes(data))
+            if edit_block:
+                edit_block(b)
+            try:
+                c.check_side_sums(c.SideFile(p), b)
+            except c.StageBStop as e:
+                return e.reason, e.detail
+        return None, None
+
+    def test_planted_faults(self):
+        rec = 8 + 16 * 7 * 2
+
+        def br_plus_one(data):  # sample 5, VNC at step 64: its br
+            off = 64 + rec * 5 + 8
+            data[off] = (data[off] + 1) % 256
+
+        def bound_plus_one(data):  # sample 9, MODE0 at step 128: its b_br
+            off = 64 + rec * 9 + 8 + 16 * 13 + 8
+            data[off] = (data[off] + 1) % 256
+
+        def flag_moved(data):  # an LOCK exchange-atom flag on a sample that is not one
+            off = 64 + rec * 40
+            data[off] ^= 8
+
+        for edit, part in ((br_plus_one, "VNC set=all: side br="), (bound_plus_one, "MODE0 set=all: side bbr="),
+                           (flag_moved, "atom flags")):
+            reason, detail = self._planted(edit_side=edit)
+            self.assertEqual(reason, "side_sums")
+            self.assertIn(part, detail)
+
+        def sum_edited(b):
+            b.sums[(128, "V1", "atom")]["bbr2"] += 1
+
+        self.assertEqual(self._planted(edit_block=sum_edited)[0], "side_sums")
+
+        def call_moved(b):
+            b.call = 1
+
+        self.assertEqual(self._planted(edit_block=call_moved), ("side_sums", "Tside.0 call 1: side start 0 count 64"))
+
+    def test_open_side_checks_the_block(self):
+        b = tside_block("Tside.0")
+        t = read(os.path.join(AGG, "Tside.0.agg"))
+        ln = [x for x in t.split("\n") if x.startswith("AGG_SIDE|")][0]
+        sd = fields_dict(parse_row(ln)[1])
+        row = {"path": sd["path"], "sha256": sd["sha256"], "bytes": int(sd["bytes"]), "indices": 64,
+               "variants": sd["variants"], "steps": sd["steps"], "dir": AGG, "block": b}
+        self.assertEqual(c.open_side(row).count, 64)
+        self.assertEqual(row["sums_checked"], sd["sha256"])
+        b.sums[(64, "VNC", "all")]["br"] += 1
+        del row["sums_checked"]
+        with self.assertRaises(c.StageBStop) as e:
+            c.open_side(row)
+        self.assertEqual(e.exception.reason, "side_sums")
+
+
+@unittest.skipUnless(os.environ.get("STRIPES_EXCL_DIR"), "needs STRIPES_EXCL_DIR, the real dumps at the excluded points")
+class RealSideFiles(unittest.TestCase):
+    """M4 on the real side files of X1 and X0 (4096 samples, 7 variants, records 64 and 128), beside their blocks."""
+
+    def test_real_side_files_agree(self):
+        excl = os.environ["STRIPES_EXCL_DIR"]
+        for spec in (X1, X0):
+            files = {"%d.hbp" % i: with_trailer(read(os.path.join(excl, "%s.%d.agg" % (spec.id, i)))) for i in (0, 1)}
+            with TempDir() as d, TempDir() as sd:
+                point_dir(d, files)
+                for i in (0, 1):  # the side files beside the blocks, under the names the AGG_SIDE rows give
+                    shutil.copy(os.path.join(excl, "%s.%d.side" % (spec.id, i)), sd)
+                pt = c.load_point(d, spec, side_dir=sd)
+                self.assertEqual(pt.verify_sides(), 2)
+                b = pt.calls[1]
+                b.sums[(128, "RN", "atom")]["br2"] += 1
+                row = dict(b.side)
+                del row["sums_checked"]
+                with self.assertRaises(c.StageBStop) as e:
+                    c.open_side(row)
+                self.assertEqual(e.exception.reason, "side_sums")
 
 
 class PlantedFaults(unittest.TestCase):

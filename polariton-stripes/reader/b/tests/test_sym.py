@@ -10,7 +10,7 @@ import tempfile
 import unittest
 
 from stripes_read_b import common as c
-from stripes_read_b import frozen, runs, series
+from stripes_read_b import frozen, qint, runs, series
 from stripes_read_b import rows_e_sym as e
 from stripes_read_b.exact import fr, parse_rat
 
@@ -48,7 +48,7 @@ def uniform_vr(m, atoms):
 
 def lattice_vr(m, atoms):
     mp = m - atoms
-    sec = [mp * q // 1 for q in Q]
+    sec = [qint.floor(mp * q) for q in Q]
     return make_vr(sec, mp - sum(sec), atoms)
 
 
@@ -135,7 +135,7 @@ class Synth:
         carrier = {}
         for i in present:
             part = "ctrl" if i < spec.all else "rest"
-            if part not in carrier and part in self.atoms:
+            if part not in carrier and part in self.atoms and i not in self.sides:
                 carrier[part] = i
         by_call = {i: p for p, i in carrier.items()}
         for i in range(spec.calls):
@@ -161,27 +161,43 @@ class Synth:
                 if ctrl:
                     b.nl_rows[step] = self.nl_override.get((i, step), self.nl[step])
             b.atoms = self.atoms[part] if part else ZERO_ATOMS
-            b.side = self.sides.get(i)
+            if i in self.sides:
+                # a side call (ensemble review M4): its AGG_SUM rows at the side records and its AGG_ATOMS are
+                # those of its side file, and the side row carries the block, so open_side cross-checks them
+                row = self.sides[i]
+                for key, x in row["sums"].items():
+                    b.sums[key] = x
+                b.atoms = dict(ZERO_ATOMS)
+                b.side = dict(row, block=b)
             nl = "".join(b.nl_rows[s] + "\n" for s in b.steps) if ctrl else None
             b.call_row = {"nl_sha256": self.sha_override.get(i, hashlib.sha256(nl.encode("ascii")).hexdigest()
-                                                             if ctrl else "none")}
+                                                             if ctrl else "none"), "y_zero": "1" if self.y0 else "0"}
             pt.calls[i] = b
         k = min(len(b.steps) for b in pt.calls.values())
         pt.steps, pt.not_measured = spec.steps[:k], spec.steps[k:]
         return pt
 
 
-def side_file(d, name, call, count, br_of, bb=20):
-    """A side file of count samples at index 4096 call (AGG-FORMAT section 7) and its AGG_SIDE row; br_of(k, v, s)."""
-    head = b"STRPSIDE" + struct.pack("<6I", 1, 7, 127, 2, 64, 128) + struct.pack("<2Q", COUNT * call, count) \
+def side_file(d, name, call, br_of, bb=20):
+    """A side file of the call's 4096 samples at index 4096 call (AGG-FORMAT section 7), no atom flag, br_of(k, v, s)
+    and b_br = bb; its AGG_SIDE row, with "sums": the AGG_SUM rows (set=all and set=atom, records 64 and 128) its
+    block must carry, summed here from br_of and bb (not by the reader's side_sums)."""
+    head = b"STRPSIDE" + struct.pack("<6I", 1, 7, 127, 2, 64, 128) + struct.pack("<2Q", COUNT * call, COUNT) \
         + bytes(16)
     body = b"".join(struct.pack("<Q", 0) + b"".join(struct.pack("<qQ", br_of(k, v, s), bb) for v in ALL7
-                                                    for s in (64, 128)) for k in range(count))
+                                                    for s in (64, 128)) for k in range(COUNT))
     path = os.path.join(d, name)
     with open(path, "wb") as f:
         f.write(head + body)
+    sums = {}
+    for v in ALL7:
+        for st in (64, 128):
+            brs = [br_of(k, v, st) for k in range(COUNT)]
+            sums[(st, v, "all")] = {"m": COUNT, "br": sum(brs), "bi": 0, "br2": sum(x * x for x in brs), "bi2": 0,
+                                    "brbi": 0, "bbr": bb * COUNT, "bbi": 0, "bbr2": bb * bb * COUNT, "bbi2": 0}
+            sums[(st, v, "atom")] = atom_sums(0)
     return {"path": path, "sha256": hashlib.sha256(head + body).hexdigest(), "bytes": len(head + body),
-            "indices": count, "variants": ",".join(ALL7), "steps": "64,128", "dir": d}
+            "indices": COUNT, "variants": ",".join(ALL7), "steps": "64,128", "dir": d, "sums": sums}
 
 
 class StubBatch:
@@ -214,13 +230,13 @@ def run_set(r2_scale=1, r3_t2=256):
 def add_sides(synths, d, shift=0):
     """Side files for calls 0 and 1 of P08 and P13; P13 br = P08 br + (-1)^k 10^6 + shift (VNC, step 64)."""
     for i in (0, 1):
-        synths["P08"].sides[i] = side_file(d, "P08.%d.side" % i, i, 32, lambda k, v, s: 1000000007 * (k + 3))
+        synths["P08"].sides[i] = side_file(d, "P08.%d.side" % i, i, lambda k, v, s: 1000000007 * (k + 3))
 
         def b13(k, v, s):
             x = 1000000007 * (k + 3) + (1000000 if k % 2 else -1000000)
             return x + (shift if (v, s) == ("VNC", 64) else 0)
 
-        synths["P13"].sides[i] = side_file(d, "P13.%d.side" % i, i, 32, b13)
+        synths["P13"].sides[i] = side_file(d, "P13.%d.side" % i, i, b13)
 
 
 def points_of(synths):
@@ -464,10 +480,34 @@ class RowE04(Base):
     def test_met(self):
         rs = by_rid(e.row_e04(self.pts, run_set(), FZ))
         self.assertEqual(rs["pair_P08-P13_t1_VNC"].outcome, c.MET)
-        self.assertIn(("pairs", 64), rs["pair_P08-P13_t1_VNC"].detail)
+        self.assertIn(("pairs", 2 * COUNT), rs["pair_P08-P13_t1_VNC"].detail)
         self.assertEqual(rs["ratio_t1_1/27->1/54"].value, fr(1, 4))
         self.assertTrue(rs["ratio_t1_1/54->1/108"].scored)
         self.assertEqual((rs["ratio_t2_1/54->1/108"].scored, rs["ratio_t2_1/54->1/108"].scoring.why), (False, "X08"))
+
+    def test_side_files_agree_with_their_blocks(self):
+        # every side row of the fixtures carries its block: open_side cross-checks AGG_SUM and AGG_ATOMS (M4)
+        for pid in ("P08", "P13"):
+            sides = self.pts[pid].sides()
+            self.assertEqual([i for i, _ in sides], [0, 1])
+            for _, row in sides:
+                self.assertIs(row["block"].side, row)
+                self.assertEqual(c.open_side(row).count, COUNT)
+        with TempDir() as d:
+            syn = {"P08": Synth("P08"), "P13": Synth("P13")}
+            add_sides(syn, d)
+            p = syn["P13"].sides[1]["path"]
+            with open(p, "r+b") as f:
+                data = bytearray(f.read())
+                data[64 + 8] ^= 1  # sample 0, VNC at step 64: br moved by one
+                f.seek(0)
+                f.write(bytes(data))
+            syn["P13"].sides[1] = dict(syn["P13"].sides[1], sha256=hashlib.sha256(bytes(data)).hexdigest())
+            pts = dict(self.pts, P08=syn["P08"].point(), P13=syn["P13"].point())
+            with self.assertRaises(c.StageBStop) as ex:
+                e.row_e04(pts, run_set(), FZ)
+        self.assertEqual(ex.exception.reason, "side_sums")
+        self.assertIn("P13 call 1 step 64 VNC set=all: side br=", ex.exception.detail)
 
     def test_paired_flag(self):
         with TempDir() as d:
@@ -691,9 +731,13 @@ class Stop(Base):
         r.batches = r.batches[:63]
         r.steps = (32, 64)
         rs = by_rid(e.row_e04(self.pts, rp, FZ))
-        self.assertEqual(rs["ratio_t2_1/54->1/108"].outcome, c.NOT_MEASURED)
-        self.assertIn(("lost_batches_R3", "5"), rs["ratio_t1_1/54->1/108"].detail)
-        self.assertEqual(rs["ratio_t1_1/54->1/108"].outcome, c.MET)
+        # rule STOP for runs: a lost batch reached no record, so every ratio with R3 is NOT_MEASURED and states the
+        # loss; the ratio of R1 and R2 is read
+        for rid in ("ratio_t1_1/54->1/108", "ratio_t2_1/54->1/108"):
+            self.assertEqual(rs[rid].outcome, c.NOT_MEASURED, rid)
+            self.assertIn(("lost", "batch_lost_R3"), rs[rid].detail)
+            self.assertIn(("lost_batches_R3", "5"), rs[rid].detail)
+        self.assertEqual(rs["ratio_t1_1/27->1/54"].outcome, c.MET)
 
 
 # ---------------------------------------------------------------------------------------------------------------------

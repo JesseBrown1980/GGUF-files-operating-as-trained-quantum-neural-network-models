@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# The sabotage suite of the stripe-phase reader: nine planted faults, each of which the reader must catch. Every case
-# prints CAUGHT or MISSED; the suite exits 0 only when all nine are CAUGHT. No engine runs here: the streams are
+# The sabotage suite of the stripe-phase reader: eleven planted faults, each of which the reader must catch. Every case
+# prints CAUGHT or MISSED; the suite exits 0 only when all eleven are CAUGHT. No engine runs here: the streams are
 # synthetic (the stage A emulator) and the campaign is fabricated (reader/b/tests/campaign.py).
 #
 #   CARGO_TARGET_DIR=<outside the repo> reader/sabotage/run.sh
@@ -110,16 +110,19 @@ $EDIT read --in "$CLEAN" --out "$WORK/r7b.hbp" --op falsify && stop falsifier $P
 report $r falsifier_on_report_read "a module naming E17's read-and-report pi_t1 as a falsifier is refused (falsifier); so is a READ file whose E17 VERDICT does (falsifier)"
 
 # 8. Rule STOP without its evidence: a record or a batch dropped with no exit 4 filed, data already seen filed as an
-# attempt, an attempt that is not a row, an exit 4 without its TWB_FAULT row, a crash taken for an engine stop.
+# attempt, an attempt that is not a row, an exit 4 without its TWB_FAULT row, a crash taken for an engine stop, and a
+# try filed with steps other than rule STOP gives it (the trailer and the .rc file name the steps of each try).
 r=0
 for op_want in dump_no_attempt:stop_attempt_count dump_block_as_attempt:stop_attempt_file \
                dump_garbage_attempt:stop_attempt_count dump_garbage_attempt_short:stop_attempt_file \
-               dump_stop_without_fault:stop_engine_stderr run_empty_no_attempt:stop_attempt_count \
-               run_truncated_no_attempt:stop_attempt_count run_crash:run_rc; do
+               dump_stop_without_fault:stop_engine_stderr dump_attempt_wrong_steps:stop_attempt_steps \
+               dump_lost_last_try_steps:stop_attempt_steps run_empty_no_attempt:stop_attempt_count \
+               run_truncated_no_attempt:stop_attempt_count run_crash:run_rc \
+               run_attempt_wrong_steps:stop_attempt_steps; do
   op=${op_want%%:*}; want=${op_want#*:}
   C=$(copy c8); $EDIT stop --campaign "$C" --op "$op" && stop "$want" $PY -I "$B" read $(inputs "$C") --out "$WORK/r8.hbp" || { echo "    case 8 $op" >&2; r=1; }
 done
-report $r stop_without_evidence "probes A (P05 call 7 cut to 3 records, no attempt: stop_attempt_count), B (the complete block filed as attempt1: stop_attempt_file) and C (an attempt holding 'anything': stop_attempt_count beside the complete block, stop_attempt_file beside a rerun); an exit 4 with an empty engine stderr (stop_engine_stderr); an R2 batch empty or cut with no attempts (stop_attempt_count); rc=137 (run_rc)"
+report $r stop_without_evidence "probes A (P05 call 7 cut to 3 records, no attempt: stop_attempt_count), B (the complete block filed as attempt1: stop_attempt_file) and C (an attempt holding 'anything': stop_attempt_count beside the complete block, stop_attempt_file beside a rerun); an exit 4 with an empty engine stderr (stop_engine_stderr); an attempt filed with the rerun's steps, and a lost call whose last try ran 2 records (stop_attempt_steps); an R2 batch empty or cut with no attempts (stop_attempt_count); rc=137 (run_rc); an R2 attempt filed with the rerun's steps (stop_attempt_steps)"
 
 # 9. QE: a panic with rc=101 leaves that command's reads NOT_MEASURED and the read goes on; the same panic text filed
 # with rc=0 stops (qe_stderr); an altered B turns Q02 NOT_MET; QE-RC.hbp short of a command stops (qe_rc).
@@ -139,6 +142,39 @@ else r=1; fi
 C=$(copy c9d); $EDIT qe --campaign "$C" --op rc_row_missing && stop qe_rc $PY -I "$B" read $(inputs "$C") --out "$WORK/r9d.hbp" || r=1
 report $r qe_exit_and_altered_B "a 6561 sector panic with rc=101 leaves its 4 reads NOT_MEASURED (zero09-zero12) and the READ file passes audit; the panic text with rc=0 is a STOP qe_stderr; B at (81, -1/54, t=2) moved by 1e-5 turns Q02 NOT_MET (falsifier par3); QE-RC.hbp short of a row is a STOP qe_rc"
 
-for d in c1c c1d c2a c2b c3a c3b c5 c8 c9a c9b c9c c9d; do rm -rf "${WORK:?}/$d"; done
-echo "SABOTAGE|cases=9|caught=$((9 - MISSED))|missed=$MISSED|engine_runs=0|json=0"
+# 10. Stray floats (the owner's ruling of 2026-11-09). At run time every float, bool or true division that meets a
+# checked integer pair raises TypeError, where fractions.Fraction lets the owner's two examples through. In the source,
+# a float planted in a copy of the live stage B is found by the scan of b/tests/test_nofloat.py, file by file.
+r=0
+$EDIT floats --work "$WORK/f10" || r=1
+out=$($PY -I "$WORK/f10/qint_floats.py" "$READER/b" 2>&1)
+{ [ "$(grep -c '^REFUSED|' <<<"$out")" = 13 ] && ! grep -q '^PASSED_THROUGH|' <<<"$out"; } || { echo "    $out" >&2; r=1; }
+out=$($PY -I "$WORK/f10/fraction_floats.py" 2>&1)
+[ "$(grep -c '^PASSED_THROUGH|' <<<"$out")" = 2 ] || { echo "    $out" >&2; r=1; }
+out=$($PY -I - "$READER/b" "$WORK/f10/b" <<'PYEOF'
+import os, sys
+sys.dont_write_bytecode = True
+sys.path.insert(0, sys.argv[1])
+from tests.test_nofloat import violations
+root = sys.argv[2]
+for d in (root, os.path.join(root, "stripes_read_b"), os.path.join(root, "tests")):
+    for nm in sorted(os.listdir(d)):
+        if nm.endswith(".py") and violations(os.path.join(d, nm)):
+            print("FOUND|file=%s|json=0" % os.path.relpath(os.path.join(d, nm), root))
+PYEOF
+)
+want=$(printf 'FOUND|file=%s|json=0\n' e2e.py stripes_read_b/common.py stripes_read_b/exact.py stripes_read_b/qint.py stripes_read_b/rows_q.py stripes_read_b/series.py)
+[ "$out" = "$want" ] || { echo "    scan found: $out" >&2; r=1; }
+rm -rf "$WORK/f10"
+report $r stray_float "13 stray floats, bools and true divisions against qint pairs, Iv, Rad and fmt each raise TypeError (Fraction(1,3)*0.5 and Fraction(0.1) pass through fractions.Fraction); 6 planted source faults (true division, a float literal, import fractions, import math, float(), round()) are each found by the source scan"
+
+# 11. A side file forged with every hash made to agree (ensemble review M4): one br of P08 call 0 moved by 1, its
+# AGG_SIDE bytes and sha256, the block's AGG_END and the point's SHA256SUMS rewritten. The side file's sums no longer
+# equal the block's AGG_SUM, so stage B stops (side_sums).
+r=0
+C=$(copy c11); $EDIT side --campaign "$C" && stop side_sums $PY -I "$B" read $(inputs "$C") --out "$WORK/r11.hbp" || r=1
+report $r side_file_forged "a P08 side file edited with its row, AGG_END and SHA256SUMS forged: its sums differ from the block's AGG_SUM (side_sums)"
+
+for d in c1c c1d c2a c2b c3a c3b c5 c8 c9a c9b c9c c9d c11; do rm -rf "${WORK:?}/$d"; done
+echo "SABOTAGE|cases=11|caught=$((11 - MISSED))|missed=$MISSED|engine_runs=0|json=0"
 [ "$MISSED" = 0 ]

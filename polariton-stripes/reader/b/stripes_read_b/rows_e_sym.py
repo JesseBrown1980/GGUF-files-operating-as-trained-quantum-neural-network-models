@@ -430,9 +430,11 @@ def ratio_read(row, rid, step, run_half, run_full, scoring, frozen):
         if r.lost:
             lost += (("lost_batches_" + r.spec.id, ":".join(str(j) for j, _ in r.lost)),)
     for r in (run_half, run_full):
-        if step not in r.steps:
+        # rule STOP: the records all 64 batches reached; a lost batch reached none
+        if r.lost or step not in r.steps:
+            why = ("batch_lost_" if r.lost else "record_not_reached_") + r.spec.id
             return Read(row, rid, at, "interval", scoring, NOT_MEASURED, frozen=frozen,
-                        detail=(("lost", "record_not_reached_" + r.spec.id),) + lost)
+                        detail=(("lost", why),) + lost)
     mh, se2h = run_half.mean_br(step)
     mf, se2f = run_full.mean_br(step)
     if mf == 0:

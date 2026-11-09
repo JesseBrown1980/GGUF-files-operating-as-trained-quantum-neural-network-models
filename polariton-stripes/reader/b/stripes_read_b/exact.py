@@ -1,12 +1,11 @@
-"""Exact arithmetic for stage B: Fraction helpers, outward-rounded intervals, exact signs of sums of square roots,
-decimal text in and out. No float anywhere; `/` is used only inside `div`."""
+"""Exact arithmetic for stage B on checked integer pairs (qint.Q): helpers, outward-rounded intervals, exact signs of
+sums of square roots, decimal text in and out. No float, no fractions, no math, no true division: every rational is a
+qint.Q and every operation goes through qint's checked functions."""
 
-import math
 import re
-from fractions import Fraction
 
-ZERO = Fraction(0)
-ONE = Fraction(1)
+from . import qint
+from .qint import Q, ZERO, ONE, HALF  # noqa: F401  (re-exported for the row modules)
 
 _INT = re.compile(r"-?(0|[1-9][0-9]*)\Z")
 _DEC = re.compile(r"([+-]?)([0-9]+)(?:\.([0-9]+))?(?:e([+-]?[0-9]+))?\Z")
@@ -18,29 +17,24 @@ class ExactError(Exception):
 
 
 def fr(n, d=1):
-    """The rational n/d of integers or Fractions."""
+    """The rational n/d of ints or Qs, or of the canonical rational text parse_rat reads."""
+    if type(n) is str:
+        n = parse_rat(n)
+    if type(d) is str:
+        d = parse_rat(d)
     return div(n, d)
 
 
 def div(a, b):
     """a/b exactly; b must be nonzero."""
-    if b == 0:
-        raise ZeroDivisionError("exact division by zero")
-    return Fraction(a) / Fraction(b)
+    return qint.div(a, b)
 
 
 def ipow(x, k):
-    """x**k for an integer k >= 0, as a Fraction when x is one."""
-    if not isinstance(k, int) or k < 0:
+    """x**k for an int k >= 0: an int for an int x, a Q for a Q."""
+    if type(k) is not int or k < 0:
         raise ExactError("ipow takes an integer exponent >= 0")
-    r = Fraction(1) if isinstance(x, Fraction) else 1
-    base = x
-    while k:
-        if k & 1:
-            r = r * base
-        base = base * base
-        k >>= 1
-    return r
+    return qint.ipow(x, k)
 
 
 def canon_int(text):
@@ -57,19 +51,16 @@ def parse_rat(text):
         raise ExactError("not a rational: " + text)
     n = int(m.group(1))
     if m.group(2) is None:
-        return Fraction(n)
+        return qint.make(n)
     d = int(m.group(2))
-    if d == 1 or math.gcd(abs(n), d) != 1 or n == 0:
+    if d == 1 or qint.gcd(n, d) != 1 or n == 0:
         raise ExactError("rational not in lowest terms: " + text)
-    return Fraction(n, d)
+    return qint.make(n, d)
 
 
 def rat_text(x):
     """The engines' text of a rational."""
-    x = Fraction(x)
-    if x.denominator == 1:
-        return str(x.numerator)
-    return "%d/%d" % (x.numerator, x.denominator)
+    return qint.text(fr(x))
 
 
 class Decimal:
@@ -86,7 +77,7 @@ class Decimal:
         e = int(exp) if exp else 0
         digits = int(whole + frac)
         last = e - len(frac)
-        v = Fraction(digits) * _p10(last)
+        v = qint.make(digits) * _p10(last)
         self.text = text
         self.value = -v if sign == "-" else v
         self.last = last
@@ -94,7 +85,7 @@ class Decimal:
     def half_unit(self):
         """Half a unit of the last stated digit."""
         if self.last >= 0:
-            return Fraction(ipow(10, self.last), 2)
+            return qint.make(ipow(10, self.last), 2)
         return fr(1, 2 * ipow(10, -self.last))
 
     def stated_band(self):
@@ -107,18 +98,18 @@ def dec(text):
 
 
 def _floor(x):
-    return x.numerator // x.denominator
+    return qint.floor(x)
 
 
 def _ceil(x):
-    return -((-x.numerator) // x.denominator)
+    return qint.ceil(x)
 
 
 def fmt(x, sig=10, mode="near"):
     """x as a decimal with sig significant digits, rounded to nearest (ties away from zero), down or up.
 
     Exact integer arithmetic; scientific notation outside [1e-3, 1e7)."""
-    x = Fraction(x)
+    x = qint.q(x)
     if x == 0:
         return "0"
     neg = x < 0
@@ -132,7 +123,7 @@ def fmt(x, sig=10, mode="near"):
     scale = _p10(sig - 1 - e)
     v = a * scale
     if mode == "near":
-        n = _floor(v + Fraction(1, 2))
+        n = _floor(v + HALF)
     else:
         down = (mode == "down") != neg
         n = _floor(v) if down else _ceil(v)
@@ -156,7 +147,7 @@ def fmt(x, sig=10, mode="near"):
 
 
 def _p10(k):
-    return Fraction(ipow(10, k)) if k >= 0 else fr(1, ipow(10, -k))
+    return qint.make(ipow(10, k)) if k >= 0 else fr(1, ipow(10, -k))
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -166,27 +157,28 @@ ROUND_BITS = 320
 
 
 def round_down(x, bits=ROUND_BITS):
-    x = Fraction(x)
-    if x.denominator == 1 or x.denominator.bit_length() <= bits:
+    x = qint.q(x)
+    if x.d == 1 or x.d.bit_length() <= bits:
         return x
-    return Fraction(_floor(x * ipow(2, bits)), ipow(2, bits))
+    return qint.make(_floor(x * ipow(2, bits)), ipow(2, bits))
 
 
 def round_up(x, bits=ROUND_BITS):
-    x = Fraction(x)
-    if x.denominator == 1 or x.denominator.bit_length() <= bits:
+    x = qint.q(x)
+    if x.d == 1 or x.d.bit_length() <= bits:
         return x
-    return Fraction(_ceil(x * ipow(2, bits)), ipow(2, bits))
+    return qint.make(_ceil(x * ipow(2, bits)), ipow(2, bits))
 
 
 class Iv:
     """A closed interval [lo, hi] of rationals; every operation encloses the exact result."""
 
     __slots__ = ("lo", "hi")
+    _exact_operand = True
 
     def __init__(self, lo, hi=None):
-        lo = Fraction(lo)
-        hi = lo if hi is None else Fraction(hi)
+        lo = qint.q(lo)
+        hi = lo if hi is None else qint.q(hi)
         if lo > hi:
             raise ExactError("empty interval")
         self.lo = lo
@@ -233,14 +225,8 @@ class Iv:
             raise ExactError("interval division by an interval that holds 0")
         return Iv(div(1, self.hi), div(1, self.lo)).r()
 
-    def __truediv__(self, o):
-        return self * Iv.of(o).inv()
-
-    def __rtruediv__(self, o):
-        return Iv.of(o) * self.inv()
-
     def mid(self):
-        return (self.lo + self.hi) * Fraction(1, 2)
+        return (self.lo + self.hi) * HALF
 
     def width(self):
         return self.hi - self.lo
@@ -263,10 +249,11 @@ class Ext:
     its denominator's interval reaches 0. Every operation encloses the exact result."""
 
     __slots__ = ("lo", "hi")
+    _exact_operand = True
 
     def __init__(self, lo, hi):
-        self.lo = None if lo is None else Fraction(lo)
-        self.hi = None if hi is None else Fraction(hi)
+        self.lo = None if lo is None else qint.q(lo)
+        self.hi = None if hi is None else qint.q(hi)
         if self.lo is not None and self.hi is not None and self.lo > self.hi:
             raise ExactError("empty interval")
 
@@ -301,7 +288,7 @@ class Ext:
 
     def scale(self, k):
         """k * self for a rational k."""
-        k = Fraction(k)
+        k = qint.q(k)
         if k == 0:
             return Ext(0, 0)
         a = None if self.lo is None else self.lo * k
@@ -360,14 +347,14 @@ def iv_abs(a):
 
 def isqrt_iv(x, bits=ROUND_BITS):
     """An interval holding sqrt(x) for a rational x >= 0, to about 2^-bits."""
-    x = Fraction(x)
+    x = qint.q(x)
     if x < 0:
         raise ExactError("sqrt of a negative")
-    p, q = x.numerator, x.denominator
-    s = math.isqrt(p * q * ipow(4, bits))
-    lo = Fraction(s, q * ipow(2, bits))
-    hi = Fraction(s + 1, q * ipow(2, bits))
-    if s * s == p * q * ipow(4, bits):
+    p, d = x.n, x.d
+    s = qint.isqrt(p * d * ipow(4, bits))
+    lo = qint.make(s, d * ipow(2, bits))
+    hi = qint.make(s + 1, d * ipow(2, bits))
+    if s * s == p * d * ipow(4, bits):
         hi = lo
     return Iv(lo, hi)
 
@@ -387,12 +374,13 @@ class Rad:
     """a + sum b_i sqrt(x_i), rationals a, b_i and x_i >= 0; exact sign and comparisons."""
 
     __slots__ = ("a", "terms")
+    _exact_operand = True
 
     def __init__(self, a=0, terms=()):
-        self.a = Fraction(a)
+        self.a = qint.q(a)
         merged = {}
         for b, x in terms:
-            b, x = Fraction(b), Fraction(x)
+            b, x = qint.q(b), qint.q(x)
             if x < 0:
                 raise ExactError("sqrt of a negative")
             if b == 0 or x == 0:
@@ -427,7 +415,7 @@ class Rad:
         return Rad.of(o) - self
 
     def scale(self, c):
-        c = Fraction(c)
+        c = qint.q(c)
         return Rad(self.a * c, tuple((b * c, x) for b, x in self.terms))
 
     def iv(self, bits=ROUND_BITS):
@@ -477,7 +465,7 @@ class Rad:
 
 
 def _sgn(x):
-    return (x > 0) - (x < 0)
+    return qint.sign(x)
 
 
 def _sign1(a, b, x):

@@ -5,9 +5,14 @@
   q --qe P [--cost P] [--qe-rc P] [--guard P] [--out P]
                                rows Q01-Q07 from the filed QE stdout (READ and VERDICT rows)
   point --dir D --id Pnn [--sums]
-                               one dump point's call files under rules SEED and STOP (a summary row)
-  run --dir D --id Rn          one run point's 64 batches (a summary row)
+                               one dump point's call files under rules SEED and STOP, the steps of every try
+                               included (a summary row)
+  sides --dir D --id Pnn [--sums]
+                               every side file a block of the point names: its size and sha256, and its sums against
+                               the block's AGG_SUM and AGG_ATOMS (ensemble review M4; a summary row)
+  run --dir D --id Rn          one run point's 64 batches, the steps of every try included (a summary row)
 
+Stage B computes on ints and checked integer pairs (stripes_read_b/qint.py) only.
 Exit 0 on success, 3 with one STOP row on stdout when stage B has nothing to decide (StageBStop).
 The whole read (every row, the READ file, its audit) is stripes_read_b/__main__.py read; see reader/README.md."""
 
@@ -97,6 +102,18 @@ def cmd_point(argv):
     return 0
 
 
+def cmd_sides(argv):
+    a = _args(argv, ("--dir", "--id"), ("--sums",))
+    spec = common.DUMP_POINTS[a["--id"]]
+    pt = common.load_point(a["--dir"], spec, require_sums=bool(a.get("--sums")))
+    rows = pt.sides()
+    checked = pt.verify_sides()
+    print(emit("STRIPES_B_SIDES", [("point", spec.id), ("side_files", str(len(rows))), ("checked", str(checked)),
+                                    ("calls", common._ranges([i for i, _ in rows]) if rows else "none"),
+                                    ("check", "size,sha256,AGG_SUM_all_and_atom,AGG_ATOMS"), ("result", "all_equal")]))
+    return 0
+
+
 def cmd_run(argv):
     a = _args(argv, ("--dir", "--id"))
     spec = common.RUN_POINTS[a["--id"]]
@@ -108,7 +125,8 @@ def cmd_run(argv):
     return 0
 
 
-COMMANDS = {"tables": cmd_tables, "series": cmd_series, "q": cmd_q, "point": cmd_point, "run": cmd_run}
+COMMANDS = {"tables": cmd_tables, "series": cmd_series, "q": cmd_q, "point": cmd_point, "sides": cmd_sides,
+            "run": cmd_run}
 
 
 def main(argv):

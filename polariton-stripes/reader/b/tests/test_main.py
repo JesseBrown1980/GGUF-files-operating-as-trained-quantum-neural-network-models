@@ -1,8 +1,15 @@
 """The READ-file audit of stripes_read_b/__main__.py on a small hand-built READ file: one read per PREDICT row."""
 
+import contextlib
+import io
+import os
+import re
+import subprocess
+import sys
 import unittest
 
 import stripes_read_b.__main__ as sb
+from stripes_read_b import VERSION, qint
 from stripes_read_b import common as c
 from stripes_read_b import frozen
 from stripes_read_b.hbp import sha256_hex
@@ -24,8 +31,8 @@ def verdict_row(rid, reads=2, scored=1, met=1, miss=0, falsifier="none", verdict
 
 
 def build(reads=None, verdicts=None):
-    head = ("STRIPES_READ_HEAD|reader=stripes-read-b|reader_version=0.1.0|frozen=polariton-stripes/"
-            "PREDICTION-STRIPE-PHASE.hbp|frozen_sha256=%s|rows=%s|json=0" % (FZ.sha256, ",".join(ORDER)))
+    head = ("STRIPES_READ_HEAD|reader=stripes-read-b|reader_version=%s|frozen=polariton-stripes/"
+            "PREDICTION-STRIPE-PHASE.hbp|frozen_sha256=%s|rows=%s|json=0" % (VERSION, FZ.sha256, ",".join(ORDER)))
     reads = reads or {rid: [read_row(rid), read_row(rid, "r2", False, "X08", c.REPORT)] for rid in ORDER}
     verdicts = verdicts or {rid: verdict_row(rid) for rid in ORDER}
     body = [head] + [x for rid in ORDER for x in reads[rid]] + [verdicts[rid] for rid in ORDER]
@@ -110,6 +117,46 @@ class Audit(unittest.TestCase):
                            ((c.MET, c.NOT_RESOLVED), False), ((c.MET,), True)):
             rs = [c.Read("T", "r%d" % k, "x", "exact", c.scored(), o) for k, o in enumerate(outs)]
             self.assertEqual(sb._row_verdict([{"verdict": r.verdict} for r in rs], fals), c.row_verdict(rs, fals))
+
+
+FLOAT_EVIDENCE = os.path.join(os.path.dirname(sb.B_DIR), "check", "float_evidence.py")
+
+
+class Provenance(unittest.TestCase):
+    """The READ file names the stage B that wrote it (quantum review 2, M3), and stray floats end in a STOP row."""
+
+    def test_version(self):
+        self.assertEqual((VERSION, c.READER_VERSION), ("0.2.0", "0.2.0"))
+
+    def test_tree_pin(self):
+        path, pin = sb.stage_b_tree()
+        self.assertEqual(path, "polariton-stripes/reader/b")
+        self.assertTrue(re.fullmatch("[0-9a-f]{64}", pin))
+        # the rule of check/float_evidence.py, which lists the files git would track: the same pin
+        if not os.path.exists(os.path.join(sb.REPO, ".git")):
+            self.skipTest("no git checkout around this stage B")
+        p = subprocess.run([sys.executable, "-I", FLOAT_EVIDENCE, "--repo", sb.REPO, "--pins", path + "/"],
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        self.assertEqual((p.returncode, p.stdout.decode("ascii")), (0, "%s/ | tree=%s | \n" % (path, pin)))
+
+    def _main(self, fn):
+        sb.COMMANDS["probe_exit"] = fn
+        out = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out):
+                rc = sb.main(["stripes_read_b", "probe_exit"])
+        finally:
+            del sb.COMMANDS["probe_exit"]
+        return rc, out.getvalue()
+
+    def test_stray_float_is_a_stop_row(self):
+        rc, text = self._main(lambda argv: qint.make(1, 3) * qint.make(1, 2) + True)  # a bool is not an int here
+        self.assertEqual(rc, 3)
+        self.assertRegex(text, r"^STOP\|reader=stripes-read-b\|reader_version=%s\|reason=qint\|detail=QintError:" %
+                         re.escape(VERSION))
+        rc, text = self._main(lambda argv: qint.div(1, 0))
+        self.assertEqual(rc, 3)
+        self.assertIn("|reason=qint|detail=ZeroDivisionError:", text)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ permissions:
   contents: read
 jobs:
   reader:
-    name: Stage A (Rust) and stage B (Python), no float, the sabotage suite and the independent check on synthetic streams; no engine runs
+    name: Stage A (Rust) and stage B (Python on checked integer pairs), no float, the Fraction evidence compared, the sabotage suite and the independent check on synthetic streams; no engine runs
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -46,17 +46,23 @@ jobs:
           cargo +1.81.0 test --locked --offline --release
           cargo +1.81.0 build --locked --offline --release
           sha256sum "$CARGO_TARGET_DIR/release/stripes-read-a"
-      - name: Stage B, the Python tests
+      - name: Stage B, the Python tests (integer pairs; the source scan refuses fractions, decimal, math, numpy, float(), round(), complex(), float literals and true division)
         run: python3 -I polariton-stripes/reader/b/run_tests.py
-      - name: No float in the Rust or the Python (self-test first)
+      - name: No float in the Rust or the Python (self-test first); the FLOAT-EVIDENCE.txt folder pins
         run: polariton-stripes/reader/check/no_float.sh
+      - name: The Fraction stage B kept as evidence against the live integer pairs, on control data only, byte for byte
+        run: |
+          set -euo pipefail
+          python3 -I polariton-stripes/reader/check/compare_b.py --work "$WORK/compare-b" | tee "$WORK/compare-b.txt"
+          grep -q '^COMPARE_B_DONE|.*|result=equal|' "$WORK/compare-b.txt"
+          test "$(grep -c '^COMPARE_B|.*|equal=1|' "$WORK/compare-b.txt")" = 4
       - name: Stage B end to end on a synthetic campaign, one VERDICT row per STRIPES_PREDICT row
         run: python3 -I polariton-stripes/reader/b/e2e.py --work "$WORK/e2e" --keep
       - name: The sabotage suite, every case CAUGHT
         run: |
           set -euo pipefail
           STRIPES_CAMPAIGN="$WORK/e2e/campaign" STRIPES_SABOTAGE_WORK="$WORK/sabotage" polariton-stripes/reader/sabotage/run.sh | tee "$WORK/sabotage.txt"
-          test "$(grep -c '^CAUGHT ' "$WORK/sabotage.txt")" = 9
+          test "$(grep -c '^CAUGHT ' "$WORK/sabotage.txt")" = 11
       - name: The independent check of stage A on synthetic streams only (check_a.py against stripes-read-a)
         run: |
           set -euo pipefail

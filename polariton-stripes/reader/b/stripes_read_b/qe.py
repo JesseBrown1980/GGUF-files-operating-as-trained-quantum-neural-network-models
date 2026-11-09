@@ -2,11 +2,10 @@
 errors of rule EB."""
 
 import re
-from fractions import Fraction
 
 from . import frozen as frozen_mod
 from .common import StageBStop, square_root
-from .exact import ExactError, Iv, canon_int, div, fr, ipow, parse_rat, rat_text
+from .exact import ZERO, ExactError, Iv, canon_int, div, fr, ipow, parse_rat, rat_text
 from .hbp import RowError, fields_dict, parse_row, read_lines
 
 READ_KIND = "POLARITON_FIRST_CORRECTION_READ"
@@ -131,6 +130,7 @@ class QeReads(dict):
     def __init__(self):
         dict.__init__(self)
         self.failed = []
+        self.failed_rc = {}
         self.stderr_lines = 0
         self.binary = None
 
@@ -182,7 +182,7 @@ class QeRead:
 
     def absB_iv(self):
         b, e = abs(self.B()), self.e_B()
-        return Iv(max(b - e, Fraction(0)), b + e)
+        return Iv(max(b - e, ZERO), b + e)
 
     def A(self):
         return self.e18("A")
@@ -203,7 +203,7 @@ class QeRead:
 
     def f_iv(self):
         """f = <n+ + n->/N; norm(n+ + n-) <= N."""
-        return self._floored("f", div(1, self.N) * self._blk(Fraction(self.N)))
+        return self._floored("f", div(1, self.N) * self._blk(fr(self.N)))
 
     def QW_iv(self):
         """Q_W = N(N-1) C2/2 + N f/2 + 1/4 (derivation QW)."""
@@ -247,6 +247,8 @@ def parse_qe(path, plan=PLAN, cost_path=None, rc_path=None):
             if rc != 0:
                 failed.add(id(cmd))
                 res.failed.append((argv_text(cmd), rc))
+                for k in cmd.keys():
+                    res.failed_rc[k] = rc
     out = {}
     order = []
     for ln in read_lines(path):
@@ -306,6 +308,16 @@ def parse_qe(path, plan=PLAN, cost_path=None, rc_path=None):
 def get(reads, layout, n, delta, y, t):
     """The read at a key, or None (NOT_MEASURED)."""
     return reads.get((layout, n, delta, y, t))
+
+
+def lost_why(reads, keys):
+    """Why a read of the rows at these keys is NOT_MEASURED: qe_rc_<rc> when a missing row's command exited nonzero
+    (rule STOP), else missing_QE_row."""
+    failed_rc = getattr(reads, "failed_rc", {})
+    for k in keys:
+        if k not in reads and k in failed_rc:
+            return "qe_rc_%d" % failed_rc[k]
+    return "missing_QE_row"
 
 
 def missing(reads, plan=PLAN):

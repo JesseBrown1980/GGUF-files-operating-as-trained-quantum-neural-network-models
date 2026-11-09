@@ -8,7 +8,7 @@ import os
 import unittest
 
 from stripes_read_b import common as c
-from stripes_read_b import frozen, qe, rows_q, series
+from stripes_read_b import frozen, qe, qint, rows_q, series
 from stripes_read_b.exact import fr, ipow, parse_rat
 from stripes_read_b.hbp import parse_row, sha256_hex
 
@@ -18,7 +18,7 @@ E18 = ipow(10, 18)
 
 
 def _floor(x):
-    return x.numerator // x.denominator
+    return qint.floor(x)
 
 
 def _template():
@@ -121,6 +121,26 @@ class Faults(unittest.TestCase):
         self.assertEqual(vs["Q03"].verdict, c.NOT_RESOLVED)  # some scored reads lost, the others MET
         self.assertEqual(vs["Q01"].verdict, c.NOT_RESOLVED)
         self.assertEqual(vs["Q01"].counts()[c.NOT_MEASURED], 1)
+
+    def test_lost_to_a_qe_exit_states_the_rc(self):
+        # the (729, 1/108) command killed (rc=137) before its rows: its reads say qe_rc_137, a row missing from a
+        # command that exited 0 says missing_QE_row (quantum review 2, M9)
+        killed = qe.argv_text([cm for cm in qe.PLAN if (cm.mode, cm.N, cm.y) == ("point", 729, "1/108")][0])
+        skip = {(cm.mode, cm.N, cm.y, t) for cm in qe.PLAN for t in cm.times if qe.argv_text(cm) == killed}
+        skip.add(("point", 81, "1/27", "1/8"))
+        rc = "QE_BINARY|sha256=%s|json=0\n" % qe.LANE_BINARY_SHA256 + "".join(
+            "QE_RC|argv=%s|rc=%d|json=0\n" % (qe.argv_text(cm), 137 if qe.argv_text(cm) == killed else 0)
+            for cm in qe.PLAN)
+        with TempDir() as d:
+            p, r = os.path.join(d, "QE.hbp"), os.path.join(d, "QE-RC.hbp")
+            write(p, synth_file(skip=skip))
+            write(r, rc)
+            vs, reads = rows_q.read_q(p, rc_path=r)
+        q07 = {x.rid: x for v in vs if v.row == "Q07" for x in v.reads}
+        self.assertEqual(q07["QW_y1/108_t1"].outcome, c.NOT_MEASURED)
+        self.assertEqual(dict(q07["QW_y1/108_t1"].detail)["lost"], "qe_rc_137")
+        q04 = {x.rid: x for v in vs if v.row == "Q04" for x in v.reads}
+        self.assertEqual(dict(q04["D8_N81"].detail)["lost"], "missing_QE_row")
 
     def test_all_rows_missing(self):
         vs = run_rows("")

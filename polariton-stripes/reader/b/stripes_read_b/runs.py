@@ -1,8 +1,10 @@
 """The twens run sums of R1-R4: 64 batches per point, each a TWB_HEAD, per record TWENS, TWB and TWB_ROUND of VNC,
-and TWB_DONE; stderr one TWB_MEMO row (memo=1); the exit code in <id>.<j>.rc. Rule STOP: a batch that exits 4
-prints nothing on stdout and a TWB_FAULT row on stderr; it is rerun with its last record dropped (the earlier tries
-filed as <id>.<j>.attempt<k>.hbp, .err and .rc) until it completes, or is lost when its one-record try exits 4 too.
-The point keeps the records every read batch reached."""
+and TWB_DONE; stderr one TWB_MEMO row (memo=1); the exit code and the steps of the try in <id>.<j>.rc. Rule STOP: a
+batch that exits 4 prints nothing on stdout and a TWB_FAULT row on stderr; it is rerun with its last record dropped
+(the earlier tries filed as <id>.<j>.attempt<k>.hbp, .err and .rc) until it completes, or is lost when its one-record
+try exits 4 too. The point keeps only the records all 64 batches reached, as rule STOP says. A lost batch reached no
+record, so a point with a lost batch keeps none: every record is NOT_MEASURED, and every read of the point states the
+loss. Its other batches and every try are still checked."""
 
 import os
 import re
@@ -131,7 +133,8 @@ def parse_batch(path, err_path, spec, j):
 
 
 class Run:
-    """The read batches of one run point, pooled per record."""
+    """The checked batches of one run point, pooled per record. steps holds the records all 64 batches reached:
+    none when a batch is lost (rule STOP), so no read of the point uses its batches."""
 
     def __init__(self, spec):
         self.spec = spec
@@ -142,7 +145,7 @@ class Run:
         self.not_measured = ()
 
     def _need(self, step):
-        if step not in self.steps:
+        if self.lost or step not in self.steps:
             raise StageBStop("not_measured_record", "%s step %d" % (self.spec.id, step))
 
     def per_batch(self, step):
@@ -191,18 +194,27 @@ def nstar_of(rs):
     return div(div(s2, m), bbar2_u) - 1
 
 
-_RC = re.compile(r"rc=(0|[1-9][0-9]*)\Z")
+_RC = re.compile(r"rc=(0|[1-9][0-9]*) steps=([0-9,]+)\Z")
 
 
 def read_rc(path, what):
-    """The exit code a run batch's wrapper filed: one line rc=E."""
+    """What a run batch's wrapper filed after a try: one line rc=E steps=S, the exit code and the steps that try ran
+    with. Returns (E, steps)."""
     if not os.path.exists(path):
         raise StageBStop("run_rc", "%s: no %s" % (what, os.path.basename(path)))
     lines = read_lines(path)
     m = _RC.match(lines[0]) if len(lines) == 1 else None
     if not m:
-        raise StageBStop("run_rc", "%s: not one rc=E line" % what)
-    return int(m.group(1))
+        raise StageBStop("run_rc", "%s: not one rc=E steps=S line" % what)
+    try:
+        steps = tuple(canon_int(x) for x in m.group(2).split(","))
+    except ExactError as e:
+        raise StageBStop("run_rc", "%s: steps %s" % (what, m.group(2)[:40])) from e
+    return int(m.group(1)), steps
+
+
+def _steps_text(steps):
+    return ",".join(str(x) for x in steps) or "none"
 
 
 def _engine_stop(base, what):
@@ -241,7 +253,7 @@ def load_run(run_dir, spec, require_err=True):
         p, e = base + ".hbp", base + ".err"
         if require_err and not os.path.exists(e):
             raise StageBStop("run_stderr", "%s: no .err" % what)
-        rc = read_rc(base + ".rc", what)
+        rc, ran = read_rc(base + ".rc", what)
         if rc == 4:
             _engine_stop(base, what)
             b, want = None, n_rec - 1
@@ -257,19 +269,30 @@ def load_run(run_dir, spec, require_err=True):
             raise StageBStop("stop_attempt_count", "%s: attempts %s, rule STOP needs 1..%d (%s)" % (
                 what, ",".join(map(str, got)) or "none", want,
                 "no try completed" if b is None else "%d of %d records" % (len(b.steps), n_rec)))
+        if b is None and ran != spec.steps[:1]:
+            raise StageBStop("stop_attempt_steps", "%s: the last try ran steps %s, rule STOP needs %s" % (
+                what, _steps_text(ran), _steps_text(spec.steps[:1])))
+        if b is not None and ran != b.steps:
+            raise StageBStop("stop_trailer_steps", "%s: .rc steps %s, batch steps %s" % (
+                what, _steps_text(ran), _steps_text(b.steps)))
         for k in got:
             ab = "%s.attempt%d" % (base, k)
             if tries[j][k] != {"hbp", "err", "rc"}:
                 raise StageBStop("stop_attempt_file", "%s attempt %d: .hbp, .err and .rc needed" % (what, k))
-            if read_rc(ab + ".rc", "%s attempt %d" % (what, k)) != 4:
+            a_rc, a_ran = read_rc(ab + ".rc", "%s attempt %d" % (what, k))
+            if a_rc != 4:
                 raise StageBStop("stop_attempt_file", "%s attempt %d: not an exit 4" % (what, k))
+            if a_ran != spec.steps[: n_rec - k + 1]:
+                raise StageBStop("stop_attempt_steps", "%s attempt %d: ran steps %s, rule STOP needs %s" % (
+                    what, k, _steps_text(a_ran), _steps_text(spec.steps[: n_rec - k + 1])))
             _engine_stop(ab, "%s attempt %d" % (what, k))
         if b is None:
             run.lost.append((j, "engine_stop_rc4"))
         else:
             run.batches.append(b)
         run.attempts += len(got)
-    if not run.batches:
+    if run.lost or not run.batches:
+        # rule STOP: "the point keeps only the records all 64 batches reached"; a lost batch reached none
         run.not_measured = spec.steps
         return run
     k = min(len(b.steps) for b in run.batches)

@@ -110,6 +110,8 @@ class Stop(unittest.TestCase):
         self.assertIsNone(qe.get(r, "point", 9, "1/3", "1/9", "1/4"))
         self.assertEqual(sorted(qe.missing(r, TEST_PLAN)), [("point", 9, "1/3", "1/9", "1/2"),
                                                             ("point", 9, "1/3", "1/9", "1/4")])
+        self.assertEqual(qe.lost_why(r, [("point", 9, "1/3", "1/9", "1/2")]), "qe_rc_101")
+        self.assertEqual(qe.lost_why({}, [("point", 9, "1/3", "1/9", "1/2")]), "missing_QE_row")
         # a READ row printed without its COST row by the command that exited is left out of the match too
         cost_text2 = "".join(x + "\n" for k, x in enumerate(costs) if k not in (cut - 1, cut)) + PANIC
         self.assertEqual(len(self._parse(qe_text, cost_text2, rc_text(TEST_PLAN, [0, 0, 101, 0, 0]))), 8)

@@ -16,6 +16,7 @@ Exit 0 on success; 3 with one STOP row on stdout when stage B has nothing to dec
 
 import hashlib
 import os
+import stat
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +30,11 @@ from stripes_read_b import frozen as frozen_mod  # noqa: E402
 from stripes_read_b import qe as qe_mod  # noqa: E402
 from stripes_read_b import rows_e_mom, rows_e_sym, rows_q, runs  # noqa: E402
 from stripes_read_b.exact import ExactError  # noqa: E402
+from stripes_read_b.qint import QintError  # noqa: E402
+
+B_DIR = os.path.dirname(HERE)
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(B_DIR)))
+NOT_TRACKED = ("__pycache__", ".ruff_cache")  # the folders reader/.gitignore names
 from stripes_read_b.hbp import RowError, emit, fields_dict, file_sha256, parse_row, read_lines, sha256_hex  # noqa: E402
 
 READ_KEYS = ("row", "read", "at", "kind", "scored", "why", "value", "lo", "hi", "band", "frozen", "verdict", "detail")
@@ -74,11 +80,13 @@ SCORING = {
 READINGS = (
     ("reading_E06_sector", "0_mismatches_with_abs(B)>=2^-20:_MET_if_none_where_either_B_is_big,_MISS_if_one_where_both"
                            "_are,_else_NOT_RESOLVED"),
-    ("reading_E16", "D+=t1,_D-=t3,_the_certified_discordant_cells_on_the_common_non-atom_samples,_SE_pair=sqrt(D++D-)"
-                    "/(2M);_the_ambiguous_cells_and_the_atoms_enter_the_bracket_of_the_difference_only;_MET_if_the"
-                    "_prediction_abs(Pi_V-Pi_VNC)+3SE_pair<=Pi_VNC/20_holds_at_every_placement_(then_the_recipe_with"
-                    "_(D+-D-)/(2M),_half_of_it,_holds_too),_MISS_if_the_recipe_fails_at_every_placement_(then_the"
-                    "_prediction_fails_too),_else_NOT_RESOLVED"),
+    ("reading_E16", "conservative:_D+=t1,_D-=t3_certified;_every_ambiguous_cell_(t2,t5,t6,t7,t8)"
+                    "_and_every_sample_outside_the_common_non-atom_set_counts_as_possibly_discordant,_so_D++D-<=D_max"
+                    "_and_SE_pair=sqrt(D_max)/(2M)_is_an_upper_bound_of_the_frozen_SE_pair_at_every_placement;_the"
+                    "_ambiguous_samples_also_widen_the_bracket_of_the_difference;_MET_if_the_prediction"
+                    "_abs(Pi_V-Pi_VNC)+3SE_pair<=Pi_VNC/20_holds_at_every_placement_(then_the_recipe_with"
+                    "_(D+-D-)/(2M),_half_of_it,_holds_too),_MISS_if_the_recipe_fails_at_every_placement_(then_the_prediction_fails_too),_else"
+                    "_NOT_RESOLVED"),
     ("reading_E15_cross", "a_scored_cross-read_other_than_predicted_is_a_falsifier_when_certified_(MISS);"
                           "_NOT_RESOLVED_leaves_the_row_NOT_RESOLVED,_since_READ3_counts_falsifiers_on_outcomes_and"
                           "_NOT_RESOLVED_is_not_certified"),
@@ -88,7 +96,11 @@ READINGS = (
     ("reading_Pi_hat", "Pi_hat_counts_every_sample,_atoms_by_their_own_sign_states;_H8_and_B16_leave_atoms_out"),
     ("reading_E01_atoms", "the_Klein_atom_masses_(about_3.108e-4_M,_0.042097_M)_have_no_band:_read_and_report"),
     ("reading_E12_E13_n", "in_E12_and_the_E13_tolerance_reads_n=4..4096_is_every_power_of_2_from_4_to_4096_with_at"
-                          "_least_1024_blocks;_the_E13_bands_take_the_frozen_n=4^k"),
+                          "_least_1024_blocks_in_the_nominal_sample_count;_after_a_lost_call_a_size_left_with_fewer"
+                          "_than_1024_measured_blocks_is_NOT_MEASURED,_so_that_read_is_NOT_RESOLVED_at_best;_the_E13"
+                          "_bands_take_the_frozen_n=4^k"),
+    ("reading_E10_falsifier", "P02_not_resolved_above_0_at_3_SE:_the_low_end_of_the_ambiguity_bracket"
+                              "_(O+-O--A)/(2M),_minus_3SE,_is_at_or_below_0"),
     ("reading_E18_zero", "E_VNC[abs(B_W)^2]=0_is_a_ratio_of_0:_MISS"),
     ("reading_E19_nstar", "n*_is_not_estimable_when_abs(Bbar)^2_u<=0_on_the_set_or_a_leave-one-out_set:_NOT_RESOLVED"),
     ("reading_Q_unbounded", "a_ratio_whose_denominator_interval_reaches_0_is_read_as_the_half-line_[lo,+inf),_or_both"
@@ -101,7 +113,11 @@ READINGS = (
                         "_out_of_the_COST_match;_stderr_text_other_than_COST_rows_with_every_rc=0_is_a_STOP"),
     ("reading_STOP_tries", "a_dump_call_or_run_batch_exiting_4_(rc=4,_nothing_on_stdout,_a_TWB_FAULT_row_on_stderr)"
                            "_is_kept_as_<call>.attempt<k>_and_rerun_with_its_last_record_dropped;_a_block_with_r_of_R"
-                           "_records_needs_attempts_1..R-r,_a_lost_call_or_batch_1..R-1;_any_other_exit_is_a_STOP"),
+                           "_records_needs_attempts_1..R-r,_a_lost_call_or_batch_1..R-1;_any_other_exit_is_a_STOP;"
+                           "_the_4096_indices_of_a_lost_call_are_NOT_MEASURED_and_the_other_calls_are_read;_a_run_batch"
+                           "_whose_one-record_try_exits_4_too_reached_no_record,_so_its_run_point_keeps_no_record"
+                           "_(the_records_all_64_batches_reached)_and_every_read_of_that_point_is_NOT_MEASURED,"
+                           "_stating_the_loss"),
     ("reading_GUARD", "the_guard_is_a_function_of_(N,delta,y)_alone:_one_allowed_line_is_filed_before_each_QE_command"
                       "_and_before_each_dump_or_run_point,_whose_calls_and_batches_follow_it;_a_refusal_counts_only"
                       "_at_a_plan_triple"),
@@ -136,6 +152,32 @@ def guard_triples():
     t += [(p.N, p.delta, p.y) for p in c.DUMP_POINTS.values()]
     t += [(p.N, p.delta, p.y) for p in c.RUN_POINTS.values()]
     return sorted(t)
+
+
+def stage_b_tree():
+    """(path, pin) of this stage B's tree, reader/b, by the rule of check/float_evidence.py (tree_line of the 4D
+    repo): the sha256 of one line `<mode> <sha256 of the bytes> <path>` per file, paths from the repo root sorted as
+    bytes, the folders reader/.gitignore names left out. On a clean checkout it is the pin that
+    `float_evidence.py --pins polariton-stripes/reader/b/` prints, so a READ file names the code that wrote it."""
+    rows = []
+    for top, dirs, files in os.walk(B_DIR):
+        links = [d for d in dirs if os.path.islink(os.path.join(top, d))]
+        dirs[:] = sorted(d for d in dirs if d not in NOT_TRACKED and d not in links)
+        for nm in files + links:
+            full = os.path.join(top, nm)
+            st = os.lstat(full)
+            if stat.S_ISLNK(st.st_mode):
+                mode, data = "120000", os.readlink(full).encode("utf-8", "surrogateescape")
+            else:
+                mode = "100755" if st.st_mode & stat.S_IXUSR else "100644"
+                with open(full, "rb") as f:
+                    data = f.read()
+            path = os.path.relpath(full, REPO).replace(os.sep, "/")
+            rows.append((path.encode("utf-8", "surrogateescape"),
+                         "%s %s %s\n" % (mode, hashlib.sha256(data).hexdigest(), path)))
+    rows.sort()
+    pin = hashlib.sha256("".join(r[1] for r in rows).encode("utf-8", "surrogateescape")).hexdigest()
+    return os.path.relpath(B_DIR, REPO).replace(os.sep, "/"), pin
 
 
 def run_listing(run_dir):
@@ -176,7 +218,9 @@ def build(a):
             rf.add_input("AGG_" + pid, sp)
     listing, n = run_listing(a["--runs"])
     rf.notes.append(("runs", "files=%d,sha256_of_listing=%s" % (n, sha256_hex(listing.encode("ascii")))))
-    rf.notes.append(("reader_b", "%s_%s,frozen_%s" % (c.READER, VERSION, fz.sha256)))
+    tree_path, tree_pin = stage_b_tree()
+    rf.notes.append(("reader_b", "%s_%s,integer_pairs,tree_%s/_%s,frozen_%s" % (
+        c.READER, VERSION, tree_path, tree_pin, fz.sha256)))
     rf.notes.append(("reader_a", "%s_%s_(per_block_AGG_HEAD)" % (c.READER_A, c.READER_A_VERSION)))
     for pid, pt in points.items():
         rf.notes.append(("point_" + pid, "calls=%d,read=%d,lost=%s,steps=%s,not_measured=%s,attempts=%d" % (
@@ -184,9 +228,11 @@ def build(a):
             ":".join(map(str, pt.steps)) or "none", ":".join(map(str, pt.not_measured)) or "none",
             len(pt.attempts))))
     for rid, r in run_points.items():
-        rf.notes.append(("run_" + rid, "batches=%d,read=%d,lost=%s,steps=%s,not_measured=%s,attempts=%d" % (
-            r.spec.batches, len(r.batches), ":".join(str(j) for j, _ in r.lost) or "none",
-            ":".join(map(str, r.steps)) or "none", ":".join(map(str, r.not_measured)) or "none", r.attempts)))
+        # rule STOP: a lost batch leaves the point no record (steps none), so no batch of it is read
+        rf.notes.append(("run_" + rid, "batches=%d,checked=%d,read=%d,lost=%s,steps=%s,not_measured=%s,attempts=%d" % (
+            r.spec.batches, len(r.batches), len(r.batches) if r.steps else 0,
+            ":".join(str(j) for j, _ in r.lost) or "none", ":".join(map(str, r.steps)) or "none",
+            ":".join(map(str, r.not_measured)) or "none", r.attempts)))
     miss = qe_mod.missing(qe_reads)
     rf.notes.append(("qe_rows", "%d_read,%d_missing_(NOT_MEASURED)" % (len(qe_reads), len(miss))))
     rf.notes.append(("qe_rc", "commands=%d,rc_nonzero=%s,stderr_lines_not_COST=%d" % (
@@ -385,6 +431,11 @@ def main(argv):
     except (ExactError, KeyError, OSError) as e:
         print(emit("STOP", [("reader", c.READER), ("reader_version", VERSION), ("reason", type(e).__name__),
                             ("detail", str(e)[:300] or "none")]))
+        return 3
+    except (QintError, ZeroDivisionError) as e:
+        # a value that is not a checked integer pair (a stray float), or an exact division by zero
+        print(emit("STOP", [("reader", c.READER), ("reader_version", VERSION), ("reason", "qint"),
+                            ("detail", ("%s:_%s" % (type(e).__name__, e))[:300])]))
         return 3
 
 

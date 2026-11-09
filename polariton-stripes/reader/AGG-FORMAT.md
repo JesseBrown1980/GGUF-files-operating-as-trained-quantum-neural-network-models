@@ -20,7 +20,7 @@ stripes-read-a --point ID --call I [--side PATH] < dump
 | 101 | one `STOP` row with `reason=panic` (arithmetic overflow or another panic; the release build has overflow checks on) |
 | 5 | nothing usable: stdout could not be written |
 
-The run script appends one line after the reader's output, `rc=<e> rc_reader=<r>`: the engine's exit code and the reader's own (`PIPESTATUS[0]` and `PIPESTATUS[1]`, taken from one expansion right after the pipeline). That line is not part of the block and is not covered by `agg_sha256`. Stage B requires it on every call file: a block is read only with `rc=0 rc_reader=0`; a STOP row is accepted only as an engine stop (`rc=4`, reason `empty_stream`, `rc_reader=3`, rule STOP); anything else stops stage B.
+The run script appends one line after the reader's output, `rc=<e> rc_reader=<r> steps=<s>`: the engine's exit code, the reader's own (`PIPESTATUS[0]` and `PIPESTATUS[1]`, taken from one expansion right after the pipeline), and the `steps=` the engine was given for that try. That line is not part of the block and is not covered by `agg_sha256`. Stage B requires it on every call file: a block is read only with `rc=0 rc_reader=0` and the block's own steps; a STOP row is accepted only as an engine stop (`rc=4`, reason `empty_stream`, `rc_reader=3`, rule STOP), with the steps rule STOP gives that try (section 10); anything else stops stage B.
 
 ## 2. Row syntax
 
@@ -200,7 +200,7 @@ What section 6 compared: samples, (sample, variant) starts rebuilt, (sample, var
 - Every field of every TWENS, TWPAIR, TWB (34 fields), TWB_ROUND (34 fields and eps_max), TWB_PAIR and TWB_PAIR_ROUND row equals the reader's own sum over the per-sample rows.
 - At a table point: N, delta, u=1, y, seed_string, start = 4096 call, count = 4096, dtden = 64, the mask of the call (section 9), steps a nonempty prefix of the point's steps (rule STOP drops last records), ctrl 0:0:0 on every record, and call < calls of the point.
 
-Stage A does not check across calls. Stage B checks: each point's SHA256SUMS against its receipts (every `.hbp`, `.err` and `.eng.err`), `agg_sha256`, each call's `nl_sha256` against its own AGG_NL rows, the AGG_CMP nesting (`mis_big_both <= mis_big_any <= mis <= cert2 <= common`, `cert2_big_both <= cert2_big_any <= cert2`), one block per call 0..calls-1 at each point (a dropped or repeated call), the side files' size and `sha256`, and rule STOP's record truncation against the attempts filed (section 10). Whether `nl_sha256` is equal across the calls of a point with the same steps is row E05's read, not a STOP.
+Stage A does not check across calls. Stage B checks: each point's SHA256SUMS against its receipts (every `.hbp`, `.err` and `.eng.err`), `agg_sha256`, each call's `nl_sha256` against its own AGG_NL rows, the AGG_CMP nesting (`mis_big_both <= mis_big_any <= mis <= cert2 <= common`, `cert2_big_both <= cert2_big_any <= cert2`), one block per call 0..calls-1 at each point (a dropped or repeated call), the side files' size and `sha256`, each side file against its own block (section 7), and rule STOP's record truncation and the steps of each try against the attempts filed (section 10). Whether `nl_sha256` is equal across the calls of a point with the same steps is row E05's read, not a STOP.
 
 ## 7. Side file
 
@@ -227,6 +227,8 @@ The side records are the stream's records whose step is 64 or 128, in stream ord
 - for each present variant in the fixed order, for each side record: i64 `br`, then u64 `b_br` (a bound above 2^64 - 1 is a STOP).
 
 At P08 and P13 (all seven variants, steps 64 and 128) a call's file is 950,336 bytes; 64 calls make about 61 MB per point. E04 pairs index i of P08 with index i of P13 (both seeds, indices below 2^18).
+
+Stage B checks each side file against its own block before it reads it (ensemble review M4; `common.check_side_sums`): start = 4096 call and count = M; the variants and the records (64 and 128 among the block's steps) are the block's; the counts of flag bits 0..3 are AGG_ATOMS `nl_klein`, `nl_exch`, `lk_klein`, `lk_exch`; and per record and variant, over all samples and over the variant's atom set (section 4), m, Sum br, Sum br^2, Sum b_br and Sum b_br^2 are AGG_SUM `m`, `br`, `br2`, `bbr` and `bbr2` of `set=all` and `set=atom`. Any difference is a STOP `side_sums`. On the real side files of X1 and X0 (N = 27, delta = 1/4) every one of these is equal.
 
 ## 8. STOP row
 
@@ -299,9 +301,10 @@ The P points total 8000 calls.
 
 ## 10. Notes for stage B
 
-- Everything is an integer. Form every mean, ratio and test in exact rationals; compare squares by cross-multiplying, as rule DECIMAL says.
+- Everything is an integer. Form every mean, ratio and test in exact rationals, as checked integer pairs (the owner's ruling of 2026-11-09: `stripes_read_b/qint.py`, no `fractions`); compare squares by cross-multiplying, as rule DECIMAL says.
 - Pooling a point: add the AGG_VR counts, the AGG_SUM sums and the AGG_BLK sums over its calls, record by record and variant by variant. The controls cover the calls below `all` only (the first 2^18 indices).
-- The files of call `i` in a point folder: `i.hbp` (this block, or a STOP row, then the trailer `rc=E rc_reader=R`), `i.err` (stage A's stderr: empty beside a block, the STOP row beside a STOP), `i.eng.err` (the engine's stderr: empty after a completed dump, one TWB_FAULT row after an exit 4) and `i.side`.
-- Rule STOP: a call whose engine exited 4 has `rc=4 rc_reader=3` and stage A's `empty_stream` STOP. Its files are kept as `i.attempt<k>.hbp`, `.err` and `.eng.err`, k = 1, 2, ..., and it is rerun with its last record and that record's ctrl entry dropped, until it completes or its one-record try exits 4 too. A block with r of the point's R records has attempts 1..R-r; a call that never completed has attempts 1..R-1 and a STOP in `i.hbp`; a complete block has none. Each attempt must be an engine stop of its point and call with its TWB_FAULT row.
-- Keep only the records every call of the point reached; the later records of the other calls are discarded unread and marked NOT_MEASURED.
+- The files of call `i` in a point folder: `i.hbp` (this block, or a STOP row, then the trailer `rc=E rc_reader=R steps=S`), `i.err` (stage A's stderr: empty beside a block, the STOP row beside a STOP), `i.eng.err` (the engine's stderr: empty after a completed dump, one TWB_FAULT row after an exit 4) and `i.side`.
+- Rule STOP: a call whose engine exited 4 has `rc=4 rc_reader=3` and stage A's `empty_stream` STOP. Its files are kept as `i.attempt<k>.hbp`, `.err` and `.eng.err`, k = 1, 2, ..., and it is rerun with its last record and that record's ctrl entry dropped, until it completes or its one-record try exits 4 too. A block with r of the point's R records has attempts 1..R-r; a call that never completed has attempts 1..R-1 and a STOP in `i.hbp`; a complete block has none. Each attempt must be an engine stop of its point and call with its TWB_FAULT row. The trailer's `steps=` binds the procedure: attempt k ran the first R - k + 1 records, the last try of a lost call ran the first one, and a block ran its own steps (STOP `stop_attempt_steps` or `stop_trailer_steps` otherwise). The run batches file the same in `<id>.<j>.rc`, one line `rc=E steps=S`.
+- Keep only the records every call of the point reached; the later records of the other calls are discarded unread and marked NOT_MEASURED. A call that never completed loses its 4096 indices (NOT_MEASURED); the other calls are read, and the reads state the loss.
+- A run point (R1-R4) keeps only the records all 64 batches reached. A batch whose one-record try exits 4 too reached no record, so its point keeps none: every read of that point is NOT_MEASURED and states the loss. The other batches and every try are still checked. The frozen run clause has no sentence for a batch that never completes, unlike the dump clause, so the reader takes it literally.
 - A STOP block means the call is not read. Decide nothing from values.

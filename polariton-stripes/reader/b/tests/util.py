@@ -39,8 +39,14 @@ def write(path, text):
         f.write(text.encode("ascii"))
 
 
-def with_trailer(agg_text, rc=0, rc_reader=0):
-    return agg_text + "rc=%d rc_reader=%d\n" % (rc, rc_reader)
+def with_trailer(agg_text, rc=0, rc_reader=0, steps=None):
+    """The call file the run script files: stage A's output, then `rc=E rc_reader=R steps=S`, S the steps the try ran
+    with (by default the block's own AGG_CALL steps)."""
+    if steps is None:
+        steps = agg_text.split("|steps=", 1)[1].split("|", 1)[0] if "\nAGG_CALL|" in agg_text else None
+    if steps is None:
+        raise ValueError("with_trailer: give the steps of a try that printed no block")
+    return agg_text + "rc=%d rc_reader=%d steps=%s\n" % (rc, rc_reader, steps)
 
 
 def rehash(agg_text):

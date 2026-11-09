@@ -181,6 +181,12 @@ def _g(reads, layout, n, y, t):
     return qe_mod.get(reads, layout, n, D, y, t)
 
 
+def _lost(reads, *lookups):
+    """The why of a NOT_MEASURED read built from the rows at lookups (layout, N, y, t): qe_rc_<rc> when a missing
+    row's command exited nonzero, else missing_QE_row."""
+    return qe_mod.lost_why(reads, [(lay, n, D, y, t) for lay, n, y, t in lookups])
+
+
 def row_q01(reads, fz):
     rows = []
     k = 0
@@ -192,7 +198,7 @@ def row_q01(reads, fz):
                 at = _at(n, "0", t, "_" + layout)
                 r = _g(reads, layout, n, "0", t)
                 if r is None:
-                    rows.append(_nm("Q01", rid, at, "exact", scored("identity")))
+                    rows.append(_nm("Q01", rid, at, "exact", scored("identity"), _lost(reads, (layout, n, "0", t))))
                     continue
                 out, det = q01_zero(r)
                 rows.append(Read("Q01", rid, at, "exact", scored("identity"), out, band="A=B=A1=D2=0,C2>0",
@@ -205,7 +211,8 @@ def row_q01(reads, fz):
             at = _at(n, "0", t)
             a, b = _g(reads, "sector", n, "0", t), _g(reads, "point", n, "0", t)
             if a is None or b is None:
-                rows.append(_nm("Q01", rid, at, "exact", scored("identity")))
+                rows.append(_nm("Q01", rid, at, "exact", scored("identity"),
+                                _lost(reads, ("sector", n, "0", t), ("point", n, "0", t))))
                 continue
             out, det = q01_same(a, b)
             rows.append(Read("Q01", rid, at, "exact", scored("identity"), out, band="sector=point_but_array_bytes",
@@ -224,8 +231,9 @@ def row_q02(reads, fz):
         at = _at(n, "+-1/54", t)
         rp, rm = _g(reads, "point", n, "1/54", t), _g(reads, "point", n, "-1/54", t)
         if rp is None or rm is None:
-            rows.append(_nm("Q02", "par%d" % i, at, "certificate", scored("symmetry")))
-            rows.append(_nm("Q02", "sign%d" % i, at, "sign", rr))
+            why = _lost(reads, ("point", n, "1/54", t), ("point", n, "-1/54", t))
+            rows.append(_nm("Q02", "par%d" % i, at, "certificate", scored("symmetry"), why))
+            rows.append(_nm("Q02", "sign%d" % i, at, "sign", rr, why))
             continue
         out, det = q02_parity(rp, rm)
         rows.append(Read("Q02", "par%d" % i, at, "certificate", scored("symmetry"), out,
@@ -253,7 +261,8 @@ def row_q03(reads, fz):
                 rh, rf = _g(reads, layout, n, yh, t), _g(reads, layout, n, y, t)
                 det = (("series_R-1/4", fmt(series.r_two_term(fr(-1, 4), tt, parse_rat(y)), 5)),)
                 if rh is None or rf is None:
-                    rows.append(_nm("Q03", rid, at, "interval", sc))
+                    rows.append(_nm("Q03", rid, at, "interval", sc,
+                                    _lost(reads, (layout, n, yh, t), (layout, n, y, t))))
                     continue
                 rows.append(_interval_read("Q03", rid, at, "interval", sc, q03_ratio(rh, rf), band, detail=det))
     phrase = "R(1/108->1/216)_and_L_at_t=2"
@@ -261,13 +270,15 @@ def row_q03(reads, fz):
     r216, r108, r54 = (_g(reads, "point", 729, y, "2") for y in ("1/216", "1/108", "1/54"))
     det = (("series_R-1/4", fmt(series.r_two_term(fr(-1, 4), 2, fr(1, 108)), 5)),)
     if r216 is None or r108 is None:
-        rows.append(_nm("Q03", "R13", _at(729, "1/108->1/216", "2"), "interval", sc))
+        rows.append(_nm("Q03", "R13", _at(729, "1/108->1/216", "2"), "interval", sc,
+                        _lost(reads, ("point", 729, "1/216", "2"), ("point", 729, "1/108", "2"))))
     else:
         rows.append(_interval_read("Q03", "R13", _at(729, "1/108->1/216", "2"), "interval", sc,
                                    q03_ratio(r216, r108), band, detail=det))
     sc = _value_scoring_pair(fz, "Q03", 729, ("1/54", "1/108", "1/216"), "2", phrase)
     if r216 is None or r108 is None or r54 is None:
-        rows.append(_nm("Q03", "L", _at(729, "L", "2"), "interval", sc))
+        rows.append(_nm("Q03", "L", _at(729, "L", "2"), "interval", sc,
+                        _lost(reads, *(("point", 729, y, "2") for y in ("1/216", "1/108", "1/54")))))
     else:
         rows.append(_interval_read("Q03", "L", _at(729, "L", "2"), "interval", sc, q03_richardson(r216, r108, r54),
                                    band, frozen="L-1/4=-8.0e-6_two-term"))
@@ -313,14 +324,15 @@ def row_q04(reads, fz):
             sc = _value_scoring_pair(fz, "Q04", n, (y,), (ta, tb), phrase)
             rid2 = "%s_N%d" % (rid, n)
             if ra is None or rb is None:
-                rows.append(_nm("Q04", rid2, at, "interval", sc))
+                rows.append(_nm("Q04", rid2, at, "interval", sc,
+                                _lost(reads, ("point", n, y, ta), ("point", n, y, tb))))
                 continue
             da, db = q04_D(ra, y, ta), q04_D(rb, y, tb)
             rows.append(_interval_read("Q04", rid2, at, "interval", sc, quotient(da, db), band_r, frozen=frz))
         at = _at(n, y, "1/8")
         sc = _value_scoring_pair(fz, "Q04", n, (y,), "1/8", None)
         if r8 is None:
-            rows.append(_nm("Q04", "D8_N%d" % n, at, "interval", sc))
+            rows.append(_nm("Q04", "D8_N%d" % n, at, "interval", sc, _lost(reads, ("point", n, y, "1/8"))))
         else:
             rows.append(_interval_read("Q04", "D8_N%d" % n, at, "interval", sc, q04_D(r8, y, "1/8"), band_d,
                                        frozen="classical_0.010996"))
@@ -344,7 +356,8 @@ def row_q05(reads, fz):
         at = _at(729, y + "->" + yh, t)
         rh, rf = _g(reads, "point", 729, yh, t), _g(reads, "point", 729, y, t)
         if rh is None or rf is None:
-            rows.append(_nm("Q05", "dR%d" % i, at, "interval", sc))
+            rows.append(_nm("Q05", "dR%d" % i, at, "interval", sc,
+                            _lost(reads, ("point", 729, yh, t), ("point", 729, y, t))))
             continue
         rows.append(_interval_read("Q05", "dR%d" % i, at, "interval", sc, q03_ratio(rh, rf) - fr(1, 4), band,
                                    frozen=text))
@@ -373,8 +386,9 @@ def row_q06(reads, fz):
             r = _g(reads, "point", 729, y, t)
             rid = "c_y%s_t%s" % (y, t)
             if r is None:
-                rows.append(_nm("Q06", rid, at, "interval", sc))
-                dev.append(_nm("Q06", "dev_y%s_t%s" % (y, t), at, "interval", rr_dev))
+                why = _lost(reads, ("point", 729, y, t))
+                rows.append(_nm("Q06", rid, at, "interval", sc, why))
+                dev.append(_nm("Q06", "dev_y%s_t%s" % (y, t), at, "interval", rr_dev, why))
                 continue
             c, dv = q06_c(r, y, t)
             det = (("B_e18", r.v["B_e18"]), ("B_sign", _sign_text(r)))
@@ -412,12 +426,13 @@ def row_q07(reads, fz):
         at = _at(729, y, t)
         r = _g(reads, "point", 729, y, t)
         if r is None:
-            rows.append(_nm("Q07", "QW_y%s_t%s" % (y, t), at, "interval", sc))
+            why = _lost(reads, ("point", 729, y, t))
+            rows.append(_nm("Q07", "QW_y%s_t%s" % (y, t), at, "interval", sc, why))
             if y != "0":
-                rows.append(_nm("Q07", "ns_y%s_t%s" % (y, t), at, "interval", sc))
-                extra.append(_nm("Q07", "nsno_y%s_t%s" % (y, t), at, "interval", rr_norm))
+                rows.append(_nm("Q07", "ns_y%s_t%s" % (y, t), at, "interval", sc, why))
+                extra.append(_nm("Q07", "nsno_y%s_t%s" % (y, t), at, "interval", rr_norm, why))
             if t == "2":
-                extra.append(_nm("Q07", "above_y%s" % y, at, "interval", rr_above))
+                extra.append(_nm("Q07", "above_y%s" % y, at, "interval", rr_above, why))
             continue
         rows.append(_interval_read("Q07", "QW_y%s_t%s" % (y, t), at, "interval", sc, q07_qw_ratio(r, law), bq,
                                    frozen="EB2_lin=" + Q07_EB2[(t, y)]))
@@ -437,7 +452,7 @@ def row_q07(reads, fz):
     fz.require("STRIPES_PREDICT", "Q07", "n*_Q_infinite_at_y=0_scored_(it_follows_from_Q01)")
     r = _g(reads, "point", 729, "0", "2")
     if r is None:
-        rows.append(_nm("Q07", "ns_y0_t2", _at(729, "0", "2"), "exact", sc))
+        rows.append(_nm("Q07", "ns_y0_t2", _at(729, "0", "2"), "exact", sc, _lost(reads, ("point", 729, "0", "2"))))
     else:
         ok = r.v["B_e18"] == 0 and r.QW_iv().lo > 0
         rows.append(Read("Q07", "ns_y0_t2", _at(729, "0", "2"), "exact", sc, read3_exact(ok), value="infinite"

@@ -1,20 +1,19 @@
 """A synthetic campaign: every input stage B reads, fabricated in the formats of a real run, with no engine.
 
-    python3 -I campaign.py --out DIR
+    python3 -I campaign.py --out DIR [--only qe,runs]
 
 writes DIR/agg/P01..P14/<call>.hbp (stage A blocks of AGG-FORMAT.md with the run script's trailer line, one file per
 call of the point table) and <call>.eng.err (the engine's stderr, empty), the side files of P08 and P13, a SHA256SUMS
 per point, DIR/run/R1..R4.<j>.hbp, .err and .rc (the 64 batches of each run point), DIR/QE.hbp, DIR/QE-COST.hbp and
 DIR/QE-RC.hbp (the 15 QE commands, QR1-QR5, and the wrapper's receipt) and DIR/GUARD.hbp (one line per guarded
-command).
+command). With --only, it writes only the runs (runs) or only the QE receipts and the guard lines (qe).
 
 The values are small fabricated integers, internally consistent where stage B checks them: each call's AGG_END hash
-and nl_sha256, the AGG_VR, AGG_SUM, AGG_BLK and AGG_CMP identities, the point table, the seeds and the stream
-hashes. Counts and sums are set from the frozen Pi, rho and B16 values and from the linear law, so most reads have
+and nl_sha256, the AGG_VR, AGG_SUM, AGG_BLK and AGG_CMP identities, each side file against its block's AGG_SUM and
+AGG_ATOMS (ensemble review M4), the trailers' steps, the point table, the seeds and the stream hashes. Counts and sums are set from the frozen Pi, rho and B16 values and from the linear law, so most reads have
 data to decide on. None of it is an engine value."""
 
 import hashlib
-import math
 import os
 import struct
 import sys
@@ -25,6 +24,7 @@ sys.path.insert(0, os.path.dirname(HERE))
 
 from stripes_read_b import common as c  # noqa: E402
 from stripes_read_b import frozen  # noqa: E402
+from stripes_read_b import qint  # noqa: E402
 from stripes_read_b import qe as qe_mod  # noqa: E402
 from stripes_read_b import rows_e_mom as m  # noqa: E402
 from stripes_read_b import rows_e_sym as e  # noqa: E402
@@ -40,13 +40,11 @@ LK_KLEIN = 172
 
 
 def floor_fr(x):
-    x = fr(x)
-    return x.numerator // x.denominator
+    return qint.floor(fr(x))
 
 
 def ceil_fr(x):
-    x = fr(x)
-    return -((-x.numerator) // x.denominator)
+    return qint.ceil(fr(x))
 
 
 def row(kind, pairs):
@@ -141,14 +139,53 @@ def vr_block(pi, dev, atoms, xatoms, lock_q=None):
 
 def sum_all(rho, scale, s2ps):
     s2 = M * s2ps
-    br = 0 if rho == 0 else floor_fr(math.isqrt(s2 + floor_fr(rho * (M - 1) * s2)) * fr(scale))
+    br = 0 if rho == 0 else floor_fr(qint.isqrt(s2 + floor_fr(rho * (M - 1) * s2)) * fr(scale))
     return {"m": M, "br": br, "bi": 0, "br2": s2, "bi2": 0, "brbi": 0, "bbr": 4 * M, "bbi": 0, "bbr2": 16 * M,
             "bbi2": 0}
 
 
 def sum_atom(atoms, s2ps):
-    return {"m": atoms, "br": atoms * math.isqrt(s2ps), "bi": 0, "br2": atoms * s2ps, "bi2": 0, "brbi": 0,
+    """Every atom has br = r = isqrt(s2ps) and b_br = 4, so its sums are those a side file can hold."""
+    r = qint.isqrt(s2ps)
+    return {"m": atoms, "br": atoms * r, "bi": 0, "br2": atoms * r * r, "bi2": 0, "brbi": 0,
             "bbr": 4 * atoms, "bbi": 0, "bbr2": 16 * atoms, "bbi2": 0}
+
+
+def exact_values(n, total, total2):
+    """n ints with sum `total` and sum of squares `total2` (total2 - total even, total2 at least the least sum of
+    squares for that sum): floor(total/n) or one more, then pairs of equal values moved to v + d, v - d, which adds
+    2 d^2 each, the d taken greedily by integer square roots."""
+    mu = total // n
+    up = total - n * mu
+    vals = [mu + 1] * up + [mu] * (n - up)
+    extra = total2 - (n - up) * mu * mu - up * (mu + 1) * (mu + 1)
+    if extra < 0 or extra % 2:
+        raise ValueError("campaign: no ints with that sum and sum of squares")
+    half, ds = extra // 2, []
+    while half:
+        d = qint.isqrt(half)
+        ds.append(d)
+        half -= d * d
+    lo, size = (up, n - up) if n - up >= up else (0, up)  # pair inside the larger group of equal values
+    if 2 * len(ds) > size:
+        raise ValueError("campaign: too few equal values to pair")
+    for k, d in enumerate(ds):
+        vals[lo + 2 * k] += d
+        vals[lo + 2 * k + 1] -= d
+    if sum(vals) != total or sum(v * v for v in vals) != total2:
+        raise ValueError("campaign: exact_values check")
+    return vals
+
+
+def side_values(sa, atoms, s2ps):
+    """The per-sample br of one side record whose AGG_SUM set=all is sa and whose first `atoms` samples are the
+    variant's atoms (br = isqrt(s2ps) each): sa with br2 raised by one when the parity needs it, and the values."""
+    r = qint.isqrt(s2ps)
+    sa = dict(sa)
+    n, total = M - atoms, sa["br"] - atoms * r
+    if (sa["br2"] - atoms * r * r - total) % 2:
+        sa["br2"] += 1
+    return sa, [r] * atoms + exact_values(n, total, sa["br2"] - atoms * r * r)
 
 
 def blk(s2tot, rho, n):
@@ -202,7 +239,9 @@ def twb_head(spec, call, steps):
     return row("TWB_HEAD", pairs)
 
 
-def side_bytes(spec, call, variants, steps, at):
+def side_bytes(spec, call, variants, steps, at, values):
+    """The side file of a call: the atom flags of AGG_ATOMS (the first samples carry them) and, per variant and
+    record 64 and 128, the br of `values` with b_br = 4, so its sums are the block's AGG_SUM rows (M4)."""
     srec = [s for s in steps if s in (64, 128)]
     vmask = sum(1 << c.VARIANTS.index(v) for v in variants)
     head = b"STRPSIDE" + struct.pack("<6I", 1, len(variants), vmask, len(srec), *((srec + [0, 0])[:2]))
@@ -211,8 +250,10 @@ def side_bytes(spec, call, variants, steps, at):
     nvals = len(variants) * len(srec)
     for k in range(M):
         flags = (3 if k < at["nl_exch"] else 0) | (4 if k < at["lk_klein"] else 0) | (8 if k < at["lk_exch"] else 0)
-        br = ((k * 7919) % 2001 - 1000) << 20
-        body.append(struct.pack("<Q" + "qQ" * nvals, flags, *([br, 16] * nvals)))
+        body.append(struct.pack("<Q", flags) + b"".join(struct.pack("<qQ", values[(v, st)][k], 4)
+                                                         for v in variants for st in srec))
+    if nvals != len(values):
+        raise ValueError("campaign: side records")
     return head + b"".join(body)
 
 
@@ -244,22 +285,30 @@ def call_block(spec, call, steps, side_name=None, side_data=None):
     rows.append(row("AGG_LAT", pc + [("lock_atoms", lock_atoms), ("lat_edge", edge),
                                      ("lat", ":".join(map(str, lat)))]))
     lq = LOCK_Q if y0 else None
+    side_call = spec.side and all_v
+    # P13's sums mirror P08's (E[B] is even in y), so the per-index side values of the two seeds agree and E04's
+    # paired differences are 0; P13 keeps its own Pi, sector and discordance model.
+    sum_pid = "P08" if spec.id == "P13" else spec.id
+    values = {}
     for step in steps:
         ref = None
         ref_atoms = None
         for v in variants:
             p = model(spec.id, step, v, par)
+            ps = p if sum_pid == spec.id else model(sum_pid, step, v, par)
             atoms, xatoms = variant_atoms(spec, v, at)
             vr = vr_block(p["pi"], p["dev"], atoms, xatoms, lq if v == "LOCK" else None)
             sp = [("step", step), ("variant", v)]
             rows.append(row("AGG_VR", pc + sp + [(k, ":".join(map(str, vr[k])) if k == "sec" else vr[k])
                                                  for k in c.AGG_KEYS["AGG_VR"][4:]]))
-            sa = sum_all(p["rho"], p["scale"], p["s2ps"])
-            st = sum_atom(atoms, p["s2ps"])
+            sa = sum_all(ps["rho"], ps["scale"], ps["s2ps"])
+            st = sum_atom(atoms, ps["s2ps"])
+            if side_call and step in (64, 128):
+                sa, values[(v, step)] = side_values(sa, atoms, ps["s2ps"])
             for name, s in (("all", sa), ("atom", st)):
                 rows.append(row("AGG_SUM", pc + sp + [("set", name)] + [(k, s[k]) for k in c.AGG_KEYS["AGG_SUM"][5:]]))
             for n in c.BLOCK_SIZES:
-                b = blk(sa["br2"], p["rho"], n)
+                b = blk(sa["br2"], ps["rho"], n)
                 rows.append(row("AGG_BLK", pc + sp + [("n", n)] + [(k, b[k]) for k in ("K", "s2", "s4", "w", "w2",
                                                                                          "sw")]))
             if v == VNC:
@@ -277,8 +326,8 @@ def call_block(spec, call, steps, side_name=None, side_data=None):
         if all_v:
             rows.append("AGG_NL|" + nl[steps.index(step)])
     side = None
-    if spec.side and all_v:
-        side = side_bytes(spec, call, variants, steps, at)
+    if side_call:
+        side = side_bytes(spec, call, variants, steps, at, values)
         srec = [s for s in steps if s in (64, 128)]
         rows.append(row("AGG_SIDE", pc + [("path", side_name), ("bytes", len(side)),
                                           ("sha256", hashlib.sha256(side).hexdigest()), ("indices", M),
@@ -318,7 +367,7 @@ def make_point(root, pid, steps=None):
         else:
             text0, call0 = cache[key]
             text, side = rebase(text0, spec, call0, call), None
-        write(os.path.join(d, "%d.hbp" % call), text + "rc=0 rc_reader=0\n")
+        write(os.path.join(d, "%d.hbp" % call), text + trailer(0, 0, steps))
         write(os.path.join(d, "%d.eng.err" % call), "")
         if side is not None:
             write(os.path.join(d, "%d.side" % call), side)
@@ -328,12 +377,18 @@ def make_point(root, pid, steps=None):
 ENGINE_FAULT = "TWB_FAULT|reason=rounding_bound_hL_above_1/2|json=0\n"
 
 
-def engine_stop_call(pid, call):
-    """What the run script files for a dump call whose engine stopped: stage A's empty_stream STOP and both exit
-    codes (<call>.hbp), and the engine's TWB_FAULT row (<call>.eng.err)."""
+def trailer(rc, rc_reader, steps):
+    """The run script's last line of a call file: both exit codes and the steps the try ran with."""
+    return "rc=%d rc_reader=%d steps=%s\n" % (rc, rc_reader, ",".join(map(str, steps)))
+
+
+def engine_stop_call(pid, call, steps):
+    """What the run script files for a try of a dump call whose engine stopped: stage A's empty_stream STOP, both
+    exit codes and the try's steps (<call>.hbp), and the engine's TWB_FAULT row (<call>.eng.err)."""
     e = hashlib.sha256(b"").hexdigest()
     return ("STOP|reader=stripes-read-a|reader_version=0.1.0|point=%s|call=%d|reason=empty_stream|line=0|detail=none"
-            "|stdin_bytes=0|stdin_lines=0|stdin_sha256=%s|json=0\nrc=4 rc_reader=3\n" % (pid, call, e)), ENGINE_FAULT
+            "|stdin_bytes=0|stdin_lines=0|stdin_sha256=%s|json=0\n" % (pid, call, e)) + trailer(4, 3, steps), \
+        ENGINE_FAULT
 
 
 def rebase(text, spec, call0, call):
@@ -383,7 +438,7 @@ def make_run(root, rid):
         for step in spec.steps:
             lw = law(spec.delta, spec.N * y * y, c.t_of_step(step))
             ns = lw.nstar().mid()
-            mu = math.isqrt(floor_fr(fr(Q, 1 + ns)))
+            mu = qint.isqrt(floor_fr(fr(Q, 1 + ns)))
             vals = dict.fromkeys(runs_mod.S_NAMES + runs_mod.Q_NAMES + runs_mod.X_NAMES + runs_mod.E_NAMES, 0)
             vals["br"] = floor_fr(n * mu * (1 + fr(alt, 100)))
             vals["br2"] = n * (Q + alt * (Q >> 10))
@@ -407,7 +462,7 @@ def make_run(root, rid):
         write(os.path.join(d, "%s.%d.hbp" % (rid, j)), "".join(x + "\n" for x in lines))
         memo = [("count", n), ("per_sample", VNC)] + [(k, 0) for k in runs_mod.MEMO_KEYS[2:]]
         write(os.path.join(d, "%s.%d.err" % (rid, j)), row("TWB_MEMO", memo) + "\n")
-        write(os.path.join(d, "%s.%d.rc" % (rid, j)), "rc=0\n")
+        write(os.path.join(d, "%s.%d.rc" % (rid, j)), "rc=0 steps=%s\n" % ",".join(map(str, spec.steps)))
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -487,7 +542,11 @@ def make_campaign(root):
 
 
 def main(argv):
-    if len(argv) != 3 or argv[1] != "--out":
+    only = None
+    if len(argv) == 5 and argv[3] == "--only":
+        only = set(argv[4].split(","))
+        argv = argv[:3]
+    if len(argv) != 3 or argv[1] != "--out" or (only is not None and not only <= {"qe", "runs"}):
         sys.stderr.write(__doc__)
         return 2
     out = argv[2]
@@ -495,7 +554,16 @@ def main(argv):
         sys.stderr.write("campaign: %s is not empty\n" % out)
         return 2
     os.makedirs(out, exist_ok=True)
-    make_campaign(out)
+    if only is None:
+        make_campaign(out)
+    else:
+        # a part of the campaign (check/compare_b.py's lens step): the runs R1-R4, or the QE receipts and guard lines
+        if "runs" in only:
+            for rid in c.RUN_POINTS:
+                make_run(out, rid)
+        if "qe" in only:
+            make_qe(out)
+            make_guard(out)
     n = sum(len(fs) for _, _, fs in os.walk(out))
     print(row("CAMPAIGN", [("out", out), ("files", n), ("dump_points", len(c.DUMP_POINTS)),
                            ("run_points", len(c.RUN_POINTS)), ("qe_commands", len(qe_mod.PLAN)), ("engine_runs", 0)]))

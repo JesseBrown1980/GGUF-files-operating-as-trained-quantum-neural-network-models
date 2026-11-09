@@ -5,14 +5,13 @@ A synthetic dump point is a few CallBlocks of 2^18 samples each (block 0 holds e
 (E17: no verdict). Each NotMet test plants one fault and checks that the row turns NOT_MET; the other tests check the
 reads, the scoring, rule STOP and the helpers on cases worked by hand."""
 
-import math
 import os
 import unittest
 
 from stripes_read_b import common as c
-from stripes_read_b import frozen, runs, series
+from stripes_read_b import frozen, qint, runs, series
 from stripes_read_b import rows_e_mom as m
-from stripes_read_b.exact import Iv, dec, fr, parse_rat
+from stripes_read_b.exact import Iv, Rad, dec, div, fr, parse_rat
 from stripes_read_b.hbp import parse_row, sha256_hex
 
 from .util import AGG, RUN, X1, XR1, TempDir, point_dir, read, with_trailer
@@ -23,13 +22,11 @@ VNC = "VNC"
 
 
 def _floor(x):
-    x = fr(x)
-    return x.numerator // x.denominator
+    return qint.floor(fr(x))
 
 
 def _ceil(x):
-    x = fr(x)
-    return -((-x.numerator) // x.denominator)
+    return qint.ceil(fr(x))
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -57,7 +54,7 @@ def vr_block(M, pi, dev=0, atoms=0, amb=0, br_amb=0):
 def sum_block(M, rho, scale=1, s2ps=Q, sign=1):
     """AGG_SUM set=all with Sum |B|^2 = M s2ps and rho_u about rho (Sum B real)."""
     S2 = M * s2ps
-    br = 0 if rho == 0 else sign * _floor(math.isqrt(S2 + _floor(rho * (M - 1) * S2)) * fr(scale))
+    br = 0 if rho == 0 else sign * _floor(qint.isqrt(S2 + _floor(rho * (M - 1) * S2)) * fr(scale))
     return {"m": M, "br": br, "bi": 0, "br2": S2, "bi2": 0, "brbi": 0, "bbr": 0, "bbi": 0, "bbr2": 0, "bbi2": 0}
 
 
@@ -206,7 +203,7 @@ def make_run(rid, nstar_scale=None, sign=None, steps=None, drop=()):
         rec = {}
         for step in steps:
             ns = law_nstar(spec, step) * fr((nstar_scale or {}).get(step, 1))
-            mu = math.isqrt(_floor(fr(Q, 1 + ns)))
+            mu = qint.isqrt(_floor(fr(Q, 1 + ns)))
             br = (sign or {}).get(step, 1) * _floor(n * mu * (1 + fr(alt, 100)))
             rec[step] = {"n": n, "br": br, "bi": 0, "br2": n * (Q + alt * (Q >> 10)), "bi2": 0, "brbi": 0,
                          "rb_br": 4 * n, "rb_bi": 0, "rb_br2": 0, "rb_bi2": 0, "rb_brbi": 0}
@@ -311,6 +308,39 @@ class Helpers(unittest.TestCase):
         self.assertEqual(p.bracket(), (fr(7, 50), fr(1, 5)))
         self.assertEqual(p.se2, fr(10000 - 1156, 4000000))
 
+    def test_e10_falsifier_at_3_se(self):
+        # x = 0.025, A/M = 0.015, 3SE = 0.01498: x - 3SE - A/M < 0, but the bracket's low end 0.0175 minus 3SE > 0
+        v = vr_block(10000, 0)
+        v.update({"br_pos": 5175, "br_neg": 4675, "br_amb": 150})
+        p = m.PiHat(v)
+        self.assertTrue((Rad.of(p.x) - p.e()).sign() < 0)
+        self.assertFalse(m.e10_not_above_zero(p))
+        v.update({"br_pos": 5100, "br_neg": 4750})  # x = 0.0175, low end 0.01, minus 3SE below 0
+        self.assertTrue(m.e10_not_above_zero(m.PiHat(v)))
+
+    def test_e19_lin_bounds_take_both_ends(self):
+        # n* = 1 with 4SE = 3: n* - 4SE = -2 < 0, so the low end is -2/n*_lin.lo - 1 (quantum review 2, M2)
+        spec = c.RUN_POINTS["R2"]
+
+        class FakeRun:
+            lost, steps, batches = [], spec.steps, [0, 1]
+
+            def nstar(self, step):
+                return fr(1), fr(9, 16)
+
+        r = m._e19_lin("lin", c.scored(), m.Inputs(runs={"R2": FakeRun()}), "R2", "1/2", "199.67", fr(1, 5))
+        y = parse_rat(spec.y)
+        law = series.Law(parse_rat(spec.delta), spec.N * y * y, fr(1, 2)).nstar()
+        self.assertEqual((r.lo - Rad.of(div(-2, law.lo) - 1)).sign(), 0)
+        self.assertEqual((r.hi - Rad.of(div(4, law.lo) - 1)).sign(), 0)
+        self.assertEqual(r.outcome, c.MISS)
+
+    def test_band_text_open_at_infinity(self):
+        self.assertEqual(c.Band(0, None, lo_open=True).text(), "(0,inf)")
+        self.assertEqual(c.Band(None, None).text(), "(-inf,inf)")
+        t = c.Band(fr(-1, 4), fr(1, 4)).text()
+        self.assertEqual((t[0], t[-1]), ("[", "]"))
+
     def test_sampled_bracket(self):
         sb = m.sampled_bracket
         self.assertEqual(sb(fr(1, 10), fr(2, 10), fr(15, 100), fr(1, 10), fr(1, 10), fr(2, 100)), c.MET)
@@ -396,13 +426,31 @@ class Helpers(unittest.TestCase):
         pt = self._e16_point(mm // 2 + 5243 + 1200, mm // 2 + 5243, 1600, 400)
         self.assertEqual(m._e16("x", "P04", 1, "V1", c.scored(), pt).outcome, c.MISS)
 
-    def test_e16_ambiguity_in_the_bracket_only(self):
-        # 40 ambiguous V1 samples widen the bracket of the difference; SE_pair stays sqrt(D+ + D-)/(2M)
+    def test_e16_ambiguity_widens_se_pair(self):
+        # the conservative reading (note reading_E16): 40 ambiguous V1 samples widen the bracket of
+        # the difference and count as possibly discordant, D_max = 10000 + 40, so 3SE_pair = 3 sqrt(10040)/2^19
         mm = 1 << 18
         pt = self._e16_point(mm // 2 + 5243, mm // 2 + 5243, 5000, 5000, amb=40)
         r = m._e16("x", "P04", 1, "V1", c.scored(), pt)
-        self.assertEqual(dict(r.detail)["3SE_pair"], "5.723e-4")
+        d = dict(r.detail)
+        self.assertEqual((d["D_max"], d["3SE_pair"]), (10040, "5.734e-4"))
+        self.assertEqual(m.possibly_discordant(pt.cmp(64, "V1"), mm), 10040)
+        self.assertEqual((m.e16_se_pair_e(pt.cmp(64, "V1"), mm) - c.se(fr(10040, 4 * mm * mm), 3)).sign(), 0)
         self.assertEqual(r.outcome, c.MET)
+
+    def test_e16_atoms_count_as_possibly_discordant(self):
+        # no certified discordance, no ambiguous sign, 40000 samples outside the common non-atom set: with the
+        # certified cells alone SE_pair = 0 and the read would be MET; counting the atoms as possibly discordant,
+        # 3SE_pair = 3 sqrt(40000)/2^19 = 1.14e-3 > Pi_VNC/20 = 1.0e-3, so it is NOT_RESOLVED
+        mm = 1 << 18
+        pt = self._e16_point(mm // 2 + 5243, mm // 2 + 5243, 0, 0)
+        cm = pt.calls[0].cmp[(64, "V1")]
+        cm["common"] = mm - 40000
+        cm["br"] = [cm["br"][0] - 20000, 0, 0, 0, cm["br"][4] - 20000, 0, 0, 0, 0]
+        r = m._e16("x", "P04", 1, "V1", c.scored(), pt)
+        d = dict(r.detail)
+        self.assertEqual((d["D+"], d["D-"], d["D_max"]), (0, 0, 40000))
+        self.assertEqual((r.outcome, d["recipe"], d["diff"]), (c.NOT_RESOLVED, c.NOT_RESOLVED, c.NOT_RESOLVED))
 
     def test_cross_outcome(self):
         co = m.cross_outcome
@@ -693,9 +741,25 @@ class Stop(unittest.TestCase):
         self.assertEqual(v.verdict, c.NOT_MEASURED)
 
     def test_lost_batch(self):
+        # rule STOP for runs: the point keeps only the records all 64 batches reached; a lost batch reached none, so
+        # every read of R2 is NOT_MEASURED and states the loss; the reads of R3 and R4 alone are read
         v = row("E19", run_edits={"R2": {"drop": (5,)}})
-        self.assertEqual(v.verdict, c.MET)
-        self.assertEqual(dict(reads_of(v)["lin_R2_t1"].detail)["lost_batches"], 1)
+        r = reads_of(v)
+        with_r2 = ("collapse_t1/2", "collapse_t1", "lin_R2_t1/2", "lin_R2_t1", "Ebr_R2_t1/2", "Ebr_R2_t1")
+        for rid in with_r2:
+            self.assertEqual(r[rid].outcome, c.NOT_MEASURED, rid)
+            self.assertEqual(dict(r[rid].detail)["lost"], "R2_batch_lost_5", rid)
+        for rid in set(r) - set(with_r2):
+            self.assertEqual(r[rid].outcome, c.MET, rid)
+        self.assertEqual(v.verdict, c.NOT_RESOLVED)
+
+    def test_lost_batch_e18(self):
+        v = row("E18", run_edits={"R2": {"drop": (5,)}})
+        r = reads_of(v)
+        for rid in ("QW_y1/54_t1", "QW_y1/54_t2"):
+            self.assertEqual(r[rid].outcome, c.NOT_MEASURED, rid)
+            self.assertEqual(dict(r[rid].detail)["lost"], "R2_batch_lost_5", rid)
+        self.assertEqual(r["QW_y1/27_t1"].outcome, c.MET)
 
     def test_missing_point_stops(self):
         inp = inputs()
