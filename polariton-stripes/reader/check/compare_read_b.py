@@ -61,6 +61,7 @@ HEAD_CASES = {"reader_version": "0.1.0 for the evidence, 0.2.0 live"}
 INPUT_CASES = {"AGG_P%02d" % k: ("sha256",) for k in range(1, 15)}
 NOTE_CASES = {
     "reader_b": "the version, the arithmetic and the tree pin of each stage B",
+    "reader_a": "the live note also names stage A's source, the git tree of reader/a (review M4)",
     "runs": "the run listing's sha256: the evidence reads .rc files without ` steps=`",
     "run_R1": "the live run notes count the batches checked (checked=)",
     "run_R2": "checked=, and on the STOP campaign rule STOP for runs: R2 keeps no record (read=0, steps=none)",

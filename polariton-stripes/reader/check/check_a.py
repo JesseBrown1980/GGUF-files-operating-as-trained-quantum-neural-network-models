@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """check_a.py: an independent stage A for the stripe-phase reader, written from the frozen rules SECTOR and ATOMS and
-reader/AGG-FORMAT.md, in Python with int and fractions.Fraction only. It reads one twens 0.4.0 dump on stdin and writes
-the aggregate block of AGG-FORMAT.md section 3 on stdout, or one STOP row.
+reader/AGG-FORMAT.md, in Python with int only. It reads one twens 0.4.0 dump on stdin and writes the aggregate block of
+AGG-FORMAT.md section 3 on stdout, or one STOP row. A stream with more than one fault STOPs at the first in the order of
+AGG-FORMAT.md section 8 (every row read, then the rebuilds from the draws, then the sums record by record).
 
     python3 -I check_a.py --point ID --call I [--side PATH] < dump
 """
@@ -9,7 +10,6 @@ the aggregate block of AGG-FORMAT.md section 3 on stdout, or one STOP row.
 import hashlib
 import re
 import sys
-from fractions import Fraction
 
 READER = "stripes-read-a"
 READER_VERSION = "0.1.0"
@@ -93,6 +93,11 @@ K_NL = (
     "rb_br rb_bi eps reads at float_used json"
 ).split()
 K_DONE = "n records mask float_used json".split()
+# the value fields of each summary row, in key order
+TWPAIR_F = "v1xw_vnxnc q0 v1zr_vnzr q1 v0xw_v1xw q2 v0zr_v1zr q3 v1xw_vnxw q4".split()
+ROUND_F = ["rb_" + f for f in TWB_F] + ["eps_max"]
+PAIR_F = ["d", "qd", "d2"]
+PROUND_F = ["rb_d", "rb_qd", "rb_d2"]
 
 # id: (N, delta, y, calls, all, steps, side)
 TABLE = {
@@ -344,9 +349,7 @@ class Stream:
             p = parts[j]
             e = p.find("=")
             if e < 0:
-                if p == k:
-                    raise Stop("row_field_without_value", ln, kind=kind, field=k)
-                raise Stop("row_key", ln, kind=kind, expected=k, got=p[:40])
+                raise Stop("row_field_without_value", ln, kind=kind, token=p[:40])
             if p[:e] != k:
                 raise Stop("row_key", ln, kind=kind, expected=k, got=p[:e][:40])
             vals.append(p[e + 1:])
@@ -404,7 +407,7 @@ def read_block(point, call, side_path, data):
         raise Stop("unterminated_last_line", nlines, bytes=len(data) - (data.rfind(b"\n") + 1))
     lines = data[:-1].decode("ascii").split("\n")
     st = Stream(lines)
-    if not lines[0].startswith("TWB_HEAD|"):
+    if lines[0].split("|")[0] != "TWB_HEAD":
         raise Stop("first_row_not_TWB_HEAD", 1)
     hd, hl, head_text = st.row("TWB_HEAD", K_HEAD)
     if hd["engine"] != "twens":
@@ -423,21 +426,24 @@ def read_block(point, call, side_path, data):
     want(hd, "q", "40", hl)
     want(hd, "sums", SUMS_TEXT, hl)
     want(hd, "rounding", ROUNDING_TEXT, hl)
-    n = pint(hd["N"], "N", hl, 2, I64_MAX)
+    n = pint(hd["N"], "N", hl, I64_MIN, I64_MAX)
+    if n < 2:
+        raise Stop("head_N", hl, stream=n)
     for f in ("delta", "u", "y"):
         if not RAT_RE.match(hd[f]) or hd[f].startswith("-0"):
             raise Stop("bad_rational", hl, field=f, text=hd[f][:40])
-    y_zero = 1 if Fraction(hd["y"]) == 0 else 0
+    y_zero = 1 if hd["y"].split("/")[0] == "0" else 0  # RAT_RE holds: zero exactly when the numerator is 0
     seed = pint(hd["seed"], "seed", hl, 0, U64_MAX)
     seed_string = hd["seed_string"]
-    if seed != int.from_bytes(hashlib.sha256(seed_string.encode()).digest()[:8], "big"):
+    # The engine prints seed_string=none when it was given seed= instead: no string binds that seed (section 6).
+    if seed_string == "none" or seed != int.from_bytes(hashlib.sha256(seed_string.encode()).digest()[:8], "big"):
         raise Stop("head_seed", hl, seed=seed, seed_string=seed_string)
     start = pint(hd["start"], "start", hl, 0, U64_MAX)
     count = pint(hd["count"], "count", hl, 0, U64_MAX)
     if count == 0 or count > 4096 or hd["samples"] != hd["count"]:
         raise Stop("head_count", hl, count=hd["count"], samples=hd["samples"])
-    dtden = pint(hd["dtden"], "dtden", hl, 1, I64_MAX)
-    if dtden != 64 and point in TABLE:
+    dtden = pint(hd["dtden"], "dtden", hl, I64_MIN, I64_MAX)
+    if dtden < 1:
         raise Stop("head_dtden", hl, stream=dtden)
     want(hd, "threads", "1", hl)
     steps_t = hd["steps"].split(",")
@@ -478,32 +484,19 @@ def read_block(point, call, side_path, data):
     psi_v1 = isqrt((((2 * n + 1) * ONE) // (2 * n)) * ONE)
     M = count
     # per-sample storage
-    flags = []
-    lat = []
     obs = [[[None] * M for _ in range(nrec)] for _ in range(7)]  # obs[v][r][i] = (7 obs, zc3)
     rbs = [[[None] * M for _ in range(nrec)] for _ in range(7)]  # rbs[v][r][i] = (eps, 7 bounds)
     uvs = [[None] * M for _ in range(7)]
     sbs = [[0] * M for _ in range(7)]
-    starts = 0
+    draws = []  # per sample (g, rot, rot text, [(s, uv, e0:ep:em, seeds, eta) per variant]), checked once all is read
     for i in range(M):
         idx = start + i
         sd, sl, _ = st.row("TWB_DUMP_SAMPLE", K_SAMPLE)
         if sd["idx"] != str(idx):
             raise Stop("sample_index", sl, expected=idx, stream=sd["idx"][:30])
         g = pvec(sd["g"], "g", sl, 6)
-        c = []
-        for gi in g:
-            if gi % (1 << 35) != 0 or abs(gi >> 35) > 2048:
-                raise Stop("draw_not_a_coin_count", 0, g=gi)
-            c.append(gi >> 35)
         rotv = pvec(sd["rot"], "rot", sl, 2)
-        fl = flags_of(c)
-        flags.append(fl)
-        lat.append((c[0] * c[0] - c[1] * c[1], 2 * c[0] * c[1]))
-        if not on[MODE0] and rotv != [ONE, 0]:
-            raise Stop("rot_without_MODE0", 0, rot=sd["rot"])
-        init, uv, ib, sb = build(g, rotv, on, n, h, psi_v1, 0)
-        eta = None
+        per_v = []
         for v in pres:
             d, ln, _ = st.row("TWB_DUMP_INIT", K_INIT)
             if d["idx"] != str(idx):
@@ -511,10 +504,6 @@ def read_block(point, call, side_path, data):
             want(d, "variant", VN[v], ln)
             s = pvec(d["s"], "s", ln, 6)
             u4 = pvec(d["uv"], "uv", ln, 4)
-            if s != init[v]:
-                raise Stop("start_mismatch", 0, variant=VN[v], stream=d["s"], reader=":".join(map(str, init[v])))
-            if u4 != uv[v]:
-                raise Stop("control_seed_mismatch", 0, variant=VN[v], stream=d["uv"])
             d, ln, _ = st.row("TWB_DUMP_IB", K_IB)
             if d["idx"] != str(idx):
                 raise Stop("sample_index", ln, expected=idx, stream=d["idx"][:30])
@@ -522,17 +511,9 @@ def read_block(point, call, side_path, data):
             e3 = [pint(d[k], k, ln, 0, U128_MAX) for k in ("e0", "ep", "em")]
             sbv = pint(d["seeds"], "seeds", ln, 0, U128_MAX)
             et = pint(d["eta"], "eta", ln, 0, U128_MAX)
-            if e3 != ib[v] or sbv != sb[v]:
-                raise Stop("start_bound_mismatch", 0, variant=VN[v])
-            if eta is None:
-                eta = et
-            elif et != eta:
-                raise Stop("eta_mismatch", 0, variant=VN[v])
-            if not on[MODE0] and et != 0:
-                raise Stop("eta_mismatch", 0, variant=VN[v], why="MODE0_off")
+            per_v.append((s, u4, e3, sbv, et))
             uvs[v][i] = u4
             sbs[v][i] = sbv
-            starts += 1
             for r in range(nrec):
                 d, ln, _ = st.row("TWB_DUMP_OBS", K_OBS)
                 if d["idx"] != str(idx):
@@ -550,10 +531,11 @@ def read_block(point, call, side_path, data):
                 b = [pint(d[k], k, ln, 0, U128_MAX) for k in ("eps", "b_zr", "b_zi", "b_xw", "b_xnc", "b_f", "b_br",
                                                               "b_bi", "b_z2", "b_fcl")]
                 rbs[v][r][i] = (b[0], b[1:8])
-    # summary rows
+        draws.append((g, rotv, sd["rot"], per_v))
+    # summary rows: each value is parsed as its row is read; the sums are compared once the whole stream is read
     ctrls = [None] * nrec
     nl_rows = [None] * nrec
-    summ = []  # (kind, step, name, row dict, line)
+    summ = {}  # (kind, record, variant or pair) -> [values]
 
     def set_ctrl(r, text, ln):
         cv = pvec(text, "ctrl", ln, 3)
@@ -576,6 +558,10 @@ def read_block(point, call, side_path, data):
             if k in ("N", "delta", "u", "y", "seed", "start", "count", "dtden", "samples", "seed_string"):
                 want(d, k, hd[k] if k != "samples" else hd["count"], ln)
 
+    def values(d, ln, names, unsigned):
+        lo, hi = (0, U128_MAX) if unsigned else (I128_MIN, I128_MAX)
+        return [pint(d[x], x, ln, lo, hi) for x in names]
+
     for r in range(nrec):
         for v, name in LEGACY:
             if not on[v]:
@@ -587,13 +573,13 @@ def read_block(point, call, side_path, data):
             want(d, "n", str(M), ln)
             set_h(d["h"], ln)
             set_ctrl(r, d["ctrl"], ln)
-            summ.append(("TWENS", r, v, d, ln))
+            summ[("TWENS", r, v)] = values(d, ln, TWB_F[:16], False)
         if on[V1] and on[VNC] and on[V0]:
             d, ln, _ = st.row("TWPAIR", K_TWPAIR)
             common(d, ln, K_TWPAIR)
             want(d, "step", str(steps[r]), ln)
             want(d, "n", str(M), ln)
-            summ.append(("TWPAIR", r, None, d, ln))
+            summ[("TWPAIR", r, None)] = values(d, ln, TWPAIR_F, False)
         for v in pres:
             d, ln, _ = st.row("TWB", K_TWB)
             common(d, ln, K_TWB)
@@ -606,24 +592,24 @@ def read_block(point, call, side_path, data):
             want(d, "n", str(M), ln)
             set_h(d["h"], ln)
             set_ctrl(r, d["ctrl"], ln)
-            summ.append(("TWB", r, v, d, ln))
+            summ[("TWB", r, v)] = values(d, ln, TWB_F, False)
             d, ln, _ = st.row("TWB_ROUND", K_ROUND)
             common(d, ln, K_ROUND)
             want(d, "step", str(steps[r]), ln)
             want(d, "variant", VN[v], ln)
             want(d, "n", str(M), ln)
+            summ[("TWB_ROUND", r, v)] = values(d, ln, ROUND_F, True)
             want(d, "units", UNITS_TEXT, ln)
-            summ.append(("TWB_ROUND", r, v, d, ln))
         for k, (va, _, vb, _, name) in enumerate(PAIRS):
             if not (on[va] and on[vb]):
                 continue
-            for kind, keys in (("TWB_PAIR", K_PAIR), ("TWB_PAIR_ROUND", K_PROUND)):
+            for kind, keys, names in (("TWB_PAIR", K_PAIR, PAIR_F), ("TWB_PAIR_ROUND", K_PROUND, PROUND_F)):
                 d, ln, _ = st.row(kind, keys)
                 common(d, ln, keys)
                 want(d, "step", str(steps[r]), ln)
                 want(d, "pair", name, ln)
                 want(d, "n", str(M), ln)
-                summ.append((kind, r, k, d, ln))
+                summ[(kind, r, k)] = values(d, ln, names, kind == "TWB_PAIR_ROUND")
         if nl:
             d, ln, t = st.row("TWB_NL", K_NL)
             for k in ("N", "delta", "u", "y", "dtden"):
@@ -640,20 +626,65 @@ def read_block(point, call, side_path, data):
             nl_rows[r] = t
         if ctrls[r] is None:
             raise Stop("record_without_ctrl", st.i, step=steps[r])
+        if table == "checked" and ctrls[r][0] != [0, 0, 0]:
+            raise Stop("table_mismatch", st.i, field="ctrl", step=steps[r], stream=ctrls[r][1][:40])
     d, ln, _ = st.row("TWB_DONE", K_DONE)
     want(d, "n", str(M), ln)
     want(d, "records", str(nrec), ln)
     want(d, "mask", hd["mask"], ln)
     if st.i != len(lines):
         raise Stop("rows_after_TWB_DONE", st.i + 1)
+
+    # every row is read: h, then each sample's draws, starts, control seeds and start bounds
     if h_seen and h_seen[0] != h:
         raise Stop("h_mismatch", 0, stream=h_seen[0], reader=h)
-    if table == "checked" and any(cv != [0, 0, 0] for cv, _ in ctrls):
-        raise Stop("table_mismatch", 0, field="ctrl")
+    flags = []
+    lat = []
+    starts = 0
+    for i, (g, rotv, rot_text, per_v) in enumerate(draws):
+        c = []
+        for gi in g:
+            if gi % (1 << 35) != 0 or abs(gi >> 35) > 2048:
+                raise Stop("draw_not_a_coin_count", 0, idx=start + i, g=gi)
+            c.append(gi >> 35)
+        flags.append(flags_of(c))
+        lat.append((c[0] * c[0] - c[1] * c[1], 2 * c[0] * c[1]))
+        if not on[MODE0] and rotv != [ONE, 0]:
+            raise Stop("rot_without_MODE0", 0, idx=start + i, rot=rot_text)
+        init, uv, ib, sb = build(g, rotv, on, n, h, psi_v1, 0)
+        eta = None
+        for v, (s, u4, e3, sbv, et) in zip(pres, per_v, strict=True):
+            if s != init[v]:
+                raise Stop("start_mismatch", 0, variant=VN[v], stream=":".join(map(str, s)),
+                           reader=":".join(map(str, init[v])))
+            if u4 != uv[v]:
+                raise Stop("control_seed_mismatch", 0, variant=VN[v], stream=":".join(map(str, u4)))
+            if e3 != ib[v] or sbv != sb[v]:
+                raise Stop("start_bound_mismatch", 0, variant=VN[v])
+            if eta is None:
+                eta = et
+            elif et != eta:
+                raise Stop("eta_mismatch", 0, variant=VN[v])
+            if not on[MODE0] and et != 0:
+                raise Stop("eta_mismatch", 0, variant=VN[v], why="MODE0_off")
+            starts += 1
 
-    # linear controls and the reader's own sums of every summary field
+    # record by record: per variant the linear controls and the TWB, TWB_ROUND and TWENS sums, then per pair the
+    # TWB_PAIR and TWB_PAIR_ROUND sums, then TWPAIR
     lin_n = 0
+    rows_n = 0
+    fields_n = 0
     sums = {}
+
+    def cmp(kind, r, label, names, stream_vals, reader_vals):
+        nonlocal rows_n, fields_n
+        rows_n += 1
+        for nm, x, rv in zip(names, stream_vals, reader_vals, strict=True):
+            if x != rv:
+                raise Stop("summary_mismatch", 0, row=kind, step=steps[r], of=label, field=nm, stream=x, reader=rv)
+            fields_n += 1
+
+    legacy = dict(LEGACY)
     for r in range(nrec):
         cv = ctrls[r][0]
         for v in pres:
@@ -682,7 +713,12 @@ def read_block(point, call, side_path, data):
                     epsmax = eps
             sums[("TWB", r, v)] = S
             sums[("TWB_ROUND", r, v)] = RB + [epsmax]
-        for k, (va, oa, vb, ob_, _) in enumerate(PAIRS):
+            cmp("TWB", r, VN[v], TWB_F, summ[("TWB", r, v)], S)
+            cmp("TWB_ROUND", r, VN[v], ROUND_F, summ[("TWB_ROUND", r, v)], RB + [epsmax])
+            if v in legacy:
+                cmp("TWENS", r, legacy[v], TWB_F[:16], summ[("TWENS", r, v)], S[:16])
+        pair_sums = {}
+        for k, (va, oa, vb, ob_, name) in enumerate(PAIRS):
             if not (on[va] and on[vb]):
                 continue
             pd = pq = pd2 = 0
@@ -697,41 +733,14 @@ def read_block(point, call, side_path, data):
                 r0 += bd
                 r1 += cu(2 * ad, bd) + cu(bd, bd) + 1
                 r2 += 2 * ad * bd + bd * bd
-            sums[("PAIR", r, k)] = [pd, pq, pd2]
-            sums[("PROUND", r, k)] = [r0, r1, r2]
-    rows_n = 0
-    fields_n = 0
-
-    def cmp(kind, r, label, names, stream_vals, reader_vals, ln):
-        nonlocal fields_n
-        lo, hi = (0, U128_MAX) if kind in ("TWB_ROUND", "TWB_PAIR_ROUND") else (I128_MIN, I128_MAX)
-        for nm, sv, rv in zip(names, stream_vals, reader_vals):
-            x = pint(sv, nm, ln, lo, hi)
-            if x != rv:
-                raise Stop("summary_mismatch", 0, row=kind, step=steps[r], of=label, field=nm, stream=x, reader=rv)
-            fields_n += 1
-
-    for kind, r, key, d, ln in summ:
-        rows_n += 1
-        if kind == "TWENS":
-            names = TWB_F[:16]
-            cmp(kind, r, VN[key], names, [d[x] for x in names], sums[("TWB", r, key)][:16], ln)
-        elif kind == "TWPAIR":
-            names = "v1xw_vnxnc q0 v1zr_vnzr q1 v0xw_v1xw q2 v0zr_v1zr q3 v1xw_vnxw q4".split()
+            pair_sums[k] = [pd, pq, pd2]
+            cmp("TWB_PAIR", r, name, PAIR_F, summ[("TWB_PAIR", r, k)], [pd, pq, pd2])
+            cmp("TWB_PAIR_ROUND", r, name, PROUND_F, summ[("TWB_PAIR_ROUND", r, k)], [r0, r1, r2])
+        if ("TWPAIR", r, None) in summ:
             rv = []
             for k in range(5):
-                rv += sums[("PAIR", r, k)][:2]
-            cmp(kind, r, "-", names, [d[x] for x in names], rv, ln)
-        elif kind == "TWB":
-            cmp(kind, r, VN[key], TWB_F, [d[x] for x in TWB_F], sums[("TWB", r, key)], ln)
-        elif kind == "TWB_ROUND":
-            names = ["rb_" + x for x in TWB_F] + ["eps_max"]
-            cmp(kind, r, VN[key], names, [d[x] for x in names], sums[("TWB_ROUND", r, key)], ln)
-        elif kind == "TWB_PAIR":
-            cmp(kind, r, PAIRS[key][4], ["d", "qd", "d2"], [d["d"], d["qd"], d["d2"]], sums[("PAIR", r, key)], ln)
-        else:
-            cmp(kind, r, PAIRS[key][4], ["rb_d", "rb_qd", "rb_d2"], [d["rb_d"], d["rb_qd"], d["rb_d2"]],
-                sums[("PROUND", r, key)], ln)
+                rv += pair_sums[k][:2]
+            cmp("TWPAIR", r, "legacy", TWPAIR_F, summ[("TWPAIR", r, None)], rv)
 
     # the aggregate rows
     pc = f"point={point}|call={call}"

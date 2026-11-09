@@ -19,7 +19,8 @@ reader/evidence/stage-b-fraction), on control data only. The output must be byte
 
 Outputs a fix after the conversion changed on purpose are not compared: E16 (the conservative SE_pair), and the text
 of a READ row (the band of an infinite end, the reason of a read lost to a QE exit). The lens prints reads by their
-fields, so its lines do not carry that text."""
+fields, so its lines do not carry that text. check/compare_read_b.py compares the two versions' READ files on the e2e
+campaigns and requires each of those differences to be a declared one."""
 
 import hashlib
 import os

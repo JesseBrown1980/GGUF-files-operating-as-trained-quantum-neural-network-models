@@ -257,29 +257,94 @@ class Provenance(unittest.TestCase):
                 sb.stage_b_tree(os.path.join(d), d)
             self.assertEqual(cm.exception.reason, "stage_b_tree")
 
+    def test_stage_a_tree_is_the_git_tree_of_reader_a(self):
+        # review M4: the reader_a note names stage A's source as the git tree of reader/a
+        with TempDir() as d:
+            repo, _ = scratch_repo(d)
+            rel = "polariton-stripes/reader/a"
+            a = os.path.join(repo, *rel.split("/"))
+            # a name that sorts beside a folder's ("src.rs" before "src/"), nested folders, an executable file
+            for path, text in (("Cargo.toml", "[package]\n"), ("src.rs", "x\n"), ("src/lib.rs", "pub fn f() {}\n"),
+                               ("src/a-b.rs", "y\n"), ("tests/common/mod.rs", "z\n"), ("run.sh", "#!/bin/sh\n")):
+                os.makedirs(os.path.dirname(os.path.join(a, path)), exist_ok=True)
+                with open(os.path.join(a, path), "w") as f:
+                    f.write(text)
+            os.chmod(os.path.join(a, "run.sh"), 0o755)
+            with open(os.path.join(repo, ".gitignore"), "a") as f:
+                f.write("target/\n")
+            git(repo, "add", "-A")
+            git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "t")
+            head = git(repo, "rev-parse", "HEAD:" + rel).decode("ascii").strip()
+            self.assertEqual(sb.stage_a_tree(a, repo), (rel, head))
+            os.makedirs(os.path.join(a, "target", "release"))
+            with open(os.path.join(a, "target", "release", "stripes-read-a"), "w") as f:
+                f.write("ignored\n")
+            self.assertEqual(sb.stage_a_tree(a, repo), (rel, head), "an ignored build folder is not source")
+            with open(os.path.join(a, "src", "lib.rs"), "a") as f:
+                f.write("// edit\n")
+            with self.assertRaises(c.StageBStop) as cm:
+                sb.stage_a_tree(a, repo)
+            self.assertEqual(cm.exception.reason, "stage_a_tree")
+            self.assertIn(rel + "/src/lib.rs: working tree", cm.exception.detail)
+            git(repo, "add", rel + "/src/lib.rs")
+            staged = git(repo, "write-tree", "--prefix=" + rel + "/").decode("ascii").strip()
+            self.assertNotEqual(staged, head)
+            self.assertEqual(sb.stage_a_tree(a, repo), (rel, staged))
+            with open(os.path.join(a, "build.rs"), "w") as f:
+                f.write("fn main() {}\n")
+            with self.assertRaises(c.StageBStop) as cm:
+                sb.stage_a_tree(a, repo)
+            self.assertEqual((cm.exception.reason, cm.exception.detail), ("stage_a_tree",
+                                                                          "not in git's index: " + rel + "/build.rs"))
+            os.remove(os.path.join(a, "build.rs"))
+            os.chmod(os.path.join(a, "src.rs"), 0o755)
+            with self.assertRaises(c.StageBStop) as cm:
+                sb.stage_a_tree(a, repo)
+            self.assertIn(rel + "/src.rs: working tree 100755", cm.exception.detail)
+            os.chmod(os.path.join(a, "src.rs"), 0o644)
+            os.remove(os.path.join(a, "src", "a-b.rs"))
+            with self.assertRaises(c.StageBStop) as cm:
+                sb.stage_a_tree(a, repo)
+            self.assertEqual(cm.exception.detail, "in git's index, not in the working tree: " + rel + "/src/a-b.rs")
+        with TempDir() as d:
+            with self.assertRaises(c.StageBStop) as cm:
+                sb.stage_a_tree(os.path.join(d, "a"), d)
+            self.assertEqual(cm.exception.reason, "stage_a_tree")
+
+    def test_stage_a_tree_of_this_checkout(self):
+        if not os.path.exists(os.path.join(sb.REPO, ".git")):
+            self.skipTest("no git checkout around this stage B")
+        rel = "polariton-stripes/reader/a"
+        try:
+            path, tree = sb.stage_a_tree()
+        except c.StageBStop as e:
+            self.fail("%s: %s (stage reader/a first)" % (e.reason, e.detail))
+        self.assertEqual(path, rel)
+        self.assertTrue(re.fullmatch("[0-9a-f]{40}", tree))
+        if subprocess.run(["git", "-C", sb.REPO, "diff", "--cached", "--quiet", "HEAD", "--", rel],
+                          check=False).returncode == 0:
+            self.assertEqual(tree, git(sb.REPO, "rev-parse", "HEAD:" + rel).decode("ascii").strip())
+
     def test_read_refuses_a_tree_whose_modes_git_does_not_hold(self):
-        # review M2: read and verify take the tree pin first and write nothing when a working-tree mode differs
+        # review M2: build() (read, and verify after its audit) takes the tree pin first and writes nothing when a
+        # working-tree mode differs from git's index
         with TempDir() as d:
             repo, b = scratch_repo(os.path.join(d, "repo"))
             os.chmod(os.path.join(b, "pkg", "a.py"), 0o755)
             out = os.path.join(d, "READ.hbp")
-            inputs = [x for k in sb.INPUT_KEYS for x in (k, d)]
+            text = io.StringIO()
             saved = sb.B_DIR, sb.REPO
             sb.B_DIR, sb.REPO = b, repo
             try:
-                for argv in (["read"] + inputs + ["--out", out], ["verify"] + inputs + ["--read", out]):
-                    text = io.StringIO()
-                    with contextlib.redirect_stdout(text):
-                        rc = sb.main(["stripes_read_b"] + argv) if argv[0] == "read" else None
-                    if rc is not None:
-                        self.assertEqual(rc, 3)
-                        self.assertIn("|reason=stage_b_modes|detail=polariton-stripes/reader/b/pkg/a.py:", text.getvalue())
-                self.assertFalse(os.path.exists(out))
+                with contextlib.redirect_stdout(text):
+                    rc = sb.main(["stripes_read_b", "read"] + [x for k in sb.INPUT_KEYS for x in (k, d)]
+                                 + ["--out", out])
                 with self.assertRaises(c.StageBStop) as cm:
-                    sb.build(dict(zip(sb.INPUT_KEYS, [d] * len(sb.INPUT_KEYS))))
-                self.assertEqual(cm.exception.reason, "stage_b_modes")
+                    sb.build(dict.fromkeys(sb.INPUT_KEYS, d))
             finally:
                 sb.B_DIR, sb.REPO = saved
+            self.assertEqual((rc, os.path.exists(out), cm.exception.reason), (3, False, "stage_b_modes"))
+            self.assertIn("|reason=stage_b_modes|detail=polariton-stripes/reader/b/pkg/a.py:", text.getvalue())
 
     def test_no_flag_skips_the_sums(self):
         # review M3: --no-sums is gone from read and verify; any flag is a usage STOP

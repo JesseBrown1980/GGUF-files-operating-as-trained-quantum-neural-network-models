@@ -17,20 +17,27 @@ jobs:
     timeout-minutes: 45
     env:
       RUSTUP_TOOLCHAIN: "1.81.0"
+      # stage A, built with the checkout path remapped to stage-a (review M4): the same sha256 at any checkout path
+      STAGE_A_SHA256: "7fe3c18f59a75bd4b06ba080027045a4d066ca1677c173ec1139c2f2dcd80ed3"
+      STAGE_A_TREE: "590b2528bee1ee52e0e0b47d23540f0ac44dd998"
     steps:
       - name: Checkout, on a pull request its merge with the base
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: The frozen files at their sums (PREDICTION-STRIPE-PHASE.hbp 3398b073..., README.md c0d9954d...)
+      - name: The frozen files at their sums (SHA256SUMS 1ef42e57... pinned, then the six files it lists; PREDICTION-STRIPE-PHASE.hbp 3398b073... and README.md c0d9954d... also by literal hash)
         run: |
           set -euo pipefail
-          cd polariton-stripes && sha256sum --strict -c SHA256SUMS
+          cd polariton-stripes
+          test "$(sha256sum SHA256SUMS | cut -d' ' -f1)" = "1ef42e5776f134db8aed87aadd9300454ae4a4efe5db9a3dfd37061364112914"
+          sha256sum --strict -c SHA256SUMS
           test "$(sha256sum PREDICTION-STRIPE-PHASE.hbp | cut -d' ' -f1)" = "3398b0732077679d77e590399236cbc161d612bb06b82e77968e2541c83688a2"
-      - name: Rust 1.81 and lints, python3; build and work folders outside the checkout
+          test "$(sha256sum README.md | cut -d' ' -f1)" = "c0d9954da5e98e64c025b396759a65028137e90c85a36689ec74408ed7f7c2d5"
+      - name: Rust 1.81 and lints, python3; build and work folders outside the checkout; every cargo call remaps the stage A path to stage-a
         run: |
           set -euo pipefail
           rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
           python3 --version
           echo "CARGO_TARGET_DIR=$RUNNER_TEMP/stripes-target" >> "$GITHUB_ENV"
+          echo "RUSTFLAGS=--remap-path-prefix=$(cd polariton-stripes/reader/a && pwd)=stage-a" >> "$GITHUB_ENV"
           echo "WORK=$RUNNER_TEMP/stripes-work" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/stripes-work"
       - name: Stage A, format
@@ -39,13 +46,15 @@ jobs:
       - name: Stage A, clippy -D warnings
         working-directory: polariton-stripes/reader/a
         run: cargo +1.81.0 clippy --locked --offline --release --all-targets -- -D warnings
-      - name: Stage A, cargo test (the real-dump tests are ignored here; they need dumps at the excluded points)
+      - name: Stage A, cargo test (the real-dump tests are ignored here; they need dumps at the excluded points); the build has the pinned sha256, from the pinned git tree of reader/a
         working-directory: polariton-stripes/reader/a
         run: |
           set -euo pipefail
           cargo +1.81.0 test --locked --offline --release
           cargo +1.81.0 build --locked --offline --release
           sha256sum "$CARGO_TARGET_DIR/release/stripes-read-a"
+          test "$(sha256sum "$CARGO_TARGET_DIR/release/stripes-read-a" | cut -d' ' -f1)" = "$STAGE_A_SHA256"
+          test "$(git rev-parse HEAD:polariton-stripes/reader/a)" = "$STAGE_A_TREE"
       - name: Stage B, the Python tests (integer pairs; the source scan refuses fractions, decimal, math, numpy, float(), round(), complex(), float literals and true division)
         run: python3 -I polariton-stripes/reader/b/run_tests.py
       - name: No float in the Rust or the Python (self-test first); the FLOAT-EVIDENCE.txt folder pins
@@ -58,6 +67,13 @@ jobs:
           test "$(grep -c '^COMPARE_B|.*|equal=1|' "$WORK/compare-b.txt")" = 4
       - name: Stage B end to end on a synthetic campaign, one VERDICT row per STRIPES_PREDICT row
         run: python3 -I polariton-stripes/reader/b/e2e.py --work "$WORK/e2e" --keep
+      - name: The READ files of the live and the Fraction stage B on the e2e campaigns, every differing row in the declared list (fabricated campaigns only)
+        run: |
+          set -euo pipefail
+          python3 -I polariton-stripes/reader/check/compare_read_b.py --campaigns "$WORK/e2e" --work "$WORK/compare-read-b" | tee "$WORK/compare-read-b.txt"
+          grep -q '^COMPARE_READ_B_SELF_TEST|plants=10|found=10|missed=none|' "$WORK/compare-read-b.txt"
+          test "$(grep -c '^COMPARE_READ_B|campaign=[a-z]*|.*|result=within_allowlist|' "$WORK/compare-read-b.txt")" = 2
+          grep -q '^COMPARE_READ_B_DONE|.*|result=within_allowlist|' "$WORK/compare-read-b.txt"
       - name: The sabotage suite, every case CAUGHT
         run: |
           set -euo pipefail
@@ -68,9 +84,10 @@ jobs:
           set -euo pipefail
           cd polariton-stripes/reader/a
           STRIPES_EMIT_DIR="$WORK/streams" cargo +1.81.0 test --locked --offline --release --test synthetic emit_streams_for_the_independent_check -- --ignored
+          test "$(sha256sum "$CARGO_TARGET_DIR/release/stripes-read-a" | cut -d' ' -f1)" = "$STAGE_A_SHA256"
           cd ../check
           python3 -I compare.py --ra "$CARGO_TARGET_DIR/release/stripes-read-a" --streams "$WORK/streams" --work "$WORK/compare" | tee "$WORK/compare.txt"
-          grep -q '|equal_all=true|' "$WORK/compare.txt"
+          grep -q '^COMPARE|cases=96|blocks=17|stops=79|equal=96|differ=0|equal_all=true|' "$WORK/compare.txt"
       - name: No engine was built or run (twens and polariton_first_correction are not in this job)
         run: |
           set -euo pipefail

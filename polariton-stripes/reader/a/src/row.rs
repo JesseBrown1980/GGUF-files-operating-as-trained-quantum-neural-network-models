@@ -88,19 +88,32 @@ pub fn same(what: &str, got: &str, want: &str) -> Result<(), Stop> {
     }
 }
 
-/// A rational "p/q" or "p" (q > 0) in the guard's text form; returns whether it is zero.
+/// Canonical digits: `0`, or a nonzero digit followed by digits (ASCII only).
+fn canonical_digits(s: &str) -> bool {
+    match s.as_bytes() {
+        [b'0'] => true,
+        [b'1'..=b'9', rest @ ..] => rest.iter().all(u8::is_ascii_digit),
+        _ => false,
+    }
+}
+
+/// A rational in its canonical text form, `-?(0|[1-9][0-9]*)(/[1-9][0-9]*)?` without `-0` (check_a.py's RAT_RE);
+/// returns whether it is zero (its numerator is `0`). Any other text, `+1/4`, `-0`, `01/40` or `1/040` among them, is
+/// a STOP `bad_rational`. The text is not parsed to a number, so it has no width limit.
 pub fn rational_is_zero(s: &str, what: &str) -> Result<bool, Stop> {
     let (p, q) = match s.split_once('/') {
-        Some((a, b)) => (a, b),
-        None => (s, "1"),
+        Some((a, b)) => (a, Some(b)),
+        None => (s, None),
     };
-    let bad = || Stop::new("bad_rational", format!("field={what},text={s}"));
-    let p: i128 = p.parse().map_err(|_| bad())?;
-    let q: i128 = q.parse().map_err(|_| bad())?;
-    if q <= 0 {
-        return Err(bad());
+    let mag = p.strip_prefix('-').unwrap_or(p);
+    let neg = mag.len() != p.len();
+    let ok = canonical_digits(mag)
+        && !(neg && mag == "0")
+        && q.map_or(true, |q| canonical_digits(q) && q != "0");
+    if !ok {
+        return Err(Stop::new("bad_rational", format!("field={what},text={s}")));
     }
-    Ok(p == 0)
+    Ok(mag == "0")
 }
 
 #[cfg(test)]
@@ -139,7 +152,23 @@ mod tests {
         assert_eq!(rational_is_zero("0", "y").ok(), Some(true));
         assert_eq!(rational_is_zero("0/7", "y").ok(), Some(true));
         assert_eq!(rational_is_zero("-1/54", "y").ok(), Some(false));
-        assert!(rational_is_zero("1/0", "y").is_err());
-        assert!(rational_is_zero("a", "y").is_err());
+        assert_eq!(rational_is_zero("1/40", "y").ok(), Some(false));
+        assert_eq!(rational_is_zero("27", "y").ok(), Some(false));
+        assert_eq!(
+            rational_is_zero("1/1000000000000000000000000000000000000000000", "y").ok(),
+            Some(false),
+            "no width limit"
+        );
+        for bad in [
+            "1/0", "a", "-0", "-0/3", "+1/40", "01/40", "1/040", "+1/4", "+0", "00", "1/-2",
+            "1/+2", "", "/", "1/", "/2", "-", "--1", "1/2/3", " 1", "1 ", "1/2 ", "\u{0661}",
+            "1e3",
+        ] {
+            assert!(rational_is_zero(bad, "y").is_err(), "{bad:?}");
+            assert_eq!(
+                rational_is_zero(bad, "y").err().map(|e| e.reason),
+                Some("bad_rational".to_string())
+            );
+        }
     }
 }

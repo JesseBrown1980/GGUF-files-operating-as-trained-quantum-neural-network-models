@@ -122,9 +122,22 @@ R=$T/repo
 mkdir -p "$R/polariton-stripes/ev"
 git -C "$R" init -q
 printf 'x = 1\n' > "$R/polariton-stripes/ev/a.py"
+"$PY" -I "$HERE/float_evidence.py" --repo "$R" --pins polariton-stripes/ev/ > /dev/null && { echo "SELF_TEST untracked file pinned"; ok=1; }
+git -C "$R" add polariton-stripes/ev/a.py
 pin=$("$PY" -I "$HERE/float_evidence.py" --repo "$R" --pins polariton-stripes/ev/ | sed 's/^.*tree=\([0-9a-f]*\).*$/\1/')
 printf '# test\npolariton-stripes/ev/ | tree=%s | a test row\n' "$pin" > "$R/polariton-stripes/FLOAT-EVIDENCE.txt"
 "$PY" -I "$HERE/float_evidence.py" --repo "$R" > /dev/null || { echo "SELF_TEST pin of an unchanged folder refused"; ok=1; }
+# the mode comes from git's index: with core.filemode=false (WSL /mnt/c) an executable bit on disk leaves the pin; with
+# core.filemode=true an unstaged mode change is a fault, and so is an untracked file under the folder
+chmod +x "$R/polariton-stripes/ev/a.py"
+git -C "$R" config core.filemode false
+"$PY" -I "$HERE/float_evidence.py" --repo "$R" > /dev/null || { echo "SELF_TEST pin moved by a mode git does not see"; ok=1; }
+git -C "$R" config core.filemode true
+"$PY" -I "$HERE/float_evidence.py" --repo "$R" > /dev/null && { echo "SELF_TEST unstaged mode change not caught"; ok=1; }
+chmod -x "$R/polariton-stripes/ev/a.py"
+printf 'y = 1\n' > "$R/polariton-stripes/ev/b.py"
+"$PY" -I "$HERE/float_evidence.py" --repo "$R" > /dev/null && { echo "SELF_TEST untracked file not caught"; ok=1; }
+rm "$R/polariton-stripes/ev/b.py"
 printf 'x = 2\n' > "$R/polariton-stripes/ev/a.py"
 "$PY" -I "$HERE/float_evidence.py" --repo "$R" > /dev/null && { echo "SELF_TEST moved pin not caught"; ok=1; }
 printf 'fn ok(r: (u64, u64)) -> u64 { let s = "1.5e3"; r.0 + 2 + s.len() as u64 } // 0.5\n' > "$T/ok.rs"

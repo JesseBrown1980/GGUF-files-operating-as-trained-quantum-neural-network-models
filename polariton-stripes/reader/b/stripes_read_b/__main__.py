@@ -158,12 +158,12 @@ def guard_triples():
     return sorted(t)
 
 
-def _git(repo, *args):
+def _git(repo, *args, reason="stage_b_tree"):
     p = subprocess.run(["git", "-C", repo] + list(args), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                        stdin=subprocess.DEVNULL, check=False)
     if p.returncode != 0:
-        raise c.StageBStop("stage_b_tree", "git %s exited %d: %s" % (args[0], p.returncode,
-                                                                     p.stderr.decode("ascii", "replace")[:120]))
+        raise c.StageBStop(reason, "git %s exited %d: %s" % (args[0], p.returncode,
+                                                             p.stderr.decode("ascii", "replace")[:120]))
     return p.stdout
 
 
@@ -222,6 +222,76 @@ def stage_b_tree(b_dir=None, repo=None):
     return os.path.relpath(b_dir, repo).replace(os.sep, "/"), pin
 
 
+def git_tree_id(entries):
+    """The id git gives the tree of {path below the tree: (mode, blob id)} (sha1 object format): entries sorted by name,
+    a folder's name compared as if it ended in '/', each `<mode> <name>\\0<20-byte id>`."""
+    root = {}
+    for path, leaf in entries.items():
+        node = root
+        *dirs, name = path.split("/")
+        for d in dirs:
+            node = node.setdefault(d, {})
+        node[name] = leaf
+
+    def tree_of(node):
+        items = []
+        for name, val in node.items():
+            nm = name.encode("utf-8", "surrogateescape")
+            if isinstance(val, dict):
+                items.append((nm + b"/", b"40000 " + nm + b"\0" + int(tree_of(val), 16).to_bytes(20, "big")))
+            else:
+                items.append((nm, val[0].encode("ascii") + b" " + nm + b"\0" + int(val[1], 16).to_bytes(20, "big")))
+        body = b"".join(e for _, e in sorted(items))
+        return hashlib.sha1(b"tree %d\0" % len(body) + body).hexdigest()
+
+    return tree_of(root)
+
+
+def stage_a_tree(a_dir=None, repo=None):
+    """(path, git tree id) of stage A's source, reader/a, from git's index (`git ls-files -s`): on a commit it is what
+    `git rev-parse <commit>:polariton-stripes/reader/a` prints, the tree the stage A pin of reader/README.md is built
+    from. StageBStop('stage_a_tree') when a file under reader/a that git does not ignore is not in the index, or an
+    index entry is missing from the working tree or differs from it in bytes or mode (stage the edits first)."""
+    repo = repo or REPO
+    a_dir = a_dir or os.path.join(os.path.dirname(B_DIR), "a")
+    rel = os.path.relpath(a_dir, repo).replace(os.sep, "/")
+    entries = {}
+    for rec in _git(repo, "ls-files", "-s", "-z", "--", rel, reason="stage_a_tree").split(b"\0"):
+        if not rec:
+            continue
+        meta, path = rec.split(b"\t", 1)
+        mode, oid, st = meta.decode("ascii").split(" ")
+        path = path.decode("utf-8", "surrogateescape")
+        if st != "0" or len(oid) != 40 or not path.startswith(rel + "/"):
+            raise c.StageBStop("stage_a_tree", "index entry %s %s %s %s" % (mode, oid[:12], st, path))
+        entries[path] = (mode, oid)
+    if not entries:
+        raise c.StageBStop("stage_a_tree", "git's index holds nothing under " + rel)
+    others = [x for x in _git(repo, "ls-files", "--others", "--exclude-standard", "-z", "--", rel,
+                              reason="stage_a_tree").split(b"\0") if x]
+    if others:
+        raise c.StageBStop("stage_a_tree", "not in git's index: " + others[0].decode("utf-8", "replace"))
+    for path, (mode, oid) in sorted(entries.items()):
+        full = os.path.join(repo, *path.split("/"))
+        try:
+            st = os.lstat(full)
+        except FileNotFoundError:
+            raise c.StageBStop("stage_a_tree", "in git's index, not in the working tree: " + path) from None
+        if stat.S_ISLNK(st.st_mode):
+            have, data = "120000", os.readlink(full).encode("utf-8", "surrogateescape")
+        elif stat.S_ISREG(st.st_mode):
+            have = "100755" if st.st_mode & stat.S_IXUSR else "100644"
+            with open(full, "rb") as f:
+                data = f.read()
+        else:
+            raise c.StageBStop("stage_a_tree", "not a file or a link: " + path)
+        blob = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+        if (have, blob) != (mode, oid):
+            raise c.StageBStop("stage_a_tree", "%s: working tree %s %s, git's index %s %s (stage it, or run from a POSIX"
+                               " checkout)" % (path, have, blob[:12], mode, oid[:12]))
+    return rel, git_tree_id({p[len(rel) + 1:]: v for p, v in entries.items()})
+
+
 def run_listing(run_dir):
     """sha256sum-style listing of the run receipts R1-R4 (the run's own receipt, in memory)."""
     names = sorted(n for n in os.listdir(run_dir) if n.split(".", 1)[0] in c.RUN_POINTS)
@@ -231,6 +301,7 @@ def run_listing(run_dir):
 def build(a):
     """The READ file of the inputs named in a (read and verify)."""
     tree_path, tree_pin = stage_b_tree()  # first: no READ file from a tree whose modes or files git does not hold
+    a_path, a_tree = stage_a_tree()  # stage A's source as git holds it, named in the reader_a note
     fz = frozen_mod.load()
     c.check_tables(fz)
     c.check_exposure_text(fz)
@@ -260,7 +331,8 @@ def build(a):
     rf.notes.append(("runs", "files=%d,sha256_of_listing=%s" % (n, sha256_hex(listing.encode("ascii")))))
     rf.notes.append(("reader_b", "%s_%s,integer_pairs,tree_%s/_%s,frozen_%s" % (
         c.READER, VERSION, tree_path, tree_pin, fz.sha256)))
-    rf.notes.append(("reader_a", "%s_%s_(per_block_AGG_HEAD)" % (c.READER_A, c.READER_A_VERSION)))
+    rf.notes.append(("reader_a", "%s_%s_(per_block_AGG_HEAD),git_tree_%s/_%s" % (
+        c.READER_A, c.READER_A_VERSION, a_path, a_tree)))
     for pid, pt in points.items():
         rf.notes.append(("point_" + pid, "calls=%d,read=%d,lost=%s,steps=%s,not_measured=%s,attempts=%d" % (
             pt.spec.calls, len(pt.calls), ":".join(str(i) for i, _ in pt.lost) or "none",

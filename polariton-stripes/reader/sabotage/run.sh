@@ -23,9 +23,12 @@ B=$READER/b/stripes_read_b/__main__.py
 EDIT="$PY -I $HERE/edit.py"
 MISSED=0
 
-(cd "$READER/a" && cargo build --release --offline --locked -q) || { echo "stage A build failed" >&2; exit 2; }
+# Rust 1.81.0 as CI pins it (review N20), and the build of reader/README.md: the checkout path remapped to stage-a, so
+# the binary's sha256 does not depend on where the checkout is (review M4) and a shared CARGO_TARGET_DIR keeps it.
+export RUSTFLAGS="--remap-path-prefix=$(cd "$READER/a" && pwd)=stage-a"
+(cd "$READER/a" && cargo +1.81.0 build --release --offline --locked -q) || { echo "stage A build failed" >&2; exit 2; }
 rm -rf "$WORK/streams"
-(cd "$READER/a" && STRIPES_EMIT_DIR="$WORK/streams" cargo test --release --offline --locked -q --test synthetic \
+(cd "$READER/a" && STRIPES_EMIT_DIR="$WORK/streams" cargo +1.81.0 test --release --offline --locked -q --test synthetic \
   emit_streams_for_the_independent_check -- --ignored >/dev/null) || { echo "stream emitter failed" >&2; exit 2; }
 CAMPAIGN=${STRIPES_CAMPAIGN:-$WORK/campaign}
 [ -d "$CAMPAIGN/agg" ] || $PY -I "$READER/b/tests/campaign.py" --out "$CAMPAIGN" >/dev/null || exit 2

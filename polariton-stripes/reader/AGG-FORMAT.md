@@ -26,6 +26,7 @@ The run script appends one line after the reader's output, `rc=<e> rc_reader=<r>
 
 - Every row is `KIND|key=value|...|json=0` followed by one `\n`. Keys appear in exactly the order given below. Values never contain `|`.
 - Integers are canonical decimals: an optional `-`, no `+`, no leading zeros, no `-0`.
+- The head's rationals `delta`, `u` and `y` are canonical text: `-?(0|[1-9][0-9]*)(/[1-9][0-9]*)?` with no `-0` (so no `+`, no leading zeros, no zero denominator, no `-0/q`; `0/7` and `2/4` are canonical text). Neither reader turns them into a number, so they have no width limit; a rational is zero exactly when its numerator is `0`. Any other text is the STOP `bad_rational`.
 - Fixed-length vectors are joined by `:`. Lists of steps, variants and masks are joined by `,`. The ctrl list is joined by `;`.
 - Units: `br`, `bi`, `b_br`, `b_bi` are integers at 2^40 (B = br/2^40 + i bi/2^40, the engine's `B_W/N`). Squares and products of them are exact at 2^80. Fourth powers are exact at 2^160. Bounds are in ulps of 2^-40.
 - `point=ID|call=I` (written `PC` below) follows the kind in every row except `AGG_TWB_HEAD` and `AGG_NL`.
@@ -194,7 +195,8 @@ What section 6 compared: samples, (sample, variant) starts rebuilt, (sample, var
 ## 6. What stage A has checked when it prints a block
 
 - The rows are exactly those `twens dump` prints, in its order: `TWB_HEAD`; per sample `TWB_DUMP_SAMPLE`, then per variant `TWB_DUMP_INIT`, `TWB_DUMP_IB` and per record `TWB_DUMP_OBS`, `TWB_DUMP_RB`; per record the legacy `TWENS` rows (V1, VN, V0, RN), `TWPAIR`, per variant `TWB` and `TWB_ROUND`, the `TWB_PAIR` and `TWB_PAIR_ROUND` rows of the pairs whose variants are on, and `TWB_NL`; then `TWB_DONE`, and nothing after it. Every row has its exact key sequence. A missing, extra, reordered or unterminated row is a STOP; so is a stream with no `TWB_DONE`.
-- `TWB_HEAD`: engine=twens, version=0.4.0, cli=dump, binary_sha256=33e62fbe0837aeddc916a57d67848338cbc258aa1dfb85a01cfba53fb8a4e03f, source_sha256 main.rs:1d768fa9..., sha256.rs:7447d1e8... (in full), reserved=0, guard=active, float_used=0, q=40, threads=1, samples=count, count <= 4096, seed = the first 8 bytes of sha256(seed_string), steps strictly increasing, mask in canonical order with VNC. `float_used=0` on every row that prints it.
+- `TWB_HEAD`: engine=twens, version=0.4.0, cli=dump, binary_sha256=33e62fbe0837aeddc916a57d67848338cbc258aa1dfb85a01cfba53fb8a4e03f, source_sha256 main.rs:1d768fa9..., sha256.rs:7447d1e8... (in full), reserved=0, guard=active, float_used=0, q=40, threads=1, N >= 2, delta, u and y canonical rationals (section 2), samples=count, count <= 4096, dtden >= 1, seed = the first 8 bytes of sha256(seed_string), steps strictly increasing, mask in canonical order with VNC. `float_used=0` on every row that prints it.
+- `seed_string=none` is refused (`head_seed`), whatever the seed. The engine prints `seed_string=none` when it was given `seed=` and no `seed_string=` (`ens_from_kv` in `polariton-bridge/engines/ensemble/src/main.rs`, sha256 `1d768fa9...`: `(Some(s), None) => (num::<u64>(s, "seed"), "none")`); that seed is bound to no string, and a head with `seed_string=none` cannot be told apart from a seed string that is literally `none`. Every point of section 9 has a seed string, so a stream at a table point never has `none`. Stage A and `check/check_a.py` both refuse it (review M7).
 - Every metadata field of every summary row equals the head's; `n` = count; the variant's init, seeds, kappa and phase names are the engine's; `h` as in AGG_CALL; one ctrl per record across its rows.
 - Per sample: each g_i is a multiple of 2^35 with |c_i| <= 2048; every variant's start (`TWB_DUMP_INIT s`), control seeds (`uv`) and start bounds (`TWB_DUMP_IB e0, ep, em, seeds`) equal the engine's construction from the draws, operation for operation; `eta` is the same for all variants of a sample, and `rot = 2^40:0`, `eta = 0` when MODE0 is off. Per record, `zcr`, `zci`, `xc` equal the linear control from ctrl and `uv`.
 - Every field of every TWENS, TWPAIR, TWB (34 fields), TWB_ROUND (34 fields and eps_max), TWB_PAIR and TWB_PAIR_ROUND row equals the reader's own sum over the per-sample rows.
@@ -238,7 +240,7 @@ Stage B checks each side file against its own block before it reads it (ensemble
 - `line`: the input line where the fault was found; 0 when it was found after the whole stream was read (the summary and start checks).
 - `detail`: key=value pairs joined by `,` (printable, `|` replaced by `_`).
 - After a STOP the reader still reads the rest of stdin, so `stdin_*` cover the whole input and the engine is not cut off.
-- A panic row is `STOP|reader=stripes-read-a|reader_version=0.1.0|reason=panic|detail=|json=0` (exit 101).
+- A panic row is `STOP|reader=stripes-read-a|reader_version=0.1.0|reason=panic|detail=D|json=0` (exit 101), on stdout and stderr, with D the panic message and its location (printable, `|` replaced by `_`). It has no `point`, `call`, `line` or `stdin_*` fields, and the panic hook does not read the rest of stdin (the main thread holds the stdin lock), so the engine upstream may see a closed pipe. Stage B never reads a call whose trailer has `rc_reader=101` (section 1).
 
 Reasons:
 
@@ -252,12 +254,12 @@ Reasons:
 | `unterminated_last_line` | the input ends inside a line |
 | `non_printable_byte` | a byte outside printable ASCII (including `\r`) |
 | `first_row_not_TWB_HEAD` | the first row is not the head |
-| `head_version`, `head_binary_sha256`, `head_source_sha256`, `head_reserved`, `head_guard`, `head_float_used`, `head_seed`, `head_count`, `head_dtden`, `head_N`, `head_mask`, `head_steps_not_increasing` | a head field outside section 6 (`head_count`: count = 0, count > 4096, samples != count, or start + count beyond 2^64; `head_mask`: an unknown name, or names out of order or repeated) |
+| `head_version`, `head_binary_sha256`, `head_source_sha256`, `head_reserved`, `head_guard`, `head_float_used`, `head_seed`, `head_count`, `head_dtden`, `head_N`, `head_mask`, `head_steps_not_increasing` | a head field outside section 6 (`head_count`: count = 0, count > 4096, samples != count, or start + count beyond 2^64; `head_mask`: an unknown name, or names out of order or repeated; `head_N`: a canonical N below 2; `head_dtden`: a canonical dtden below 1, while a dtden other than 64 at a table point is `table_mismatch`; `head_seed`: section 6) |
 | `table_mismatch`, `table_call_out_of_range` | the head or ctrl is not the table's for this point and call |
 | `truncated` | the stream ends before an expected row (no `TWB_DONE`, or rows missing) |
 | `rows_after_TWB_DONE` | content after the last row |
-| `row_kind`, `row_key`, `row_short`, `row_long`, `row_field_without_value` | a row of the wrong kind or key sequence |
-| `bad_integer`, `bad_list`, `bad_rational` | a value that is not canonical |
+| `row_kind`, `row_key`, `row_short`, `row_long`, `row_field_without_value` | a row of the wrong kind or key sequence (`row_field_without_value`: a token without `=`, whatever its text; `row_key`: a `key=` other than the expected key) |
+| `bad_integer`, `bad_list`, `bad_rational` | a value that is not canonical (`bad_list`: a list with the wrong number of entries; `bad_rational`: section 2) |
 | `field_value` | a metadata or constant field differs from the head or the engine's text |
 | `float_used` | a row prints `float_used` other than 0 |
 | `sample_index` | a sample row out of index order |
@@ -273,6 +275,17 @@ Reasons:
 | `block_sum_overflow`, `side_bound_above_u64` | a value beyond the reader's integer widths |
 | `side_write` | the side file could not be written (a partial file is removed) |
 | `no_VNC` | the head's mask has no VNC |
+
+Order of the checks. When a stream holds more than one fault, the STOP names the first in this order, in stage A and in `check/check_a.py` alike (review M7):
+
+1. the arguments and the point;
+2. the rows in stream order: each row's kind and key sequence, its canonical values and its constant and head fields; the head is held to the table of its point right after it is read, and a record's ctrl (`record_without_ctrl`, and `table_mismatch` at a table point) after that record's last row; then `TWB_DONE` and nothing after it;
+3. `h_mismatch`;
+4. sample by sample, in index order: the draws, `rot`, the start rebuild, then per variant in the fixed order the start, `uv`, the start bounds and `eta`;
+5. record by record: per variant in the fixed order, the linear controls of every sample, then the TWB, TWB_ROUND and legacy TWENS sums; then per pair the TWB_PAIR and TWB_PAIR_ROUND sums; then TWPAIR;
+6. the aggregate identities and widths, then the side file.
+
+Within one row the order of the field checks is not fixed: two faults in one row may be named differently by the two readers.
 
 ## 9. Point table
 
