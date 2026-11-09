@@ -21,6 +21,47 @@ jobs:
       - name: Independent raw-source schema and nine sabotage tests
         run: |
           python3 -I -B polariton-bridge/reader/gpt6_source_schema.py --selftest
+      - name: Strict no-float AST scan using git-index file modes
+        run: |
+          python3 - <<'PY'
+          import ast
+          import pathlib
+          import subprocess
+          rows = subprocess.check_output(
+              ["git", "ls-files", "-s", "-z", "--", "polariton-bridge/reader/"])
+          pyfiles = []
+          for row in rows.split(b"\0"):
+              if not row:
+                  continue
+              meta, path = row.split(b"\t", 1)
+              mode = meta.split(b" ")[0]
+              if not path.endswith(b".py"):
+                  continue
+              if mode not in (b"100644", b"100755"):
+                  raise SystemExit("READ_FLOAT_REFUSED|reason=unexpected_index_mode")
+              pyfiles.append(pathlib.Path(path.decode("utf-8")))
+          if len(pyfiles) < 2:
+              raise SystemExit("READ_FLOAT_REFUSED|reason=missing_python_source")
+          banned_modules = {"fractions", "decimal", "numpy", "pandas"}
+          banned_calls = {"float", "complex", "eval", "exec", "compile", "__import__"}
+          for path in pyfiles:
+              tree = ast.parse(path.read_text(encoding="utf-8"))
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Constant) and type(node.value) is float:
+                      raise SystemExit("READ_FLOAT_REFUSED|reason=float_literal")
+                  if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+                      raise SystemExit("READ_FLOAT_REFUSED|reason=true_division")
+                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                      if node.func.id in banned_calls:
+                          raise SystemExit("READ_FLOAT_REFUSED|reason=unsafe_call")
+                  if isinstance(node, ast.Import):
+                      if any(i.name.split(".")[0] in banned_modules for i in node.names):
+                          raise SystemExit("READ_FLOAT_REFUSED|reason=banned_import")
+                  if isinstance(node, ast.ImportFrom) and node.module:
+                      if node.module.split(".")[0] in banned_modules:
+                          raise SystemExit("READ_FLOAT_REFUSED|reason=banned_from")
+          print("READER_INDEX_NO_FLOAT|files=%d|pass=1|json=0" % len(pyfiles))
+          PY
       - name: No binary float or hidden model execution in pre-read core
         run: |
           python3 - <<'PY'
