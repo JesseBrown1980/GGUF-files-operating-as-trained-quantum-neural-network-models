@@ -18,23 +18,27 @@ jobs:
       - name: Exact integer-rational boundary tests and planted faults
         run: |
           python3 -I -B polariton-bridge/reader/gpt6_read_core.py --selftest
+      - name: Independent raw-source schema and nine sabotage tests
+        run: |
+          python3 -I -B polariton-bridge/reader/gpt6_source_schema.py --selftest
       - name: No binary float or hidden model execution in pre-read core
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import ast
-          path = Path("polariton-bridge/reader/gpt6_read_core.py")
-          t = ast.parse(path.read_text())
           banned = {"fractions", "decimal", "numpy", "pandas"}
-          for x in ast.walk(t):
-              if isinstance(x, ast.Constant) and type(x.value) is float:
-                  raise SystemExit("refused: float literal")
-              if isinstance(x, ast.Import):
-                  for n in x.names:
-                      if n.name.split(".")[0] in banned:
-                          raise SystemExit("refused: import " + n.name)
-              if isinstance(x, ast.ImportFrom) and x.module:
-                  if x.module.split(".")[0] in banned:
-                      raise SystemExit("refused: from " + x.module)
+          for path in (Path("polariton-bridge/reader/gpt6_read_core.py"),
+                       Path("polariton-bridge/reader/gpt6_source_schema.py")):
+              t = ast.parse(path.read_text())
+              for x in ast.walk(t):
+                  if isinstance(x, ast.Constant) and type(x.value) is float:
+                      raise SystemExit("refused: float literal")
+                  if isinstance(x, ast.Import):
+                      for n in x.names:
+                          if n.name.split(".")[0] in banned:
+                              raise SystemExit("refused: import " + n.name)
+                  if isinstance(x, ast.ImportFrom) and x.module:
+                      if x.module.split(".")[0] in banned:
+                          raise SystemExit("refused: from " + x.module)
           print("PRE_READ_FLOAT_GATE|PASS|json=0")
           PY
