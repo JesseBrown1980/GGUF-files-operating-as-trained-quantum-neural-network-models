@@ -1309,6 +1309,10 @@ def _e19_lin(rid, sc, inp, rid_pt, t, text, half):
                       frozen="n*_lin=" + text, detail=(("nstar", "not_estimable"),))
     y = parse_rat(spec.y)
     law = series.Law(fr(parse_rat(spec.delta)), spec.N * y * y, parse_rat(t)).nstar()
+    if law is None or not law.pos():
+        # the bracket below needs n*_lin > 0 at both ends (a lower end at or below 0 gives no bound or a wrong one)
+        raise c.StageBStop("e19_law", "%s t=%s: n*_lin is %s, not above 0" % (rid_pt, t, "infinite" if law is None
+                                                                                 else "%r" % law))
     e = c.se(se2a, 4)
     # (n* -+ 4SE)/n*_lin over n*_lin in [law.lo, law.hi], law.lo > 0: each end's extreme is at one end of the
     # bracket, which one by the sign of n* -+ 4SE (quantum review 2, M2)

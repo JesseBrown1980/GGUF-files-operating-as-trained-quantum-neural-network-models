@@ -1,22 +1,28 @@
 """stripes-read-b: python3 -I reader/b/stripes_read_b/__main__.py <command> ...
 
-  read   --agg D --runs D --qe P --cost P --qe-rc P --guard P --out P [--no-sums]
-         every STRIPES_PREDICT row from the per-call aggregates (D/P01..P14/<call>.hbp with each point's SHA256SUMS),
+  read   --agg D --runs D --qe P --cost P --qe-rc P --guard P --out P
+         every STRIPES_PREDICT row from the per-call aggregates (D/P01..P14/<call>.hbp, each point's files checked
+         against its SHA256SUMS; no flag skips that check),
          the run receipts (R1-R4, 64 batches each) and the QE receipts (stdout, stderr and the wrapper's QE-RC.hbp);
          writes READ-STRIPE-PHASE.hbp
   audit  --read P
          checks a READ file alone: its hash, one VERDICT per PREDICT row, every count and verdict from its READ rows,
          falsifiers on scored reads only, and the scored and read-and-report reads of each row against SCORING
-  verify --read P --agg D --runs D --qe P --cost P --qe-rc P --guard P [--no-sums]
-         rebuilds the READ file from the inputs and compares it line for line
+  verify --read P --agg D --runs D --qe P --cost P --qe-rc P --guard P
+         rebuilds the READ file from the inputs, the SHA256SUMS checks included, and compares it line for line
   scoring --read P
          prints the SCORING table of a READ file (to review a change of the row modules)
+
+read and verify first take stage B's own tree pin (stage_b_tree): each file's mode from git's index, its bytes from
+the working tree. They write nothing when a file under reader/b is not in the index or a working-tree mode differs
+from the index's (a checkout with core.filemode=false, such as WSL /mnt/c: run stage B from a POSIX checkout).
 
 Exit 0 on success; 3 with one STOP row on stdout when stage B has nothing to decide, or a check fails; 2 on usage."""
 
 import hashlib
 import os
 import stat
+import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -124,14 +130,12 @@ READINGS = (
 )
 
 
-def _args(argv, keys, flags=()):
+def _args(argv, keys):
+    """{key: value} of `--key value` pairs; no command takes a flag (none skips a check)."""
     out, i = {}, 0
     while i < len(argv):
         a = argv[i]
-        if a in flags and a not in out:
-            out[a] = True
-            i += 1
-        elif a in keys and i + 1 < len(argv) and a not in out:
+        if a in keys and i + 1 < len(argv) and a not in out:
             out[a] = argv[i + 1]
             i += 2
         else:
@@ -154,30 +158,68 @@ def guard_triples():
     return sorted(t)
 
 
-def stage_b_tree():
+def _git(repo, *args):
+    p = subprocess.run(["git", "-C", repo] + list(args), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                       stdin=subprocess.DEVNULL, check=False)
+    if p.returncode != 0:
+        raise c.StageBStop("stage_b_tree", "git %s exited %d: %s" % (args[0], p.returncode,
+                                                                     p.stderr.decode("ascii", "replace")[:120]))
+    return p.stdout
+
+
+def stage_b_index(b_dir=None, repo=None):
+    """{path: mode} of git's index under reader/b (`git ls-files -s`), paths from the repo root."""
+    b_dir, repo = b_dir or B_DIR, repo or REPO
+    rel = os.path.relpath(b_dir, repo).replace(os.sep, "/")
+    out = {}
+    for rec in _git(repo, "ls-files", "-s", "-z", "--", rel).split(b"\0"):
+        if not rec:
+            continue
+        meta, path = rec.split(b"\t", 1)
+        mode, _oid, st = meta.decode("ascii").split(" ")
+        if st != "0":
+            raise c.StageBStop("stage_b_tree", "unmerged index entry: " + path.decode("utf-8", "replace"))
+        out[path.decode("utf-8", "surrogateescape")] = mode
+    return out
+
+
+def stage_b_tree(b_dir=None, repo=None):
     """(path, pin) of this stage B's tree, reader/b, by the rule of check/float_evidence.py (tree_line of the 4D
     repo): the sha256 of one line `<mode> <sha256 of the bytes> <path>` per file, paths from the repo root sorted as
-    bytes, the folders reader/.gitignore names left out. On a clean checkout it is the pin that
-    `float_evidence.py --pins polariton-stripes/reader/b/` prints, so a READ file names the code that wrote it."""
-    rows = []
-    for top, dirs, files in os.walk(B_DIR):
+    bytes, the mode from git's index (`git ls-files -s`) and the bytes from the working tree. On a clean checkout it
+    is the pin that `float_evidence.py --pins polariton-stripes/reader/b/` prints, so a READ file names the code that
+    wrote it. StageBStop when a file under reader/b (the folders reader/.gitignore names aside) is not in the index,
+    an index entry is not in the working tree, or a working-tree mode differs from the index's (stage_b_modes)."""
+    b_dir, repo = b_dir or B_DIR, repo or REPO
+    index = stage_b_index(b_dir, repo)
+    rows, seen = [], set()
+    for top, dirs, files in os.walk(b_dir):
         links = [d for d in dirs if os.path.islink(os.path.join(top, d))]
         dirs[:] = sorted(d for d in dirs if d not in NOT_TRACKED and d not in links)
         for nm in files + links:
             full = os.path.join(top, nm)
+            path = os.path.relpath(full, repo).replace(os.sep, "/")
+            if path not in index:
+                raise c.StageBStop("stage_b_tree", "not in git's index: " + path)
             st = os.lstat(full)
             if stat.S_ISLNK(st.st_mode):
-                mode, data = "120000", os.readlink(full).encode("utf-8", "surrogateescape")
+                have, data = "120000", os.readlink(full).encode("utf-8", "surrogateescape")
             else:
-                mode = "100755" if st.st_mode & stat.S_IXUSR else "100644"
+                have = "100755" if st.st_mode & stat.S_IXUSR else "100644"
                 with open(full, "rb") as f:
                     data = f.read()
-            path = os.path.relpath(full, REPO).replace(os.sep, "/")
+            if have != index[path]:
+                raise c.StageBStop("stage_b_modes", "%s: working tree %s, git's index %s (run stage B from a POSIX"
+                                   " checkout)" % (path, have, index[path]))
+            seen.add(path)
             rows.append((path.encode("utf-8", "surrogateescape"),
-                         "%s %s %s\n" % (mode, hashlib.sha256(data).hexdigest(), path)))
+                         "%s %s %s\n" % (index[path], hashlib.sha256(data).hexdigest(), path)))
+    gone = sorted(set(index) - seen)
+    if gone:
+        raise c.StageBStop("stage_b_tree", "in git's index, not in the working tree: " + gone[0])
     rows.sort()
     pin = hashlib.sha256("".join(r[1] for r in rows).encode("utf-8", "surrogateescape")).hexdigest()
-    return os.path.relpath(B_DIR, REPO).replace(os.sep, "/"), pin
+    return os.path.relpath(b_dir, repo).replace(os.sep, "/"), pin
 
 
 def run_listing(run_dir):
@@ -188,13 +230,13 @@ def run_listing(run_dir):
 
 def build(a):
     """The READ file of the inputs named in a (read and verify)."""
+    tree_path, tree_pin = stage_b_tree()  # first: no READ file from a tree whose modes or files git does not hold
     fz = frozen_mod.load()
     c.check_tables(fz)
     c.check_exposure_text(fz)
     qe_mod.check_plan(fz)
     c.check_guard_file(a["--guard"], guard_triples())
-    sums = "--no-sums" not in a
-    points = {pid: c.load_point(os.path.join(a["--agg"], pid), spec, require_sums=sums)
+    points = {pid: c.load_point(os.path.join(a["--agg"], pid), spec, require_sums=True)
               for pid, spec in c.DUMP_POINTS.items()}
     for pt in points.values():
         if pt.spec.side:
@@ -213,12 +255,9 @@ def build(a):
     rf.add_input("QE_RC", a["--qe-rc"])
     rf.add_input("GUARD", a["--guard"])
     for pid in c.DUMP_POINTS:
-        sp = os.path.join(a["--agg"], pid, "SHA256SUMS")
-        if os.path.exists(sp):
-            rf.add_input("AGG_" + pid, sp)
+        rf.add_input("AGG_" + pid, os.path.join(a["--agg"], pid, "SHA256SUMS"))  # load_point checked each one
     listing, n = run_listing(a["--runs"])
     rf.notes.append(("runs", "files=%d,sha256_of_listing=%s" % (n, sha256_hex(listing.encode("ascii")))))
-    tree_path, tree_pin = stage_b_tree()
     rf.notes.append(("reader_b", "%s_%s,integer_pairs,tree_%s/_%s,frozen_%s" % (
         c.READER, VERSION, tree_path, tree_pin, fz.sha256)))
     rf.notes.append(("reader_a", "%s_%s_(per_block_AGG_HEAD)" % (c.READER_A, c.READER_A_VERSION)))
@@ -366,7 +405,7 @@ INPUT_KEYS = ("--agg", "--runs", "--qe", "--cost", "--qe-rc", "--guard")
 
 
 def cmd_read(argv):
-    a = _args(argv, INPUT_KEYS + ("--out",), ("--no-sums",))
+    a = _args(argv, INPUT_KEYS + ("--out",))
     _need(a, INPUT_KEYS + ("--out",))
     lines = build(a)
     h = write_lines(a["--out"], lines)
@@ -391,7 +430,7 @@ def cmd_audit(argv):
 
 
 def cmd_verify(argv):
-    a = _args(argv, INPUT_KEYS + ("--read",), ("--no-sums",))
+    a = _args(argv, INPUT_KEYS + ("--read",))
     _need(a, INPUT_KEYS + ("--read",))
     have = read_lines(a["--read"])
     audit_lines(have)
@@ -432,8 +471,9 @@ def main(argv):
         print(emit("STOP", [("reader", c.READER), ("reader_version", VERSION), ("reason", type(e).__name__),
                             ("detail", str(e)[:300] or "none")]))
         return 3
-    except (QintError, ZeroDivisionError) as e:
-        # a value that is not a checked integer pair (a stray float), or an exact division by zero
+    except (QintError, ValueError, ArithmeticError) as e:
+        # a value that is not a checked integer pair (a stray float, Q / int), an exact division by zero, or another
+        # value or arithmetic fault: one STOP row, and build() wrote no READ file
         print(emit("STOP", [("reader", c.READER), ("reader_version", VERSION), ("reason", "qint"),
                             ("detail", ("%s:_%s" % (type(e).__name__, e))[:300])]))
         return 3

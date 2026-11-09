@@ -6,8 +6,9 @@ denominator is positive. An operand must be a Q or an int; anything else raises 
 fractions.Fraction cannot enter or leave. Comparison is by cross-multiplication.
 
 Q's operators (+, -, *, unary -, abs, ==, <, <=, >, >=) are these same functions. Q has no true division, floor
-division, power, float, int or round: those raise TypeError. Division is div(a, b). No float, no fractions, no math:
-gcd and isqrt are written here in integers."""
+division, modulo, divmod, float or int: /, //, %, divmod(), float() and int() on a Q, from either side, raise
+QintError; power and round raise TypeError. Division is div(a, b). No float, no fractions, no math: gcd and isqrt are
+written here in integers."""
 
 
 class QintError(TypeError):
@@ -127,6 +128,36 @@ class Q:
     def __ge__(self, o):
         o = _operand(o)
         return NotImplemented if o is NotImplemented else cmp(self, o) >= 0
+
+    def __truediv__(self, o):
+        raise QintError("Q / %s: use div(a, b)" % type(o).__name__)
+
+    def __rtruediv__(self, o):
+        raise QintError("%s / Q: use div(a, b)" % type(o).__name__)
+
+    def __floordiv__(self, o):
+        raise QintError("Q // %s: use floor(div(a, b))" % type(o).__name__)
+
+    def __rfloordiv__(self, o):
+        raise QintError("%s // Q: use floor(div(a, b))" % type(o).__name__)
+
+    def __mod__(self, o):
+        raise QintError("Q mod %s refused" % type(o).__name__)
+
+    def __rmod__(self, o):
+        raise QintError("%s mod Q refused" % type(o).__name__)
+
+    def __divmod__(self, o):
+        raise QintError("divmod(Q, %s) refused" % type(o).__name__)
+
+    def __rdivmod__(self, o):
+        raise QintError("divmod(%s, Q) refused" % type(o).__name__)
+
+    def __float__(self):
+        raise QintError("float(Q) refused")
+
+    def __int__(self):
+        raise QintError("int(Q) refused: use floor, ceil or num")
 
     def __hash__(self):
         # equal values hash equal: Q(n, 1) == n

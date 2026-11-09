@@ -183,9 +183,9 @@ def check_tables(fz=None):
             want_engine = "dump" if table is DUMP_POINTS else "run"
             if row["engine"] != want_engine:
                 raise StageBStop("table", "%s engine %s" % (pid, row["engine"]))
-            if int(row["N"]) != p.N or row["delta"] != p.delta or row["y"] != p.y:
+            if canon_int(row["N"]) != p.N or row["delta"] != p.delta or row["y"] != p.y:
                 raise StageBStop("table", pid + " N, delta or y")
-            if tuple(int(x) for x in row["steps"].split(",")) != p.steps:
+            if tuple(canon_int(x) for x in row["steps"].split(",")) != p.steps:
                 raise StageBStop("table", pid + " steps")
             if row["seed_string"] != p.seed_string:
                 raise StageBStop("table", pid + " seed_string")

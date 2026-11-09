@@ -1,11 +1,31 @@
 """qint: reduced pairs, checks after every operation, refusal of every operand that is not an int or a Q, comparison by
 cross-multiplication, and the integer gcd and isqrt. The values come from an integer LCG (no random module)."""
 
+import os
+import subprocess
+import sys
 import unittest
 
 from stripes_read_b import qint
 from stripes_read_b.exact import Iv, Rad, fr
 from stripes_read_b.qint import Q, QintError
+
+B = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REFUSED_IN_A_CHILD = """import sys
+sys.dont_write_bytecode = True
+sys.path.insert(0, sys.argv[1])
+from stripes_read_b import qint
+x = qint.make(1, 3)
+def aug():
+    y = x
+    y /= 2
+for op in (lambda: x / 2, lambda: 2 / x, lambda: x / x, lambda: float(x), lambda: complex(x), aug):
+    try:
+        op()
+        print("passed")
+    except qint.QintError:
+        print("refused")
+"""
 
 
 def lcg(seed, count, bits):
@@ -87,10 +107,20 @@ class Pairs(unittest.TestCase):
             qint.gcd(1, None)
 
     def test_no_other_numeric_doors(self):
-        for name in ("__truediv__", "__rtruediv__", "__floordiv__", "__mod__", "__pow__", "__float__", "__int__",
-                     "__index__", "__round__", "__complex__", "__trunc__", "__floor__", "__ceil__"):
+        for name in ("__pow__", "__rpow__", "__index__", "__round__", "__complex__", "__trunc__", "__floor__",
+                     "__ceil__"):
             self.assertFalse(hasattr(Q, name), name)
         x = qint.make(1, 3)
+        # review N12: //, %, divmod and int on a Q, from either side, raise QintError (reason qint) ...
+        for op in (lambda: x // 2, lambda: 2 // x, lambda: x // x, lambda: x % 2, lambda: 2 % x, lambda: divmod(x, 1),
+                   lambda: divmod(1, x), lambda: int(x)):
+            with self.assertRaises(QintError):
+                op()
+        # ... and so do / and float(); the source scan refuses those in this file, so a child runs them from a string
+        child = subprocess.run([sys.executable, "-I", "-c", REFUSED_IN_A_CHILD, B], stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, check=False)
+        self.assertEqual((child.returncode, child.stdout.decode("ascii")), (0, "refused\n" * 6),
+                         child.stderr.decode("ascii", "replace")[-400:])
         with self.assertRaises(AttributeError):
             x.n = 2
         with self.assertRaises(QintError):
