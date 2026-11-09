@@ -1,0 +1,40 @@
+name: Polariton bridge blind-reader preflight (no blind outputs)
+
+on:
+  pull_request:
+    paths:
+      - "polariton-bridge/reader/**"
+      - ".github/workflows/polariton-bridge-reader-preflight.yml"
+  workflow_dispatch:
+
+jobs:
+  synthetic-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen prediction and amendment integrity
+        run: |
+          python3 -I -B polariton-bridge/reader/gpt6_read_core.py --preflight
+      - name: Exact integer-rational boundary tests and planted faults
+        run: |
+          python3 -I -B polariton-bridge/reader/gpt6_read_core.py --selftest
+      - name: No binary float or hidden model execution in pre-read core
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import ast
+          path = Path("polariton-bridge/reader/gpt6_read_core.py")
+          t = ast.parse(path.read_text())
+          banned = {"fractions", "decimal", "numpy", "pandas"}
+          for x in ast.walk(t):
+              if isinstance(x, ast.Constant) and type(x.value) is float:
+                  raise SystemExit("refused: float literal")
+              if isinstance(x, ast.Import):
+                  for n in x.names:
+                      if n.name.split(".")[0] in banned:
+                          raise SystemExit("refused: import " + n.name)
+              if isinstance(x, ast.ImportFrom) and x.module:
+                  if x.module.split(".")[0] in banned:
+                      raise SystemExit("refused: from " + x.module)
+          print("PRE_READ_FLOAT_GATE|PASS|json=0")
+          PY
