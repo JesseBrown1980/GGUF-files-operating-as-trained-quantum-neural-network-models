@@ -279,63 +279,135 @@ def exact_prefix(parts, goal, *, allow_variant=False):
     return True
 
 
-def pair_certificate(pair_rows, expected):
-    """No verdict without a same-prefix TWB_PAIR and its rounding certificate."""
-    need(bool(pair_rows), "missing_E_PAIR")
+def pair_certificate(pair_rows, expected, rounding_rows):
+    """Exact common-prefix E_PAIR estimate, SE and explicit fixed-point bound.
+
+    Source engine: obs() emits X_W/N^2 and X_NC/N^2 at 2^40, and
+    PAIRS[0] emits V1xw-VNCxnc; P = 2*N^3/(N-1)*mean(d/2^40).
+    The squared per-sample differences d2 are exact at 2^80.
+    """
+    need(bool(pair_rows) and bool(rounding_rows), "missing_E_PAIR_or_rounding")
     for r in pair_rows:
         need(r["_tag"] == "TWB_PAIR"
              and r.get("pair") == "V1xw-VNCxnc", "pair_not_common_sample")
         need(all(k in r for k in ("d", "d2", "n", "start", "count")), "pair_schema")
-        need(int(r["n"]) == int(r["count"]), "pair_count_inconsistent")
+        need(canon_int(r["n"], positive=True) == canon_int(r["count"], positive=True),
+             "pair_count_inconsistent")
     exact_prefix(pair_rows, expected)
-    d = sum(int(r["d"]) for r in pair_rows)
-    sq = sum(int(r["d2"]) for r in pair_rows)
-    # The TWB_PAIR d2 field is the sample-wise squared difference at 2^80.
+    indexed_rounds = {}
+    for r in rounding_rows:
+        need(r["_tag"] == "TWB_PAIR_ROUND" and r.get("pair") == "V1xw-VNCxnc",
+             "pair_wrong_rounding_record")
+        need(all(k in r for k in ("N", "delta", "y", "seed", "dtden", "step",
+                                  "start", "count", "n", "rb_d", "rb_qd", "rb_d2")),
+             "pair_round_missing_identity")
+        k = (canon_int(r["start"]), canon_int(r["count"], positive=True))
+        need(k not in indexed_rounds, "duplicate_pair_rounding")
+        for v in ("rb_d", "rb_qd", "rb_d2"):
+            need(canon_int(r[v]) >= 0, "pair_negative_rounding")
+        indexed_rounds[k] = r
+    need(len(indexed_rounds) == len(pair_rows), "pair_round_count")
+    rb = 0
+    for r in pair_rows:
+        k = (canon_int(r["start"]), canon_int(r["count"], positive=True))
+        need(k in indexed_rounds, "pair_round_missing_batch")
+        rr = indexed_rounds[k]
+        for name in ("N", "delta", "y", "seed", "dtden", "step", "n"):
+            need(rr[name] == r[name], "pair_round_identity")
+        rb += canon_int(rr["rb_d"])
+    d = sum(canon_int(r["d"]) for r in pair_rows)
+    sq = sum(canon_int(r["d2"]) for r in pair_rows)
+    # Unbiased 3-SE for sample-wise common-sample differences.
     e = three_se(expected, d, sq, SCALE)
-    n = int(pair_rows[0]["N"])
+    n = canon_int(pair_rows[0]["N"], positive=True)
+    need(n > 1, "pair_N")
     coefficient = ratio(2 * n * n * n, n - 1)
     mean_p = mul(coefficient, ratio(d, expected * SCALE))
-    return mean_p, mul(coefficient, e)
+    sampling = mul(coefficient, e)
+    rounding = mul(coefficient, ratio(rb, expected * SCALE))
+    return mean_p, sampling, rounding
+
+
+def pair_verdict(measured, predicted, tol, terms):
+    """Frozen E_PAIR MET gate: both CLT checks must permit MET."""
+    need(type(terms) is dict and set(terms) == set(REQUIRED_ERRORS),
+         "missing_error_decomposition")
+    sampling = terms["3SE"]
+    need(cmp(abq(predicted), ratio(0)) > 0, "pair_zero_prediction")
+    status = verdict(sub(measured, predicted), terms, tol)
+    limit = div(abq(predicted), ratio(100))
+    # E_PAIR line 183: 3SE <= |P|/100 to claim MET.
+    # Line 175: 3.29SE <= |P|/100 before any MET.
+    if status == "MET" and (cmp(sampling, limit) > 0 or
+        cmp(mul(sampling, ratio(329, 300)), limit) > 0):
+        return "NOT_RESOLVED"
+    return status
 
 
 def selftest():
     z = ratio(0)
     one = ratio(1)
+    def terms(sampling=ratio(0)):
+        return {"3SE": sampling, "e_int": z, "e_round": z,
+                "e_q": z, "e_trunc": z}
     need(num("1.25e-3") == ratio(1, 800), "parse_scientific")
-    need(verdict(ratio(1, 2), {"sampling": ratio(1, 10)}, one) == "MET", "met")
-    need(verdict(ratio(2), {"sampling": ratio(1, 10)}, one) == "MISS", "miss")
-    need(verdict(ratio(1), {"sampling": ratio(1, 10)}, one) == "NOT_RESOLVED", "ambiguity")
-    need(verdict(z, {"sampling": z}, z) == "MET", "boundary_met")
-    need(verdict(ratio(2), {"sampling": one}, one) == "NOT_RESOLVED", "boundary_miss_strict")
-    need(verdict(z, {"sampling": z}, one, undefined=True) == "UNDEFINED", "undefined")
+    need(num("-3/5") == ratio(-3, 5), "parse_fraction")
+    need(verdict(ratio(1, 2), terms(ratio(1, 10)), one) == "MET", "met")
+    need(verdict(ratio(2), terms(ratio(1, 10)), one) == "MISS", "miss")
+    need(verdict(one, terms(ratio(1, 10)), one) == "NOT_RESOLVED", "ambiguity")
+    need(verdict(z, terms(), z) == "MET", "boundary_met")
+    need(verdict(ratio(2), terms(one), one) == "NOT_RESOLVED", "boundary_miss_strict")
+    need(verdict(z, terms(), one, undefined=True) == "UNDEFINED", "undefined")
     need(three_se(2, 0, 0) == z, "zero_variance")
     need(cmp(three_se(2, 0, 2 * SCALE * SCALE), one) > 0, "large_variance")
     p = dict(_tag="TWB_PAIR", N="81", delta="3/5", y="1/27", seed="5",
              start="0", count="2", dtden="64", step="32", pair="V1xw-VNCxnc",
              n="2", d="0", d2="0")
-    a, e = pair_certificate([p], 2)
-    need(a == z and e == z, "paired_zero")
-    fail = 0
+    pr = dict(p, _tag="TWB_PAIR_ROUND", rb_d="0", rb_qd="0", rb_d2="0")
+    a, e, rr = pair_certificate([p], 2, [pr])
+    need(a == z and e == z and rr == z, "paired_zero")
+    need(pair_verdict(z, one, ratio(2), terms()) == "MET", "paired_met")
+    need(pair_verdict(z, one, ratio(2), terms(ratio(1, 90))) ==
+         "NOT_RESOLVED", "paired_329_guard")
+    need(pair_verdict(z, one, ratio(2), terms(ratio(1, 200))) ==
+         "MET", "paired_small_se")
     bads = [
         lambda: exact_prefix([dict(p, count="1")], 2),
         lambda: exact_prefix([p, dict(p, start="1", count="1")], 3),
         lambda: exact_prefix([p, dict(p, seed="6", start="2")], 4),
-        lambda: pair_certificate([dict(p, pair="V1xw-VNCxw")], 2),
-        lambda: pair_certificate([dict(p, d2="-1")], 2),
-        lambda: pair_certificate([dict(p, n="3")], 2),
-        lambda: verdict(z, {"sampling": ratio(-1)}, one),
+        lambda: exact_prefix([dict(p, seed=None)], 2),
+        lambda: exact_prefix([dict(p, pair=None)], 2),
+        lambda: exact_prefix([dict((k,v) for k,v in p.items() if k != "N")], 2),
+        lambda: exact_prefix([dict((k,v) for k,v in p.items() if k != "step")], 2),
+        lambda: pair_certificate([dict(p, pair="V1xw-VNCxw")], 2, [pr]),
+        lambda: pair_certificate([dict(p, d2="-1")], 2, [pr]),
+        lambda: pair_certificate([dict(p, n="3")], 2, [pr]),
+        lambda: pair_certificate([p], 2, []),
+        lambda: pair_certificate([p], 2, [dict(pr, rb_d="-1")]),
+        lambda: pair_certificate([p], 2, [dict(pr, seed="6")]),
+        lambda: verdict(z, {"3SE": z}, one),
+        lambda: verdict(z, {"3SE": z, "e_int": z, "e_round": z,
+                            "e_q": z}, one),
+        lambda: verdict(z, terms(ratio(-1)), one),
         lambda: verdict(z, {}, one),
         lambda: num("NaN"),
         lambda: num("1e400"),
+        lambda: num("-+-5"),
+        lambda: num("3_0"),
+        lambda: num(" 3"),
+        lambda: num("+3"),
+        lambda: num("٣"),
+        lambda: num("1 /2"),
         lambda: fields("TWB|n=1|n=2|json=0"),
     ]
+    failed = 0
     for fn in bads:
         try:
             fn()
-        except (StopRead, ValueError):
-            fail += 1
-    need(fail == len(bads), "fault_suite")
-    return fail
+        except (StopRead, ValueError, TypeError, KeyError):
+            failed += 1
+    need(failed == len(bads), "fault_suite")
+    return failed
 
 
 def main():
