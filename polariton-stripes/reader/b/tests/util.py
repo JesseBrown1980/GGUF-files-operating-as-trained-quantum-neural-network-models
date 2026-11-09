@@ -12,6 +12,7 @@ DATA = os.path.join(HERE, "data")
 AGG = os.path.join(DATA, "agg")
 RUN = os.path.join(DATA, "run")
 QE9 = os.path.join(DATA, "qe9")
+EXCL = os.path.join(DATA, "excl")  # the real excluded-point dumps (as xz), their blocks and side files: PROVENANCE.txt
 
 # Excluded test points (AGG-FORMAT.md section 9 has X1, X0 with 8 calls; the fixtures hold calls 0 and 1).
 X1 = common.DumpPoint("X1", 27, "1/4", "1/40", 2 * 4096, 2, (64, 128), False)

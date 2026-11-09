@@ -266,6 +266,49 @@ fn bump(line: &str, key: &str) -> String {
     set_field(line, key, &(v + 1).to_string())
 }
 
+/// `key=` set to `val` on every row that has the key.
+fn set_all(text: &str, key: &str, val: &str) -> String {
+    let mut out = String::new();
+    for line in text.lines() {
+        out.push_str(&set_field(line, key, val));
+        out.push('\n');
+    }
+    out
+}
+
+/// The `:`-joined list `key` with `f` applied to its entries.
+fn edit_list(line: &str, key: &str, f: &dyn Fn(&mut Vec<i64>)) -> String {
+    let text = line
+        .split('|')
+        .find_map(|t| t.strip_prefix(&format!("{key}=")))
+        .expect("key")
+        .to_string();
+    let mut p: Vec<i64> = text.split(':').map(|x| x.parse().expect("i")).collect();
+    f(&mut p);
+    let t: Vec<String> = p.iter().map(|x| x.to_string()).collect();
+    set_field(line, key, &t.join(":"))
+}
+
+/// A VNC-only stream of 300 draws at Tsyn, with no MODE0 (so every rot is 2^40:0).
+fn vnc_only() -> Syn {
+    let mut vnc = Syn::new(
+        27,
+        "1/40",
+        &STEPS,
+        [true, false, false, false, false, false, false],
+        false,
+    );
+    let mut rng = Lcg(31);
+    for _ in 0..300 {
+        let mut c = [0i64; 6];
+        for x in c.iter_mut() {
+            *x = rng.int(4);
+        }
+        vnc.samples.push(sample(&mut rng, c, 1, NR, false));
+    }
+    vnc
+}
+
 /// The faulty streams of every_stop_path, each with the STOP reason it must give at a test id.
 fn stop_cases(good: &str) -> Vec<(&'static str, String)> {
     let good = good.to_string();
@@ -474,6 +517,51 @@ fn stop_cases(good: &str) -> Vec<(&'static str, String)> {
             "non_printable_byte",
             good.replacen("|json=0\n", "|json=0\r\n", 1),
         ),
+        (
+            "bad_list",
+            replace_nth(&good, "TWB_DUMP_SAMPLE|", 2, &|l| {
+                edit_list(l, "g", &|p| {
+                    p.pop();
+                })
+            }),
+        ),
+        (
+            "head_steps_not_increasing",
+            replace_nth(&good, "TWB_HEAD|", 0, &|l| set_field(l, "steps", "128,64")),
+        ),
+        (
+            "control_seed_mismatch",
+            replace_nth(&good, "TWB_DUMP_INIT|", 3, &|l| {
+                edit_list(l, "uv", &|p| p[0] += 1)
+            }),
+        ),
+        (
+            "h_differs",
+            replace_nth(&good, "TWB|", 2, &|l| bump(l, "h")),
+        ),
+        (
+            "h_mismatch",
+            set_all(&good, "h", &(stripes_read_a::eng::h_of(27) + 1).to_string()),
+        ),
+        (
+            "ctrl_differs_within_record",
+            replace_nth(&good, "TWB|", 1, &|l| set_field(l, "ctrl", "0:0:1")),
+        ),
+        (
+            "start_rebuild",
+            replace_nth(&good, "TWB_DUMP_SAMPLE|", 2, &|l| {
+                edit_list(l, "g", &|p| {
+                    p[0] = 2048 << 35;
+                    p[1] = 2048 << 35;
+                })
+            }),
+        ),
+        (
+            "rot_without_MODE0",
+            replace_nth(&vnc_only().render(), "TWB_DUMP_SAMPLE|", 4, &|l| {
+                edit_list(l, "rot", &|p| p[1] = 1)
+            }),
+        ),
     ]
 }
 
@@ -488,7 +576,202 @@ fn arg_cases() -> Vec<(Vec<&'static str>, &'static str)> {
         (vec!["--point", "P08", "--call", "0"], "side_file_required"),
         (vec!["--point", "P13", "--call", "63"], "side_file_required"),
         (vec!["--point", "X1", "--call", "0"], "table_mismatch"),
+        (
+            vec!["--point", "X1", "--call", "8"],
+            "table_call_out_of_range",
+        ),
+        (
+            vec![
+                "--point",
+                "Tsyn",
+                "--call",
+                "0",
+                "--side",
+                "/dev/null/side.bin",
+            ],
+            "side_write",
+        ),
     ]
+}
+
+/// One probe: what it plants, the arguments, the stream, and the STOP reason both readers give (None: a block).
+type Probe = (
+    &'static str,
+    Vec<&'static str>,
+    String,
+    Option<&'static str>,
+);
+
+/// The probes of the PR #18 review (M7): the first 16 gave a different outcome, reason or line in stage A and in
+/// check_a.py before the fix; the last 3 are controls on which the two already agreed. At Tsyn and at X1 only.
+fn probe_cases() -> Vec<Probe> {
+    let tsyn = vec!["--point", "Tsyn", "--call", "0"];
+    let x1 = vec!["--point", "X1", "--call", "2"];
+    let good = small().render();
+    let p = points::find("X1").expect("X1");
+    let x1_text = table_stream(p, 2, &STEPS, 106).render();
+    let none_seed = stripes_read_a::sha256::seed_u64("none").to_string();
+    let two_faults = replace_nth(
+        &replace_nth(&good, "TWB_DUMP_INIT|", 3, &|l| {
+            edit_list(l, "s", &|p| p[2] += 1)
+        }),
+        "TWB_DONE|",
+        0,
+        &|l| set_field(l, "n", "23"),
+    );
+    let lone_head = joined(std::iter::once("TWB_HEAD").chain(good.lines().skip(1)));
+    let key_alone = replace_nth(&good, "TWB_DUMP_OBS|", 3, &|l| {
+        l.split('|')
+            .map(|t| if t.starts_with("xw=") { "xw" } else { t })
+            .collect::<Vec<_>>()
+            .join("|")
+    });
+    vec![
+        (
+            "y=-0 on every row",
+            tsyn.clone(),
+            set_all(&good, "y", "-0"),
+            Some("bad_rational"),
+        ),
+        (
+            "y=+1/40",
+            tsyn.clone(),
+            set_all(&good, "y", "+1/40"),
+            Some("bad_rational"),
+        ),
+        (
+            "y=01/40",
+            tsyn.clone(),
+            set_all(&good, "y", "01/40"),
+            Some("bad_rational"),
+        ),
+        (
+            "y=1/040",
+            tsyn.clone(),
+            set_all(&good, "y", "1/040"),
+            Some("bad_rational"),
+        ),
+        (
+            "delta=+1/4",
+            tsyn.clone(),
+            set_all(&good, "delta", "+1/4"),
+            Some("bad_rational"),
+        ),
+        (
+            "u=+1",
+            tsyn.clone(),
+            set_all(&good, "u", "+1"),
+            Some("bad_rational"),
+        ),
+        (
+            "seed_string=none with seed = sha256(none) on every row",
+            tsyn.clone(),
+            set_all(&set_all(&good, "seed_string", "none"), "seed", &none_seed),
+            Some("head_seed"),
+        ),
+        (
+            "dtden=0",
+            tsyn.clone(),
+            set_all(&good, "dtden", "0"),
+            Some("head_dtden"),
+        ),
+        (
+            "N=1",
+            tsyn.clone(),
+            set_all(&good, "N", "1"),
+            Some("head_N"),
+        ),
+        (
+            "a token without = that is not the key",
+            tsyn.clone(),
+            replace_nth(&good, "TWB_DUMP_OBS|", 3, &|l| l.replacen("|xw=", "|xw", 1)),
+            Some("row_field_without_value"),
+        ),
+        (
+            "two faults: a start, then TWB_DONE n",
+            tsyn.clone(),
+            two_faults,
+            Some("field_value"),
+        ),
+        (
+            "a first row TWB_HEAD alone",
+            tsyn.clone(),
+            lone_head,
+            Some("row_short"),
+        ),
+        (
+            "dtden=32 at X1",
+            x1.clone(),
+            set_all(&x1_text, "dtden", "32"),
+            Some("table_mismatch"),
+        ),
+        (
+            "y=-0 at X1",
+            x1.clone(),
+            set_all(&x1_text, "y", "-0"),
+            Some("bad_rational"),
+        ),
+        (
+            "ctrl 1:0:0 at X1",
+            x1.clone(),
+            set_all(&x1_text, "ctrl", "1:0:0"),
+            Some("table_mismatch"),
+        ),
+        (
+            "y with a 43-digit denominator",
+            tsyn.clone(),
+            set_all(&good, "y", "1/1000000000000000000000000000000000000000000"),
+            None,
+        ),
+        (
+            "control: the token xw alone",
+            tsyn.clone(),
+            key_alone,
+            Some("row_field_without_value"),
+        ),
+        (
+            "control: y=0/7",
+            tsyn.clone(),
+            set_all(&good, "y", "0/7"),
+            None,
+        ),
+        ("control: y=-1/40", tsyn, set_all(&good, "y", "-1/40"), None),
+    ]
+}
+
+#[test]
+fn review_probes_read_as_stated() {
+    let cases = probe_cases();
+    assert_eq!(cases.len(), 19);
+    for (what, args, text, want) in &cases {
+        let rep = read(args, text);
+        match want {
+            Some(reason) => {
+                assert_eq!(rep.code, 3, "{what}: {}", rep.out);
+                assert_eq!(
+                    stop_reason(&rep.out).as_deref(),
+                    Some(*reason),
+                    "{what}: {}",
+                    rep.out
+                );
+            }
+            None => assert_eq!(rep.code, 0, "{what}: {}", rep.out),
+        }
+    }
+    let two = &cases[10].2;
+    let line = two
+        .lines()
+        .position(|l| l.starts_with("TWB_DONE|"))
+        .expect("done")
+        + 1;
+    let rep = read(&cases[10].1, two);
+    assert!(
+        rep.out.contains(&format!("|line={line}|")),
+        "the parse fault comes first: {}",
+        rep.out
+    );
+    let y0 = read(&cases[17].1, &cases[17].2);
+    assert!(y0.out.contains("|y=0/7|y_zero=1|"), "{}", y0.out);
 }
 
 #[test]
@@ -857,22 +1140,7 @@ fn emit_streams_for_the_independent_check() {
         }
     }
     put("good_lock_lattice", &tsyn, &lock.render());
-    let mut vnc = Syn::new(
-        27,
-        "1/40",
-        &STEPS,
-        [true, false, false, false, false, false, false],
-        false,
-    );
-    let mut rng = Lcg(31);
-    for _ in 0..300 {
-        let mut c = [0i64; 6];
-        for x in c.iter_mut() {
-            *x = rng.int(4);
-        }
-        vnc.samples.push(sample(&mut rng, c, 1, NR, false));
-    }
-    put("good_vnc_only", &tsyn, &vnc.render());
+    put("good_vnc_only", &tsyn, &vnc_only().render());
     let tables: [(&str, u64, &[u64], bool); 8] = [
         ("P13", 0, &[64, 128], true),
         ("P13", 5, &[64], true),
@@ -899,6 +1167,13 @@ fn emit_streams_for_the_independent_check() {
     }
     for (k, (args, want)) in arg_cases().iter().enumerate() {
         put(&format!("args{k:02}_{want}"), args, &good);
+    }
+    for (k, (_, args, text, want)) in probe_cases().iter().enumerate() {
+        put(
+            &format!("probe{k:02}_{}", want.unwrap_or("block")),
+            args,
+            text,
+        );
     }
     let syn = small();
     let s = syn

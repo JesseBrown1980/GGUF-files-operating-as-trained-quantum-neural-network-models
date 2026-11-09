@@ -331,6 +331,8 @@ fn parse_head(line: &str) -> Result<Head, Stop> {
     let y_zero = rational_is_zero(v[8], "y")?;
     let seed: u64 = int(v[9], "seed")?;
     let seed_string = v[10].to_string();
+    // `none` is what the engine prints when it was given seed= rather than seed_string= (ens_from_kv in its main.rs):
+    // that seed is bound to no string, so it is refused whatever its value (AGG-FORMAT.md section 6).
     if seed_string == "none" || seed != seed_u64(&seed_string) {
         return Err(Stop::new(
             "head_seed",

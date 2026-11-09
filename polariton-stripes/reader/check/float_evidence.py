@@ -3,9 +3,12 @@
 
 A folder row reads `folder/ | tree=H | reason`, the format of the 4D repo's scripts/FLOAT-EVIDENCE.txt. H is the
 sha256 of one line per entry under the folder, `<mode> <sha256 of the bytes> <path>\\n`, in git's order (paths sorted
-as bytes), the rule of tree_line and tree_pin in that repo's scripts/no_float_gate.py. The entries are the files git
-would track there (`git ls-files --cached --others --exclude-standard`), read from the working tree, so the check
-holds before and after the commit. A new file, a mode change or an edited byte moves H.
+as bytes), the rule of tree_line and tree_pin in that repo's scripts/no_float_gate.py. The entries are git's index
+under the folder (`git ls-files -s`, as that gate takes them): each mode comes from the index, never from the file
+system, so a checkout with core.filemode=false (Windows, WSL /mnt/c) gives the pin a Linux checkout gives; the bytes
+are read from the working tree. An untracked file under the folder, an unmerged entry, an index entry missing from
+the working tree and a mode change git sees but the index does not hold are faults (stage a new file with git add
+first). A staged new file, a staged mode change or an edited byte moves H.
 
     python3 -I float_evidence.py [--repo DIR]          checks every folder row; prints one row each, exit 1 on a fault
     python3 -I float_evidence.py [--repo DIR] --pins FOLDER/...   prints `FOLDER/ | tree=H | ` for a person to finish
@@ -22,24 +25,63 @@ LIST = "polariton-stripes/FLOAT-EVIDENCE.txt"
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 
 
-def entries(repo, folder):
-    """[(mode, sha256, path)] of the files under folder, in git's order."""
-    out = subprocess.run(["git", "-C", repo, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--",
-                          folder], capture_output=True, check=True, stdin=subprocess.DEVNULL).stdout
-    paths = sorted({p for p in out.split(b"\0") if p}, key=bytes)
+class Fault(Exception):
+    """A folder whose pin cannot be taken: the text is one field of a FLOAT_EVIDENCE row."""
+
+
+def git(repo, *args):
+    p = subprocess.run(["git", "-C", repo] + list(args), capture_output=True, check=False, stdin=subprocess.DEVNULL)
+    if p.returncode != 0:
+        raise Fault("git_%s_rc=%d" % (args[0], p.returncode))
+    return p.stdout
+
+
+def records(out):
+    return [r for r in out.split(b"\0") if r]
+
+
+def text(path):
+    return path.decode("utf-8", "surrogateescape")
+
+
+def index_entries(repo, folder):
+    """[(mode, oid, path)] of git's index under folder (`git ls-files -s`), in git's order (paths sorted as bytes)."""
     rows = []
-    for p in paths:
-        full = os.path.join(repo, p.decode("utf-8", "surrogateescape"))
-        st = os.lstat(full)
-        if stat.S_ISLNK(st.st_mode):
-            mode, data = "120000", os.readlink(full).encode("utf-8", "surrogateescape")
-        elif stat.S_ISREG(st.st_mode):
-            mode = "100755" if st.st_mode & stat.S_IXUSR else "100644"
-            with open(full, "rb") as f:
-                data = f.read()
-        else:
-            raise SystemExit("FLOAT_EVIDENCE|not_a_file=%s|json=0" % p.decode("utf-8", "replace"))
-        rows.append((mode, hashlib.sha256(data).hexdigest(), p.decode("utf-8", "surrogateescape")))
+    for rec in records(git(repo, "ls-files", "-s", "-z", "--", folder)):
+        meta, path = rec.split(b"\t", 1)
+        mode, oid, stage = meta.decode("ascii").split(" ")
+        if stage != "0":
+            raise Fault("unmerged=" + text(path))
+        rows.append((mode, oid, path))
+    return sorted(rows, key=lambda r: r[2])
+
+
+def entries(repo, folder):
+    """[(mode, sha256, path)] of the files under folder, in git's order: the mode from git's index, the bytes from the
+    working tree. Raises Fault on an untracked file, an index entry missing from the working tree, a mode change git
+    sees in the working tree (git diff-files, which follows core.filemode) and a mode other than a file or a link."""
+    untracked = records(git(repo, "ls-files", "-z", "--others", "--exclude-standard", "--", folder))
+    if untracked:
+        raise Fault("untracked=" + text(sorted(untracked, key=bytes)[0]))
+    diff = records(git(repo, "diff-files", "-z", "--", folder))
+    for meta, path in zip(diff[0::2], diff[1::2], strict=True):
+        src, dst = meta.decode("ascii").lstrip(":").split(" ")[:2]
+        if src != dst and dst != "000000":  # 000000: a deleted file, a fault below
+            raise Fault("mode_not_in_the_index=%s:%s:%s" % (text(path), src, dst))
+    rows = []
+    for mode, _oid, p in index_entries(repo, folder):
+        full = os.path.join(repo, text(p))
+        try:
+            if mode == "120000":
+                data = os.readlink(full).encode("utf-8", "surrogateescape")
+            elif mode in ("100644", "100755") and stat.S_ISREG(os.lstat(full).st_mode):
+                with open(full, "rb") as f:
+                    data = f.read()
+            else:
+                raise Fault("not_a_file=%s:%s" % (text(p), mode))
+        except OSError as e:
+            raise Fault("not_in_the_working_tree=" + text(p)) from e
+        rows.append((mode, hashlib.sha256(data).hexdigest(), text(p)))
     return rows
 
 
@@ -85,7 +127,11 @@ def main(argv):
         repo, args = args[1], args[2:]
     if args and args[0] == "--pins":
         for folder in args[1:]:
-            rows = entries(repo, folder)
+            try:
+                rows = entries(repo, folder)
+            except Fault as e:
+                print("FLOAT_EVIDENCE|folder=%s|%s|result=fault|json=0" % (folder, e))
+                return 1
             if not rows or not folder.endswith("/"):
                 print("FLOAT_EVIDENCE|no_files=%s|json=0" % folder)
                 return 1
@@ -104,7 +150,12 @@ def main(argv):
         print("FLOAT_EVIDENCE|%s|json=0" % row)
         fails += 1
     for folder, want in sorted(folders.items()):
-        rows = entries(repo, folder)
+        try:
+            rows = entries(repo, folder)
+        except Fault as e:
+            fails += 1
+            print("FLOAT_EVIDENCE|folder=%s|listed=%s|%s|result=fault|json=0" % (folder, want, e))
+            continue
         got = tree_pin(rows) if rows else "none"
         ok = got == want
         fails += not ok

@@ -6,9 +6,9 @@ import shutil
 import unittest
 
 from stripes_read_b import common as c
-from stripes_read_b.hbp import parse_row, fields_dict
+from stripes_read_b.hbp import fields_dict, parse_row, sha256_hex
 
-from .util import AGG, ENGINE_FAULT, X0, X1, TempDir, point_dir, read, rehash, with_trailer, write
+from .util import AGG, ENGINE_FAULT, EXCL, X0, X1, TempDir, point_dir, read, rehash, with_trailer, write
 
 
 def x1_files(call1="X1.1.agg"):
@@ -434,12 +434,29 @@ class SideSums(unittest.TestCase):
         self.assertEqual(e.exception.reason, "side_sums")
 
 
-@unittest.skipUnless(os.environ.get("STRIPES_EXCL_DIR"), "needs STRIPES_EXCL_DIR, the real dumps at the excluded points")
 class RealSideFiles(unittest.TestCase):
-    """M4 on the real side files of X1 and X0 (4096 samples, 7 variants, records 64 and 128), beside their blocks."""
+    """M4 on the real side files of X1 and X0 (4096 samples, 7 variants, records 64 and 128), beside their blocks: from
+    tests/data/excl, or from STRIPES_EXCL_DIR when it is set (a folder check/excl_unpack.py wrote)."""
+
+    def test_the_folder_matches_its_sums(self):
+        lines = read(os.path.join(EXCL, "SHA256SUMS")).split("\n")[:-1]
+        listed = dict(reversed(ln.split("  ", 1)) for ln in lines)
+        self.assertEqual(len(listed), len(lines))
+        present = sorted(os.listdir(EXCL))
+        self.assertEqual([nm for nm in present if nm != "SHA256SUMS" and nm not in listed], [])
+        for nm in present:
+            if nm != "SHA256SUMS":
+                with open(os.path.join(EXCL, nm), "rb") as f:
+                    self.assertEqual(sha256_hex(f.read()), listed[nm], nm)
+        # what is listed and not here: the four dumps (here as xz) and X1s4.0.txt (sha256 only)
+        self.assertEqual(sorted(nm for nm in listed if nm not in present),
+                         ["X0.0.txt", "X0.1.txt", "X1.0.txt", "X1.1.txt", "X1s4.0.txt"])
+        self.assertEqual([nm for nm in ("X1.0", "X1.1", "X0.0", "X0.1") if nm + ".txt.xz" not in present], [])
+        for nm in ("X1.0", "X1.1", "X0.0", "X0.1"):  # the blocks are the agg fixtures, byte for byte
+            self.assertEqual(read(os.path.join(EXCL, nm + ".agg")), read(os.path.join(AGG, nm + ".agg")), nm)
 
     def test_real_side_files_agree(self):
-        excl = os.environ["STRIPES_EXCL_DIR"]
+        excl = os.environ.get("STRIPES_EXCL_DIR") or EXCL
         for spec in (X1, X0):
             files = {"%d.hbp" % i: with_trailer(read(os.path.join(excl, "%s.%d.agg" % (spec.id, i)))) for i in (0, 1)}
             with TempDir() as d, TempDir() as sd:

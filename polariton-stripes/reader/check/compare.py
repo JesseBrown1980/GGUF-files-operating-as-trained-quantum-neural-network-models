@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """compare.py: the independent check of stage A. Each stream is read by stripes-read-a and by check_a.py; the two
 outputs must be equal. A block must be equal byte for byte, its side file too. A STOP must agree in every field but
-`detail` (the detail text is free), and its reason must be the one the case name expects.
+`detail` (the detail text is free), and its reason must be the one the case name expects (stopNN_REASON, argsNN_REASON,
+probeNN_REASON); a case named probeNN_block must be a block in both.
 
     python3 -I compare.py --ra PATH [--streams DIR] [--excl DIR] [--work DIR]
 
@@ -22,7 +23,8 @@ CHECKER = os.path.join(HERE, "check_a.py")
 STOP_KEYS = ("reader", "reader_version", "point", "call", "reason", "line", "stdin_bytes", "stdin_lines",
              "stdin_sha256")
 EXCL_NAME = re.compile(r"(X[01])\.(0|[1-9][0-9]*)\.txt\Z")
-CASE_REASON = re.compile(r"(?:stop|args)[0-9]+_([A-Za-z0-9_]+)\Z")
+CASE_REASON = re.compile(r"(?:stop|args|probe)[0-9]+_([A-Za-z0-9_]+)\Z")
+CASE_BLOCK = re.compile(r"probe[0-9]+_block\Z")
 
 
 def row_fields(line):
@@ -65,8 +67,15 @@ def compare_case(ra, name, args, stream, work):
     why = []
     if rc_a != rc_b:
         why.append("rc_%d_%d" % (rc_a, rc_b))
+    block_case = CASE_BLOCK.match(name) is not None
+    m = CASE_REASON.match(name)
+    want_reason = m.group(1) if m and not block_case else None
+    if block_case and (rc_a != 0 or rc_b != 0):
+        why.append("expected_block")
     kind = "block" if rc_a == 0 else "stop"
     if rc_a == 0 and rc_b == 0:
+        if want_reason:
+            why.append("expected_stop_%s" % want_reason)
         if out_a != out_b:
             la, lb = out_a.split(b"\n"), out_b.split(b"\n")
             k = next((i for i, (x, y) in enumerate(zip(la, lb, strict=False)) if x != y), min(len(la), len(lb)))
@@ -86,9 +95,8 @@ def compare_case(ra, name, args, stream, work):
                     why.append("stop_%s_%s_%s" % (k, fa.get(k), fb.get(k)))
             if err_a != out_a or err_b != out_b:
                 why.append("stop_not_on_stderr")
-            m = CASE_REASON.match(name)
-            if m and fa.get("reason") != m.group(1):
-                why.append("reason_%s_expected_%s" % (fa.get("reason"), m.group(1)))
+            if want_reason and fa.get("reason") != want_reason:
+                why.append("reason_%s_expected_%s" % (fa.get("reason"), want_reason))
         kind = "stop:" + row_fields(out_a.decode("ascii", "replace").rstrip("\n")).get("reason", "?")
     elif rc_a == rc_b:
         why.append("rc_%d" % rc_a)

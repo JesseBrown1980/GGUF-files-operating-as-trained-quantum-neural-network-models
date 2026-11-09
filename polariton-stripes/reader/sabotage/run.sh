@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# The sabotage suite of the stripe-phase reader: eleven planted faults, each of which the reader must catch. Every case
-# prints CAUGHT or MISSED; the suite exits 0 only when all eleven are CAUGHT. No engine runs here: the streams are
+# The sabotage suite of the stripe-phase reader: twelve planted faults, each of which the reader must catch. Every case
+# prints CAUGHT or MISSED; the suite exits 0 only when all twelve are CAUGHT. No engine runs here: the streams are
 # synthetic (the stage A emulator) and the campaign is fabricated (reader/b/tests/campaign.py).
 #
 #   CARGO_TARGET_DIR=<outside the repo> reader/sabotage/run.sh
 #
 # Optional: STRIPES_SABOTAGE_WORK (work folder, kept), STRIPES_CAMPAIGN (an existing campaign folder),
-# STRIPES_EXCL_DIR (real dumps at the excluded points, X1.0.txt; adds one more stage A check).
+# STRIPES_EXCL_DIR (real dumps at the excluded points, X1.0.txt; adds one more stage A check, 4c; a folder that
+# reader/check/excl_unpack.py --out writes from reader/b/tests/data/excl serves).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 READER=$(dirname "$HERE")
@@ -23,9 +24,12 @@ B=$READER/b/stripes_read_b/__main__.py
 EDIT="$PY -I $HERE/edit.py"
 MISSED=0
 
-(cd "$READER/a" && cargo build --release --offline --locked -q) || { echo "stage A build failed" >&2; exit 2; }
+# Rust 1.81.0 as CI pins it (review N20), and the build of reader/README.md: the checkout path remapped to stage-a, so
+# the binary's sha256 does not depend on where the checkout is (review M4) and a shared CARGO_TARGET_DIR keeps it.
+export RUSTFLAGS="--remap-path-prefix=$(cd "$READER/a" && pwd)=stage-a"
+(cd "$READER/a" && cargo +1.81.0 build --release --offline --locked -q) || { echo "stage A build failed" >&2; exit 2; }
 rm -rf "$WORK/streams"
-(cd "$READER/a" && STRIPES_EMIT_DIR="$WORK/streams" cargo test --release --offline --locked -q --test synthetic \
+(cd "$READER/a" && STRIPES_EMIT_DIR="$WORK/streams" cargo +1.81.0 test --release --offline --locked -q --test synthetic \
   emit_streams_for_the_independent_check -- --ignored >/dev/null) || { echo "stream emitter failed" >&2; exit 2; }
 CAMPAIGN=${STRIPES_CAMPAIGN:-$WORK/campaign}
 [ -d "$CAMPAIGN/agg" ] || $PY -I "$READER/b/tests/campaign.py" --out "$CAMPAIGN" >/dev/null || exit 2
@@ -71,8 +75,15 @@ report $r bi_flip_on_exchange_atom "stage A STOPs on bi=-0 (bad_integer) and on 
 # 2. Two sector counts swapped.
 r=0
 C=$(copy c2a); $EDIT block --campaign "$C" --point P01 --call 0 --op swap_sec --sums && stop agg_sha256 $PY -I "$B" read $(inputs "$C") --out "$WORK/r2a.hbp" || r=1
+rm -f "$WORK/r2b.hbp" "$WORK/r2c.hbp"
 C=$(copy c2b); $EDIT block --campaign "$C" --point P01 --call 0 --op swap_sec --rehash && stop sha256sums $PY -I "$B" read $(inputs "$C") --out "$WORK/r2b.hbp" || r=1
-report $r swapped_sector_counts "stage B refuses the block when SHA256SUMS is rewritten (agg_sha256) and when AGG_END is forged (sha256sums)"
+# review M3: no flag skips SHA256SUMS. verify of the clean READ file on case 2b's inputs stops at the same check, and
+# the flag that skipped it (--no-sums, removed) is a usage STOP for read and verify; no READ file is written
+stop sha256sums $PY -I "$B" verify --read "$CLEAN" $(inputs "$C") || r=1
+stop usage $PY -I "$B" read $(inputs "$C") --out "$WORK/r2c.hbp" --no-sums || r=1
+stop usage $PY -I "$B" verify --read "$CLEAN" $(inputs "$C") --no-sums || r=1
+[ ! -e "$WORK/r2b.hbp" ] && [ ! -e "$WORK/r2c.hbp" ] || r=1
+report $r swapped_sector_counts "stage B refuses the block when SHA256SUMS is rewritten (agg_sha256) and when AGG_END is forged (sha256sums), in read and in verify; --no-sums is a usage STOP for both, and no READ file is written"
 
 # 3. A dropped call.
 r=0
@@ -101,7 +112,10 @@ r=0
 stop scoring_table $PY -I "$HERE/patch.py" promote $(inputs "$CAMPAIGN") --out "$WORK/r6a.hbp" || r=1
 $EDIT read --in "$CLEAN" --out "$WORK/r6b.hbp" --op promote && stop scored_read $PY -I "$B" audit --read "$WORK/r6b.hbp" || r=1
 $EDIT read --in "$CLEAN" --out "$WORK/r6c.hbp" --op promote_why && stop scoring_table $PY -I "$B" audit --read "$WORK/r6c.hbp" || r=1
-report $r report_read_promoted "a module scoring E15's RP13 cross-read is refused (scoring_table); in a READ file, E17 pi_t1 scored with why=X08 fails audit (scored_read), and with why=unexposed (scoring_table)"
+# 6d (review N19): the other way, a scored read demoted: E04's first MET signflip read filed as read-and-report
+# (scored=0, why=X08, verdict=REPORT), its VERDICT counts made to agree; only the SCORING table sees it
+$EDIT read --in "$CLEAN" --out "$WORK/r6d.hbp" --op demote && stop scoring_table $PY -I "$B" audit --read "$WORK/r6d.hbp" || r=1
+report $r report_read_promoted "a module scoring E15's RP13 cross-read is refused (scoring_table); in a READ file, E17 pi_t1 scored with why=X08 fails audit (scored_read), and with why=unexposed (scoring_table); a scored E04 read demoted to read-and-report, its VERDICT agreeing, fails audit (scoring_table)"
 
 # 7. A falsifier evaluated on a read-and-report read.
 r=0
@@ -148,7 +162,7 @@ report $r qe_exit_and_altered_B "a 6561 sector panic with rc=101 leaves its 4 re
 r=0
 $EDIT floats --work "$WORK/f10" || r=1
 out=$($PY -I "$WORK/f10/qint_floats.py" "$READER/b" 2>&1)
-{ [ "$(grep -c '^REFUSED|' <<<"$out")" = 13 ] && ! grep -q '^PASSED_THROUGH|' <<<"$out"; } || { echo "    $out" >&2; r=1; }
+{ [ "$(grep -c '^REFUSED|' <<<"$out")" = 27 ] && ! grep -q '^PASSED_THROUGH|' <<<"$out"; } || { echo "    $out" >&2; r=1; }
 out=$($PY -I "$WORK/f10/fraction_floats.py" 2>&1)
 [ "$(grep -c '^PASSED_THROUGH|' <<<"$out")" = 2 ] || { echo "    $out" >&2; r=1; }
 out=$($PY -I - "$READER/b" "$WORK/f10/b" <<'PYEOF'
@@ -166,7 +180,7 @@ PYEOF
 want=$(printf 'FOUND|file=%s|json=0\n' e2e.py stripes_read_b/common.py stripes_read_b/exact.py stripes_read_b/qint.py stripes_read_b/rows_q.py stripes_read_b/series.py)
 [ "$out" = "$want" ] || { echo "    scan found: $out" >&2; r=1; }
 rm -rf "$WORK/f10"
-report $r stray_float "13 stray floats, bools and true divisions against qint pairs, Iv, Rad and fmt each raise TypeError (Fraction(1,3)*0.5 and Fraction(0.1) pass through fractions.Fraction); 6 planted source faults (true division, a float literal, import fractions, import math, float(), round()) are each found by the source scan"
+report $r stray_float "27 stray floats, bools, true divisions, Fractions, Decimals and complexes against qint pairs, Iv, Rad and fmt each raise TypeError (Fraction(1,3)*0.5 and Fraction(0.1) pass through fractions.Fraction); 6 planted source faults (true division, a float literal, import fractions, import math, float(), round()) are each found by the source scan"
 
 # 11. A side file forged with every hash made to agree (ensemble review M4): one br of P08 call 0 moved by 1, its
 # AGG_SIDE bytes and sha256, the block's AGG_END and the point's SHA256SUMS rewritten. The side file's sums no longer
@@ -175,6 +189,25 @@ r=0
 C=$(copy c11); $EDIT side --campaign "$C" && stop side_sums $PY -I "$B" read $(inputs "$C") --out "$WORK/r11.hbp" || r=1
 report $r side_file_forged "a P08 side file edited with its row, AGG_END and SHA256SUMS forged: its sums differ from the block's AGG_SUM (side_sums)"
 
+# 12. A moved frozen file (review N1, M8). edit.py copies reader/a and reader/b into a git repository of their own,
+# beside a copy of the frozen file and its README with one of them moved. The repo's frozen files are only read. The
+# unmoved copy passes audit and gets past the frozen check in read; each moved copy stops there (frozen_sha256).
+r=0
+F12=$WORK/f12
+rm -f "$WORK/r12a.hbp" "$WORK/r12d.hbp"
+M=$($EDIT frozen --work "$F12" --op none) && $PY -I "$M" audit --read "$CLEAN" > /dev/null || r=1
+# the unmoved copy's read passes its tree checks and the frozen check and reaches rule GUARD: a guard file not there
+stop FileNotFoundError $PY -I "$M" read --agg "$CAMPAIGN/agg" --runs "$CAMPAIGN/run" --qe "$CAMPAIGN/QE.hbp" \
+  --cost "$CAMPAIGN/QE-COST.hbp" --qe-rc "$CAMPAIGN/QE-RC.hbp" --guard "$F12/no_such_guard.hbp" --out "$WORK/r12a.hbp" || r=1
+M=$($EDIT frozen --work "$F12" --op byte) && stop frozen_sha256 $PY -I "$M" read $(inputs "$CAMPAIGN") --out "$WORK/r12a.hbp" || r=1
+M=$($EDIT frozen --work "$F12" --op byte) && stop frozen_sha256 $PY -I "$M" audit --read "$CLEAN" || r=1
+M=$($EDIT frozen --work "$F12" --op crlf) && stop frozen_sha256 $PY -I "$M" audit --read "$CLEAN" || r=1
+M=$($EDIT frozen --work "$F12" --op readme) && stop frozen_sha256 $PY -I "$M" verify --read "$CLEAN" $(inputs "$CAMPAIGN") || r=1
+M=$($EDIT frozen --work "$F12" --op no_readme) && stop frozen_sha256 $PY -I "$M" read $(inputs "$CAMPAIGN") --out "$WORK/r12d.hbp" || r=1
+[ ! -e "$WORK/r12a.hbp" ] && [ ! -e "$WORK/r12d.hbp" ] || r=1
+rm -rf "$F12"
+report $r frozen_file_moved "a copy of stage B beside the frozen file with one digit moved stops in read and audit (frozen_sha256), with CRLF line ends in audit, with one byte of the frozen README moved in verify, and with no README in read; no READ file is written; the unmoved copy passes audit, and its read gets past the frozen check"
+
 for d in c1c c1d c2a c2b c3a c3b c5 c8 c9a c9b c9c c9d c11; do rm -rf "${WORK:?}/$d"; done
-echo "SABOTAGE|cases=11|caught=$((11 - MISSED))|missed=$MISSED|engine_runs=0|json=0"
+echo "SABOTAGE|cases=12|caught=$((12 - MISSED))|missed=$MISSED|engine_runs=0|json=0"
 [ "$MISSED" = 0 ]

@@ -1,4 +1,7 @@
-X1.0.agg X1.1.agg X0.0.agg X0.1.agg: stage A (sha256 742eea62f2107cbf5c9d888da78a88c28d155daf6c4e4d354e874bd2a25b8400) on
+X1.0.agg X1.1.agg X0.0.agg X0.1.agg: stage A (sha256 742eea62f2107cbf5c9d888da78a88c28d155daf6c4e4d354e874bd2a25b8400,
+  a build without the path remap at /home/user/qnn/polariton-stripes/reader/a into the cloud seat's scratch folder
+  .../scratchpad/stripes-build/ra, of a reader/a that was never committed; the pinned remapped build 7fe3c18f...
+  of git tree 590b2528 writes these four files and their side files byte for byte: reader/README.md, stage A) on
   twens dump N=27 delta=1/4 u=1 y=1/40 (X1) or y=0 (X0) seed_string=stripes-ens-v1:N27:d1/4:y<y> start=4096i count=4096
   dtden=64 threads=1 steps=64,128 ctrl=0:0:0;0:0:0 mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL, stripes-read-a --point X<k> --call i --side
 X1.1.steps64.agg: the same call 1 of X1 with steps=64 ctrl=0:0:0 (a call rerun with its last record dropped)

@@ -86,7 +86,11 @@ def file_sha256(path):
 def read_lines(path):
     """The lines of a text file; every line must end with '\\n' and be printable ASCII."""
     with open(path, "rb") as f:
-        data = f.read()
+        return text_lines(f.read(), path)
+
+
+def text_lines(data, path):
+    """The lines of the bytes of a text file (read_lines, on bytes already read and hashed)."""
     if data and not data.endswith(b"\n"):
         raise RowError("%s: last line unterminated" % path)
     text = data.decode("ascii")

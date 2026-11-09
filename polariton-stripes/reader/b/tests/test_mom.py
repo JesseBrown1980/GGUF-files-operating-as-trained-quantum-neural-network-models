@@ -335,6 +335,40 @@ class Helpers(unittest.TestCase):
         self.assertEqual((r.hi - Rad.of(div(4, law.lo) - 1)).sign(), 0)
         self.assertEqual(r.outcome, c.MISS)
 
+    def test_e19_lin_law_not_above_zero_stops(self):
+        # review N15: the bracket needs n*_lin.lo > 0; a law reaching 0 or below 0, or an infinite one, is a STOP
+        spec = c.RUN_POINTS["R2"]
+
+        class FakeRun:
+            lost, steps, batches = [], spec.steps, [0, 1]
+
+            def nstar(self, step):
+                return fr(1), fr(9, 16)
+
+        def law_of(value):
+            class Law:
+                def __init__(self, *args):
+                    pass
+
+                def nstar(self):
+                    return value
+
+            return Law
+
+        law = series.Law
+        try:
+            for value in (Iv(-1, 2), Iv(0, 2), None):
+                series.Law = law_of(value)
+                with self.assertRaises(c.StageBStop) as cm:
+                    m._e19_lin("lin", c.scored(), m.Inputs(runs={"R2": FakeRun()}), "R2", "1/2", "199.67",
+                               fr(1, 5))
+                self.assertEqual(cm.exception.reason, "e19_law")
+            series.Law = law_of(Iv(fr(1, 2), 2))
+            self.assertEqual(m._e19_lin("lin", c.scored(), m.Inputs(runs={"R2": FakeRun()}), "R2", "1/2", "199.67",
+                                        fr(1, 5)).row, "E19")
+        finally:
+            series.Law = law
+
     def test_band_text_open_at_infinity(self):
         self.assertEqual(c.Band(0, None, lo_open=True).text(), "(0,inf)")
         self.assertEqual(c.Band(None, None).text(), "(-inf,inf)")

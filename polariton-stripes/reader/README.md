@@ -6,8 +6,8 @@ This folder reads the runs of `PREDICTION-STRIPE-PHASE.hbp` (frozen at 1977d45, 
 - `AGG-FORMAT.md`: the full grammar of the aggregate block, the side file and the STOP row. Stage B reads only what it defines.
 - `b/`: stage B, `stripes-read-b` 0.2.0, Python 3, ints and checked integer pairs (`stripes_read_b/qint.py`) only, run with `python3 -I`. It reads the aggregates, the run receipts and the QE receipts and applies every STRIPES_PREDICT row.
 - `evidence/stage-b-fraction/`: stage B as reviewed at 5aad307 (`stripes-read-b` 0.1.0), on `fractions.Fraction`, kept verbatim as evidence: all 96 files of `b/` at 5aad307, byte for byte, and its README. It is listed with its tree pin in `polariton-stripes/FLOAT-EVIDENCE.txt` and is never run at a row point.
-- `check/`: the independent check of stage A (`check_a.py`, `compare.py`), `no_float.sh` with `float_evidence.py`, and the comparison of the two stage B versions (`compare_b.py`, `probe_b.py`).
-- `sabotage/run.sh`: eleven planted faults; the reader must catch each one.
+- `check/`: the independent check of stage A (`check_a.py`, `compare.py`), `no_float.sh` with `float_evidence.py`, and the comparison of the two stage B versions (`compare_b.py`, `probe_b.py`, `compare_read_b.py`).
+- `sabotage/run.sh`: twelve planted faults; the reader must catch each one.
 - `.github/workflows/polariton-stripes.yml` (at the repo root): runs all of it on every push and pull request that touches `polariton-stripes/`.
 
 ## Stage A: one dump stream in, one aggregate block out
@@ -18,7 +18,7 @@ stripes-read-a --point ID --call I [--side PATH] < dump
 
 `ID` is P01-P14, or the excluded test points X1 and X0. Stage A:
 
-- checks the head: version 0.4.0, the source and binary sha256, reserved=0, guard=active, float_used=0 on every row that prints it, and the seed against the seed string;
+- checks the head: version 0.4.0, the source and binary sha256, reserved=0, guard=active, float_used=0 on every row that prints it, the seed against the seed string (a `seed_string=none` is refused), and N, dtden and the canonical text of delta, u and y;
 - checks the exact row sequence, key order and canonical integers, and, at a table point, the frozen command of that call (N, delta, y, seed string, start = 4096 I, count = 4096, mask, steps a prefix of the point's, ctrl 0:0:0);
 - rebuilds every start, control seed and start bound from the draws, and recomputes every field of TWB, TWB_ROUND, TWENS, TWPAIR, TWB_PAIR and TWB_PAIR_ROUND from the per-sample rows;
 - applies rules SECTOR and ATOMS, and prints per record and variant the 16 certified sector counts with A, the sign counts (atoms apart), the moment sums, the block sums for n = 4..4096, the comparison tables against VNC, the LOCK lattice test, the verbatim TWB_NL rows, sha256 of stdin, the TWB_HEAD line and the block's own sha256 (AGG_END);
@@ -26,18 +26,26 @@ stripes-read-a --point ID --call I [--side PATH] < dump
 
 Any difference is one STOP row (stdout and stderr) and exit 3; the reader still reads the rest of stdin. Exit 0 is a block. Exit 101 is a panic (overflow checks are on in release).
 
-Build and test, always with the target folder outside the repo:
+Build and test, always with the target folder outside the repo, and with the checkout path remapped to `stage-a` for every cargo call that shares the target folder:
 
 ```
 cd polariton-stripes/reader/a
 export CARGO_TARGET_DIR=/abs/path/outside/the/repo/ra
+export RUSTFLAGS="--remap-path-prefix=$PWD=stage-a"
 cargo +1.81.0 fmt -- --check
 cargo +1.81.0 clippy --locked --offline --release --all-targets -- -D warnings
 cargo +1.81.0 test --locked --offline --release
-STRIPES_EXCL_DIR=<folder with X1.0.txt X1.1.txt X0.0.txt X0.1.txt> cargo +1.81.0 test --locked --offline --release --test excluded_dumps -- --ignored
+cargo +1.81.0 build --locked --offline --release
+sha256sum "$CARGO_TARGET_DIR/release/stripes-read-a"   # 7fe3c18f59a75bd4b06ba080027045a4d066ca1677c173ec1139c2f2dcd80ed3
+python3 -I ../check/excl_unpack.py --out /abs/excl   # the real excluded dumps of b/tests/data/excl, unpacked and checked
+STRIPES_EXCL_DIR=/abs/excl cargo +1.81.0 test --locked --offline --release --test excluded_dumps -- --ignored
 ```
 
-The 29 default tests need no engine. The three ignored tests read real dumps at the excluded points. The test emulator reproduces those dumps byte for byte, and the aggregates equal oracles written apart from the crate. This seat's build of stage A has sha256 `c8c3f0d12bcc5a21c703d0170b30637e8138b89004219b8d6562c43c36db7cf2`; a second build into another target folder gave the same hash.
+The 30 default tests need no engine. The three ignored tests read real dumps at the excluded points (see "The real excluded-point data" below). The test emulator reproduces those dumps byte for byte, and the aggregates equal oracles written apart from the crate.
+
+The stage A pin is the build of git tree `590b2528bee1ee52e0e0b47d23540f0ac44dd998` of `reader/a` (`git rev-parse <commit>:polariton-stripes/reader/a`) with rustc 1.81.0 (`eeb90cda1`) and the remap above: sha256 `7fe3c18f59a75bd4b06ba080027045a4d066ca1677c173ec1139c2f2dcd80ed3`. Without the remap the binary holds the absolute source paths of its panic locations, so its sha256 moves with the checkout path (review M4). This seat built that tree with the remap at three source paths (the checkout `/home/user/qnn/polariton-stripes/reader/a` and two copies under its scratch folder, `.../qnn18fix/B/q1/a` and `.../qnn18fix/B/q2/some/other/place`), each into its own target folder, and got the same sha256 three times; the same copy built without the remap gave `0a1c91e8...` instead. Remapping the earlier tree `a64e2af9` to CI's checkout path reproduces CI's own build of it, `395a3f9d0c3020bf...`, on this seat, so the toolchain and linker here give CI's bytes. CI asserts the pin and the tree (`STAGE_A_SHA256`, `STAGE_A_TREE`), and stage B names the tree in the `reader_a` note of every READ file (see "The run, with this seat's binaries").
+
+Earlier stage A hashes, both builds without the remap at this seat's checkout path `/home/user/qnn/polariton-stripes/reader/a`: `c8c3f0d12bcc5a21c703d0170b30637e8138b89004219b8d6562c43c36db7cf2` is git tree `a64e2af9` (commits b810786 to 73fb7ee), built into target folders under this seat's scratch folder (`.../scratchpad/stripes-build/ra` and others) and rebuilt the same here; `742eea62f2107cbf5c9d888da78a88c28d155daf6c4e4d354e874bd2a25b8400` (`b/tests/data/agg/COMMANDS.txt`) was the binary at `.../scratchpad/stripes-build/ra/release/stripes-read-a` at 10:22 on 2026-11-09, recorded in `.../stripes-build/excl/READER.txt`, from a `reader/a` that no commit holds (`lib.rs` and `stream.rs` were edited at 11:48, before b810786, and a rebuild of `a64e2af9` at that path gives `c8c3f0d1`, not `742eea62`). Neither can be rebuilt at another path (tree `a64e2af9` with the remap gives `ce98e0c8b1a44f30d4ecb7f4ea9db67686fde1f738af91b81129fa90dbcf11ec` at any path; this fix pass changed `row.rs` and `stream.rs`, so the pin moved to `7fe3c18f`). `7fe3c18f` replaces both: on the four real dumps at X1 and X0 it writes the four `X*.agg` fixtures and their side files byte for byte, and `compare.py --excl` gives 4 of 4 equal.
 
 ## Stage B: the aggregates, the runs and the QE rows in, READ-STRIPE-PHASE.hbp out
 
@@ -49,10 +57,10 @@ python3 -I polariton-stripes/reader/b/stripes_read_b/__main__.py read \
 
 `read` does, in order:
 
-1. Checks the frozen file's sha256, the point tables against the STRIPES_POINT rows, rule EXPOSED against X08 and the 15 QE commands against QR1-QR5.
+1. Takes stage B's own tree pin, the `reader_b` note: each file's mode from git's index (`git ls-files -s`), its bytes from the working tree. It writes nothing (a STOP row) when a file under `b/` is not in the index (`stage_b_tree`) or a working-tree mode differs from the index's (`stage_b_modes`). So stage B and the gates run from a POSIX checkout (Linux, or WSL on ext4), not from `/mnt/c` or another checkout with `core.filemode=false`, and a new file is staged with `git add` before a read. Then checks the frozen file's sha256 and the frozen README's (STOP `frozen_sha256`; the rows are parsed from the bytes that were hashed), the point tables against the STRIPES_POINT rows, rule EXPOSED against X08 and the 15 QE commands against QR1-QR5.
 2. Rule GUARD: a `TWB_GUARD ... verdict=allowed` line before each QE command and before each dump or run point, so at least as many lines at each (N, delta, y) as guarded commands there (33 in all), and no refusal at a plan triple.
 3. Loads P01-P14 under rules SEED and STOP:
-   - each point's SHA256SUMS against its receipts (every `.hbp`, `.err` and `.eng.err`);
+   - each point's SHA256SUMS against its receipts (every `.hbp`, `.err` and `.eng.err`); `read` and `verify` take no flag, and nothing skips this check;
    - every call file's trailer (`rc=E rc_reader=R steps=S`, S the steps that try ran with), AGG_END hash, `nl_sha256`, grammar and identities;
    - one block per call, and every side file's size and sha256;
    - every side file against its own block (ensemble review M4): start and count, variants and records, the four atom-flag counts against AGG_ATOMS, and per record and variant m, Sum br, Sum br^2, Sum b_br and Sum b_br^2 over all samples and over the variant's atom set against AGG_SUM;
@@ -101,7 +109,7 @@ Readings where the frozen text allows two, or says nothing (also written as STRI
 Tests:
 
 ```
-python3 -I polariton-stripes/reader/b/run_tests.py     # 286 unit tests, one skipped without STRIPES_EXCL_DIR, about 40 s
+python3 -I polariton-stripes/reader/b/run_tests.py     # 301 unit tests, none skipped, about 40 s
 python3 -I polariton-stripes/reader/b/e2e.py           # the end-to-end test, about 3.5 min, about 0.3 GB of temporary files
 ```
 
@@ -133,25 +141,41 @@ The owner ruled on 2026-11-09 that stage B moves from `fractions.Fraction` to in
 - `make(n, d)`, `add`, `sub`, `mul`, `div`, `neg`, `absq`, `cmp`, `sign`, `floor`, `ceil`, `ipow`, and `gcd` and `isqrt` in integers (no `math`).
 - Every result passes `_pair`, which checks `type(x) is int` for both parts (a bool is refused) and d > 0.
 - An operand must be a `Q` or an int. A float, complex, bool, Fraction, Decimal or str raises `TypeError`. Comparison is by cross-multiplication.
-- `Q`'s operators are these same functions. `Q` has no true division, floor division, power, `float`, `int` or `round`.
+- `Q`'s operators are these same functions. `/`, `//`, `%`, `divmod`, `float()` and `int()` on a `Q`, from either side, raise `QintError`; `Q` has no power or `round` (`TypeError`).
 - `exact.py` keeps its API (`fr`, `div`, `Iv`, `Ext`, `Rad`, `fmt`, ...) and the same algorithms, now on `Q`.
-- A `QintError` (a stray float, bool or other type) or an exact division by zero ends `read`, `audit` and `verify` with one STOP row, reason `qint`, and exit 3.
+- A `QintError` (a stray float, bool or other type), an exact division by zero, or any other `ValueError` or `ArithmeticError` ends `read`, `audit` and `verify` with one STOP row, reason `qint`, and exit 3, and no READ file is written.
 
-The source scan `b/tests/test_nofloat.py` refuses, in every .py of `b/`: the imports fractions, decimal, math and numpy (and statistics, cmath, random, json, pickle, marshal, importlib, ctypes, scipy, mpmath, sympy); the names float, round, complex, pow, eval, exec, compile; float and complex literals; true division anywhere; `**`; the attributes `__truediv__`, `__float__`, `fromhex`, `as_integer_ratio` and their kin; float formats; struct float codes. It plants one fault of each kind first.
+The source scan `b/tests/test_nofloat.py` refuses, in every .py of `b/`:
+
+- the imports fractions, decimal, math, numpy, statistics, cmath, random, json, pickle, marshal, importlib, ctypes, scipy, mpmath, sympy, operator, array, time, datetime, tomllib and builtins;
+- the names float, round, complex, pow, eval, exec, compile, `__import__`, format and `__builtins__`;
+- float and complex literals, true division anywhere, and `**`;
+- the attributes `__truediv__`, `__rtruediv__`, `__itruediv__`, `truediv`, `itruediv`, `__float__`, `__complex__`, `__round__`, `fromhex`, `as_integer_ratio`, `pow`, `__pow__`, `__rpow__`, `__ipow__`, `float`, `cast`, `literal_eval`, `float_info`, `timestamp`, `st_mtime`, `st_atime`, `st_ctime`, `getmtime` and `modules`;
+- `getattr`, unless it is called with a str constant as the name and that name is none of the attributes or names above;
+- a format spec in an f-string; in any string, a percent format of type e, f, g or % (with a mapping key, a `*` width or a `*` precision too) and a brace format spec of type e, f, g or % (as `str.format` and `format()` read it);
+- a struct call whose format is not a literal or holds a float code (e, f, d), called through `struct`, an alias of it, or a name imported from it; and `from struct import *`.
+
+It plants one fault of each kind first: 83 plants, one for every listed module, name and attribute (a test checks that none is left without one), and a clean control with integer struct codes, a constant `getattr`, `%s`, `%d` and braces that are not a float spec. The checker and the sabotage suite get the loose form of the same scan (`no_float.sh`). The scan reads the source; it is not a proof that no float can arise. The other half is at run time: `qint` refuses every operand that is not an int or a `Q`.
 
 CRT and rational reconstruction are not used. The largest pair measured: 1,389 bits in a whole read of the synthetic campaign, 1,753 bits in the frozen-decimal checks, 16,387 bits in the unit tests (the 16,384-bit refinement of `Rad.sign`). Python ints carry these directly. A read takes about 40 s.
 
 The two versions against each other, on control data only (no row point, no engine):
 
 ```
-python3 -I polariton-stripes/reader/check/compare_b.py [--excl <dir of X1.i.side, X0.i.side>]
+python3 -I polariton-stripes/reader/check/compare_b.py [--excl <dir of X1.i.side, X0.i.side>, such as polariton-stripes/reader/b/tests/data/excl>]
 ```
 
 It checks the evidence pin, lays the evidence out at its old depth beside a copy of the frozen file, and runs `run_b.py tables`, `run_b.py series`, `probe_b.py` and `probe_b.py --lens` with each version. The probe prints, at 30 significant digits, the closed forms at the excluded (delta, y, t), the QE rows at N = 9, delta = 1/3 and the Q helpers on them, the pooled blocks at N = 27, delta = 1/4 with every estimator and 412 READ rows built on them, the run sums of XR0 and XR1, and with `--excl` the paired sums of the real side files. The lens runs the row builders of Q01-Q07, E09-E15 and E17-E19: on fabricated QE receipts and runs R1-R4 that the live `tests/campaign.py --only qe,runs` writes once (small integers, no engine value), and on the X1 and X0 blocks. It prints each read by its fields, so text-only changes do not reach it. E16 is left out, since its conservative SE_pair changed its output on purpose; E01-E08 need the table's own points. On this seat all four outputs were byte-identical (probe 1,122 lines with `--excl`, lens 784 lines).
 
-At the conversion step alone, before the open items below changed any output, both versions also wrote byte-identical files on the e2e campaigns: the 16,914 campaign files, the READ file (sha256 `c625ee46...`) and the STOP campaign's READ file (`9e7be937...`). The open items then changed the trailer grammar, the side files and E16, so that comparison is not repeatable on the current tree; the probe and the lens are.
+At the conversion step alone, before the open items below changed any output, both versions also wrote byte-identical files on the e2e campaigns: the 16,914 campaign files, the READ file (sha256 `c625ee46...`) and the STOP campaign's READ file (`9e7be937...`). Those two hashes came from an uncommitted working tree: no commit holds the conversion without the later fixes (5aad307 is the Fraction version, c036d7a has both), so git history cannot reproduce them. The open items then changed the trailer grammar, the side files and E16. What is repeatable on the current tree is the probe, the lens and `check/compare_read_b.py` below.
 
-The later fixes change the live output on purpose, and the evidence keeps the old one. On the e2e campaigns of this tree (the evidence given the old trailer grammar, the run on this seat's scratch folder), each difference is one of these:
+The later fixes change the live output on purpose, and the evidence keeps the old one. `check/compare_read_b.py` (review M5, run in CI after `e2e.py`) has each version `read` the clean campaign and the STOP campaign. The evidence reads a copy in its own receipt grammar: ` steps=` dropped from every call-file trailer and run `.rc` file, and the point's SHA256SUMS given the new sha256 of each rewritten call file. It requires every STRIPES_READ and STRIPES_VERDICT row that differs to fall in one of the declared cases below, compares the head, the inputs and the notes against their own declared lists, and then checks itself on ten planted undeclared differences, each of which it must find:
+
+```
+python3 -I polariton-stripes/reader/check/compare_read_b.py [--campaigns <the --work folder of e2e.py --keep>]
+```
+
+Each difference is one of these:
 
 - E16, 24 reads: the bounds and the detail of the conservative SE_pair (no verdict changed on the campaign).
 - The band of an infinite end prints open, `(0,inf)` and `(-inf,inf)`: 20 reads of E15, E19 and Q07 (text only).
@@ -159,11 +183,11 @@ The later fixes change the live output on purpose, and the evidence keeps the ol
 - Rule STOP for runs: R2's lost batch leaves every R2 read NOT_MEASURED (STOP campaign, 11 reads). E04 turns from NOT_MET to NOT_RESOLVED and E19 from MET to NOT_RESOLVED; E18 stays NOT_MET on its R1 read.
 - The head and notes: version 0.2.0, the `reader_b` tree pin, the run notes (`checked=`), the reading notes, and the receipts' new trailer grammar (the AGG input hashes and the run listing).
 
-Every other row was byte-identical: 2,634 of 2,678 READ rows and all 26 VERDICT rows on the clean campaign, 2,600 READ rows and 23 VERDICT rows on the STOP campaign. The E10 falsifier and the E19 bounds changed nothing there: the campaign has A = 0 at P02, where both forms of the falsifier agree, and n* - 4SE stays above 0 at every E19 read.
+Every other row was byte-identical: 2,634 of 2,678 READ rows and all 26 VERDICT rows on the clean campaign, 2,600 READ rows and 23 VERDICT rows on the STOP campaign (`compare_read_b.py` on this seat; the evidence's READ files `96507472...` and `164f3bbd...`). The E10 falsifier and the E19 bounds changed nothing there: the campaign has A = 0 at P02, where both forms of the falsifier agree, and n* - 4SE stays above 0 at every E19 read.
 
 ## The independent check of stage A
 
-`check/check_a.py` is a second stage A written from the frozen rules and AGG-FORMAT.md in Python (int and Fraction only). `check/compare.py` reads each stream with both readers. A block must be equal byte for byte, and its side file too. A STOP must agree in every field but `detail`, with the reason the case expects.
+`check/check_a.py` is a second stage A written from the frozen rules and AGG-FORMAT.md in Python (int only). `check/compare.py` reads each stream with both readers. A block must be equal byte for byte, and its side file too. A STOP must agree in every field but `detail`, with the reason the case expects.
 
 ```
 cd polariton-stripes/reader/a
@@ -171,12 +195,43 @@ STRIPES_EMIT_DIR=/abs/streams cargo +1.81.0 test --locked --offline --release --
 python3 -I ../check/compare.py --ra $CARGO_TARGET_DIR/release/stripes-read-a --streams /abs/streams [--excl <dir of X1.i.txt, X0.i.txt>]
 ```
 
-The emitter writes 67 synthetic cases:
+The emitter writes 96 synthetic cases:
 
-- 14 blocks: designed streams at y = 1/40 and y = 0, the LOCK lattice, a VNC-only stream, and table-point streams at P13 (with side files, one with a dropped record), P14, P01, P07, P08, X1 and X0;
-- 53 STOPs: every STOP path of the stream and the arguments, and the planted exchange-atom faults.
+- 17 blocks: designed streams at y = 1/40 and y = 0, the LOCK lattice, a VNC-only stream, table-point streams at P13 (with side files, one with a dropped record), P14, P01, P07, P08, X1 and X0, and three of the probes below (`probe15_block`, `probe17_block`, `probe18_block`);
+- 79 STOPs: 51 faulty streams (`stopNN_REASON`) and 10 faulty argument lists (`argsNN_REASON`), the planted exchange-atom faults, and 16 of the probes (`probeNN_REASON`). `compare.py` requires the reason a case is named for, and a block for `probeNN_block`.
 
-On this seat all 67 were equal, and so were the 4 real excluded dumps (71 of 71). CI runs the synthetic cases only.
+Between them they give 48 of the 57 reasons of the AGG-FORMAT STOP table. The 9 that no case gives: `read_error` (stdin from a file does not fail); `record_without_ctrl` and the four `missing_TWB*` (no stream that passes the row sequence check lacks those rows); `aggregate_identity` (a reader fault); `block_sum_overflow` and `side_bound_above_u64` (values the engine cannot reach; a stream that reaches them first overflows a 128-bit sum, a panic in stage A, while `check_a.py` has unbounded ints, so the two readers would differ there). The agreement claim is for the emitted cases and the real excluded dumps only.
+
+The probes (review M7, at Tsyn and X1 only): 16 gave a different outcome, reason or line in the two readers of 73fb7ee (stage A `c8c3f0d1` and that `check_a.py`: 80 of these 96 cases equal, the 16 differ), and 3 are controls on which they already agreed. Non-canonical rationals on every row, `y = -0`, `+1/40`, `01/40`, `1/040`, `delta = +1/4` and `u = +1`, were a block in stage A (an i128 parse) and `bad_rational` in `check_a.py`; `y = -0` at X1 was `table_mismatch` against `bad_rational`; a `y` with a 43-digit denominator was `bad_rational` in stage A (i128) and a block in `check_a.py`. `seed_string=none` with seed = sha256("none") on every row was `head_seed` in stage A and a block in `check_a.py`. `dtden = 0` and `N = 1` were `head_dtden` and `head_N` against `bad_integer`; `dtden = 32` at X1 was `table_mismatch` against `head_dtden`; a token without `=` other than the key was `row_field_without_value` against `row_key`; a first row `TWB_HEAD` alone was `row_short` against `first_row_not_TWB_HEAD`; a start fault followed by a TWB_DONE fault was `field_value` against `start_mismatch`; ctrl `1:0:0` at X1 was `table_mismatch` in both, at the record's last line against line 0. The controls: the token `xw` alone, `y = 0/7` and `y = -1/40`. Now stage A reads a rational as text by RAT_RE (no width limit), both refuse `seed_string=none`, `check_a.py` takes stage A's reasons for N, dtden and a token without `=`, and both follow the check order of AGG-FORMAT.md section 8, so all 96 are equal.
+
+On this seat all 96 were equal, and so were the 4 real excluded dumps (100 of 100). CI runs the synthetic cases only and requires 96 of 96.
+
+## The real excluded-point data
+
+`b/tests/data/excl/` holds the real dumps that the cloud seat made at the excluded points before the freeze review, with its scratch build of twens 0.4.0 (sha256 `33e62fbe...`), each command after a `twens guard`: X1 (N = 27, delta = 1/4, u = 1, y = 1/40) and X0 (y = 0), calls 0 and 1. No row point is there. `PROVENANCE.txt` in the folder says where each file came from. The folder holds:
+
+- `COMMANDS.txt`, `READER.txt` and `GUARD.hbp`, byte for byte as the cloud seat wrote them; the absolute scratch paths in them are the historical record;
+- the four blocks `X*.agg` (byte-identical to `agg/X*.agg`) and their side files `X*.side`;
+- the four dumps as xz -9 copies, `X*.txt.xz` (4.2 to 4.3 MB each, 26.7 to 26.8 MB unpacked);
+- `SHA256SUMS`: the 13 lines of the source folder's own list unchanged, then every other file. `X1s4.0.txt` (call 0 of X1 with steps 64 to 256, 47 MB) is listed by its sha256 only: its xz copy is 8.5 MB, over this copy's 8 MB limit, and nothing reads it.
+
+`run_tests.py` reads the blocks and side files there (`RealSideFiles`, no longer skipped, and a check of the folder against its `SHA256SUMS`). For the rest, `check/excl_unpack.py` unpacks the dumps into a folder outside the repo, after checking every file present and every unpacked dump against `SHA256SUMS`. Then, from `polariton-stripes/reader`:
+
+```
+python3 -I check/excl_unpack.py --out /abs/excl
+(cd a && STRIPES_EXCL_DIR=/abs/excl cargo +1.81.0 test --locked --offline --release --test excluded_dumps -- --ignored)
+python3 -I check/compare.py --ra $CARGO_TARGET_DIR/release/stripes-read-a --excl /abs/excl
+python3 -I check/compare_b.py --excl b/tests/data/excl
+STRIPES_EXCL_DIR=/abs/excl CARGO_TARGET_DIR=/abs/path/outside/the/repo/ra sabotage/run.sh
+```
+
+These are the items the review could not see. On this seat, with stage A `7fe3c18f`, they gave:
+
+- the three ignored stage A tests: 3 passed. The third writes `SABOTAGE.txt` into the folder, and it was byte-identical to the one in the cloud seat's dump folder;
+- `compare.py --excl`: 4 of 4 blocks equal;
+- `compare_b.py --excl`: 4 of 4 equal, the probe 1,122 lines;
+- sabotage case 4c: CAUGHT, inside the full suite run. Run by hand, it is a STOP `summary_mismatch` at TWB step 64, VNC, br: stream -42498031717, reader -42498031718, the line S2 of the cloud seat's `SABOTAGE.txt`;
+- the producer of the X1 and X0 blocks, `stripes-read-a --point X1 --call 0 --side PATH < X1.0.txt` and so on: it writes each side file byte for byte, and each block byte for byte apart from `AGG_SIDE path=`, which holds the `--side` argument as given, and the AGG_END hash over it. The fixtures were written with `--side /tmp/claude-0/-home-user/b2fb539a-cb4d-5f0b-a22f-ca1a7fcb500d/scratchpad/stripes-build/excl/X1.0.side` (and so on). On this seat, with `--side` in a scratch folder, the side files were byte-identical, and the blocks became byte-identical once that path was put in `path=` and AGG_END recomputed. To get them byte for byte directly, give `--side` that same path (create the folder first); this seat did not, since the folder holds the cloud seat's originals.
 
 ## The sabotage suite
 
@@ -184,20 +239,21 @@ On this seat all 67 were equal, and so were the 4 real excluded dumps (71 of 71)
 CARGO_TARGET_DIR=/abs/path/outside/the/repo/ra polariton-stripes/reader/sabotage/run.sh
 ```
 
-It builds stage A, emits the synthetic streams, writes (or reuses, `STRIPES_CAMPAIGN`) the campaign, and checks first that the clean inputs read. Then it plants eleven faults (`sabotage/edit.py` edits copies; `sabotage/patch.py` plants a fault in stage B's code). Each case prints CAUGHT or MISSED:
+It builds stage A, emits the synthetic streams, writes (or reuses, `STRIPES_CAMPAIGN`) the campaign, and checks first that the clean inputs read. Then it plants twelve faults (`sabotage/edit.py` edits copies; `sabotage/patch.py` plants a fault in stage B's code). Each case prints CAUGHT or MISSED:
 
 1. The sign of bi flipped on one exchange atom:
    - bi=-0 on a LOCK atom is a STOP `bad_integer`;
    - a flipped nonzero bi is a STOP `summary_mismatch`;
    - an edited block fails `agg_sha256`;
    - a forged, consistent block turns E02 NOT_MET, with its `xbi` read in the falsifier.
-2. Two sector counts swapped: the block fails `agg_sha256` (with SHA256SUMS rewritten) or `sha256sums` (with AGG_END forged).
+2. Two sector counts swapped: the block fails `agg_sha256` (with SHA256SUMS rewritten) or `sha256sums` (with AGG_END forged). With AGG_END forged, `verify` of the clean READ file stops at `sha256sums` too, and `--no-sums` (review M3, removed) is a STOP `usage` for `read` and `verify`; no READ file is written.
 3. A dropped call: SHA256SUMS still lists it (`sha256sums`); with the list rewritten, rule SEED finds the call missing (`seed_dropped_call`).
-4. An altered TWB or TWB_ROUND sum: a STOP `summary_mismatch`. With `STRIPES_EXCL_DIR` the suite also tries this on a real excluded dump.
+4. An altered TWB or TWB_ROUND sum: a STOP `summary_mismatch`. With `STRIPES_EXCL_DIR` the suite also tries this on a real excluded dump (4c; a folder `check/excl_unpack.py --out` wrote serves).
 5. A wrong TWB_HEAD version: a STOP `head_version` in stage A, and in stage B for a forged block.
 6. A read-and-report read promoted to scored:
    - in a row module, stage B stops (`scoring_table`);
-   - in a READ file, `audit` stops (`scored_read`, or `scoring_table` when its `why` is changed too).
+   - in a READ file, `audit` stops (`scored_read`, or `scoring_table` when its `why` is changed too);
+   - 6d, the other way (review N19): a scored E04 read filed as read-and-report (`scored=0`, `why=X08`, `verdict=REPORT`), its VERDICT counts made to agree. Every other check of `audit` passes; the SCORING table stops it (`scoring_table`, E04 (17, 15) against (17, 16)).
 7. A falsifier evaluated on a read-and-report read: stage B stops (`falsifier`), in a row module and in a READ file.
 8. Rule STOP without its evidence (the review's probes A, B and C, and the runs). Each is a STOP:
    - P05 call 7 cut to 3 records with no attempt (`stop_attempt_count`);
@@ -212,8 +268,9 @@ It builds stage A, emits the synthetic streams, writes (or reuses, `STRIPES_CAMP
    - the same panic text filed with rc=0: a STOP `qe_stderr`;
    - B at (81, -1/54, t=2) moved by 1e-5: Q02 NOT_MET, with falsifier `par3`;
    - QE-RC.hbp short of a row: a STOP `qe_rc`.
-10. Stray floats: 13 floats, bools and true divisions against `qint` pairs, `Iv`, `Rad` and `fmt` each raise `TypeError` (the same `Fraction(1, 3) * 0.5` and `Fraction(0.1)` pass through `fractions.Fraction`); six faults planted in a copy of the live stage B source (true division, a float literal, `import fractions`, `import math`, `float()`, `round()`) are each found by the source scan.
+10. Stray floats: 27 floats, bools, true divisions, Fractions, Decimals and complexes (review N18: from either side of a `Q`, into `make`, `fr`, `Iv`, `Rad` and `fmt`) against `qint` pairs, `Iv`, `Rad` and `fmt` each raise `TypeError` (the same `Fraction(1, 3) * 0.5` and `Fraction(0.1)` pass through `fractions.Fraction`); six faults planted in a copy of the live stage B source (true division, a float literal, `import fractions`, `import math`, `float()`, `round()`) are each found by the source scan.
 11. A side file forged with every hash made to agree: one br of P08 call 0 moved by 1, its AGG_SIDE bytes and sha256, the block's AGG_END and SHA256SUMS rewritten. Its sums differ from the block's AGG_SUM: a STOP `side_sums`.
+12. A moved frozen file (review N1, M8): `edit.py frozen` copies `reader/a` and `reader/b` into a git repository of their own, beside copies of the frozen file and its README with one of them moved (the repo's frozen files are only read). One digit of the frozen file moved stops `read` and `audit`, CRLF line ends stop `audit`, one byte of the README moved stops `verify`, and no README stops `read`: each a STOP `frozen_sha256`, with no READ file written. The unmoved copy passes `audit`, and its `read` gets past the frozen check (to a missing guard file, `FileNotFoundError`).
 
 A forger who rewrites a block, its AGG_END and the point's SHA256SUMS together is not visible in the aggregates, unless the block names a side file whose sums then disagree (case 11). The defense is to commit the aggregates and their sums with the run (run plan step 8), with the stream hashes stage A prints.
 
@@ -225,9 +282,9 @@ polariton-stripes/reader/check/no_float.sh
 
 - Every folder row of `polariton-stripes/FLOAT-EVIDENCE.txt` is checked against its tree pin (`check/float_evidence.py`), and those folders are left out of the scans below.
 - The Rust of stage A, with comments and strings removed, is grepped for f32 and f64, float literals and float methods.
-- Every other .py under `reader/` is scanned as tokens for float and complex literals, float(), round, pow, math other than isqrt and gcd, numpy and the like.
-- Then the AST check of `b/tests/test_nofloat.py` runs on every such .py: strict on `b/` (the rules above under "Integer pairs"), loose on `check/` and `sabotage/` (math.isqrt, math.gcd and fractions allowed there, no `/` and no `**`).
-- A self-test first plants one fault of each kind, and a moved pin.
+- Every other .py under `reader/` is scanned as tokens for float and complex literals, float(), round, pow, math other than isqrt and gcd, numpy and the like, `builtins`, `__builtins__` and `tomllib`, and, after a `.`, the float doors (`pow`, `__pow__`, `float`, `__truediv__`, `cast`, `literal_eval`, `float_info`, `timestamp`, `st_mtime`, `getmtime`, `modules` and their kin).
+- Then the AST check of `b/tests/test_nofloat.py` runs on every such .py: strict on `b/` (the rules above under "Integer pairs"), loose on `check/` and `sabotage/` (math.isqrt, math.gcd and fractions allowed there, and the modules of the strict list; no `/`, no `**`, and the attribute, `getattr`, format and struct rules hold).
+- A self-test first plants one fault of each kind, the float doors of review M6 among them (`operator.pow`, `(2).__pow__`, `builtins.float`, `sys.float_info`, `time.time()`, `format()`, a computed `getattr` name, `from struct import unpack` with `<d`, `'{:.3f}'` and `'%(a).3f'`), and a moved pin.
 
 ## The run, with this seat's binaries
 
@@ -237,11 +294,11 @@ The binaries are built under this seat's scratch folder, never inside the repo:
 OUT=/tmp/claude-0/-home-user/b2fb539a-cb4d-5f0b-a22f-ca1a7fcb500d/scratchpad/stripes-build
 T=$OUT/tw/release/twens                          # twens 0.4.0, sha256 33e62fbe0837aeddc916a57d67848338cbc258aa1dfb85a01cfba53fb8a4e03f
 QE=$OUT/qe/release/polariton_first_correction    # sha256 6bf8ebf2309700cb5be4cce25d82e5c4ee70fbc49521d4d7686cfc1649aa0a21 (equal to the lane build)
-RA=$OUT/ra/release/stripes-read-a                # stage A, sha256 c8c3f0d12bcc5a21c703d0170b30637e8138b89004219b8d6562c43c36db7cf2
+RA=$OUT/ra-remap/release/stripes-read-a          # stage A, sha256 7fe3c18f59a75bd4b06ba080027045a4d066ca1677c173ec1139c2f2dcd80ed3 (git tree 590b2528 of reader/a)
 SB="python3 -I $PWD/polariton-stripes/reader/b/stripes_read_b/__main__.py"
 ```
 
-Never use `polariton-bridge/engines/ensemble/target/release/twens`, a stale 0.3.0 build. Rebuild with `(cd polariton-bridge/engines/ensemble && cargo build --release --locked --offline --target-dir $OUT/tw)` and `CARGO_TARGET_DIR=$OUT/qe cargo build --release --locked --bin polariton_first_correction`, and check both sha256 before use. Commit the reader with its sha256 before step 3 (run plan step 2). In a sparse checkout whose cone leaves out `polariton-stripes/` (this seat's cone is `.github polariton-bridge review-tools src`), stage it with `git add --sparse polariton-stripes .github/workflows/polariton-stripes.yml`: the 103 new files (`FLOAT-EVIDENCE.txt`, `qint.py`, `test_qint.py`, `compare_b.py`, `float_evidence.py`, `probe_b.py` and the 97 evidence files) and every changed one, the 16 `.rc` fixtures among them. Then run `no_float.sh`, `run_tests.py` and `compare_b.py` on a fresh checkout of the commit. The `reader_b` note of a READ file holds stage B's tree pin; `float_evidence.py --pins polariton-stripes/reader/b/` on the commit prints the same pin.
+Never use `polariton-bridge/engines/ensemble/target/release/twens`, a stale 0.3.0 build. Rebuild with `(cd polariton-bridge/engines/ensemble && cargo build --release --locked --offline --target-dir $OUT/tw)` and `CARGO_TARGET_DIR=$OUT/qe cargo build --release --locked --bin polariton_first_correction`, and check both sha256 before use. Build stage A from the committed reader with the path remapped, `(cd polariton-stripes/reader/a && RUSTFLAGS="--remap-path-prefix=$PWD=stage-a" CARGO_TARGET_DIR=$OUT/ra-remap cargo +1.81.0 build --locked --offline --release)`, and check that `sha256sum $RA` gives `7fe3c18f...` and `git rev-parse HEAD:polariton-stripes/reader/a` gives `590b2528...` (the pins of the stage A section). `$OUT/ra` keeps the earlier `c8c3f0d1` build. Commit the reader with its sha256 before step 3 (run plan step 2). In a sparse checkout whose cone leaves out `polariton-stripes/` (this seat's cone is `.github polariton-bridge review-tools src`), stage it with `git add --sparse polariton-stripes .github/workflows/polariton-stripes.yml`: the 103 new files (`FLOAT-EVIDENCE.txt`, `qint.py`, `test_qint.py`, `compare_b.py`, `float_evidence.py`, `probe_b.py` and the 97 evidence files) and every changed one, the 16 `.rc` fixtures among them. Then run `no_float.sh`, `run_tests.py`, `compare_b.py`, `e2e.py --keep` and `compare_read_b.py` on a fresh POSIX checkout of the commit (Linux, or WSL on ext4, not `/mnt/c`). The `reader_b` note of a READ file holds stage B's tree pin; `float_evidence.py --pins polariton-stripes/reader/b/` on the commit prints the same pin. Both take each mode from git's index (`git ls-files -s`), so any checkout of the commit gives that pin, and stage B writes no READ file from a working tree whose modes differ from the index or that holds a file the index does not. The `reader_a` note names stage A's source, the git tree of `reader/a` taken from the index (`git_tree_polariton-stripes/reader/a/_590b2528...` on the commit); stage B writes no READ file when a file under `reader/a` differs from the index or is not in it (STOP `stage_a_tree`), so stage those edits first too.
 
 All commands below run in `polariton-stripes/receipts/`:
 
