@@ -49,7 +49,7 @@ def main(argv):
     while i < len(argv):
         if argv[i] in ("--excl", "--work") and i + 1 < len(argv):
             if argv[i] == "--excl":
-                excl = argv[i + 1]
+                excl = os.path.abspath(argv[i + 1])  # probe_b.py runs in another folder
             else:
                 work = argv[i + 1]
             i += 2

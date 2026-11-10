@@ -766,8 +766,11 @@ class Stop(unittest.TestCase):
         r = reads_of(v)["iid_P02_VNC_t1"]
         d = dict(r.detail)
         self.assertEqual(d["lost_calls"], 1)
-        self.assertIn("NOT_MEASURED", d["n4096"])
-        self.assertEqual(r.outcome, c.NOT_RESOLVED)
+        self.assertEqual(d["n4096"], "NOT_MEASURED_call_loss_insufficient_blocks")
+        self.assertEqual((d["nominal_blocks_n4096"], d["complete_blocks_n4096"]), (1024, 960))
+        self.assertEqual(d["reason"], "call_loss_insufficient_blocks")
+        self.assertEqual(r.outcome, c.NOT_MEASURED)
+        self.assertEqual(v.verdict, c.NOT_RESOLVED)
 
     def test_no_qe(self):
         v = row("E18", with_qe=False)
@@ -801,6 +804,130 @@ class Stop(unittest.TestCase):
         with self.assertRaises(c.StageBStop) as e:
             m.read_e_mom(inp, rows=("E18",))
         self.assertEqual(e.exception.reason, "missing_point")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The owner's ruling on E12/E13 (PR #18 comment 6753596286).
+
+
+def full_point(pid, step, lose=(), short=None):
+    """A VNC-only point of 4096-sample calls at its nominal count, one record, Z_n = 1 at every n; `short` drops one
+    block of n=4096 from call 0's AGG_BLK (a shortfall no lost call explains)."""
+    spec = c.DUMP_POINTS[pid]
+    pt = c.Point(spec)
+    for i in range(spec.calls):
+        if i in lose:
+            pt.lost.append((i, "engine_stop_rc4"))
+            continue
+        b = c.CallBlock()
+        b.call, b.steps, b.variants = i, (step,), (VNC,)
+        s = sum_block(c.COUNT, 0)
+        b.sums[(step, VNC, "all")] = s
+        for n in c.BLOCK_SIZES:
+            b.blk[(step, VNC, n)] = blk_block(c.COUNT, s["br2"], 0, n)
+        if short and i == 0:
+            b.blk[(step, VNC, short)] = dict(b.blk[(step, VNC, short)], K=b.blk[(step, VNC, short)]["K"] - 1)
+        pt.calls[i] = b
+    pt.steps = (step,)
+    return pt
+
+
+class OwnerRulingE12E13(unittest.TestCase):
+    SC = c.scored("iid_identity")
+
+    def iid(self, pt, kind="iid"):
+        return m.z_read("E12", "iid_x", "at", self.SC, pt, 64, VNC, "all", m.n_list(pt.spec.vnc), kind)
+
+    def test_e12_every_power_of_2_on_the_nominal_count(self):
+        # ruling 1: every power of 2 from 4 to 4096 with at least 1024 blocks in the nominal sample count
+        self.assertEqual(m.n_list(1 << 22), (4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096))
+        self.assertEqual(m.n_list(1 << 20), (4, 8, 16, 32, 64, 128, 256, 512, 1024))
+        self.assertEqual(m.n_list(1 << 18), (4, 8, 16, 32, 64, 128, 256))
+        r = reads_of(row("E12"))
+        sizes = lambda rid: [k for k, _ in r[rid].detail if k[:1] == "n" and k[1:].isdigit()]  # noqa: E731
+        self.assertEqual(sizes("iid_P02_VNC_t1"), ["n%d" % n for n in m.n_list(1 << 22)])
+        self.assertEqual(sizes("iid_P05_VNC_t1"), ["n%d" % n for n in m.n_list(1 << 20)])
+        self.assertEqual(sizes("iid_P02_V1_t1"), ["n%d" % n for n in m.n_list(1 << 18)])
+        self.assertEqual(sizes("zero_P01_VNC_t1"), ["n%d" % n for n in m.n_list(1 << 22)])
+        # the IID identity and the CLT 3SE thresholds are kept
+        self.assertEqual(r["iid_P02_VNC_t1"].band, "abs(Z_n-1-(n-1)rho_u)+3SE<=1/4+(n-1)rho_u/10")
+        self.assertEqual(r["zero_P01_VNC_t1"].band, "abs(Z_n-1)+3SE<=1/4")
+
+    def test_e13_bands_on_powers_of_4_only(self):
+        # ruling 2: the frozen plateau bands at n = 4^k, scored vs read-and-report unchanged, no band from E12
+        v = row("E13")
+        bands = [x for x in v.reads if x.rid.startswith("band_")]
+        self.assertEqual(len(bands), sum(len(b) for _, _, b in m.E13_BANDS))
+        for x in bands:
+            n = int(x.rid.rsplit("_n", 1)[1])
+            self.assertIn(n, m.POW4, x.rid)
+        self.assertEqual(sorted(x.rid for x in bands if x.scored),
+                         sorted("band_%s_t%d_n%d" % (pid, t, n) for pid, t, b in m.E13_BANDS
+                                if (pid, t) in (("P02", 2), ("P08", 1)) for n, _, _ in b))
+        self.assertEqual({x.row for x in reads_of(row("E12")).values()}, {"E12"})
+        self.assertFalse([x for x in row("E12").reads if x.kind == "band"])
+
+    def test_one_lost_call_at_2_22(self):
+        # ruling 3 and 4: 2^22/4096 = 1024 blocks, 1023 after one lost call: n=4096 NOT_MEASURED with its audit fields
+        whole = self.iid(full_point("P02", 64))
+        self.assertEqual(whole.outcome, c.MET)
+        self.assertNotIn("reason", dict(whole.detail))
+        r = self.iid(full_point("P02", 64, lose=(500,)))
+        d = dict(r.detail)
+        self.assertEqual(r.outcome, c.NOT_MEASURED)
+        self.assertEqual(d["n4096"], "NOT_MEASURED_call_loss_insufficient_blocks")
+        self.assertEqual((d["nominal_blocks_n4096"], d["complete_blocks_n4096"]), (1024, 1023))
+        self.assertEqual(d["reason"], "call_loss_insufficient_blocks")
+        self.assertEqual(d["missing_indices"], "2048000-2052095")
+        self.assertEqual(d["schedule"], "calls_0-1023_x4096_indices_0-4194303")
+        self.assertEqual(d["lost_calls"], 1)
+        # the nominal grid is kept, not shrunk to 2048: every size stays listed, the others measured on their blocks
+        self.assertEqual([k for k in d if k[:1] == "n" and k[1:].isdigit()], ["n%d" % n for n in m.n_list(1 << 22)])
+        self.assertTrue(d["n2048"].endswith("_MET"))
+        self.assertNotIn("nominal_blocks_n2048", d)
+        parse_row(r.row_text())
+
+    def test_lost_call_band(self):
+        pt = full_point("P02", 128, lose=(500,))
+        sc = c.scored("unexposed")
+        r = m.zband_read("E13", "band_P02_t2_n4096", "at", sc, pt, 128, 4096, c.MET, "rho=x")
+        d = dict(r.detail)
+        self.assertEqual((r.outcome, r.verdict, r.scored), (c.NOT_MEASURED, c.NOT_MEASURED, True))
+        self.assertEqual((d["nominal_blocks_n4096"], d["complete_blocks_n4096"]), (1024, 1023))
+        self.assertEqual((d["reason"], d["missing_indices"]), ("call_loss_insufficient_blocks", "2048000-2052095"))
+        self.assertEqual(r.frozen, "rho=x")
+        self.assertEqual(m.zband_read("E13", "b", "at", sc, pt, 128, 1024, c.MET, "x").outcome, c.MET)
+
+    def test_lost_call_never_met_miss_or_not_resolved(self):
+        # a lost size is NOT_MEASURED; a measured MISS or NOT_RESOLVED elsewhere in the read is kept
+        lost = full_point("P02", 64, lose=(500,))
+        for n, z, want in ((4, fr(3, 2), c.MISS), (4, fr(5, 4), c.NOT_RESOLVED)):
+            for b in lost.calls.values():
+                s2 = b.sums[(64, VNC, "all")]["br2"]
+                b.blk[(64, VNC, n)] = blk_block(c.COUNT, s2, 0, n, z)
+            r = self.iid(lost)
+            self.assertEqual(r.outcome, want)
+            self.assertEqual(dict(r.detail)["n4096"], "NOT_MEASURED_call_loss_insufficient_blocks")
+
+    def test_row_verdicts_after_a_loss(self):
+        # E12 and E13 with a lost P02 block: the affected reads NOT_MEASURED, labels and scoring as without the loss
+        for rid in ("E12", "E13"):
+            clean, lost = row(rid), row(rid, lose={"P02": (78,)})
+            self.assertEqual([(x.rid, x.scoring.why, x.scored) for x in clean.reads],
+                             [(x.rid, x.scoring.why, x.scored) for x in lost.reads])
+            got = reads_of(lost)
+            for x in lost.reads:
+                if dict(x.detail).get("reason") == m.CALL_LOSS:
+                    self.assertEqual(x.outcome, c.NOT_MEASURED, x.rid)
+            self.assertNotIn(lost.verdict, (c.MET, c.NOT_MET))
+        self.assertEqual(got["band_P02_t2_n4096"].outcome, c.NOT_MEASURED)
+        self.assertEqual(got["band_P02_t2_n1024"].outcome, c.MET)
+
+    def test_unexplained_shortfall_stops(self):
+        # a size short of its nominal blocks with no lost call is a STOP: a missing block is never zero data
+        with self.assertRaises(c.StageBStop) as e:
+            self.iid(full_point("P02", 64, short=4096))
+        self.assertEqual(e.exception.reason, "block_count")
 
 
 class RealExcluded(unittest.TestCase):

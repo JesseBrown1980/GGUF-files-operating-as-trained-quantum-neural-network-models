@@ -196,7 +196,13 @@ def _comparand(o):
 
 
 def _pair(n, d):
-    """The checked result of every operation: both parts int, d > 0. The callers pass reduced pairs."""
+    """The checked result of every operation: both parts int, d > 0. It does not reduce: every caller passes a pair that is
+    reduced by construction (review N13), so gcd(n, d) = 1 holds for every Q there is:
+    - _reduced divides by g = gcd(n, d) after the sign is moved to n, so gcd(n/g, d/g) = 1 and d/g > 0;
+    - (o, 1) for an int o (_operand, _comparand, q) and the constants (0, 1), (1, 1), (1, 2): gcd(n, 1) = 1, gcd(1, 2) = 1;
+    - neg and absq give (-n, d) or (n, d) of a Q: gcd(-n, d) = gcd(n, d) = 1;
+    - ipow gives (n^k, d^k) of a Q: a prime p dividing both would divide n and d, so gcd(n^k, d^k) = 1 (and (1, 1) at k = 0).
+    No other code builds a Q: Q's own constructor is refused, and add, sub, mul and div go through _reduced."""
     _int(n, "numerator")
     _int(d, "denominator")
     if d <= 0:

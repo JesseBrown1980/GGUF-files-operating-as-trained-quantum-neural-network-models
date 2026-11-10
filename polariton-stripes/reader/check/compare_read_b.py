@@ -20,7 +20,14 @@ row-point data: the campaigns are tests/campaign.py's small fabricated integers.
                          (0,inf]);
      R2_lost_batch       on the STOP campaign, a read of E04, E18 or E19 at R2 that the live stage B leaves
                          NOT_MEASURED stating the lost batch (rule STOP for runs), with that row's VERDICT;
-     qe_rc_reason        on the STOP campaign, a read whose detail alone differs, lost:qe_rc_<rc> for missing_QE_row.
+     qe_rc_reason        on the STOP campaign, a read whose detail alone differs, lost:qe_rc_<rc> for missing_QE_row;
+     call_loss_blocks    on the STOP campaign, an E12 or E13 read with a size below 1024 complete blocks after a lost
+                         call (the owner's ruling, PR #18 comment 6753596286): that size NOT_MEASURED with reason
+                         call_loss_insufficient_blocks and the audit fields where the evidence prints K<k>_NOT_MEASURED;
+                         the read NOT_MEASURED where the evidence reads NOT_RESOLVED, or MISS or NOT_RESOLVED in both
+                         from a measured size (a Z_n read; REPORT for NOT_RESOLVED or MISS where the read is
+                         read-and-report); a band NOT_MEASURED in both, the evidence's detail
+                         lost:fewer_than_1024_blocks; with that row's VERDICT.
    The head, the inputs and the notes are compared apart, against their own declared lists (NOTE_CASES, INPUT_CASES).
 5. Prints one COMPARE_READ_B row per campaign, one COMPARE_READ_B_META row per campaign for the head, inputs and
    notes, a COMPARE_READ_B_UNEXPLAINED row per row outside every case (at most 20), and COMPARE_READ_B_DONE; exit 0
@@ -52,6 +59,8 @@ CALL_TRAILER = re.compile(r"(rc=(?:0|[1-9][0-9]*) rc_reader=(?:0|[1-9][0-9]*)) s
 RUN_RC = re.compile(r"(rc=(?:0|[1-9][0-9]*)) steps=[0-9,]+\Z")
 SUMS_LINE = re.compile(r"([0-9a-f]{64})  (\S+)\Z")
 R2_ROWS = ("E04", "E18", "E19")
+CALL_LOSS = "call_loss_insufficient_blocks"
+AUDIT_KEY = re.compile(r"(nominal_blocks_n|complete_blocks_n)[0-9]+\Z|(reason|missing_indices|schedule)\Z")
 QE_RC_DETAIL = re.compile(r"(?<=lost:)qe_rc_[1-9][0-9]*")
 
 # The head, input and note rows that may differ, each with its reason; any other difference is outside the list.
@@ -71,6 +80,11 @@ NOTE_CASES = {
     "reading_E12_E13_n": "reworded by the later fixes (a size left with fewer than 1024 measured blocks)",
     "reading_E16": "the conservative SE_pair of the later fixes",
     "reading_STOP_tries": "the steps of every try and rule STOP for runs, added by the later fixes",
+    "frozen_R1_s": "live only: R1's frozen s=1/2 against the s=1 stage B computes (review N6)",
+    "closed_STOP_runs": "live only: the GATE ruling the frozen text closes, with its frozen line (PR #18 comment)",
+    "closed_E16_bracket": "live only: the GATE ruling the frozen text closes, with its frozen lines (PR #18 comment)",
+    "closed_E02_counts": "live only: the GATE ruling the frozen text closes, with its frozen lines (PR #18 comment)",
+    "ruled_E12_E13": "live only: the owner's E12/E13 ruling (PR #18 comment 6753596286) the live stage B applies",
 }
 
 
@@ -162,6 +176,34 @@ def r2_lost(live, stop):
             and live["verdict"] == c.NOT_MEASURED and "batch_lost" in live["detail"])
 
 
+def call_loss(live, frac, stop):
+    """The live read states a call loss below 1024 blocks; the evidence read the same sizes, that one unmeasured."""
+    if not stop or live["row"] not in ("E12", "E13"):
+        return False
+    det = [x.split(":", 1) for x in live["detail"].split(",")]
+    d = dict(det)
+    if d.get("reason") != CALL_LOSS:
+        return False
+    if live["read"].startswith("band_"):
+        return frac["verdict"] == c.NOT_MEASURED and frac["detail"] == "lost:fewer_than_1024_blocks"
+    want = []
+    for k, v in det:
+        if AUDIT_KEY.match(k):
+            continue
+        if v == "NOT_MEASURED_" + CALL_LOSS:
+            v = "K%s_NOT_MEASURED" % d["complete_blocks_" + k]
+        want.append("%s:%s" % (k, v))
+    # a measured MISS or NOT_RESOLVED is kept in both; else the live NOT_MEASURED where the evidence NOT_RESOLVED
+    verdicts = (live["verdict"], frac["verdict"])
+    # (a read-and-report read prints REPORT for a measured outcome, NOT_MEASURED for none)
+    rr = live["scored"] == "0"
+    kept = ((c.REPORT, c.REPORT),) if rr else ((c.MISS, c.MISS), (c.NOT_RESOLVED, c.NOT_RESOLVED))
+    lost = (c.NOT_MEASURED, c.REPORT if rr else c.NOT_RESOLVED)
+    return frac["detail"] == ",".join(want) and (verdicts in kept and set(differing(live, frac)) == {"detail"}
+                                                 or verdicts == lost
+                                                 and set(differing(live, frac)) == {"verdict", "detail"})
+
+
 def read_case(live, frac, stop):
     """The declared case of a differing READ row, or None."""
     diff = differing(live, frac)
@@ -171,6 +213,8 @@ def read_case(live, frac, stop):
         return "band_infinite_end"
     if r2_lost(live, stop):
         return "R2_lost_batch"
+    if call_loss(live, frac, stop):
+        return "call_loss_blocks"
     if stop and diff == ["detail"] and QE_RC_DETAIL.sub("missing_QE_row", live["detail"]) == frac["detail"] \
             and QE_RC_DETAIL.search(live["detail"]):
         return "qe_rc_reason"
@@ -203,7 +247,7 @@ def compare_meta(live, frac):
 def compare(name, live_path, frac_path, stop, quiet=False):
     """The faults of a pair of READ files: every row outside the declared cases (printed unless quiet)."""
     live, frac = read_file(live_path), read_file(frac_path)
-    counts = {"E16_bounds": 0, "band_infinite_end": 0, "R2_lost_batch": 0, "qe_rc_reason": 0}
+    counts = {"E16_bounds": 0, "band_infinite_end": 0, "R2_lost_batch": 0, "qe_rc_reason": 0, "call_loss_blocks": 0}
     bad, r2_rows = [], set()
     lr, fr_ = live[3], frac[3]
     if [(r["row"], r["read"]) for r in lr] != [(r["row"], r["read"]) for r in fr_]:
@@ -218,7 +262,7 @@ def compare(name, live_path, frac_path, stop, quiet=False):
             bad.append(("STRIPES_READ", "%s:%s" % (a["row"], a["read"]), ",".join(differing(a, b))))
             continue
         counts[case] += 1
-        if case == "R2_lost_batch":
+        if case in ("R2_lost_batch", "call_loss_blocks"):
             r2_rows.add(a["row"])
     lv, fv = live[4], frac[4]
     if [v["row"] for v in lv] != [v["row"] for v in fv]:
@@ -237,7 +281,7 @@ def compare(name, live_path, frac_path, stop, quiet=False):
     if quiet:
         return bad
     print("COMPARE_READ_B|campaign=%s|live_sha256=%s|evidence_sha256=%s|read_rows=%d:%d|read_equal=%d|%s|"
-          "read_unexplained=%d|verdict_rows=%d:%d|verdict_equal=%d|verdict_R2_lost_batch=%d|verdict_unexplained=%d|"
+          "read_unexplained=%d|verdict_rows=%d:%d|verdict_equal=%d|verdict_declared_loss=%d|verdict_unexplained=%d|"
           "result=%s|json=0" % (
               name, file_sha256(live_path)[:16], file_sha256(frac_path)[:16], len(lr), len(fr_), equal,
               "|".join("%s=%d" % kv for kv in counts.items()), sum(1 for x in bad if x[0] == "STRIPES_READ"),
@@ -294,6 +338,9 @@ PLANTS = (
     ("an_E04_read_off_R2", "stop", "evidence", lambda k, d: is_read("E04")(k, d) and "R2" not in d["at"], "verdict",
      lambda d: c.MISS),
     ("verdict_row_Q01", "stop", "evidence", is_row("STRIPES_VERDICT", "row", "Q01"), "verdict", lambda d: c.NONE),
+    ("a_call_loss_read_MET_in_the_evidence", "stop", "evidence",
+     lambda k, d: k == "STRIPES_READ" and d["row"] == "E12" and d["read"] == "iid_P03_VNC_t1", "verdict",
+     lambda d: c.MET),
 )
 
 

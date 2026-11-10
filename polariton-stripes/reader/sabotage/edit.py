@@ -5,7 +5,7 @@ campaign call file or a READ file; nothing is edited in place and no engine runs
   block  --campaign D --point P --call I --op OP [--rehash] [--sums]
                                              OP: xatom_bi_nz, swap_sec, version_030
   drop   --campaign D --point P --call I [--sums]
-  read   --in F --out F --op OP              OP: promote, promote_why, falsify
+  read   --in F --out F --op OP              OP: promote, promote_why, demote, falsify
   stop   --campaign D --op OP                rule STOP without its evidence (SHA256SUMS rewritten each time):
                                              dump_no_attempt, dump_block_as_attempt, dump_garbage_attempt,
                                              dump_garbage_attempt_short, dump_stop_without_fault,
@@ -16,6 +16,11 @@ campaign call file or a READ file; nothing is edited in place and no engine runs
                                              agree: AGG_SIDE bytes and sha256, AGG_END and SHA256SUMS
   floats --work D                            writes D/qint_floats.py, D/fraction_floats.py (stray floats at run time)
                                              and D/b (a copy of the live stage B with floats planted in its source)
+  frozen --work D --op OP                    a copy of reader/a and reader/b in a git repository at D, the frozen
+                                             file and its README beside them, one of them moved; prints the copy's
+                                             stage B. OP: none (the control: nothing moved), byte (one digit of
+                                             the frozen file moved), crlf (its line ends CRLF), readme (one byte of
+                                             the README moved), no_readme
 """
 
 import hashlib
@@ -198,6 +203,19 @@ def cmd_read(a):
             return set_field(ln, "verdict", c.MET)
 
         edit_first(lines, lambda ln: ln.startswith(vrow), counts)
+    elif op == "demote":  # review N19: a scored E04 read filed as read-and-report (rule EXPOSED), its VERDICT agreeing
+        erow, ev = "STRIPES_READ|row=E04|", "STRIPES_VERDICT|row=E04|"
+        fals = field(next(ln for ln in lines if ln.startswith(ev)), "falsifier").split(":", 1)[0].split(",")
+        edit_first(lines, lambda ln: ln.startswith(erow) and field(ln, "scored") == "1"
+                   and field(ln, "verdict") == c.MET and field(ln, "read") not in fals,
+                   lambda ln: set_field(set_field(set_field(ln, "scored", "0"), "why", "X08"), "verdict", c.REPORT))
+
+        def demoted(ln):
+            for k, step in (("scored", -1), ("report", 1), ("met", -1)):
+                ln = set_field(ln, k, str(int(field(ln, k)) + step))
+            return ln
+
+        edit_first(lines, lambda ln: ln.startswith(ev), demoted)
     elif op == "falsify":
         fals = frozen.load().predict("E17")["falsifier"]
         edit_first(lines, lambda ln: ln.startswith(vrow),
@@ -357,8 +375,11 @@ def cmd_side(a):
 QINT_FLOATS = '''import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, sys.argv[1])
+import decimal
+import fractions
 from stripes_read_b import qint
 from stripes_read_b.exact import Iv, Rad, fmt, fr
+F, D = fractions.Fraction, decimal.Decimal
 CASES = (
     ("Q(1,3)*0.5", lambda: qint.make(1, 3) * 0.5),
     ("0.5*Q(1,3)", lambda: 0.5 * qint.make(1, 3)),
@@ -373,6 +394,21 @@ CASES = (
     ("fmt(0.25)", lambda: fmt(0.25)),
     ("fr(True)", lambda: fr(True)),
     ("Q(1,3)/2", lambda: qint.make(1, 3) / 2),
+    # review N18: a Fraction, a Decimal and a complex, from either side and into the exact classes
+    ("Q(1,3)*Fraction(1,2)", lambda: qint.make(1, 3) * F(1, 2)),
+    ("Fraction(1,2)+Q(1,3)", lambda: F(1, 2) + qint.make(1, 3)),
+    ("Fraction(1,2)==fr(1,2)", lambda: F(1, 2) == fr(1, 2)),
+    ("make(Fraction(1,3))", lambda: qint.make(F(1, 3))),
+    ("Iv(fr(1,3))*Fraction(1,2)", lambda: Iv(fr(1, 3)) * F(1, 2)),
+    ("Rad(Fraction(1,4))", lambda: Rad(F(1, 4))),
+    ("Q(1,3)+Decimal(1)", lambda: qint.make(1, 3) + D(1)),
+    ("Decimal('0.5')*Q(1,3)", lambda: D("0.5") * qint.make(1, 3)),
+    ("fr(Decimal('0.1'))", lambda: fr(D("0.1"))),
+    ("fmt(Decimal('0.25'))", lambda: fmt(D("0.25"))),
+    ("Q(1,3)*complex(1)", lambda: qint.make(1, 3) * complex(1)),
+    ("complex(1)+fr(1,2)", lambda: complex(1) + fr(1, 2)),
+    ("make(complex(1))", lambda: qint.make(complex(1))),
+    ("Iv(fr(1,3))+complex(1)", lambda: Iv(fr(1, 3)) + complex(1)),
 )
 for name, fn in CASES:
     try:
@@ -416,7 +452,52 @@ def cmd_floats(a):
             f.write(text.encode("ascii"))
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# A moved frozen file (review N1, M8). The copy is a git repository holding reader/a and reader/b in its index, so the
+# copy's read and verify pass their tree checks (stage_b_tree, stage_a_tree) and reach the frozen file; the frozen file
+# and the README beside it are copies at the depth frozen.py looks for them, one of them moved. The repo's own frozen
+# files are only read.
+
+
+def cmd_frozen(a):
+    import shutil
+    import subprocess
+
+    work, op = a["--work"], a["--op"]
+    if op not in ("none", "byte", "crlf", "readme", "no_readme"):
+        raise SystemExit("edit.py: frozen op " + op)
+    reader = os.path.dirname(HERE)
+    stripes = os.path.dirname(reader)
+    if os.path.isdir(work):
+        shutil.rmtree(work)
+    dst = os.path.join(work, "polariton-stripes")
+    skip = shutil.ignore_patterns("__pycache__", ".ruff_cache", "target", "data")
+    for part in ("a", "b"):
+        shutil.copytree(os.path.join(reader, part), os.path.join(dst, "reader", part), ignore=skip)
+    with open(os.path.join(stripes, frozen.FROZEN_NAME), "rb") as f:
+        hbp = bytearray(f.read())
+    with open(os.path.join(stripes, frozen.README_NAME), "rb") as f:
+        readme = bytearray(f.read())
+    if op == "byte":  # the first digit at or after the middle of the file, d -> d+1 mod 10
+        k = next(i for i in range(len(hbp) // 2, len(hbp)) if 48 <= hbp[i] <= 57)
+        hbp[k] = 48 + (hbp[k] - 47) % 10
+    elif op == "crlf":
+        hbp = bytearray(bytes(hbp).replace(b"\n", b"\r\n"))
+    elif op == "readme":
+        k = len(readme) // 2
+        readme[k] = 32 if readme[k] != 32 else 95
+    with open(os.path.join(dst, frozen.FROZEN_NAME), "wb") as f:
+        f.write(bytes(hbp))
+    if op != "no_readme":
+        with open(os.path.join(dst, frozen.README_NAME), "wb") as f:
+            f.write(bytes(readme))
+    for args in (["init", "-q"], ["add", "polariton-stripes/reader"]):
+        subprocess.run(["git", "-C", work] + args, check=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+    print(os.path.join(dst, "reader", "b", "stripes_read_b", "__main__.py"))
+
+
 COMMANDS = {
+    "frozen": (cmd_frozen, ("--work", "--op"), ()),
     "side": (cmd_side, ("--campaign",), ()),
     "floats": (cmd_floats, ("--work",), ()),
     "stream": (cmd_stream, ("--in", "--out", "--op"), ()),

@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# The sabotage suite of the stripe-phase reader: eleven planted faults, each of which the reader must catch. Every case
-# prints CAUGHT or MISSED; the suite exits 0 only when all eleven are CAUGHT. No engine runs here: the streams are
+# The sabotage suite of the stripe-phase reader: twelve planted faults, each of which the reader must catch, and one
+# documented fault it cannot see (case 13). Every case prints CAUGHT or MISSED (case 13 NOT_VISIBLE or MISSED); the
+# suite exits 0 only when all twelve are CAUGHT and case 13 reads as documented. No engine runs here: the streams are
 # synthetic (the stage A emulator) and the campaign is fabricated (reader/b/tests/campaign.py).
 #
 #   CARGO_TARGET_DIR=<outside the repo> reader/sabotage/run.sh
 #
 # Optional: STRIPES_SABOTAGE_WORK (work folder, kept), STRIPES_CAMPAIGN (an existing campaign folder),
-# STRIPES_EXCL_DIR (real dumps at the excluded points, X1.0.txt; adds one more stage A check).
+# STRIPES_EXCL_DIR (real dumps at the excluded points, X1.0.txt; adds one more stage A check, 4c; a folder that
+# reader/check/excl_unpack.py --out writes from reader/b/tests/data/excl serves).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 READER=$(dirname "$HERE")
@@ -52,7 +54,7 @@ TSYN=(--point Tsyn --call 0)
 # Baseline: the unsabotaged inputs are read, so every catch below is the fault's.
 ok=0
 ra "$S/good_y40.txt" "${TSYN[@]}" > "$WORK/good.agg" || ok=1
-ra "$S/table_P13_0_r2.txt" --point P13 --call 0 --side "$WORK/good.side" > "$WORK/p13.agg" || ok=1
+ra "$S/table_X0_5_r2.txt" --point X0 --call 5 --side "$WORK/good.side" > "$WORK/x0.agg" || ok=1
 CLEAN=$WORK/READ-clean.hbp
 $PY -I "$B" read $(inputs "$CAMPAIGN") --out "$CLEAN" > /dev/null || ok=1
 $PY -I "$B" audit --read "$CLEAN" > /dev/null || ok=1
@@ -74,8 +76,15 @@ report $r bi_flip_on_exchange_atom "stage A STOPs on bi=-0 (bad_integer) and on 
 # 2. Two sector counts swapped.
 r=0
 C=$(copy c2a); $EDIT block --campaign "$C" --point P01 --call 0 --op swap_sec --sums && stop agg_sha256 $PY -I "$B" read $(inputs "$C") --out "$WORK/r2a.hbp" || r=1
+rm -f "$WORK/r2b.hbp" "$WORK/r2c.hbp"
 C=$(copy c2b); $EDIT block --campaign "$C" --point P01 --call 0 --op swap_sec --rehash && stop sha256sums $PY -I "$B" read $(inputs "$C") --out "$WORK/r2b.hbp" || r=1
-report $r swapped_sector_counts "stage B refuses the block when SHA256SUMS is rewritten (agg_sha256) and when AGG_END is forged (sha256sums)"
+# review M3: no flag skips SHA256SUMS. verify of the clean READ file on case 2b's inputs stops at the same check, and
+# the flag that skipped it (--no-sums, removed) is a usage STOP for read and verify; no READ file is written
+stop sha256sums $PY -I "$B" verify --read "$CLEAN" $(inputs "$C") || r=1
+stop usage $PY -I "$B" read $(inputs "$C") --out "$WORK/r2c.hbp" --no-sums || r=1
+stop usage $PY -I "$B" verify --read "$CLEAN" $(inputs "$C") --no-sums || r=1
+[ ! -e "$WORK/r2b.hbp" ] && [ ! -e "$WORK/r2c.hbp" ] || r=1
+report $r swapped_sector_counts "stage B refuses the block when SHA256SUMS is rewritten (agg_sha256) and when AGG_END is forged (sha256sums), in read and in verify; --no-sums is a usage STOP for both, and no READ file is written"
 
 # 3. A dropped call.
 r=0
@@ -86,7 +95,7 @@ report $r dropped_call "SHA256SUMS lists the call (sha256sums); with the list re
 # 4. An altered TWB sum.
 r=0
 $EDIT stream --in "$S/good_y40.txt" --out "$WORK/s4a.txt" --op twb_br && stop summary_mismatch ra "$WORK/s4a.txt" "${TSYN[@]}" || r=1
-$EDIT stream --in "$S/table_P13_0_r2.txt" --out "$WORK/s4b.txt" --op round_rb_br && stop summary_mismatch ra "$WORK/s4b.txt" --point P13 --call 0 --side "$WORK/s4b.side" || r=1
+$EDIT stream --in "$S/table_X0_5_r2.txt" --out "$WORK/s4b.txt" --op round_rb_br && stop summary_mismatch ra "$WORK/s4b.txt" --point X0 --call 5 --side "$WORK/s4b.side" || r=1
 if [ -n "${STRIPES_EXCL_DIR:-}" ] && [ -f "$STRIPES_EXCL_DIR/X1.0.txt" ]; then
   $EDIT stream --in "$STRIPES_EXCL_DIR/X1.0.txt" --out "$WORK/s4c.txt" --op twb_br && stop summary_mismatch ra "$WORK/s4c.txt" --point X1 --call 0 --side "$WORK/s4c.side" || r=1
   rm -f "$WORK/s4c.txt"
@@ -104,7 +113,10 @@ r=0
 stop scoring_table $PY -I "$HERE/patch.py" promote $(inputs "$CAMPAIGN") --out "$WORK/r6a.hbp" || r=1
 $EDIT read --in "$CLEAN" --out "$WORK/r6b.hbp" --op promote && stop scored_read $PY -I "$B" audit --read "$WORK/r6b.hbp" || r=1
 $EDIT read --in "$CLEAN" --out "$WORK/r6c.hbp" --op promote_why && stop scoring_table $PY -I "$B" audit --read "$WORK/r6c.hbp" || r=1
-report $r report_read_promoted "a module scoring E15's RP13 cross-read is refused (scoring_table); in a READ file, E17 pi_t1 scored with why=X08 fails audit (scored_read), and with why=unexposed (scoring_table)"
+# 6d (review N19): the other way, a scored read demoted: E04's first MET signflip read filed as read-and-report
+# (scored=0, why=X08, verdict=REPORT), its VERDICT counts made to agree; only the SCORING table sees it
+$EDIT read --in "$CLEAN" --out "$WORK/r6d.hbp" --op demote && stop scoring_table $PY -I "$B" audit --read "$WORK/r6d.hbp" || r=1
+report $r report_read_promoted "a module scoring E15's RP13 cross-read is refused (scoring_table); in a READ file, E17 pi_t1 scored with why=X08 fails audit (scored_read), and with why=unexposed (scoring_table); a scored E04 read demoted to read-and-report, its VERDICT agreeing, fails audit (scoring_table)"
 
 # 7. A falsifier evaluated on a read-and-report read.
 r=0
@@ -151,7 +163,7 @@ report $r qe_exit_and_altered_B "a 6561 sector panic with rc=101 leaves its 4 re
 r=0
 $EDIT floats --work "$WORK/f10" || r=1
 out=$($PY -I "$WORK/f10/qint_floats.py" "$READER/b" 2>&1)
-{ [ "$(grep -c '^REFUSED|' <<<"$out")" = 13 ] && ! grep -q '^PASSED_THROUGH|' <<<"$out"; } || { echo "    $out" >&2; r=1; }
+{ [ "$(grep -c '^REFUSED|' <<<"$out")" = 27 ] && ! grep -q '^PASSED_THROUGH|' <<<"$out"; } || { echo "    $out" >&2; r=1; }
 out=$($PY -I "$WORK/f10/fraction_floats.py" 2>&1)
 [ "$(grep -c '^PASSED_THROUGH|' <<<"$out")" = 2 ] || { echo "    $out" >&2; r=1; }
 out=$($PY -I - "$READER/b" "$WORK/f10/b" <<'PYEOF'
@@ -169,7 +181,7 @@ PYEOF
 want=$(printf 'FOUND|file=%s|json=0\n' e2e.py stripes_read_b/common.py stripes_read_b/exact.py stripes_read_b/qint.py stripes_read_b/rows_q.py stripes_read_b/series.py)
 [ "$out" = "$want" ] || { echo "    scan found: $out" >&2; r=1; }
 rm -rf "$WORK/f10"
-report $r stray_float "13 stray floats, bools and true divisions against qint pairs, Iv, Rad and fmt each raise TypeError (Fraction(1,3)*0.5 and Fraction(0.1) pass through fractions.Fraction); 6 planted source faults (true division, a float literal, import fractions, import math, float(), round()) are each found by the source scan"
+report $r stray_float "27 stray floats, bools, true divisions, Fractions, Decimals and complexes against qint pairs, Iv, Rad and fmt each raise TypeError (Fraction(1,3)*0.5 and Fraction(0.1) pass through fractions.Fraction); 6 planted source faults (true division, a float literal, import fractions, import math, float(), round()) are each found by the source scan"
 
 # 11. A side file forged with every hash made to agree (ensemble review M4): one br of P08 call 0 moved by 1, its
 # AGG_SIDE bytes and sha256, the block's AGG_END and the point's SHA256SUMS rewritten. The side file's sums no longer
@@ -178,6 +190,44 @@ r=0
 C=$(copy c11); $EDIT side --campaign "$C" && stop side_sums $PY -I "$B" read $(inputs "$C") --out "$WORK/r11.hbp" || r=1
 report $r side_file_forged "a P08 side file edited with its row, AGG_END and SHA256SUMS forged: its sums differ from the block's AGG_SUM (side_sums)"
 
-for d in c1c c1d c2a c2b c3a c3b c5 c8 c9a c9b c9c c9d c11; do rm -rf "${WORK:?}/$d"; done
-echo "SABOTAGE|cases=11|caught=$((11 - MISSED))|missed=$MISSED|engine_runs=0|json=0"
+# 12. A moved frozen file (review N1, M8). edit.py copies reader/a and reader/b into a git repository of their own,
+# beside a copy of the frozen file and its README with one of them moved. The repo's frozen files are only read. The
+# unmoved copy passes audit and gets past the frozen check in read; each moved copy stops there (frozen_sha256).
+r=0
+F12=$WORK/f12
+rm -f "$WORK/r12a.hbp" "$WORK/r12d.hbp"
+M=$($EDIT frozen --work "$F12" --op none) && $PY -I "$M" audit --read "$CLEAN" > /dev/null || r=1
+# the unmoved copy's read passes its tree checks and the frozen check and reaches rule GUARD: a guard file not there
+stop FileNotFoundError $PY -I "$M" read --agg "$CAMPAIGN/agg" --runs "$CAMPAIGN/run" --qe "$CAMPAIGN/QE.hbp" \
+  --cost "$CAMPAIGN/QE-COST.hbp" --qe-rc "$CAMPAIGN/QE-RC.hbp" --guard "$F12/no_such_guard.hbp" --out "$WORK/r12a.hbp" || r=1
+M=$($EDIT frozen --work "$F12" --op byte) && stop frozen_sha256 $PY -I "$M" read $(inputs "$CAMPAIGN") --out "$WORK/r12a.hbp" || r=1
+M=$($EDIT frozen --work "$F12" --op byte) && stop frozen_sha256 $PY -I "$M" audit --read "$CLEAN" || r=1
+M=$($EDIT frozen --work "$F12" --op crlf) && stop frozen_sha256 $PY -I "$M" audit --read "$CLEAN" || r=1
+M=$($EDIT frozen --work "$F12" --op readme) && stop frozen_sha256 $PY -I "$M" verify --read "$CLEAN" $(inputs "$CAMPAIGN") || r=1
+M=$($EDIT frozen --work "$F12" --op no_readme) && stop frozen_sha256 $PY -I "$M" read $(inputs "$CAMPAIGN") --out "$WORK/r12d.hbp" || r=1
+[ ! -e "$WORK/r12a.hbp" ] && [ ! -e "$WORK/r12d.hbp" ] || r=1
+rm -rf "$F12"
+report $r frozen_file_moved "a copy of stage B beside the frozen file with one digit moved stops in read and audit (frozen_sha256), with CRLF line ends in audit, with one byte of the frozen README moved in verify, and with no README in read; no READ file is written; the unmoved copy passes audit, and its read gets past the frozen check"
+
+# 13. Not visible, by design (review N17): case 2's sector swap with the block, its AGG_END and the point's SHA256SUMS
+# all forged. Nothing in the aggregates can see it: the READ file passes audit with the same 26 VERDICT rows, and
+# the only STRIPES_READ rows that move are E07's at P01 (the lattice read's detail and lk_x2_P01_t1_LOCK's reported
+# value). This case is not counted as CAUGHT: it prints NOT_VISIBLE when exactly that holds, else MISSED (the limit
+# moved, so the README's statement of it must change). The defense is the run plan's: commit the aggregates and their
+# sums with the run, beside the stream hashes stage A prints (reader/README.md, the sabotage suite).
+r=0
+C=$(copy c13); $EDIT block --campaign "$C" --point P01 --call 0 --op swap_sec --rehash --sums || r=1
+if [ "$r" = 0 ] && $PY -I "$B" read $(inputs "$C") --out "$WORK/r13.hbp" > /dev/null && $PY -I "$B" audit --read "$WORK/r13.hbp" > /dev/null; then
+  cmp -s <(grep '^STRIPES_VERDICT|' "$CLEAN") <(grep '^STRIPES_VERDICT|' "$WORK/r13.hbp") || r=1
+  moved=$(diff <(grep '^STRIPES_READ|' "$CLEAN") <(grep '^STRIPES_READ|' "$WORK/r13.hbp") | grep '^>' | cut -d'|' -f2,3 | sort -u | tr '\n' ' ')
+  [ "$moved" = "row=E07|read=lk_lat_P01_t1_LOCK row=E07|read=lk_x2_P01_t1_LOCK " ] || { echo "    rows moved: $moved" >&2; r=1; }
+else r=1; fi
+if [ "$r" = 0 ]; then
+  echo "NOT_VISIBLE swapped_sector_counts_fully_forged: case 2's swap with the block, AGG_END and SHA256SUMS forged reads with the same 26 VERDICT rows and passes audit; only E07 at P01 moves (lk_lat_P01_t1_LOCK detail, lk_x2_P01_t1_LOCK value); the defense is the committed aggregates and sums"
+else
+  echo "MISSED swapped_sector_counts_fully_forged: the documented not-visible case no longer reads as documented"; MISSED=$((MISSED + 1))
+fi
+
+for d in c1c c1d c2a c2b c3a c3b c5 c8 c9a c9b c9c c9d c11 c13; do rm -rf "${WORK:?}/$d"; done
+echo "SABOTAGE|cases=12|caught=$((12 - MISSED))|missed=$MISSED|not_visible_documented=1|engine_runs=0|json=0"
 [ "$MISSED" = 0 ]

@@ -7,6 +7,7 @@ pub mod big;
 pub mod check;
 pub mod eng;
 pub mod points;
+pub mod rng;
 pub mod row;
 pub mod sector;
 pub mod sha256;
@@ -145,7 +146,7 @@ fn read_call<R: BufRead>(a: &Args, src: &mut stream::Lines<R>) -> Result<String,
         }
         e
     })?;
-    let checked = check::check(&parsed)?;
+    let checked = check::check(&parsed, table.is_some())?;
     let ag = agg::aggregate(&parsed)?;
     let pc = format!("point={}|call={}", a.point, a.call);
     let body = agg::rows(&parsed, &ag, &pc);

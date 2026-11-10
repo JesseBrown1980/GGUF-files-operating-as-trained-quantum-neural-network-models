@@ -9,10 +9,12 @@ probeNN_REASON); a case named probeNN_block must be a block in both.
 --streams DIR holds synthetic cases NAME.args (one argument per line, @SIDE@ for a side-file path) and NAME.txt (the
 stream), as written by `cargo test --test synthetic emit_streams_for_the_independent_check -- --ignored`.
 --excl DIR holds real twens dumps at the excluded points only: X1.<i>.txt (N=27, delta=1/4, y=1/40) and X0.<i>.txt
-(y=0), read as --point X1 or X0 --call i --side. This script runs no engine.
+(y=0), read as --point X1 or X0 --call i --side. This script runs no engine. Before any case it checks check_a.py's
+splitmix64 and xoshiro256** on the published reference vectors (COMPARE_PREFLIGHT).
 
-Exit 0 when every case is equal, 1 otherwise; usage errors exit 2."""
+Exit 0 when every case is equal and the preflight holds, 1 otherwise; usage errors exit 2."""
 
+import importlib.util
 import os
 import re
 import subprocess
@@ -23,7 +25,7 @@ CHECKER = os.path.join(HERE, "check_a.py")
 STOP_KEYS = ("reader", "reader_version", "point", "call", "reason", "line", "stdin_bytes", "stdin_lines",
              "stdin_sha256")
 EXCL_NAME = re.compile(r"(X[01])\.(0|[1-9][0-9]*)\.txt\Z")
-CASE_REASON = re.compile(r"(?:stop|args|probe)[0-9]+_([A-Za-z0-9_]+)\Z")
+CASE_REASON = re.compile(r"(?:stop|args|probe|draw)[0-9]+_([A-Za-z0-9_]+)\Z")
 CASE_BLOCK = re.compile(r"probe[0-9]+_block\Z")
 
 
@@ -124,6 +126,22 @@ def cases_excl(excl):
     return out
 
 
+def rng_vectors_equal():
+    """check_a.py's splitmix64 and xoshiro256** against the published reference vectors (stage A's rng.rs tests)."""
+    sys.dont_write_bytecode = True
+    spec = importlib.util.spec_from_file_location("check_a", CHECKER)
+    ca = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ca)
+    z, got = 0, []
+    for _ in range(3):
+        z, v = ca._splitmix(z)
+        got.append(v)
+    r = ca.Xoshiro(0)
+    r.s = [1, 2, 3, 4]
+    return (got == [0xE220A8397B1DCDAF, 0x6E789E6AA1B965F4, 0x06C45D188009454F]
+            and [r.next() for _ in range(4)] == [11520, 0, 1509978240, 1215971899390074240])
+
+
 def main(argv):
     opts, i = {}, 1
     while i < len(argv):
@@ -136,6 +154,10 @@ def main(argv):
     if "--ra" not in opts or not ("--streams" in opts or "--excl" in opts):
         sys.stderr.write(__doc__)
         return 2
+    vectors = rng_vectors_equal()
+    print("COMPARE_PREFLIGHT|check=check_a_rng_reference_vectors|result=%s|json=0" % ("equal" if vectors else "differ"))
+    if not vectors:
+        return 1
     work = opts.get("--work") or os.path.join(os.path.dirname(os.path.abspath(opts["--ra"])), "compare-work")
     os.makedirs(work, exist_ok=True)
     cases = []

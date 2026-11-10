@@ -739,6 +739,95 @@ fn probe_cases() -> Vec<Probe> {
     ]
 }
 
+/// The draws at a table point (review N8) and the rot bound (review N9). At a table point stage A rebuilds g, rot and
+/// eta from (seed, idx); each stream below is consistent in every other way (its starts and sums are rendered from the
+/// moved draw), so only that rebuild sees it. At Tsyn a rot component above 2^41 is refused before m() takes it; one
+/// of exactly 2^41 passes that check and fails the start rebuild (the rot was edited in the text).
+fn draw_cases() -> Vec<Probe> {
+    let x1 = vec!["--point", "X1", "--call", "2"];
+    let x0 = vec!["--point", "X0", "--call", "5", "--side", "@SIDE@"];
+    let tsyn = vec!["--point", "Tsyn", "--call", "0"];
+    let px1 = points::find("X1").expect("X1");
+    let px0 = points::find("X0").expect("X0");
+    let mut g_moved = table_stream(px1, 2, &STEPS, 106);
+    g_moved.samples[7].c[0] += 1;
+    let mut rot_moved = table_stream(px0, 5, &STEPS, 107);
+    rot_moved.samples[9].rot.0 += 1;
+    let mut eta_moved = table_stream(px0, 5, &STEPS, 107);
+    eta_moved.samples[11].eta += 1;
+    let good = small().render();
+    let rot_text = |v: &str| replace_nth(&good, "TWB_DUMP_SAMPLE|", 3, &|l| set_field(l, "rot", v));
+    vec![
+        (
+            "g0 of sample 7 moved by 2^35 at X1",
+            x1,
+            g_moved.render(),
+            Some("draw_mismatch"),
+        ),
+        (
+            "rot of sample 9 moved by 1 at X0",
+            x0.clone(),
+            rot_moved.render(),
+            Some("draw_mismatch"),
+        ),
+        (
+            "eta of sample 11 moved by 1 at X0",
+            x0,
+            eta_moved.render(),
+            Some("draw_mismatch"),
+        ),
+        (
+            "rot 2^41+1:0 at Tsyn",
+            tsyn.clone(),
+            rot_text("2199023255553:0"),
+            Some("rot_out_of_range"),
+        ),
+        (
+            "rot 0:-(2^41+1) at Tsyn",
+            tsyn.clone(),
+            rot_text("0:-2199023255553"),
+            Some("rot_out_of_range"),
+        ),
+        (
+            "rot 2^41:0 at Tsyn passes the bound",
+            tsyn,
+            rot_text("2199023255552:0"),
+            Some("start_mismatch"),
+        ),
+    ]
+}
+
+#[test]
+fn draws_rebuilt_at_table_points_and_rot_bounded() {
+    let side = std::path::PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("draws.side");
+    let side = side.to_str().expect("utf8 path").to_string();
+    for (what, args, text, want) in draw_cases() {
+        let args: Vec<&str> = args
+            .iter()
+            .map(|a| if *a == "@SIDE@" { side.as_str() } else { a })
+            .collect();
+        let rep = read(&args, &text);
+        assert_eq!(rep.code, 3, "{what}: {}", rep.out);
+        assert_eq!(
+            stop_reason(&rep.out).as_deref(),
+            want,
+            "{what}: {}",
+            rep.out
+        );
+    }
+    for (id, call, with_side) in [("X1", 2u64, false), ("X0", 5, true), ("X1", 7, true)] {
+        let p = points::find(id).expect("point");
+        let c = call.to_string();
+        let mut args = vec!["--point", id, "--call", c.as_str()];
+        if with_side {
+            args.extend(["--side", side.as_str()]);
+        }
+        let rep = read(&args, &table_stream(p, call, &STEPS, 108).render());
+        assert_eq!(rep.code, 0, "{id}: {}", rep.out);
+        assert!(rep.out.contains("|table=checked|"), "{id}");
+    }
+}
+
 #[test]
 fn review_probes_read_as_stated() {
     let cases = probe_cases();
@@ -1064,7 +1153,9 @@ fn the_binary_end_to_end() {
     assert_eq!(out.status.code(), Some(3));
 }
 
-/// A stream of 4096 draws at a table point or an excluded point, with the call's mask and the records given.
+/// A stream of 4096 samples at a table point or an excluded point, with the call's mask and the records given. The
+/// draws g, rot and eta are the engine's from (seed, idx) (stage A rebuilds them at a table point, review N8); the
+/// observables and bounds are LCG values (no engine runs).
 fn table_stream(p: &points::Point, call: u64, steps: &[u64], seed: u64) -> Syn {
     let all = call < p.all_calls;
     let on = if all {
@@ -1078,19 +1169,12 @@ fn table_stream(p: &points::Point, call: u64, steps: &[u64], seed: u64) -> Syn {
     syn.start = 4096 * call;
     let vs = vars(&on);
     let mut rng = Lcg(seed);
-    for i in 0..4096 {
-        let mut c = [0i64; 6];
-        for x in c.iter_mut() {
-            *x = rng.int(5);
-        }
-        if i % 29 == 3 {
-            c[2] = c[0];
-            c[3] = c[1];
-        }
-        if i % 31 == 4 {
-            c[1] = 0;
-        }
+    for i in 0..4096u64 {
+        let (g, rot, eta) = stripes_read_a::rng::draws(syn.seed(), syn.start + i, on[MODE0]);
+        let c = g.map(|x| x >> 35);
         let mut s = sample(&mut rng, c, vs.len(), steps.len(), on[MODE0]);
+        s.rot = (rot[0], rot[1]);
+        s.eta = eta;
         for (vi, &v) in vs.iter().enumerate() {
             let exch = if v == LOCK {
                 c[1] == 0
@@ -1141,15 +1225,15 @@ fn emit_streams_for_the_independent_check() {
     }
     put("good_lock_lattice", &tsyn, &lock.render());
     put("good_vnc_only", &tsyn, &vnc_only().render());
-    let tables: [(&str, u64, &[u64], bool); 8] = [
-        ("P13", 0, &[64, 128], true),
-        ("P13", 5, &[64], true),
-        ("P14", 3, &[64, 128], false),
-        ("P01", 100, &[64, 128, 192, 256], false),
-        ("P07", 70, &[128, 192, 256], false),
-        ("P08", 64, &[64, 128], false),
+    // Excluded points only (review N8): stage A rebuilds a table point's draws from its seed, and no test computes the
+    // draws of a row point's seed, so no stream here carries a row-point id (the head checks of every point are in
+    // table_checks_at_every_point).
+    let tables: [(&str, u64, &[u64], bool); 5] = [
         ("X1", 2, &[64, 128], false),
         ("X0", 5, &[64, 128], true),
+        ("X1", 0, &[64], false),
+        ("X0", 7, &[64], true),
+        ("X1", 6, &[64, 128], true),
     ];
     for (k, (id, call, steps, with_side)) in tables.iter().enumerate() {
         let p = points::find(id).expect("point");
@@ -1171,6 +1255,13 @@ fn emit_streams_for_the_independent_check() {
     for (k, (_, args, text, want)) in probe_cases().iter().enumerate() {
         put(
             &format!("probe{k:02}_{}", want.unwrap_or("block")),
+            args,
+            text,
+        );
+    }
+    for (k, (_, args, text, want)) in draw_cases().iter().enumerate() {
+        put(
+            &format!("draw{k:02}_{}", want.unwrap_or("block")),
             args,
             text,
         );

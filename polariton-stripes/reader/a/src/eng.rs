@@ -66,6 +66,10 @@ pub const FIELDS: [&str; NF] = [
 
 pub type St = [i64; 6];
 
+/// m() takes a rot component only when |rot| <= 2^41 (review N9): `starts` refuses a larger one, and stage A's
+/// check STOPs `rot_out_of_range` before it.
+pub const ROT_LIMIT: u64 = 1 << 41;
+
 #[inline]
 pub fn m(a: i64, b: i64) -> i64 {
     ((i128::from(a) * i128::from(b)) >> Q) as i64
@@ -185,6 +189,9 @@ pub fn starts(
     rot30: (i64, i64),
     on: &[bool; NV],
 ) -> Result<Starts, &'static str> {
+    if rot30.0.unsigned_abs() > ROT_LIMIT || rot30.1.unsigned_abs() > ROT_LIMIT {
+        return Err("rot_above_2^41");
+    }
     let h = h_of(n);
     let (rp, ip, rm, im) = (m(g[0], h), m(g[1], h), m(g[2], h), m(g[3], h));
     let nsum = m(rp, rp) + m(ip, ip) + m(rm, rm) + m(im, im);

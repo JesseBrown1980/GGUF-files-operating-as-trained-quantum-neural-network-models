@@ -103,9 +103,32 @@ class Radicals(unittest.TestCase):
 
     def test_three_roots(self):
         self.assertEqual((Rad.sqrt(2) + Rad.sqrt(3) + Rad.sqrt(5) - fr(538, 100)).sign(), 1)  # 5.3823
-        # sqrt 2 + sqrt 8 - sqrt 18 = 0 with three radicands: refinement cannot decide an exact zero, so it refuses
+        # three independent radicands whose sum the refinement cannot resolve still refuse: the bound is 16384 bits
+        tiny = Rad.sqrt(2) + Rad.sqrt(3) + Rad.sqrt(5)
+        near = tiny.iv(20000)
         with self.assertRaises(ExactError):
-            Rad(0, ((1, 2), (1, 8), (-1, 18))).sign()
+            (tiny - near.lo).sign()
+
+    def test_square_ratio_radicands_merge(self):
+        # review N14: sqrt 8 = 2 sqrt 2 and sqrt 18 = 3 sqrt 2, so sqrt 2 + sqrt 8 - sqrt 18 is exactly 0 (it refused
+        # before, as a tie of three radicands that refinement cannot decide)
+        r = Rad(0, ((1, 2), (1, 8), (-1, 18)))
+        self.assertEqual((r.a, r.terms), (0, ()))
+        self.assertEqual(r.sign(), 0)
+        # rational radicands: sqrt(1/2) = (1/2) sqrt 2, sqrt(9/8) = (3/4) sqrt 2; one term on the least radicand
+        r = Rad(1, ((1, fr(1, 2)), (1, 2), (-4, fr(9, 8))))
+        # 1 + sqrt(1/2) + 2 sqrt(1/2) - 6 sqrt(1/2) = 1 - 3 sqrt(1/2), and 9/2 > 1
+        self.assertEqual(r.terms, ((-3, fr(1, 2)),))
+        self.assertEqual(r.sign(), -1)
+        # the order of the terms does not change the result
+        self.assertEqual(Rad(1, ((-4, fr(9, 8)), (1, 2), (1, fr(1, 2)))).terms, r.terms)
+        # radicands whose ratio is not a square stay apart; equal radicands add as before
+        self.assertEqual(len(Rad(0, ((1, 2), (1, 3), (1, 6))).terms), 3)
+        self.assertEqual(Rad(0, ((1, 3), (2, 3))).terms, ((3, 3),))
+        self.assertEqual(Rad(0, ((1, 12), (1, 27))).terms, ((fr(5, 2), 12),))  # sqrt 27 = (3/2) sqrt 12
+        # sqrt 2 + sqrt 8 + sqrt 3 - (1/3) sqrt 27 = 3 sqrt 2: the sqrt 3 class cancels
+        self.assertEqual((Rad.sqrt(2) + Rad.sqrt(8) + Rad.sqrt(3) - Rad.sqrt(27, fr(1, 3))).terms,
+                         ((3, 2),))
 
 
 class Read3(unittest.TestCase):
