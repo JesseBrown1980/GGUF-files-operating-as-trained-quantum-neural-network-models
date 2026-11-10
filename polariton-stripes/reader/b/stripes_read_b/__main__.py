@@ -127,6 +127,26 @@ READINGS = (
     ("reading_GUARD", "the_guard_is_a_function_of_(N,delta,y)_alone:_one_allowed_line_is_filed_before_each_QE_command"
                       "_and_before_each_dump_or_run_point,_whose_calls_and_batches_follow_it;_a_refusal_counts_only"
                       "_at_a_plan_triple"),
+    # review note N6: the frozen R1 row files s=1/2, and the reader never takes s from a STRIPES_POINT row
+    ("frozen_R1_s", "STRIPES_POINT_R1_(frozen_line_19)_files_s=1/2,_while_y_sqrt(N)=(1/27)_sqrt(729)=1;_stage_B"
+                    "_computes_s=y_sqrt(N)_itself_from_N_and_y_(rule_EXPOSED_reads_abs(s)=1_at_R1)_and_no_read_uses"
+                    "_the_filed_s;_the_frozen_bytes_stay_as_they_are"),
+    # the owner rulings of the receipt's GATE row that the frozen text closes (local seat, PR #18 comment 6749660971);
+    # line numbers are those of PREDICTION-STRIPE-PHASE.hbp at 1977d45
+    ("closed_STOP_runs", "closed_by_the_frozen_text,_the_literal_reading:_frozen_line_37_(rule_STOP)_gives_the_dump"
+                         "_clause_its_own_sentence_for_a_call_that_never_completes_(its_4096_indices_NOT_MEASURED)"
+                         "_and_the_run_clause_none:_the_point_keeps_only_the_records_all_64_batches_reached;_a_lost"
+                         "_batch_reached_none,_so_every_read_of_its_run_point_is_NOT_MEASURED_and_states_the_loss"),
+    ("closed_E16_bracket", "closed_by_the_frozen_text,_the_bracket_reading:_frozen_line_30_(rule_SECTOR)_has_every"
+                           "_ambiguous_cell_bracketed_in_every_test,_so_D++D-<=D_max_over_every_placement;_frozen_line"
+                           "_114_(E16)_holds_the_statement_abs(Pi_V-Pi_VNC)_and_the_recipe_(D+-D-)/(2M):_MET_when_the"
+                           "_statement_passes_at_every_placement,_MISS_when_the_recipe_fails_at_every_placement,_else"
+                           "_NOT_RESOLVED"),
+    ("closed_E02_counts", "closed_by_the_frozen_text,_counts_keyed_by_sample_count_and_variant_class:_frozen_line_4"
+                          "_(STRIPES_POINTS_COMMON)_gives_calls_i<64_every_variant_and_NL,_so_the_controls_cover_the"
+                          "_first_2^18_indices;_frozen_line_100_(E02)_keys_its_intervals_by_sample_count_and_variant"
+                          "_class,_[0,51]_at_2^18_on_those_indices;_a_partial_set_after_a_lost_call_has_a_count_no"
+                          "_interval_is_keyed_to,_so_its_count_is_NOT_MEASURED"),
 )
 
 

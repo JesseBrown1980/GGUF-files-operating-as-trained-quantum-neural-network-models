@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# The sabotage suite of the stripe-phase reader: twelve planted faults, each of which the reader must catch. Every case
-# prints CAUGHT or MISSED; the suite exits 0 only when all twelve are CAUGHT. No engine runs here: the streams are
+# The sabotage suite of the stripe-phase reader: twelve planted faults, each of which the reader must catch, and one
+# documented fault it cannot see (case 13). Every case prints CAUGHT or MISSED (case 13 NOT_VISIBLE or MISSED); the
+# suite exits 0 only when all twelve are CAUGHT and case 13 reads as documented. No engine runs here: the streams are
 # synthetic (the stage A emulator) and the campaign is fabricated (reader/b/tests/campaign.py).
 #
 #   CARGO_TARGET_DIR=<outside the repo> reader/sabotage/run.sh
@@ -53,7 +54,7 @@ TSYN=(--point Tsyn --call 0)
 # Baseline: the unsabotaged inputs are read, so every catch below is the fault's.
 ok=0
 ra "$S/good_y40.txt" "${TSYN[@]}" > "$WORK/good.agg" || ok=1
-ra "$S/table_P13_0_r2.txt" --point P13 --call 0 --side "$WORK/good.side" > "$WORK/p13.agg" || ok=1
+ra "$S/table_X0_5_r2.txt" --point X0 --call 5 --side "$WORK/good.side" > "$WORK/x0.agg" || ok=1
 CLEAN=$WORK/READ-clean.hbp
 $PY -I "$B" read $(inputs "$CAMPAIGN") --out "$CLEAN" > /dev/null || ok=1
 $PY -I "$B" audit --read "$CLEAN" > /dev/null || ok=1
@@ -94,7 +95,7 @@ report $r dropped_call "SHA256SUMS lists the call (sha256sums); with the list re
 # 4. An altered TWB sum.
 r=0
 $EDIT stream --in "$S/good_y40.txt" --out "$WORK/s4a.txt" --op twb_br && stop summary_mismatch ra "$WORK/s4a.txt" "${TSYN[@]}" || r=1
-$EDIT stream --in "$S/table_P13_0_r2.txt" --out "$WORK/s4b.txt" --op round_rb_br && stop summary_mismatch ra "$WORK/s4b.txt" --point P13 --call 0 --side "$WORK/s4b.side" || r=1
+$EDIT stream --in "$S/table_X0_5_r2.txt" --out "$WORK/s4b.txt" --op round_rb_br && stop summary_mismatch ra "$WORK/s4b.txt" --point X0 --call 5 --side "$WORK/s4b.side" || r=1
 if [ -n "${STRIPES_EXCL_DIR:-}" ] && [ -f "$STRIPES_EXCL_DIR/X1.0.txt" ]; then
   $EDIT stream --in "$STRIPES_EXCL_DIR/X1.0.txt" --out "$WORK/s4c.txt" --op twb_br && stop summary_mismatch ra "$WORK/s4c.txt" --point X1 --call 0 --side "$WORK/s4c.side" || r=1
   rm -f "$WORK/s4c.txt"
@@ -208,6 +209,25 @@ M=$($EDIT frozen --work "$F12" --op no_readme) && stop frozen_sha256 $PY -I "$M"
 rm -rf "$F12"
 report $r frozen_file_moved "a copy of stage B beside the frozen file with one digit moved stops in read and audit (frozen_sha256), with CRLF line ends in audit, with one byte of the frozen README moved in verify, and with no README in read; no READ file is written; the unmoved copy passes audit, and its read gets past the frozen check"
 
-for d in c1c c1d c2a c2b c3a c3b c5 c8 c9a c9b c9c c9d c11; do rm -rf "${WORK:?}/$d"; done
-echo "SABOTAGE|cases=12|caught=$((12 - MISSED))|missed=$MISSED|engine_runs=0|json=0"
+# 13. Not visible, by design (review N17): case 2's sector swap with the block, its AGG_END and the point's SHA256SUMS
+# all forged. Nothing in the aggregates can see it: the READ file passes audit with the same 26 VERDICT rows, and
+# the only STRIPES_READ rows that move are E07's at P01 (the lattice read's detail and lk_x2_P01_t1_LOCK's reported
+# value). This case is not counted as CAUGHT: it prints NOT_VISIBLE when exactly that holds, else MISSED (the limit
+# moved, so the README's statement of it must change). The defense is the run plan's: commit the aggregates and their
+# sums with the run, beside the stream hashes stage A prints (reader/README.md, the sabotage suite).
+r=0
+C=$(copy c13); $EDIT block --campaign "$C" --point P01 --call 0 --op swap_sec --rehash --sums || r=1
+if [ "$r" = 0 ] && $PY -I "$B" read $(inputs "$C") --out "$WORK/r13.hbp" > /dev/null && $PY -I "$B" audit --read "$WORK/r13.hbp" > /dev/null; then
+  cmp -s <(grep '^STRIPES_VERDICT|' "$CLEAN") <(grep '^STRIPES_VERDICT|' "$WORK/r13.hbp") || r=1
+  moved=$(diff <(grep '^STRIPES_READ|' "$CLEAN") <(grep '^STRIPES_READ|' "$WORK/r13.hbp") | grep '^>' | cut -d'|' -f2,3 | sort -u | tr '\n' ' ')
+  [ "$moved" = "row=E07|read=lk_lat_P01_t1_LOCK row=E07|read=lk_x2_P01_t1_LOCK " ] || { echo "    rows moved: $moved" >&2; r=1; }
+else r=1; fi
+if [ "$r" = 0 ]; then
+  echo "NOT_VISIBLE swapped_sector_counts_fully_forged: case 2's swap with the block, AGG_END and SHA256SUMS forged reads with the same 26 VERDICT rows and passes audit; only E07 at P01 moves (lk_lat_P01_t1_LOCK detail, lk_x2_P01_t1_LOCK value); the defense is the committed aggregates and sums"
+else
+  echo "MISSED swapped_sector_counts_fully_forged: the documented not-visible case no longer reads as documented"; MISSED=$((MISSED + 1))
+fi
+
+for d in c1c c1d c2a c2b c3a c3b c5 c8 c9a c9b c9c c9d c11 c13; do rm -rf "${WORK:?}/$d"; done
+echo "SABOTAGE|cases=12|caught=$((12 - MISSED))|missed=$MISSED|not_visible_documented=1|engine_runs=0|json=0"
 [ "$MISSED" = 0 ]

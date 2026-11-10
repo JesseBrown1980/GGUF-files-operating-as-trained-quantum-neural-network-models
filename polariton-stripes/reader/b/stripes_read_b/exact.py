@@ -370,6 +370,18 @@ def sqrt_iv(a, bits=ROUND_BITS):
 # Exact signs of a + sum_i b_i sqrt(x_i) (rule DECIMAL: comparisons squared and cross-multiplied).
 
 
+def _root_ratio(x, y):
+    """sqrt(x/y) as a Q when x/y is the square of a rational, else None; x, y > 0. With x = n_x/d_x and y = n_y/d_y,
+    x/y = A/B for A = n_x d_y, B = d_x n_y, and A/B is a rational square exactly when A B is a square: then
+    sqrt(x/y) = isqrt(A B)/B."""
+    a = qint.num(x) * qint.den(y)
+    b = qint.den(x) * qint.num(y)
+    r = qint.isqrt(a * b)
+    if r * r != a * b:
+        return None
+    return qint.make(r, b)
+
+
 class Rad:
     """a + sum b_i sqrt(x_i), rationals a, b_i and x_i >= 0; exact sign and comparisons."""
 
@@ -378,14 +390,24 @@ class Rad:
 
     def __init__(self, a=0, terms=()):
         self.a = qint.q(a)
-        merged = {}
+        classes = []  # [[(b, x), ...]]: radicands whose ratios are rational squares
         for b, x in terms:
             b, x = qint.q(b), qint.q(x)
             if x < 0:
                 raise ExactError("sqrt of a negative")
             if b == 0 or x == 0:
                 continue
-            merged[x] = merged.get(x, ZERO) + b
+            for cl in classes:
+                if _root_ratio(x, cl[0][1]) is not None:
+                    cl.append((b, x))
+                    break
+            else:
+                classes.append([(b, x)])
+        merged = {}
+        for cl in classes:
+            # one term per class, on its least radicand m: b sqrt(x) = b sqrt(x/m) sqrt(m) (review N14)
+            m = min(x for _, x in cl)
+            merged[m] = sum((b * _root_ratio(x, m) for b, x in cl), ZERO)
         self.terms = tuple((b, x) for x, b in sorted(merged.items()) if b != 0)
 
     @staticmethod

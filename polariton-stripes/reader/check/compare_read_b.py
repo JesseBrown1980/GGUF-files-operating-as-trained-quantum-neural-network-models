@@ -71,6 +71,10 @@ NOTE_CASES = {
     "reading_E12_E13_n": "reworded by the later fixes (a size left with fewer than 1024 measured blocks)",
     "reading_E16": "the conservative SE_pair of the later fixes",
     "reading_STOP_tries": "the steps of every try and rule STOP for runs, added by the later fixes",
+    "frozen_R1_s": "live only: R1's frozen s=1/2 against the s=1 stage B computes (review N6)",
+    "closed_STOP_runs": "live only: the GATE ruling the frozen text closes, with its frozen line (PR #18 comment)",
+    "closed_E16_bracket": "live only: the GATE ruling the frozen text closes, with its frozen lines (PR #18 comment)",
+    "closed_E02_counts": "live only: the GATE ruling the frozen text closes, with its frozen lines (PR #18 comment)",
 }
 
 

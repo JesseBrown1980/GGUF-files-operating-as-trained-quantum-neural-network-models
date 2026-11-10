@@ -1,11 +1,13 @@
 //! The stream checked against itself: each sample's starts, control seeds and start bounds rebuilt from its draws,
 //! each linear control from its seeds, and every TWENS, TWPAIR, TWB, TWB_ROUND, TWB_PAIR and TWB_PAIR_ROUND field
-//! from the per-sample rows. Any difference is a STOP.
+//! from the per-sample rows; at a table point also the draws g, rot and eta rebuilt from (seed, idx) (review N8).
+//! Any difference is a STOP.
 
 use crate::eng::{
     cu, field_bounds, h_of, lin, starts, twb_terms, uabs, FIELDS, LEGACY, MODE0, NF, NV, ONE,
-    PAIRS, VNAME,
+    PAIRS, ROT_LIMIT, VNAME,
 };
+use crate::rng::draws;
 use crate::stream::Parsed;
 use crate::Stop;
 
@@ -20,6 +22,17 @@ pub struct Checked {
 
 pub const G_UNIT: i64 = 1 << 35;
 pub const C_MAX: i64 = 2048;
+
+/// A genuine unit30 rot component is at most about 2^40 (1 + 2^-29); m() takes none above 2^41 (review N9).
+pub fn rot_in_range(rot: &[i64; 2], idx: u64) -> Result<(), Stop> {
+    if rot.iter().any(|r| r.unsigned_abs() > ROT_LIMIT) {
+        return Err(Stop::new(
+            "rot_out_of_range",
+            format!("idx={idx},rot={}:{}", rot[0], rot[1]),
+        ));
+    }
+    Ok(())
+}
 
 /// c_i = g_i / 2^35 (rule ATOMS); every g_i must be a multiple of 2^35 with |c_i| <= 2048.
 pub fn noise_values(g: &[i64; 6], idx: u64) -> Result<[i64; 6], Stop> {
@@ -43,7 +56,9 @@ fn mismatch(row: &str, step: u64, who: &str, field: &str, stream: String, reader
     )
 }
 
-pub fn check(p: &Parsed) -> Result<Checked, Stop> {
+/// `table`: the stream is at a table point (P01-P14, X1, X0), whose seed comes from the frozen seed string, so its
+/// draws are rebuilt from (seed, idx) as the engine makes them.
+pub fn check(p: &Parsed, table: bool) -> Result<Checked, Stop> {
     let h = &p.head;
     let n = h.n;
     let on = h.on;
@@ -67,8 +82,25 @@ pub fn check(p: &Parsed) -> Result<Checked, Stop> {
         let idx = h.start + s as u64;
         noise_values(&p.g[s], idx)?;
         let rot = p.rot[s];
+        rot_in_range(&rot, idx)?;
         if !on[MODE0] && rot != [ONE, 0] {
             return Err(Stop::new("rot_without_MODE0", format!("idx={idx}")));
+        }
+        if table {
+            let (g, r, eta) = draws(h.seed, idx, on[MODE0]);
+            let eta_stream = p.ib[p.sv(s, 0)][4];
+            let field = if g != p.g[s] {
+                Some("g")
+            } else if r != rot {
+                Some("rot")
+            } else if eta != eta_stream {
+                Some("eta")
+            } else {
+                None
+            };
+            if let Some(f) = field {
+                return Err(Stop::new("draw_mismatch", format!("idx={idx},field={f}")));
+            }
         }
         let st = starts(n, &p.g[s], (rot[0], rot[1]), &on)
             .map_err(|e| Stop::new("start_rebuild", format!("idx={idx},why={e}")))?;

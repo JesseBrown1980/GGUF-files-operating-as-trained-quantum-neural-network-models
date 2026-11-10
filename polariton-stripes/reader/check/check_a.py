@@ -149,6 +149,70 @@ def isqrt(n):
         x = y
 
 
+# The draws of twens 0.4.0 (Rng, splitmix, ens_draw in polariton-bridge/engines/ensemble/src/main.rs), from the engine
+# source, in Python ints (review N8): at a table point g, rot and eta are rebuilt from (seed, idx).
+U64 = (1 << 64) - 1
+FNV = 0x1000000001B3  # the engine const FNV = 0x1000_0000_01B3
+ROT_LIMIT = 1 << 41
+
+
+def _splitmix(z):
+    z = (z + 0x9E3779B97F4A7C15) & U64
+    v = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & U64
+    v = ((v ^ (v >> 27)) * 0x94D049BB133111EB) & U64
+    return z, v ^ (v >> 31)
+
+
+def _rotl(x, k):
+    return ((x << k) | (x >> (64 - k))) & U64
+
+
+class Xoshiro:
+    def __init__(self, seed):
+        z, self.s = seed & U64, []
+        for _ in range(4):
+            z, v = _splitmix(z)
+            self.s.append(v)
+
+    def next(self):
+        s = self.s
+        result = (_rotl((s[1] * 5) & U64, 7) * 9) & U64
+        t = (s[1] << 17) & U64
+        s[2] ^= s[0]
+        s[3] ^= s[1]
+        s[1] ^= s[2]
+        s[0] ^= s[3]
+        s[2] ^= t
+        s[3] = _rotl(s[3], 45)
+        return result
+
+
+def engine_draws(seed, idx, mode0):
+    """(g0..g5, [rot_c, rot_s], eta) of sample idx: six Gaussians (popcount of 4096 bits - 2048) 2^35, then MODE0's
+    unit30x when MODE0 is on, else (2^40, 0) and 0."""
+    r = Xoshiro(seed + idx * FNV)
+    g = []
+    for _ in range(6):
+        c = 0
+        for _ in range(64):
+            c += bin(r.next()).count("1")
+        g.append((c - 2048) << 35)
+    if not mode0:
+        return g, [ONE, 0], 0
+    while True:
+        a = (r.next() >> 33) - (1 << 30)
+        b = (r.next() >> 33) - (1 << 30)
+        r2 = a * a + b * b
+        if not (1 << 58) <= r2 <= (1 << 60):
+            continue
+        rt = isqrt(r2)
+        d, rr = r2 - rt * rt, rt * rt
+        eta = ceil_div(d << Q, 2 * rr)
+        # the engine's i128 division truncates toward zero
+        cs = [(abs(x) << Q) // rt * (1 if x >= 0 else -1) for x in (a, b)]
+        return g, cs, eta
+
+
 def cu(a, b):
     return (a * b + (ONE - 1)) >> Q
 
@@ -649,8 +713,15 @@ def read_block(point, call, side_path, data):
             c.append(gi >> 35)
         flags.append(flags_of(c))
         lat.append((c[0] * c[0] - c[1] * c[1], 2 * c[0] * c[1]))
+        if any(abs(x) > ROT_LIMIT for x in rotv):
+            raise Stop("rot_out_of_range", 0, idx=start + i, rot=rot_text)
         if not on[MODE0] and rotv != [ONE, 0]:
             raise Stop("rot_without_MODE0", 0, idx=start + i, rot=rot_text)
+        if table == "checked":
+            eg, erot, eeta = engine_draws(seed, start + i, on[MODE0])
+            field = "g" if eg != g else "rot" if erot != rotv else "eta" if eeta != per_v[0][4] else None
+            if field:
+                raise Stop("draw_mismatch", 0, idx=start + i, field=field)
         init, uv, ib, sb = build(g, rotv, on, n, h, psi_v1, 0)
         eta = None
         for v, (s, u4, e3, sbv, et) in zip(pres, per_v, strict=True):

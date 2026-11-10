@@ -490,6 +490,48 @@ class FrozenFile(unittest.TestCase):
             with self.assertRaises(ExactError):
                 c.check_tables(Edited(field, value))
 
+class FrozenCitations(unittest.TestCase):
+    """The notes that cite frozen line numbers (review N6 and the closures of PR #18 comment 6749660971): each cited
+    line (1-based, of the file at 1977d45, whose sha256 frozen.load checks) is the row it names and holds the text the
+    note rests on."""
+
+    CITED = {
+        "frozen_R1_s": ((19, "STRIPES_POINT", "R1", ("|N=729|", "|y=1/27|", "|s=1/2|")),),
+        "closed_STOP_runs": ((37, "STRIPES_RULE", "STOP", (
+            "if_none_completes,_its_4096_indices_are_NOT_MEASURED_and_reads_state_the_loss",
+            "the_point_keeps_only_the_records_all_64_batches_reached")),),
+        "closed_E16_bracket": ((30, "STRIPES_RULE", "SECTOR", ("bracketed_in_every_test",)),
+                               (114, "STRIPES_PREDICT", "E16", ("abs(Pi_V-Pi_VNC)", "(D+_-_D-)/(2M)"))),
+        "closed_E02_counts": ((4, "STRIPES_POINTS_COMMON", None, (
+            "calls_i<64_mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL", "cover_the_first_2^18_indices")),
+                              (100, "STRIPES_PREDICT", "E02", ("|id=E02|",))),
+    }
+
+    def test_cited_lines(self):
+        notes = dict(sb.READINGS)
+        for label, cites in self.CITED.items():
+            self.assertIn(label, notes)
+            for line, kind, rid, phrases in cites:
+                self.assertIn("frozen_line_%d" % line, notes[label], label)
+                text = FZ.lines[line - 1]
+                self.assertTrue(text.startswith(kind + "|"), (label, line))
+                if rid is not None:
+                    self.assertEqual(FZ.text(kind, rid), text, (label, line))
+                for ph in phrases:
+                    self.assertIn(ph, text, (label, line))
+
+    def test_r1_s_is_computed(self):
+        # review N6: the frozen R1 row files s=1/2; stage B computes s = y sqrt(N) = (1/27) 27 = 1 and uses that
+        from stripes_read_b import rows_e_mom as m
+
+        r1 = c.RUN_POINTS["R1"]
+        self.assertEqual(FZ.row("STRIPES_POINT", "R1")["s"], "1/2")
+        delta, abs_s, t = m.triple(r1, 1)
+        self.assertEqual((abs_s.n, abs_s.d), (1, 1))
+        self.assertEqual(abs_s, 1)
+        self.assertEqual((delta, t), (qint.make(-1, 4), 1))
+
+
 
 if __name__ == "__main__":
     unittest.main()
