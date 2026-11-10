@@ -101,10 +101,12 @@ READINGS = (
     ("reading_E04_ratios", "MET_inside_[1/4-1/100-4SE,1/4+1/100+4SE],_MISS_outside,_the_frozen_band_and_falsifier"),
     ("reading_Pi_hat", "Pi_hat_counts_every_sample,_atoms_by_their_own_sign_states;_H8_and_B16_leave_atoms_out"),
     ("reading_E01_atoms", "the_Klein_atom_masses_(about_3.108e-4_M,_0.042097_M)_have_no_band:_read_and_report"),
-    ("reading_E12_E13_n", "in_E12_and_the_E13_tolerance_reads_n=4..4096_is_every_power_of_2_from_4_to_4096_with_at"
-                          "_least_1024_blocks_in_the_nominal_sample_count;_after_a_lost_call_a_size_left_with_fewer"
-                          "_than_1024_measured_blocks_is_NOT_MEASURED,_so_that_read_is_NOT_RESOLVED_at_best;_the_E13"
-                          "_bands_take_the_frozen_n=4^k"),
+    ("reading_E12_E13_n", "in_E12_and_the_E13_tolerance_reads_(method_as_E12)_n=4..4096_is_every_power_of_2_from_4"
+                          "_to_4096_with_at_least_1024_blocks_in_the_nominal_sample_count;_the_E13_bands_take_the"
+                          "_frozen_n=4^k;_after_a_lost_call_a_size_of_that_grid_left_with_fewer_than_1024_complete"
+                          "_blocks_is_NOT_MEASURED_(call_loss_insufficient_blocks),_never_MET,_MISS_or_NOT_RESOLVED,"
+                          "_and_its_read_is_NOT_MEASURED_unless_a_measured_size_is_MISS_or_NOT_RESOLVED;_ruled_by_the"
+                          "_owner,_see_ruled_E12_E13"),
     ("reading_E10_falsifier", "P02_not_resolved_above_0_at_3_SE:_the_low_end_of_the_ambiguity_bracket"
                               "_(O+-O--A)/(2M),_minus_3SE,_is_at_or_below_0"),
     ("reading_E18_zero", "E_VNC[abs(B_W)^2]=0_is_a_ratio_of_0:_MISS"),
@@ -147,6 +149,16 @@ READINGS = (
                           "_first_2^18_indices;_frozen_line_100_(E02)_keys_its_intervals_by_sample_count_and_variant"
                           "_class,_[0,51]_at_2^18_on_those_indices;_a_partial_set_after_a_lost_call_has_a_count_no"
                           "_interval_is_keyed_to,_so_its_count_is_NOT_MEASURED"),
+    # the GATE row's last open ruling, made by the owner (PR #18 comment 6753596286, 2026-11-09T22:50Z)
+    ("ruled_E12_E13", "owner-ruled_in_PR_#18_comment_6753596286:_E12_at_every_power_of_2,_n=4..4096,_where_the"
+                      "_nominal_sample_count_gives_at_least_1024_blocks,_its_IID_identity_and_CLT_3SE_kept;_the_E13"
+                      "_frozen_plateau_bands_scored_on_n=4,16,64,256,1024,4096_only,_scored_and_read-and-report_as"
+                      "_frozen,_and_no_E13_band_made_from_an_E12_read;_after_a_lost_call_the_nominal_grid,_count,"
+                      "_exposure_and_labels_are_kept_and_each_(point,record,variant,n)_below_1024_complete_blocks"
+                      "_is_NOT_MEASURED_with_reason_call_loss_insufficient_blocks_(2^22/4096:_1024_blocks,_1023"
+                      "_after_one_lost_call),_its_read_printing_nominal_blocks_n<n>,_complete_blocks_n<n>,"
+                      "_missing_indices,_reason_and_schedule;_a_shortfall_no_lost_call_explains_is_a_STOP_block_count;"
+                      "_STOP_for_run_batches_stays_literal_(closed_STOP_runs)"),
 )
 
 

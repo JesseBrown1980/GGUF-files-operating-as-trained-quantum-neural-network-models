@@ -291,6 +291,35 @@ def n_list(nominal):
     return tuple(n for n in c.BLOCK_SIZES if nominal // n >= MIN_BLOCKS)
 
 
+CALL_LOSS = "call_loss_insufficient_blocks"
+
+
+def nominal_of(pt, scope):
+    """The frozen sample count of a read's calls: VNC on every call, the controls on the calls below `all`."""
+    return pt.spec.vnc if scope == "all" else pt.spec.all * c.COUNT
+
+
+def short_of(pt, scope, nominal, n, k):
+    """True when a size of the nominal grid has fewer than 1024 complete blocks (owner ruling, PR #18 comment
+    6753596286); a shortfall that no lost call explains, or a surplus, is a STOP."""
+    want = nominal // n
+    if k > want or (k < want and not pt.lost_indices(scope)):
+        raise c.StageBStop("block_count", "%s n=%d: K=%d, nominal %d" % (pt.spec.id, n, k, want))
+    return want >= MIN_BLOCKS > k
+
+
+def call_loss_audit(pt, scope, nominal, shorts):
+    """The audit fields beside a read with a size below 1024 complete blocks: per size the nominal and complete
+    blocks, then the reason, the missing indices and the original schedule (rule STOP: never zero data)."""
+    det = []
+    for n, k in shorts:
+        det += [("nominal_blocks_n%d" % n, nominal // n), ("complete_blocks_n%d" % n, k)]
+    gone = "+".join("%d-%d" % (a, b - 1) for a, b in pt.lost_indices(scope))
+    calls = nominal // c.COUNT
+    return tuple(det) + (("reason", CALL_LOSS), ("missing_indices", gone),
+                         ("schedule", "calls_0-%d_x%d_indices_0-%d" % (calls - 1, c.COUNT, nominal - 1)))
+
+
 def b16_of(vr):
     return c.b16(vr["sec"], vr["amb"], vr["mp"])
 
@@ -349,12 +378,21 @@ def pi_report(row, rid, at, sc, pi, extra=()):
 def z_read(row, rid, at, sc, pt, step, v, scope, ns, kind, rho=None):
     """Z_n tests over the block sizes ns, one read: kind "zero" |Z_n - 1| + 3SE <= 1/4 (E12 at y=0); "iid"
     |Z_n - 1 - (n-1) rho_u| + 3SE <= 1/4 + (n-1) rho_u/10 (E12); "tol" |Z_n - 1 - (n-1) rho| + 3SE <= 1/4 + (n-1) rho/5
-    at the frozen rho (E13). A size left with fewer than 1024 blocks by a loss is NOT_MEASURED."""
+    at the frozen rho (E13). A size of the nominal grid left below 1024 complete blocks by a lost call is NOT_MEASURED
+    (owner ruling, PR #18 comment 6753596286): never MET, MISS or NOT_RESOLVED, and the read is NOT_MEASURED unless a
+    measured size is MISS or NOT_RESOLVED; its audit fields stand beside it. A size off the grid keeps
+    K<n>_NOT_MEASURED."""
     s = sums_of(pt, step, v, scope)
     ru = rho_u(s)
-    outs, det, last = [], [], None
+    nominal = nominal_of(pt, scope)
+    grid = n_list(nominal)
+    outs, det, last, shorts = [], [], None, []
     for n in ns:
         k = blk_of(pt, step, v, n, scope)
+        if n in grid and short_of(pt, scope, nominal, n, k["K"]):
+            shorts.append((n, k["K"]))
+            det.append(("n%d" % n, "NOT_MEASURED_" + CALL_LOSS))
+            continue
         if k["K"] < MIN_BLOCKS:
             outs.append(c.NOT_MEASURED)
             det.append(("n%d" % n, "K%d_NOT_MEASURED" % k["K"]))
@@ -371,22 +409,32 @@ def z_read(row, rid, at, sc, pt, step, v, scope, ns, kind, rho=None):
         det.append(("n%d" % n, "%s+-%s_%s" % (fmt(z.Z, 6), up(z.e3(), 3), o)))
         last = z
     out = combine(outs)
+    if shorts and c.MISS not in outs and c.NOT_RESOLVED not in outs:
+        out = c.NOT_MEASURED
     extra = [("rho_u", fmt(ru, 6))]
     ns_hat = nstar_of([s])
     extra.append(("nstar_hat", "none" if ns_hat is None else fmt(ns_hat, 6)))
+    audit = call_loss_audit(pt, scope, nominal, shorts) if shorts else ()
     band = {"zero": "abs(Z_n-1)+3SE<=1/4", "iid": "abs(Z_n-1-(n-1)rho_u)+3SE<=1/4+(n-1)rho_u/10",
             "tol": "abs(Z_n-1-(n-1)rho)+3SE<=1/4+(n-1)rho/5"}[kind]
     if last is None:
-        return c.Read(row, rid, at, "sampled", sc, out, band=band, detail=tuple(det + extra) + loss(pt, scope))
+        return c.Read(row, rid, at, "sampled", sc, out, band=band,
+                      detail=tuple(det + extra) + loss(pt, scope) + audit)
     e = last.e3()
     return c.Read(row, rid, at, "sampled", sc, out, value=last.Z, lo=last.Z - e, hi=last.Z + e, band=band,
-                  detail=tuple(det + extra) + loss(pt, scope))
+                  detail=tuple(det + extra) + loss(pt, scope) + audit)
 
 
 def zband_read(row, rid, at, sc, pt, step, n, predicted, frozen):
     """The band [3/4, 5/4] at n: band MET if |Z_n - 1| + 3SE <= 1/4, NOT_MET if |Z_n - 1| - 3SE > 1/4; the read
-    compares that band verdict with the predicted one (MET or NOT_MET)."""
+    compares that band verdict with the predicted one (MET or NOT_MET). Below 1024 complete blocks after a lost call it
+    is NOT_MEASURED with its audit fields (owner ruling, PR #18 comment 6753596286)."""
     k = blk_of(pt, step, VNC, n, "all")
+    nominal = nominal_of(pt, "all")
+    if n in n_list(nominal) and short_of(pt, "all", nominal, n, k["K"]):
+        return c.Read(row, rid, at, "band", sc, c.NOT_MEASURED, band=c.Band(fr(3, 4), fr(5, 4)), frozen=frozen,
+                      detail=(("predicted", predicted),) + loss(pt)
+                      + call_loss_audit(pt, "all", nominal, [(n, k["K"])]))
     if k["K"] < MIN_BLOCKS:
         raise Lost("fewer_than_1024_blocks")
     z = Zn(k)

@@ -99,7 +99,7 @@ Readings where the frozen text allows two, or says nothing (also written as STRI
 - E04 ratios: MET inside [1/4 - 1/100 - 4SE, 1/4 + 1/100 + 4SE], MISS outside (the frozen band and falsifier).
 - Pi_hat counts every sample, the atoms by their own sign states; H8 and B16 leave the atoms out.
 - E01: the Klein atom masses have no band, so they are read and reported.
-- E12 and the E13 tolerance reads: n = 4..4096 is every power of 2 from 4 to 4096 with at least 1024 blocks in the nominal sample count. After a lost call, a size left with fewer than 1024 measured blocks is NOT_MEASURED, so that read is NOT_RESOLVED at best (one lost call is enough: K = 1023 at n = 4096 on 2^22). The frozen text also allows limiting n to the sizes the measured data have; the owner picks. The E13 bands take the frozen n = 4^k.
+- E12 and the E13 tolerance reads (E13's method is "as_E12"): n = 4..4096 is every power of 2 from 4 to 4096 with at least 1024 blocks in the nominal sample count. The E13 bands take the frozen n = 4^k. After a lost call, a size of that grid left with fewer than 1024 complete blocks is NOT_MEASURED (reason `call_loss_insufficient_blocks`), never MET, MISS or NOT_RESOLVED, and its read is NOT_MEASURED unless one of its measured sizes is MISS or NOT_RESOLVED (one lost call is enough: K = 1023 at n = 4096 on 2^22). This is the owner's ruling (`ruled_E12_E13` below).
 - E10, the falsifier "P02 not resolved above 0 at 3 SE": the low end of the ambiguity bracket, (O+ - O- - A)/(2M), minus 3 SE, is at or below 0. The band read keeps the frozen e = 3SE + A/M.
 - E18: E_VNC[abs(B_W)^2] = 0 is a ratio of 0, so MISS. E19: n* is not estimable when abs(Bbar)^2_u <= 0, so NOT_RESOLVED.
 - Q03, Q04, Q05, Q07: a ratio whose denominator's interval reaches 0 is the half-line [lo, +inf), or both half-lines when the denominator crosses 0. It is MISS when every piece is disjoint from the band (rule READ3), else NOT_RESOLVED.
@@ -115,14 +115,22 @@ Three of the owner rulings that the receipt's GATE row listed as open are closed
 - `closed_E16_bracket`, E16, the bracket reading above: frozen line 30 (rule SECTOR) brackets an ambiguous cell "in every test"; frozen line 114 (E16) holds the statement abs(Pi_V - Pi_VNC) and the recipe (D+ - D-)/(2M).
 - `closed_E02_counts`, E02, counts keyed by sample count and variant class: frozen line 4 (STRIPES_POINTS_COMMON: calls i < 64 carry every variant and NL, "so the controls and NL cover the first 2^18 indices") and frozen line 100 (E02). The comment cited line 5 for STRIPES_POINTS_COMMON; it is line 4 (line 5 is STRIPES_POINT P01).
 
-E12 and E13, the set of block sizes n (the step, and the range after a lost call; the reading `reading_E12_E13_n` above): ruled by the owner (PR #18 comment 6753596286, 2026-11-09T22:50Z), applied in the next pass; this pass leaves the reader as it is (receipt, rows 12 and 13). Every other reading of this list is a seat choice made before any data; the owner confirms each before the run (receipt, row 13).
+E12 and E13, the set of block sizes n (the step, and the range after a lost call; the reading `reading_E12_E13_n` above): ruled by the owner (PR #18 comment 6753596286, 2026-11-09T22:50Z) and applied by the third fix pass (receipt, rows 12 and 15), with its own STRIPES_READ_NOTE, `ruled_E12_E13`:
+
+- E12 is read at every power of 2, n = 4..4096, where the nominal sample count gives at least 1024 blocks: n = 4..4096 at 2^22, 4..1024 at 2^20, 4..256 on the 2^18 controls (`n_list`). The IID identity and the CLT 3SE thresholds are kept.
+- The E13 plateau bands are scored on n = 4, 16, 64, 256, 1024, 4096 only (each where the nominal count gives 1024 blocks), scored and read-and-report as frozen (rule EXPOSED), and no E12 read makes an E13 band. The E13 tolerance read "Z_n tol 1/4+(n-1)rho/5 MET" is not a band and keeps E12's grid ("method=as_E12"); its scoring is unchanged. The ruling does not name this read, so its grid is a seat choice, not part of the ruling: the owner confirms it before any row-point run (receipt, row 13, `seat_choice_E13_tol_grid`). If the owner meant all of E13, the tolerance reads (scored: `tol_P02_t1`, `tol_P02_t2`, `tol_P08_t1`) and compare_b's lens output move to n = 4^k; the code stays as it is until then.
+- After a lost call the nominal grid, the read keys, their exposure and labels stay as they are; nothing is shrunk or reindexed. Each (point, record, variant, n) with fewer than 1024 complete blocks prints `n<n>:NOT_MEASURED_call_loss_insufficient_blocks` in its read (a band read is NOT_MEASURED itself). A measured MISS or NOT_RESOLVED at another size of the same read is kept; otherwise the read is NOT_MEASURED, never MET. The value, lo and hi such a read prints are those of its last measured size (for example n = 512 when n = 1024..4096 are lost), as a NOT_RESOLVED read printed them before; its `n<n>` detail keys say which sizes were measured.
+- Beside each such read: `nominal_blocks_n<n>`, `complete_blocks_n<n>`, `reason:call_loss_insufficient_blocks`, `missing_indices` (the lost calls' index ranges, `2048000-2052095` for call 500) and `schedule` (the original one, `calls_0-1023_x4096_indices_0-4194303` at 2^22, `calls_0-63_x4096_indices_0-262143` for the controls). A lost call is never zero data: a size short of its nominal blocks with no lost call to explain it, or above them, is a STOP `block_count`.
+- STOP for run batches stays the literal reading (`closed_STOP_runs`).
+
+Every other reading of this list is a seat choice made before any data; the owner confirms each before the run (receipt, row 13).
 
 And one note on a frozen value the reader does not use: `frozen_R1_s`. STRIPES_POINT R1 (frozen line 19) files s = 1/2, while y sqrt(N) = (1/27) sqrt(729) = 1. Stage B computes s = y sqrt(N) itself from N and y (`rows_e_mom.triple`, `DumpPoint.s`), so rule EXPOSED reads abs(s) = 1 at R1 and no read takes the filed value (review N6; the unit test `test_r1_s_is_computed`). The frozen bytes stay as they are.
 
 Tests:
 
 ```
-python3 -I polariton-stripes/reader/b/run_tests.py     # 304 unit tests, none skipped, about 40 s
+python3 -I polariton-stripes/reader/b/run_tests.py     # 311 unit tests, none skipped, about 60 s
 python3 -I polariton-stripes/reader/b/e2e.py           # the end-to-end test, about 3.5 min, about 0.3 GB of temporary files
 ```
 
@@ -140,7 +148,7 @@ The values are small fabricated integers, not engine values. `read` must give on
 - R2 batch 5 lost the same way (two attempts and the last try), so every R2 read is NOT_MEASURED (11 reads of E04, E18 and E19, each stating the loss);
 - the QE command at (729, 1/108) killed after its t=1 row (rc=137), and the 6561 sector command panicked after its t=2 row (rc=101, the panic text on stderr).
 
-It must give the same rows and the same SCORING table, with NOT_MEASURED reads where data was lost, the losses in its notes, and `verify` equal.
+It must give the same rows and the same SCORING table, with NOT_MEASURED reads where data was lost, the losses in its notes, and `verify` equal. By the owner's E12/E13 ruling, each of the 39 E12 and E13 reads that P03 call 500 (1023 of 1024 blocks at n = 4096) and P08 call 10 (1020 of 1024 at n = 1024 for VNC, 1008 of 1024 at n = 256 for the controls) leave below 1024 complete blocks at a size must carry its audit fields and be NOT_MEASURED, or keep the MISS of a measured size (the 4 P03 VNC reads of E12, MISS at n = 2048 on the fabricated values in both campaigns); the clean campaign has none.
 
 The part-1 commands of `b/run_b.py` (`tables`, `series`, `q`, `point`, `sides`, `run`) check the tables, the frozen decimals and single inputs. `sides` checks every side file of a point against its block (M4).
 
@@ -182,7 +190,7 @@ It checks the evidence pin, lays the evidence out at its old depth beside a copy
 
 At the conversion step alone, before the open items below changed any output, both versions also wrote byte-identical files on the e2e campaigns: the 16,914 campaign files, the READ file (sha256 `c625ee46...`) and the STOP campaign's READ file (`9e7be937...`). Those two hashes came from an uncommitted working tree: no commit holds the conversion without the later fixes (5aad307 is the Fraction version, c036d7a has both), so git history cannot reproduce them. The open items then changed the trailer grammar, the side files and E16. What is repeatable on the current tree is the probe, the lens and `check/compare_read_b.py` below.
 
-The later fixes change the live output on purpose, and the evidence keeps the old one. `check/compare_read_b.py` (review M5, run in CI after `e2e.py`) has each version `read` the clean campaign and the STOP campaign. The evidence reads a copy in its own receipt grammar: ` steps=` dropped from every call-file trailer and run `.rc` file, and the point's SHA256SUMS given the new sha256 of each rewritten call file. It requires every STRIPES_READ and STRIPES_VERDICT row that differs to fall in one of the declared cases below, compares the head, the inputs and the notes against their own declared lists, and then checks itself on ten planted undeclared differences, each of which it must find:
+The later fixes change the live output on purpose, and the evidence keeps the old one. `check/compare_read_b.py` (review M5, run in CI after `e2e.py`) has each version `read` the clean campaign and the STOP campaign. The evidence reads a copy in its own receipt grammar: ` steps=` dropped from every call-file trailer and run `.rc` file, and the point's SHA256SUMS given the new sha256 of each rewritten call file. It requires every STRIPES_READ and STRIPES_VERDICT row that differs to fall in one of the declared cases below, compares the head, the inputs and the notes against their own declared lists, and then checks itself on eleven planted undeclared differences, each of which it must find:
 
 ```
 python3 -I polariton-stripes/reader/check/compare_read_b.py [--campaigns <the --work folder of e2e.py --keep>]
@@ -194,9 +202,10 @@ Each difference is one of these:
 - The band of an infinite end prints open, `(0,inf)` and `(-inf,inf)`: 20 reads of E15, E19 and Q07 (text only).
 - A read lost to a QE exit names it, `lost:qe_rc_101` or `lost:qe_rc_137` (STOP campaign, 27 reads; text only).
 - Rule STOP for runs: R2's lost batch leaves every R2 read NOT_MEASURED (STOP campaign, 11 reads). E04 turns from NOT_MET to NOT_RESOLVED and E19 from MET to NOT_RESOLVED; E18 stays NOT_MET on its R1 read.
-- The head and notes: version 0.2.0, the `reader_b` tree pin, the run notes (`checked=`), the reading notes, the four notes of the second fix pass (`frozen_R1_s`, `closed_STOP_runs`, `closed_E16_bracket`, `closed_E02_counts`, live only), and the receipts' new trailer grammar (the AGG input hashes and the run listing).
+- The owner's E12/E13 ruling (`call_loss_blocks`, STOP campaign, 39 reads; the case the third fix pass added): a size below 1024 complete blocks after a lost call prints `NOT_MEASURED_call_loss_insufficient_blocks` and the audit fields where the evidence prints `K<k>_NOT_MEASURED`, and the read is NOT_MEASURED where the evidence reads NOT_RESOLVED (28 scored E12 reads and 1 scored E13 read; REPORT for 3 read-and-report E13 reads), or keeps a measured MISS in both (4 E12 reads); a band below 1024 blocks (3 E13 reads) is NOT_MEASURED in both, with the audit fields where the evidence has `lost:fewer_than_1024_blocks`. E12 stays NOT_MET and E13 NOT_RESOLVED; only their counts move. Its self-test plant sets the evidence's `iid_P03_VNC_t1` to MET, which must be found.
+- The head and notes: version 0.2.0, the `reader_b` tree pin, the run notes (`checked=`), the reading notes, the four notes of the second fix pass (`frozen_R1_s`, `closed_STOP_runs`, `closed_E16_bracket`, `closed_E02_counts`, live only), the note of the third (`ruled_E12_E13`, live only), and the receipts' new trailer grammar (the AGG input hashes and the run listing).
 
-Every other row was byte-identical: 2,634 of 2,678 READ rows and all 26 VERDICT rows on the clean campaign, 2,600 READ rows and 23 VERDICT rows on the STOP campaign (`compare_read_b.py` on this seat; the evidence's READ files `96507472...` and `164f3bbd...`). The E10 falsifier and the E19 bounds changed nothing there: the campaign has A = 0 at P02, where both forms of the falsifier agree, and n* - 4SE stays above 0 at every E19 read.
+Every other row was byte-identical: 2,634 of 2,678 READ rows and all 26 VERDICT rows on the clean campaign, 2,561 READ rows and 21 VERDICT rows on the STOP campaign (2,600 and 23 before the third fix pass) (`compare_read_b.py` on this seat; the evidence's READ files `96507472...` and `164f3bbd...`). The E10 falsifier and the E19 bounds changed nothing there: the campaign has A = 0 at P02, where both forms of the falsifier agree, and n* - 4SE stays above 0 at every E19 read.
 
 ## The independent check of stage A
 

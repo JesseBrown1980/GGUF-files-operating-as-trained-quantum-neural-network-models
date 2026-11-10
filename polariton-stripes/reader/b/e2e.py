@@ -13,7 +13,9 @@
    after its t=1 row (rc=137) and the 6561 sector command panicked after its t=2 row (rc=101, the panic text on
    stderr). Its READ file must have the same rows, the same scored and read-and-report reads (the SCORING table), and
    NOT_MEASURED reads where data was lost. Rule STOP keeps only the records all 64 batches of a run point reached, and
-   the lost batch reached none: every read of R2 (E04, E18, E19) must be NOT_MEASURED and state the loss.
+   the lost batch reached none: every read of R2 (E04, E18, E19) must be NOT_MEASURED and state the loss. By the
+   owner's E12/E13 ruling (PR #18 comment 6753596286), every read with a size of its nominal grid below 1024 complete
+   blocks after a lost call (P03 and P08) must be NOT_MEASURED with its audit fields, and the clean campaign has none.
 
 Stage B computes on checked integer pairs (stripes_read_b/qint.py). Prints one E2E row; exit 0 when every check
 holds."""
@@ -133,6 +135,25 @@ def run_reads(path, rid="R2"):
     return [r for r in rows if pat.search(r["at"])]
 
 
+# Reads the STOP campaign's lost calls leave below 1024 complete blocks (P03 call 500: 1023 of 1024 at n=4096; P08
+# call 10: 1020 of 1024 at n=1024 for VNC, 1008 of 1024 at n=256 for the controls), each with a part of its detail.
+CALL_LOSS_WANT = {
+    ("E12", "iid_P03_VNC_t1"): "nominal_blocks_n4096:1024,complete_blocks_n4096:1023,reason:call_loss_insufficient"
+                               "_blocks,missing_indices:2048000-2052095,schedule:calls_0-1023_x4096_indices_0-4194303",
+    ("E12", "iid_P08_VNC_t1"): "nominal_blocks_n1024:1024,complete_blocks_n1024:1020",
+    ("E12", "iid_P08_LOCK_t2"): "nominal_blocks_n256:1024,complete_blocks_n256:1008,reason:call_loss_insufficient"
+                                "_blocks,missing_indices:40960-45055,schedule:calls_0-63_x4096_indices_0-262143",
+    ("E13", "tol_P03_t2"): "n4096:NOT_MEASURED_call_loss_insufficient_blocks",
+    ("E13", "band_P03_t2_n4096"): "complete_blocks_n4096:1023",
+    ("E13", "band_P08_t1_n1024"): "complete_blocks_n1024:1020",
+}
+
+
+def call_loss_reads(path):
+    rows = [fields_dict(parse_row(ln)[1]) for ln in read_lines(path) if ln.startswith("STRIPES_READ|")]
+    return [r for r in rows if "reason:call_loss_insufficient_blocks" in r["detail"]]
+
+
 def verdict_rows(path):
     return [fields_dict(parse_row(ln)[1]) for ln in read_lines(path) if ln.startswith("STRIPES_VERDICT|")]
 
@@ -223,17 +244,34 @@ def main(argv):
                 fails.append("R2_read_" + r["read"])
         if any(r["verdict"] == c.NOT_MEASURED for r in r2_clean):
             fails.append("R2_read_lost_in_the_clean_campaign")
+        # the owner's E12/E13 ruling (PR #18 comment 6753596286): a size of the nominal grid below 1024 complete
+        # blocks after a lost call is NOT_MEASURED, never MET, MISS or NOT_RESOLVED, with its audit fields
+        cl = call_loss_reads(out2) if rc2 == 0 else []
+        for r in cl:
+            d = dict(x.split(":", 1) for x in r["detail"].split(","))
+            measured = [v.rsplit("_", 1)[-1] for k, v in d.items() if re.fullmatch("n[0-9]+", k) and "+-" in v]
+            want = c.MISS if "MISS" in measured else c.NOT_RESOLVED if "RESOLVED" in measured else c.NOT_MEASURED
+            if r["verdict"] != want or not {"missing_indices", "schedule"} <= set(d) \
+                    or not any(k.startswith("nominal_blocks_n") for k in d):
+                fails.append("call_loss_read_" + r["read"])
+        got = {(r["row"], r["read"]): r["detail"] for r in cl}
+        for key, part in CALL_LOSS_WANT.items():
+            if part not in got.get(key, ""):
+                fails.append("call_loss_%s_%s" % key)
+        if rc == 0 and call_loss_reads(out):
+            fails.append("call_loss_in_the_clean_campaign")
         rc_v2, text_v2 = stage_b("verify", "--read", out2, *inputs(lost))
         if rc_v2 != 0:
             fails.append("verify_stop:" + text_v2[:200])
         if rc2 == 0 and [r for r in campaign_scoring(out) if r] != [r for r in campaign_scoring(out2) if r]:
             fails.append("scoring_table_stop")
         print("E2E|predict_rows=%d|verdict_rows=%d|verdicts=%s|audit=%s|verify=%s|stop_campaign_verdict_rows=%d|"
-              "stop_campaign_not_measured_scored=%d|stop_campaign_R2_reads_not_measured=%d|qe_rows_absent=%d|"
-              "qe_commands_rc_nonzero=%d|engine_runs=0|result=%s|json=0" % (
+              "stop_campaign_not_measured_scored=%d|stop_campaign_R2_reads_not_measured=%d|"
+              "stop_campaign_call_loss_reads=%d|qe_rows_absent=%d|qe_commands_rc_nonzero=%d|engine_runs=0|"
+              "result=%s|json=0" % (
                   len(order), len(vs), ",".join("%s:%d" % kv for kv in sorted(tally.items())),
                   "pass" if rc_a == 0 else "fail", "equal" if rc_v == 0 else "differ", len(vs2), nm,
-                  sum(1 for r in r2 if r["verdict"] == c.NOT_MEASURED), nq, nfail,
+                  sum(1 for r in r2 if r["verdict"] == c.NOT_MEASURED), len(cl), nq, nfail,
                   "pass" if not fails else "fail:" + ";".join(f.replace("|", "/") for f in fails)))
     finally:
         if own and not keep:

@@ -72,7 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 -I polariton-stripes/reader/check/compare_read_b.py --campaigns "$WORK/e2e" --work "$WORK/compare-read-b" | tee "$WORK/compare-read-b.txt"
-          grep -q '^COMPARE_READ_B_SELF_TEST|plants=10|found=10|missed=none|' "$WORK/compare-read-b.txt"
+          grep -q '^COMPARE_READ_B_SELF_TEST|plants=11|found=11|missed=none|' "$WORK/compare-read-b.txt"
           test "$(grep -c '^COMPARE_READ_B|campaign=[a-z]*|.*|result=within_allowlist|' "$WORK/compare-read-b.txt")" = 2
           grep -q '^COMPARE_READ_B_DONE|.*|result=within_allowlist|' "$WORK/compare-read-b.txt"
       - name: The sabotage suite, every case CAUGHT, and the documented not-visible case (13) reading as documented
