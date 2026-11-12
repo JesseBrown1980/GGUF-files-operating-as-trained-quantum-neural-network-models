@@ -40,6 +40,32 @@ jobs:
             exit 1
           fi
           grep -q 'READ_DISABLED_ONLY_SYNTHETIC_MODES' "$RUNNER_TEMP/refusal.hbp"
+      - name: Exact in-memory common-prefix ensemble moment and covariance checks
+        run: |
+          set -euo pipefail
+          python3 -I -B polariton-bridge/reader/gpt6_ensemble_moments.py --selftest \
+            | tee "$RUNNER_TEMP/bridge-ensemble-stats.hbp"
+          grep -Fq 'BRIDGE_MOMENTS|sample_count=4|mean_ReZ=3/2|mean_XNC=4/1|' \
+            "$RUNNER_TEMP/bridge-ensemble-stats.hbp"
+          grep -Fq '|actual_outputs_opened=0|status=PASS|' \
+            "$RUNNER_TEMP/bridge-ensemble-stats.hbp"
+          if python3 -I -B polariton-bridge/reader/gpt6_ensemble_moments.py --read /tmp 2>"$RUNNER_TEMP/ensemble-read-refusal.hbp"; then
+            echo "ERROR: blind ensemble read unexpectedly accepted"
+            exit 1
+          fi
+          grep -q 'BLIND_OUTPUT_READ_DISABLED' "$RUNNER_TEMP/ensemble-read-refusal.hbp"
+      - name: Quantum planned route, trajectory and jet source contracts with shell refusal
+        run: |
+          set -euo pipefail
+          python3 -I -B polariton-bridge/reader/gpt6_source_contracts.py --selftest \
+            | tee "$RUNNER_TEMP/bridge-source-contracts.hbp"
+          grep -Fq '|blind_outputs_opened=0|status=PASS|' \
+            "$RUNNER_TEMP/bridge-source-contracts.hbp"
+          if python3 -I -B polariton-bridge/reader/gpt6_source_contracts.py --read /tmp 2>"$RUNNER_TEMP/source-read-refusal.hbp"; then
+            echo "ERROR: blind source read unexpectedly accepted"
+            exit 1
+          fi
+          grep -q 'BLIND_READ_DISABLED' "$RUNNER_TEMP/source-read-refusal.hbp"
       - name: Strict no-float AST scan using git-index file modes
         run: |
           python3 - <<'PY'
