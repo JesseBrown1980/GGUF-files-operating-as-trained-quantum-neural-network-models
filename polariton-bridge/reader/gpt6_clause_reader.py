@@ -15,6 +15,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from gpt6_read_core import (
     StopRead, need, fields, rows, num, ratio, cmp, add, sub, mul, div,
     abq, fmt, verdict, pair_verdict, preflight, REQUIRED_ERRORS,
