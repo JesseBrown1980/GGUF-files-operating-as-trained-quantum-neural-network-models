@@ -1,0 +1,130 @@
+name: Polariton bridge blind-reader preflight (no blind outputs)
+
+on:
+  pull_request:
+    paths:
+      - "polariton-bridge/reader/**"
+      - ".github/workflows/polariton-bridge-reader-preflight.yml"
+  workflow_dispatch:
+
+jobs:
+  synthetic-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen prediction and amendment integrity
+        run: |
+          python3 -I -B polariton-bridge/reader/gpt6_read_core.py --preflight
+      - name: Exact integer-rational boundary tests and planted faults
+        run: |
+          python3 -I -B polariton-bridge/reader/gpt6_read_core.py --selftest
+      - name: Independent raw-source schema and nine sabotage tests
+        run: |
+          python3 -I -B polariton-bridge/reader/gpt6_source_schema.py --selftest
+      - name: Compile every frozen bridge clause and 7040 classical-observable slots without reading data
+        run: |
+          set -euo pipefail
+          python3 -I -B polariton-bridge/reader/gpt6_clause_reader.py --inventory \
+            | tee "$RUNNER_TEMP/bridge-352-inventory.hbp"
+          python3 -I -B polariton-bridge/reader/gpt6_clause_reader.py --selftest \
+            | tee "$RUNNER_TEMP/bridge-352-synthetic.hbp"
+          grep -Fq 'BRIDGE_READER_CONTRACT|frozen_rows=352|classical_epsilon_slots=7040|' \
+            "$RUNNER_TEMP/bridge-352-inventory.hbp"
+          grep -Fq '|actual_blind_outputs_opened=0|status=READ_DISABLED_PENDING_INDEPENDENT_REVIEW|' \
+            "$RUNNER_TEMP/bridge-352-inventory.hbp"
+          grep -Fq '|actual_outputs_opened=0|status=PASS|' \
+            "$RUNNER_TEMP/bridge-352-synthetic.hbp"
+          if python3 -I -B polariton-bridge/reader/gpt6_clause_reader.py \
+            --read /nonexistent 2>"$RUNNER_TEMP/refusal.hbp"; then
+            echo "ERROR: a blind read flag was unexpectedly accepted"
+            exit 1
+          fi
+          grep -q 'READ_DISABLED_ONLY_SYNTHETIC_MODES' "$RUNNER_TEMP/refusal.hbp"
+      - name: Exact in-memory common-prefix ensemble moment and covariance checks
+        run: |
+          set -euo pipefail
+          python3 -I -B polariton-bridge/reader/gpt6_ensemble_moments.py --selftest \
+            | tee "$RUNNER_TEMP/bridge-ensemble-stats.hbp"
+          grep -Fq 'BRIDGE_MOMENTS|sample_count=4|mean_ReZ=3/2|mean_XNC=4/1|' \
+            "$RUNNER_TEMP/bridge-ensemble-stats.hbp"
+          grep -Fq '|actual_outputs_opened=0|status=PASS|' \
+            "$RUNNER_TEMP/bridge-ensemble-stats.hbp"
+          if python3 -I -B polariton-bridge/reader/gpt6_ensemble_moments.py --read /tmp 2>"$RUNNER_TEMP/ensemble-read-refusal.hbp"; then
+            echo "ERROR: blind ensemble read unexpectedly accepted"
+            exit 1
+          fi
+          grep -q 'BLIND_OUTPUT_READ_DISABLED' "$RUNNER_TEMP/ensemble-read-refusal.hbp"
+      - name: Quantum planned route, trajectory and jet source contracts with shell refusal
+        run: |
+          set -euo pipefail
+          python3 -I -B polariton-bridge/reader/gpt6_source_contracts.py --selftest \
+            | tee "$RUNNER_TEMP/bridge-source-contracts.hbp"
+          grep -Fq '|blind_outputs_opened=0|status=PASS|' \
+            "$RUNNER_TEMP/bridge-source-contracts.hbp"
+          if python3 -I -B polariton-bridge/reader/gpt6_source_contracts.py --read /tmp 2>"$RUNNER_TEMP/source-read-refusal.hbp"; then
+            echo "ERROR: blind source read unexpectedly accepted"
+            exit 1
+          fi
+          grep -q 'BLIND_READ_DISABLED' "$RUNNER_TEMP/source-read-refusal.hbp"
+      - name: Strict no-float AST scan using git-index file modes
+        run: |
+          python3 - <<'PY'
+          import ast
+          import pathlib
+          import subprocess
+          rows = subprocess.check_output(
+              ["git", "ls-files", "-s", "-z", "--", "polariton-bridge/reader/"])
+          pyfiles = []
+          for row in rows.split(b"\0"):
+              if not row:
+                  continue
+              meta, path = row.split(b"\t", 1)
+              mode = meta.split(b" ")[0]
+              if not path.endswith(b".py"):
+                  continue
+              if mode not in (b"100644", b"100755"):
+                  raise SystemExit("READ_FLOAT_REFUSED|reason=unexpected_index_mode")
+              pyfiles.append(pathlib.Path(path.decode("utf-8")))
+          if len(pyfiles) < 2:
+              raise SystemExit("READ_FLOAT_REFUSED|reason=missing_python_source")
+          banned_modules = {"fractions", "decimal", "numpy", "pandas"}
+          banned_calls = {"float", "complex", "eval", "exec", "compile", "__import__"}
+          for path in pyfiles:
+              tree = ast.parse(path.read_text(encoding="utf-8"))
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Constant) and type(node.value) is float:
+                      raise SystemExit("READ_FLOAT_REFUSED|reason=float_literal")
+                  if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+                      raise SystemExit("READ_FLOAT_REFUSED|reason=true_division")
+                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                      if node.func.id in banned_calls:
+                          raise SystemExit("READ_FLOAT_REFUSED|reason=unsafe_call")
+                  if isinstance(node, ast.Import):
+                      if any(i.name.split(".")[0] in banned_modules for i in node.names):
+                          raise SystemExit("READ_FLOAT_REFUSED|reason=banned_import")
+                  if isinstance(node, ast.ImportFrom) and node.module:
+                      if node.module.split(".")[0] in banned_modules:
+                          raise SystemExit("READ_FLOAT_REFUSED|reason=banned_from")
+          print("READER_INDEX_NO_FLOAT|files=%d|pass=1|json=0" % len(pyfiles))
+          PY
+      - name: No binary float or hidden model execution in pre-read core
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import ast
+          banned = {"fractions", "decimal", "numpy", "pandas"}
+          for path in (Path("polariton-bridge/reader/gpt6_read_core.py"),
+                       Path("polariton-bridge/reader/gpt6_source_schema.py")):
+              t = ast.parse(path.read_text())
+              for x in ast.walk(t):
+                  if isinstance(x, ast.Constant) and type(x.value) is float:
+                      raise SystemExit("refused: float literal")
+                  if isinstance(x, ast.Import):
+                      for n in x.names:
+                          if n.name.split(".")[0] in banned:
+                              raise SystemExit("refused: import " + n.name)
+                  if isinstance(x, ast.ImportFrom) and x.module:
+                      if x.module.split(".")[0] in banned:
+                          raise SystemExit("refused: from " + x.module)
+          print("PRE_READ_FLOAT_GATE|PASS|json=0")
+          PY
