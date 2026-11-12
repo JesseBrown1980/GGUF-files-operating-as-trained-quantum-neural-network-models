@@ -102,7 +102,7 @@ def catalogue():
         # complement, but must never be silently omitted.
         need(not (set(applies) & set(reports)), "applies_vs_report_overlap")
         need(row.get("blind") == "1", "lost_blind_flag")
-        need(num(row["t"]) > ZERO if False else cmp(num(row["t"]), ZERO) > 0,
+        need(cmp(num(row["t"]), ZERO) > 0,
              "invalid_read_time")
         for c in applies:
             counts[c] += 1
