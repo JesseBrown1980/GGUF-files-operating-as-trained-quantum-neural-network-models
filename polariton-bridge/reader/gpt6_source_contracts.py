@@ -80,10 +80,22 @@ def trajectory_bounds(items, point, *, authenticated=False):
     return ob
 
 
+def jet_rows(source):
+    """Full jetread.py source grammar, including conservation and sign rows."""
+    need(type(source) is bytes and source.endswith(b"\n")
+         and b"\r" not in source, "jet_raw_output_lf")
+    allowed = ("JR_HEAD", "JR_OBS", "JR_SIGN", "JR_PAIR",
+               "JR_CONS", "JR_GATES", "JR_END")
+    items = [fields(line) for line in source.decode("utf-8").splitlines()]
+    need(items and all(x["_tag"] in allowed for x in items),
+         "jet_raw_unknown_or_empty_row")
+    return items
+
+
 def jet_contract(items, frozen_plan, *, authenticated=False):
     """Validate every status/source identity; never substitute a failed jet."""
     need(authenticated is True, "unverified_jet_sha")
-    raw = parse_rows(items)
+    raw = jet_rows(items)
     need(raw[0]["_tag"] == "JR_HEAD" and raw[-1]["_tag"] == "JR_END",
          "jet_wrong_row_order")
     heads = [r for r in raw if r["_tag"] == "JR_HEAD"]
@@ -119,8 +131,35 @@ def jet_contract(items, frozen_plan, *, authenticated=False):
     ), "jet_status_inconsistent")
     observations = [r for r in raw if r["_tag"] == "JR_OBS"]
     needs = ("VNC", "V1")
-    need(all(any(o.get("variant") == v for o in observations)
-             for v in needs), "jet_missing_variant")
+    want = ("C1", "f", "V2") if num(h["y"]) == ZERO else (
+        "C1", "A1", "V2", "f", "D2", "ZR"
+    )
+    need(len(observations) == len(want) * 2, "jet_observable_census")
+    for variant in needs:
+        need({r.get("obs") for r in observations
+              if r.get("variant") == variant} == set(want),
+             "jet_missing_or_duplicate_observable")
+    signs = [r for r in raw if r["_tag"] == "JR_SIGN"]
+    need(len(signs) == (0 if num(h["y"]) == ZERO else 2),
+         "jet_sign_census")
+    need(all(r.get("variant") in needs and
+             r.get("E_Re_Z_sign") in ("+", "-", "0") and
+             r.get("row") == h["row"] for r in signs),
+         "jet_sign_bad")
+    need({r["variant"] for r in signs} ==
+         (set() if num(h["y"]) == ZERO else set(needs)),
+         "jet_sign_variant_missing")
+    pairs = [r for r in raw if r["_tag"] == "JR_PAIR"]
+    cons = [r for r in raw if r["_tag"] == "JR_CONS"]
+    need(len(pairs) == len(cons) == 1, "jet_pair_cons_census")
+    need(pairs[0].get("row") == h["row"]
+         and pairs[0].get("what") == "N^2*(C1_V1-C1_VNC)"
+         and cons[0].get("row") == h["row"],
+         "jet_pair_cons_identity")
+    for name in ("value_P", "T_P", "T_P_over_absP"):
+        need(name in pairs[0], "jet_pair_missing_" + name)
+        certified_num(pairs[0][name], name) if name != "value_P" else num(pairs[0][name])
+    need(cons[0].get("t0_exact") in ("0", "1"), "jet_conservation_flag")
     for row in observations:
         need(row.get("row") == h["row"] and
              row.get("law") == "engine", "jet_observable_not_bound")
@@ -130,10 +169,15 @@ def jet_contract(items, frozen_plan, *, authenticated=False):
         if row["obs"] == "V2" and num(h["y"]) == ZERO:
             need(row.get("value_P") == "UNDEFINED", "jet_zero_V2")
         else:
-            for col in ("value_P", "T_P", "Trel_P", "e_int"):
+            for col in ("value_P", "T_P", "e_int"):
                 need(col in row and row[col] != "NA",
                      "jet_missing_numeric_" + col)
                 certified_num(row[col], col) if col != "value_P" else num(row[col])
+            # A zero observable can legitimately print an undefined relative
+            # error. The absolute errors must still be present and nonnegative.
+            need("Trel_P" in row, "jet_missing_relative_diagnostic")
+            if row["Trel_P"] != "NA":
+                certified_num(row["Trel_P"], "Trel_P")
     return ("JET_READY" if should_be_ready else "JET_NOT_RESOLVED",
             len(observations))
 
