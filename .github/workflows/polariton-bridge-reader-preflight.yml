@@ -21,6 +21,25 @@ jobs:
       - name: Independent raw-source schema and nine sabotage tests
         run: |
           python3 -I -B polariton-bridge/reader/gpt6_source_schema.py --selftest
+      - name: Compile every frozen bridge clause and 7040 classical-observable slots without reading data
+        run: |
+          set -euo pipefail
+          python3 -I -B polariton-bridge/reader/gpt6_clause_reader.py --inventory \
+            | tee "$RUNNER_TEMP/bridge-352-inventory.hbp"
+          python3 -I -B polariton-bridge/reader/gpt6_clause_reader.py --selftest \
+            | tee "$RUNNER_TEMP/bridge-352-synthetic.hbp"
+          grep -Fq 'BRIDGE_READER_CONTRACT|frozen_rows=352|classical_epsilon_slots=7040|' \
+            "$RUNNER_TEMP/bridge-352-inventory.hbp"
+          grep -Fq '|actual_blind_outputs_opened=0|status=READ_DISABLED_PENDING_INDEPENDENT_REVIEW|' \
+            "$RUNNER_TEMP/bridge-352-inventory.hbp"
+          grep -Fq '|actual_outputs_opened=0|status=PASS|' \
+            "$RUNNER_TEMP/bridge-352-synthetic.hbp"
+          if python3 -I -B polariton-bridge/reader/gpt6_clause_reader.py \
+            --read /nonexistent 2>"$RUNNER_TEMP/refusal.hbp"; then
+            echo "ERROR: a blind read flag was unexpectedly accepted"
+            exit 1
+          fi
+          grep -q 'READ_DISABLED_ONLY_SYNTHETIC_MODES' "$RUNNER_TEMP/refusal.hbp"
       - name: Strict no-float AST scan using git-index file modes
         run: |
           python3 - <<'PY'
