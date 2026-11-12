@@ -213,6 +213,40 @@ def selftest():
     ]
     assert trajectory_bounds(_as_bytes(good_t), point,
                              authenticated=True)["N"] == "81"
+    # A synthetic complete positive-y jetread record, including JR_SIGN,
+    # JR_PAIR and JR_CONS, never a reserved-point measurement.
+    plan_digest = "a" * 64
+    frozen_plan = {"row": "L0481", "plan_sha256": plan_digest,
+                   "N": "81", "delta": "3/5", "y": "1/27", "t": "1/2"}
+    jr = [
+        ("JR_HEAD|mode=blind|row=L0481|N=81|delta=3/5|y=1/27|t=1/2|"
+         "step64=32|step128=64|plan_sha256=%s|reader_sha256=%s|"
+         "jet_sha256=%s|eint_jet_sha256=%s|binary_sha256=%s|"
+         "P=10|q=64|json=0") % ((plan_digest,) * 5),
+    ]
+    for var in ("VNC", "V1"):
+        for obs in ("C1", "A1", "V2", "f", "D2", "ZR"):
+            jr.append("JR_OBS|row=L0481|variant=%s|obs=%s|law=engine|"
+                      "value_P=1/2|T_P=1e-8|Trel_P=2e-8|"
+                      "e_int=1e-8|json=0" % (var, obs))
+        jr.append("JR_SIGN|row=L0481|variant=%s|E_Re_Z_sign=+|json=0" % var)
+    jr.extend((
+        "JR_PAIR|row=L0481|what=N^2*(C1_V1-C1_VNC)|"
+        "value_P=1|T_P=1e-8|T_P_over_absP=1e-8|json=0",
+        "JR_CONS|row=L0481|t0_exact=1|json=0",
+        "JR_GATES|row=L0481|G_TRUNC=pass|G_FALL=pass|G_ODD=pass|"
+        "G_CONS=pass|G_PAIR=pass|status=JET_READY|json=0",
+    ))
+    jr.append("JR_END|row=L0481|rows=%d|float_used=0|json=0" % (len(jr) + 1))
+    assert jet_contract(_as_bytes(jr), frozen_plan,
+                        authenticated=True) == ("JET_READY", 12)
+    not_ready = [
+        x.replace("G_PAIR=pass", "G_PAIR=fail:pair_T_P").replace(
+            "status=JET_READY", "status=JET_NOT_RESOLVED")
+        if x.startswith("JR_GATES|") else x for x in jr
+    ]
+    assert jet_contract(_as_bytes(not_ready), frozen_plan,
+                        authenticated=True) == ("JET_NOT_RESOLVED", 12)
     point_shell = dict(point, N="6561", delta="-3/5",
                        quantum="energy_shell_block_or_authorized_full_fallback")
     blocked = 0
@@ -232,15 +266,28 @@ def selftest():
                                       "C1_err_le=-1")
         ]), point, authenticated=True),
         lambda: jet_contract(b"", {}, authenticated=False),
+        lambda: jet_contract(_as_bytes(jr), dict(frozen_plan, plan_sha256="b" * 64),
+                             authenticated=True),
+        lambda: jet_contract(_as_bytes(jr[0:2] + jr[3:]), frozen_plan,
+                             authenticated=True),
+        lambda: jet_contract(_as_bytes([
+            x.replace("status=JET_READY", "status=JET_NOT_RESOLVED")
+            if x.startswith("JR_GATES|") else x for x in jr
+        ]), frozen_plan, authenticated=True),
+        lambda: jet_contract(_as_bytes([
+            x.replace("JR_SIGN|", "JR_WEIRD|")
+            if x.startswith("JR_SIGN|") else x for x in jr
+        ]), frozen_plan, authenticated=True),
     ):
         try:
             fn()
         except (StopRead, ValueError, KeyError, TypeError):
             blocked += 1
-    need(blocked == 6, "source_route_sabotage")
+    need(blocked == 10, "source_route_sabotage")
     print("BRIDGE_SOURCE_CONTRACT|planned_full_K=N_verified=PASS|"
           "unapproved_shell_fallback_refused=PASS|"
-          "trajectory_bound_pair=PASS|"
+          "trajectory_bound_pair=PASS|jet_all_12_observables=PASS|"
+          "jet_failed_gate_stays_not_resolved=PASS|"
           "sabotages_rejected=%d|blind_outputs_opened=0|status=PASS|json=0"
           % blocked)
 
