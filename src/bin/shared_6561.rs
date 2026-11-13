@@ -47,8 +47,11 @@ fn make_synthetic(slot: usize, phase: u8, length: usize) -> Vec<u8> {
         state ^= state >> 7;
         state ^= state << 17;
         let r = ((state >> 21) as u32).wrapping_add(index as u32);
-        let group = (parent + leaf / 9) % 3;
-        let skew = (leaf % 9) as u32;
+        // Every parent has a persistent distribution; the first fixture
+        // averaged all three groups within every parent and never switched.
+        // This revised fixture forces distinct parent-level populations.
+        let group = parent % 3;
+        let skew = ((parent / 3) % 9 * 2 + leaf % 9) as u32;
         let selector = r % 100;
         let byte = match group {
             0 if selector < 60 + skew => b'a' + (r % 26) as u8,
@@ -83,7 +86,7 @@ fn fixture_input() -> Result<Input, Box<dyn Error>> {
         counts,
         parts,
         target,
-        manifest_digest: String::from("SYNTHETIC_FIXED_GENERATOR_V1"),
+        manifest_digest: String::from("SYNTHETIC_FIXED_GENERATOR_V2_PARENT_DISTINCT"),
         source_digest: hex_digest(&fingerprint),
         synthetic: true,
     })
