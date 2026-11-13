@@ -46,6 +46,9 @@ jobs:
           cargo run --locked --release --bin shared_6561 -- --fixture-6561 build/full-6561 | tee build/full-6561/RESULT.hbp
           grep -q 'FULL6561_TRAIN|parents=81|leaves=6561' build/full-6561/RESULT.hbp
           grep -q 'FULL6561_COMPLETE|populated_parent_heads=81|populated_leaf_heads=6561|heldout_bytes=3359232|exact_stream_replays=5|synthetic=true|result=PASS' build/full-6561/RESULT.hbp
+          grep -Eq '^FULL6561_RESULT\|name=parents\|.*parent_switches=[1-9]' build/full-6561/RESULT.hbp
+          grep -Eq '^FULL6561_RESULT\|name=full_tree\|.*parent_switches=[1-9]' build/full-6561/RESULT.hbp
+          awk -F'|' '/^FULL6561_RESULT\|name=full_tree\|/ { for(i=1;i<=NF;i++) { split($i,kv,"="); if(kv[1]=="parent_switches") p=kv[2]+0; if(kv[1]=="total_switches") t=kv[2]+0; } if(p<1 || t<=p) exit 1; seen=1; } END { if(!seen) exit 1; }' build/full-6561/RESULT.hbp
           for name in base parents full_tree zero_deltas shuffled_deltas; do
             grep -q "FULL6561_RESULT|name=$name" build/full-6561/RESULT.hbp
             test -s "build/full-6561/$name.gguf"
