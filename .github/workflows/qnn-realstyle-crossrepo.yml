@@ -66,6 +66,8 @@ jobs:
             build/crossrepo/results > build/crossrepo/results/STDOUT.hbp
           grep '^CROSSREPO_RESULT|' build/crossrepo/results/CROSSREPO-RESULT.hbp
           grep '^CROSSREPO_DECISION|' build/crossrepo/results/CROSSREPO-RESULT.hbp
+          grep '^CROSSREPO_RECENT256|' build/crossrepo/results/CROSSREPO-RESULT.hbp
+          grep '^CROSSREPO_PAIRED|' build/crossrepo/results/CROSSREPO-RESULT.hbp
           test "$(grep -c '^CROSSREPO_RESULT|' build/crossrepo/results/CROSSREPO-RESULT.hbp)" -eq 16
           test "$(grep -c '^CROSSREPO_PRED|' build/crossrepo/results/CROSSREPO-RESULT.hbp)" -eq 576
           test "$(grep -c '^CROSSREPO_CONFUSION|' build/crossrepo/results/CROSSREPO-RESULT.hbp)" -eq 64
