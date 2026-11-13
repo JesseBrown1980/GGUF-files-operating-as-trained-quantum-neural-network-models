@@ -610,6 +610,45 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
             "REALSTYLE_INVARIANT|prefix={take}|parent_only_vs_tree_classification_equal=PASS|why=leaf_weights_do_not_affect_parent_selection|json=0\n"
         ));
     }
+    // Exploratory control recorded only AFTER viewing original frozen scores.
+    // The real hierarchical parent router only uses a recent 256-byte window,
+    // whereas the original 1024-byte baselines observe the full prefix.
+    report.push_str("REALSTYLE_POSTHOC_CONTROL|scope=last_256_bytes_only|source=grafts/REALSTYLE-CONTEXT-POSTCHECK.hbp|original_scores_unchanged=YES|json=0\n");
+    for take in [256_usize, 1_024_usize] {
+        for method in [1_usize, 2_usize, 4_usize] {
+            let mut correct = 0_usize;
+            let mut count = 0_usize;
+            for doc in docs.iter().filter(|d| d.partition == Partition::Test) {
+                let recent = &doc.data[take - BLOCK..take];
+                let result = baseline.classify(method, recent);
+                correct += usize::from(result == doc.class);
+                count += 1;
+            }
+            report.push_str(&format!(
+                "REALSTYLE_RECENT256|method={}|prefix={take}|correct={correct}|total={count}|model_bytes={}|posthoc=YES|json=0\n",
+                METHOD_NAMES[method],
+                model_sizes[method]
+            ));
+        }
+        let mut base_only_correct = 0_usize;
+        let mut router_only_correct = 0_usize;
+        let mut both_correct = 0_usize;
+        for doc in docs.iter().filter(|d| d.partition == Partition::Test) {
+            let nb = baseline.classify(2, &doc.data[..take]) == doc.class;
+            let route =
+                routed_parent(&graft, &doc.data[..take], RoutingMode::Parents) == doc.class;
+            if nb && !route {
+                base_only_correct += 1;
+            } else if route && !nb {
+                router_only_correct += 1;
+            } else if route && nb {
+                both_correct += 1;
+            }
+        }
+        report.push_str(&format!(
+            "REALSTYLE_PAIRED|prefix={take}|byte_unigram_only_correct={base_only_correct}|graft_only_correct={router_only_correct}|both_correct={both_correct}|n=36|json=0\n"
+        ));
+    }
     report.push_str("REALSTYLE_COMPLETE|heldout_real_source_files=36|classes=4|methods=8|prefixes=2|all_16_confusion_matrices=FILED|synthetic_6561_actual_GGUF=TESTED|json=0\n");
     fs::write(out.join("REALSTYLE-RESULT.hbp"), &report)?;
     print!("{report}");
