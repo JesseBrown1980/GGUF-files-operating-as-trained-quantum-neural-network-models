@@ -61,7 +61,7 @@ jobs:
             grep -q 'FULL6561_EXTERNAL_DECODE|bytes=3359232|route_blocks=13122' "build/full-6561/$name.DECODE.hbp"
           done
           cp build/full-6561/full_tree.stream build/full-6561/corrupted.stream
-          printf '0' | dd of=build/full-6561/corrupted.stream bs=1 seek=140 conv=notrunc status=none
+          printf '0' | dd of=build/full-6561/corrupted.stream bs=1 seek=0 conv=notrunc status=none
           ! cargo run --locked --release --bin shared_6561 -- --decode-check build/full-6561/full_tree.gguf build/full-6561/corrupted.stream build/full-6561/target.raw
           printf '0\tsrc/qnn.rs\n1\tsrc/qutrit.rs\n' > build/full-6561/incomplete-source-list.tsv
           ! cargo run --locked --release --bin shared_6561 -- --fit-source-list build/full-6561/incomplete-source-list.tsv build/full-6561/REJECT
