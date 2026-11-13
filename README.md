@@ -15,6 +15,14 @@ Node. Receipts are HBP/HBI with SHA-256, and every receipt line ends in `json=0`
 Predictions were sealed in [`PREREG.hbp`](PREREG.hbp) (sha256 `5485a600…`) and
 pushed in commit `03ff607` before any code existed.
 
+## Spatial12B: HEB-C/HTTP-0 integer network-of-networks (November 12, 2026)
+
+**[Spatial12B implementation and precise boundaries](spatial12b/README.md)** · **[Prediction-first HBP freeze](spatial12b/PREDICTION.hbp)** · **[QNN PR #21](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/21)**
+
+A new Rust 1.81 standalone experiment gives **12,000,000,000 virtual 27-state node addresses**, exact 22-trit address paths, context-dependent matrices generated from **27 shared integer coefficients**, and active-only synchronous neighbor updates. It benchmarks four *address-capacity* rungs, using **4,096 actually occupied nodes and three steps per rung**, with SHA-256 state receipts. It does not run 12 billion neural computations, load any trained GGUF as spatial neural weights, or simulate quantum entanglement.
+
+Its separate native HTTP-0 address-only bridge is under review [in the HEB-C portal repository](https://github.com/JesseBrown1980/qoled-internet-HEB-C-revisted-HTTP---free-0-hbi-hbp-sha-sh-hash/pull/8). The existing exact quantum circuits, trained models and physics benchmark receipts are unchanged. The next gate is real held-out learning and source-transfer evaluation, not larger virtual counts.
+
 ## Google qsim exact circuit compatibility — November 4, 2026
 
 The [prediction-first Google-circuit audit](docs/GOOGLE-QSIM-LIKE-FOR-LIKE-20261104.md) uses this repository's integer-only Rust environment to run **exact Google-defined qubit operations** without replacing them with the existing QNN's qutrit operations. Its sources are [Google qsim's actual 24-qubit sample circuit](https://github.com/quantumlib/qsim/blob/master/circuits/circuit_q24) and [Google's complete Bell-state tutorial](https://quantumai.google/qsim/qsimcirq_tutorial).
