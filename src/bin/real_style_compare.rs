@@ -22,8 +22,7 @@ const CLASSES: [&str; 4] = ["rust", "python", "markdown", "hbp"];
 const NCLASS: usize = 4;
 const TRAIN_BYTES: usize = 1_536;
 const LEAF_BYTES: usize = 512;
-const FULL_SYNTHETIC_SHA: &str =
-    "606c4d8478b8dbd72dfda0dad6c6ef1895c081a7cd5d5bb6c363525f57b941b2";
+const FULL_SYNTHETIC_SHA: &str = "606c4d8478b8dbd72dfda0dad6c6ef1895c081a7cd5d5bb6c363525f57b941b2";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Partition {
@@ -57,12 +56,18 @@ fn load_frozen_documents() -> Result<Vec<Document>, Box<dyn Error>> {
     if anchor.trim() != BASE {
         return Err("frozen repository commit unavailable".into());
     }
-    for line in SPLIT.lines().filter(|x| !x.starts_with('#') && !x.is_empty()) {
+    for line in SPLIT
+        .lines()
+        .filter(|x| !x.starts_with('#') && !x.is_empty())
+    {
         let row: Vec<&str> = line.split('\t').collect();
         if row.len() != 5 {
             return Err("frozen split has wrong field count".into());
         }
-        let class = CLASSES.iter().position(|x| *x == row[0]).ok_or("bad class")?;
+        let class = CLASSES
+            .iter()
+            .position(|x| *x == row[0])
+            .ok_or("bad class")?;
         let partition = match row[1] {
             "train" => Partition::Train,
             "validation" => Partition::Validation,
@@ -146,9 +151,7 @@ impl Baselines {
     fn group_score(&self, c: usize, data: &[u8]) -> u64 {
         let total = log2_q12(self.group_sum[c] + 3);
         data.iter()
-            .map(|&byte| {
-                u64::from(total - log2_q12(self.group[c][family_of_byte(byte)] + 1))
-            })
+            .map(|&byte| u64::from(total - log2_q12(self.group[c][family_of_byte(byte)] + 1)))
             .sum()
     }
 
@@ -165,9 +168,7 @@ impl Baselines {
         for &byte in data {
             let slot = usize::from(previous) * 256 + usize::from(byte);
             let total = self.row_sum[c][usize::from(previous)] + 256;
-            score += u64::from(
-                log2_q12(total) - log2_q12(u32::from(self.bigram[c][slot]) + 1),
-            );
+            score += u64::from(log2_q12(total) - log2_q12(u32::from(self.bigram[c][slot]) + 1));
             previous = byte;
         }
         score
@@ -382,7 +383,10 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
 
     for take in [256_usize, 1_024_usize] {
         let label_map = readout_for_synthetic(&synthetic, &docs, take);
-        fs::write(out.join(format!("synthetic_{take}_label_map.bin")), label_map)?;
+        fs::write(
+            out.join(format!("synthetic_{take}_label_map.bin")),
+            label_map,
+        )?;
         for method in 0..METHOD_NAMES.len() {
             let mut matrix = [[0_usize; NCLASS]; NCLASS];
             let mut count = 0_usize;
@@ -392,14 +396,8 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
             for _ in 0..10 {
                 for doc in docs.iter().filter(|d| d.partition == Partition::Test) {
                     let observed = &doc.data[..take];
-                    let result = predict(
-                        method,
-                        &baseline,
-                        &graft,
-                        &synthetic,
-                        &label_map,
-                        observed,
-                    );
+                    let result =
+                        predict(method, &baseline, &graft, &synthetic, &label_map, observed);
                     checksum += result;
                 }
             }
@@ -466,9 +464,7 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.as_slice() {
-        [_, flag, synthetic, out] if flag == "--run" => {
-            run(Path::new(synthetic), Path::new(out))
-        }
+        [_, flag, synthetic, out] if flag == "--run" => run(Path::new(synthetic), Path::new(out)),
         _ => Err("usage: real_style_compare --run SYNTHETIC_6561_GGUF OUTPUT_DIR".into()),
     }
 }
