@@ -409,6 +409,12 @@ impl Graft {
             }
             counts[id] = value;
         }
+        for row in counts.chunks_exact(256) {
+            let count: u32 = row.iter().map(|&x| u32::from(x)).sum();
+            if count > BASE_ROW_LIMIT {
+                return Err("backbone row total above normalized cap");
+            }
+        }
         let mut result = Self::new(
             Backbone::from_counts(counts),
             f.u32("graft.training_sources")
@@ -569,7 +575,9 @@ mod tests {
         assert_eq!(rebuilt.learned_leaves(), 1);
         assert_eq!(rebuilt.first_any_leaf(), Some(6560));
         assert_eq!(rebuilt.shifts(6560, RoutingMode::Tree), [1, -3, 3]);
-        assert!(Graft::from_gguf(&gguf[..gguf.len() - 1]).is_err());
+        let mut corrupted = gguf;
+        corrupted[0] ^= 1;
+        assert!(Graft::from_gguf(&corrupted).is_err());
     }
 
     #[test]
