@@ -435,6 +435,31 @@ mod tests {
     }
 
     #[test]
+    fn actual_nearby_nodes_change_updated_neural_state() {
+        let generator = Generator::default();
+        let center = encode_address(Address {
+            x: 0,
+            y: 3,
+            z: 3,
+            channel: 0,
+        })
+        .unwrap();
+        let near_z = neighbor_within(center, 14, CAPACITY).unwrap();
+        let near_y = neighbor_within(center, 16, CAPACITY).unwrap();
+        let mut without = SparseNodes::default();
+        without.set(center, 1, CAPACITY).unwrap();
+        without.set(near_y, 3, CAPACITY).unwrap();
+        let mut with = without.clone();
+        with.set(near_z, 2, CAPACITY).unwrap();
+        assert_eq!(generator.infer(center, 1, 0, 3), Some(2));
+        assert_eq!(generator.infer(center, 1, 2, 3), Some(1));
+        without.tick(CAPACITY, &generator);
+        with.tick(CAPACITY, &generator);
+        assert_eq!(without.get(center), 2);
+        assert_eq!(with.get(center), 1);
+    }
+
+    #[test]
     fn active_memory_and_negative_controls() {
         let capacity = CAPACITY;
         let mut nodes = SparseNodes::default();
