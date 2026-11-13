@@ -1,0 +1,45 @@
+name: GPT-6 manual GGUF surgery — inspect actual train-only weights
+on:
+  push:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/WEIGHT-SURGERY-*'
+      - '.github/workflows/qnn-weight-surgery.yml'
+  pull_request:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/WEIGHT-SURGERY-*'
+      - '.github/workflows/qnn-weight-surgery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  train-only-inspection:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rust 1.81 and exact no-float Rust checks
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --bin real_style_compare
+      - name: Print actual learned GGUF weight vectors without evaluation data
+        run: |
+          set -euo pipefail
+          mkdir -p build/surgery
+          cargo run --locked --release --bin real_style_compare -- --inspect-weights | tee build/surgery/TRAIN-ONLY-INSPECT.hbp
+          test "$(grep -c '^SURGERY_PARENT|' build/surgery/TRAIN-ONLY-INSPECT.hbp)" -eq 4
+          test "$(grep -c '^SURGERY_LEAF|' build/surgery/TRAIN-ONLY-INSPECT.hbp)" -eq 24
+          grep -Fq 'SURGERY_INSPECT_COMPLETE|heads=4|leaf_heads=24|test_files_read=0|json=0' build/surgery/TRAIN-ONLY-INSPECT.hbp
+          sha256sum build/surgery/TRAIN-ONLY-INSPECT.hbp > build/surgery/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: train-only-GGUF-weights
+          path: build/surgery/
+          retention-days: 30
