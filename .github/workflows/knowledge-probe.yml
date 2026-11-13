@@ -1,0 +1,63 @@
+name: Knowledge probe for trained 6561-head GGUF
+on:
+  push:
+    paths:
+      - 'src/bin/shared_knowledge_probe.rs'
+      - 'grafts/KNOWLEDGE-*'
+      - '.github/workflows/knowledge-probe.yml'
+  pull_request:
+    paths:
+      - 'src/bin/shared_knowledge_probe.rs'
+      - 'grafts/KNOWLEDGE-*'
+      - '.github/workflows/knowledge-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  factual_probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust 1.81 toolchain
+        run: |
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+      - name: Confirm frozen probe and integer-only code
+        run: |
+          set -euo pipefail
+          grep -q 'stage=BEFORE_PROBE_CODE' grafts/KNOWLEDGE-PROBE-PREDICTION.hbp
+          ! grep -nE '\bf(32|64)\b|serde_json|unsafe\s*\{' src/bin/shared_knowledge_probe.rs
+          ! git ls-files | grep -iE '\.(json|js|mjs|ts)$|package\.json'
+      - name: Format, strict clippy and probe tests
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --bin shared_knowledge_probe -- --nocapture
+      - name: Regenerate the exact previous 6561-head synthetic GGUF checkpoint
+        run: |
+          set -euo pipefail
+          mkdir -p build/knowledge/fixture
+          cargo run --locked --release --bin shared_6561 -- --fixture-6561 build/knowledge/fixture > build/knowledge/fixture/FIXTURE.hbp
+          test -s build/knowledge/fixture/full_tree.gguf
+          model_hash=$(sha256sum build/knowledge/fixture/full_tree.gguf | awk '{print $1}')
+          test "$model_hash" = "606c4d8478b8dbd72dfda0dad6c6ef1895c081a7cd5d5bb6c363525f57b941b2"
+      - name: Generate real bytes and grade eight facts without any answer lookup
+        run: |
+          set -euo pipefail
+          mkdir -p build/knowledge/probe
+          cargo run --locked --release --bin shared_knowledge_probe -- --probe build/knowledge/fixture/full_tree.gguf build/knowledge/probe | tee build/knowledge/probe/LOG.hbp
+          grep -q 'PROBE_COMPLETE|scored_greedy_questions=48' build/knowledge/probe/KNOWLEDGE-RESULT.hbp
+          grep -q 'PROBE_CAUSAL_COUNTEREXAMPLE|different_country_questions=France_Japan|same_final_byte=true|base_greedy_completion_identical=true|semantic_discrimination=FAIL' build/knowledge/probe/KNOWLEDGE-RESULT.hbp
+          test "$(grep -c '^PROBE_SCORE|' build/knowledge/probe/KNOWLEDGE-RESULT.hbp)" -eq 6
+          test "$(find build/knowledge/probe -name '*.bin' | wc -l)" -eq 48
+          (cd build/knowledge/probe && sha256sum KNOWLEDGE-RESULT.hbp *.bin > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-gguf-6561-factual-knowledge-probe
+          path: |
+            build/knowledge/probe/
+            build/knowledge/fixture/FIXTURE.hbp
+          retention-days: 30
+          if-no-files-found: warn
