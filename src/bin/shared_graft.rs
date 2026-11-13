@@ -70,7 +70,11 @@ fn train_manifest(manifest: &Path, model_path: &Path) -> Result<(), Box<dyn Erro
         }
         let fields: Vec<&str> = line.split('\t').collect();
         if fields.len() != 3 {
-            return Err(format!("manifest line {} must have id, train_path, validation_path", line_number + 1).into());
+            return Err(format!(
+                "manifest line {} must have id, train_path, validation_path",
+                line_number + 1
+            )
+            .into());
         }
         let slot: usize = fields[0].parse()?;
         if slot >= CAPACITY || !seen_slots.insert(slot) {
@@ -116,7 +120,11 @@ fn train_manifest(manifest: &Path, model_path: &Path) -> Result<(), Box<dyn Erro
 const TRAIN: [[&str; 3]; 3] = [
     ["src/qnn.rs", "src/gguf_model.rs", "src/qutrit.rs"],
     ["README.md", "polariton/README.md", "spatial12b/README.md"],
-    ["PREREG.hbp", "PREREG-YM-Z3.hbp", "spatial12b/PREDICTION.hbp"],
+    [
+        "PREREG.hbp",
+        "PREREG-YM-Z3.hbp",
+        "spatial12b/PREDICTION.hbp",
+    ],
 ];
 const VALID: [&str; 3] = [
     "src/train.rs",
@@ -125,8 +133,14 @@ const VALID: [&str; 3] = [
 ];
 const TEST: [[&str; 2]; 3] = [
     ["src/virtual_qnn.rs", "src/task.rs"],
-    ["docs/FULL-Q24-INTEGER-20261104.md", "docs/QSIM-OFFICIAL-REFERENCE-20261104.md"],
-    ["docs/PREDICTION-GOOGLE-QSIM-20261104.hbp", "docs/GOOGLE-QSIM-OFFICIAL-REFERENCE-20261104.hbp"],
+    [
+        "docs/FULL-Q24-INTEGER-20261104.md",
+        "docs/QSIM-OFFICIAL-REFERENCE-20261104.md",
+    ],
+    [
+        "docs/PREDICTION-GOOGLE-QSIM-20261104.hbp",
+        "docs/GOOGLE-QSIM-OFFICIAL-REFERENCE-20261104.hbp",
+    ],
 ];
 
 fn interleave(files: &[Vec<u8>]) -> Vec<u8> {
@@ -237,7 +251,13 @@ fn demo(out: &Path) -> Result<(), Box<dyn Error>> {
     case("shared_base", &baseline, RoutingMode::Base, &target, out)?;
     let mut parent_only = model.clone();
     parent_only.leaves.fill(None);
-    case("parents_only", &parent_only, RoutingMode::Parents, &target, out)?;
+    case(
+        "parents_only",
+        &parent_only,
+        RoutingMode::Parents,
+        &target,
+        out,
+    )?;
     case("shared_tree", &model, RoutingMode::Tree, &target, out)?;
     let mut zero = model.clone();
     for value in zero.parents.iter_mut().flatten() {
@@ -248,11 +268,19 @@ fn demo(out: &Path) -> Result<(), Box<dyn Error>> {
     }
     case("zero_deltas", &zero, RoutingMode::Tree, &target, out)?;
     let mut shuffled = model.clone();
-    let indices: Vec<usize> = (0..CAPACITY).filter(|&id| model.leaves[id].is_some()).collect();
+    let indices: Vec<usize> = (0..CAPACITY)
+        .filter(|&id| model.leaves[id].is_some())
+        .collect();
     for (i, &id) in indices.iter().enumerate() {
         shuffled.leaves[id] = model.leaves[indices[(i + 7) % indices.len()]];
     }
-    case("shuffled_deltas", &shuffled, RoutingMode::Tree, &target, out)?;
+    case(
+        "shuffled_deltas",
+        &shuffled,
+        RoutingMode::Tree,
+        &target,
+        out,
+    )?;
     println!("GRAFT_DEMO_COMPLETE|cases=5|exact_replays=5|address_capacity=6561|learned_leaves=27|full_6561_corpus=NOT_AVAILABLE|trained_full_LLM=NO|quantum_simulation=NO|json=0");
     Ok(())
 }
