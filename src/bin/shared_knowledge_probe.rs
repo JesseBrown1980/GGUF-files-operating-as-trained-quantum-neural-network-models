@@ -253,11 +253,80 @@ fn run(model_path: &Path, output_dir: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Exploratory follow-up added AFTER the failed factual QA probe:
+/// distinguish three known synthetic generator families, not real file types.
+fn style_probe(
+    model_path: &Path,
+    heldout_path: &Path,
+    output_dir: &Path,
+) -> Result<(), Box<dyn Error>> {
+    fs::create_dir_all(output_dir)?;
+    let model_bytes = fs::read(model_path)?;
+    if hex_digest(&model_bytes) != MODEL_SHA256 {
+        return Err("different model checkpoint".into());
+    }
+    let model = Graft::from_gguf(&model_bytes)?;
+    let data = fs::read(heldout_path)?;
+    if data.len() != CAPACITY * 512 {
+        return Err("expected the complete 6561x512 synthetic target".into());
+    }
+    let mut report = String::from(
+        "STYLE_PROBE|status=EXPLORATORY_POSTCHECK|source=KNOWN_SYNTHETIC_STYLE_GENERATOR|not_blind=YES|factual_knowledge=NOT_TESTED|json=0\n",
+    );
+    for mode in [RoutingMode::Parents, RoutingMode::Tree] {
+        for take in [256_usize, 512_usize] {
+            let mut matches_family = 0_usize;
+            let mut matches_parent = 0_usize;
+            let mut matches_leaf = 0_usize;
+            let mut predicted_parents = BTreeSet::new();
+            let mut confusion = [[0_usize; 3]; 3];
+            for slot in 0..CAPACITY {
+                let parent = slot / 81;
+                let family = parent % 3;
+                let piece = &data[slot * 512..slot * 512 + take];
+                let mut router = Router::new(&model, mode);
+                let mut predicted = router.select(&model, &piece[..256], mode);
+                if take > 256 {
+                    predicted = router.select(&model, piece, mode);
+                }
+                let predicted_parent = predicted / 81;
+                let predicted_family = predicted_parent % 3;
+                matches_family += usize::from(predicted_family == family);
+                matches_parent += usize::from(predicted_parent == parent);
+                matches_leaf += usize::from(predicted == slot);
+                predicted_parents.insert(predicted_parent);
+                confusion[family][predicted_family] += 1;
+            }
+            report.push_str(&format!(
+                "STYLE_RESULT|mode={}|observed_bytes_per_piece={take}|sources=6561|correct_synthetic_family={matches_family}|exact_parent={matches_parent}|exact_leaf={matches_leaf}|distinct_predicted_parents={}|baseline_family_correct=2187|json=0\n",
+                mode_name(mode),
+                predicted_parents.len()
+            ));
+            for (true_family, row) in confusion.iter().enumerate() {
+                report.push_str(&format!(
+                    "STYLE_CONFUSION|mode={}|observed_bytes_per_piece={take}|true_family={true_family}|pred0={}|pred1={}|pred2={}|json=0\n",
+                    mode_name(mode),
+                    row[0],
+                    row[1],
+                    row[2]
+                ));
+            }
+        }
+    }
+    report.push_str("STYLE_COMPLETE|synthetic_classification_only=YES|original_factual_qa_remains_ZERO|json=0\n");
+    fs::write(output_dir.join("STYLE-RESULT.hbp"), &report)?;
+    print!("{report}");
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.as_slice() {
         [_, action, model, output] if action == "--probe" => {
             run(Path::new(model), Path::new(output))
+        }
+        [_, action, model, heldout, output] if action == "--style" => {
+            style_probe(Path::new(model), Path::new(heldout), Path::new(output))
         }
         _ => Err("usage: shared_knowledge_probe --probe FULL_TREE.gguf OUTPUT_DIR".into()),
     }
