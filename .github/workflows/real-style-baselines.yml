@@ -54,6 +54,10 @@ jobs:
           test "$(grep -c '^REALSTYLE_RESULT|' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 16
           test "$(grep -c '^REALSTYLE_CONFUSION|' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 64
           test "$(grep -c '^REALSTYLE_PRED|' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 576
+          test "$(grep -c '^REALSTYLE_RECENT256|' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 6
+          test "$(grep -c '^REALSTYLE_PAIRED|' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 2
+          grep '^REALSTYLE_RECENT256|' build/realstyle/results/REALSTYLE-RESULT.hbp
+          grep '^REALSTYLE_PAIRED|' build/realstyle/results/REALSTYLE-RESULT.hbp
           test "$(grep -c 'parent_only_vs_tree_classification_equal=PASS' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 2
           test -s build/realstyle/results/real_graft_tree.gguf
           test -s build/realstyle/results/real_graft_parents.gguf
