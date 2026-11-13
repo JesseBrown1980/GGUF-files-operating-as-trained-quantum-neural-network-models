@@ -155,8 +155,7 @@ impl Backbone {
         let sym = left as u8;
         let low = self.cumulative(prev, sym, w);
         let high = low
-            + (u32::from(self.counts[usize::from(prev) * 256 + left]) + 1)
-                * w[family_of_byte(sym)];
+            + (u32::from(self.counts[usize::from(prev) * 256 + left]) + 1) * w[family_of_byte(sym)];
         (sym, low, high, total)
     }
 
@@ -335,19 +334,46 @@ impl Graft {
         let meta = gguf_model::Model {
             kv: vec![
                 ("general.architecture".into(), Kv::Str(ARCH.into())),
-                ("general.name".into(), Kv::Str("QNN_SHARED_GRAFT81X81_V1".into())),
+                (
+                    "general.name".into(),
+                    Kv::Str("QNN_SHARED_GRAFT81X81_V1".into()),
+                ),
                 ("graft.parents_capacity".into(), Kv::U32(PARENTS as u32)),
                 ("graft.leaves_capacity".into(), Kv::U32(CAPACITY as u32)),
-                ("graft.trained_parents".into(), Kv::U32(self.learned_parents() as u32)),
-                ("graft.trained_leaves".into(), Kv::U32(self.learned_leaves() as u32)),
-                ("graft.training_sources".into(), Kv::U32(self.training_sources)),
-                ("graft.backbone".into(), Kv::Str("byte_bigram_integer".into())),
-                ("graft.scope".into(), Kv::Str("real sparse corrections; no trained empty slot".into())),
+                (
+                    "graft.trained_parents".into(),
+                    Kv::U32(self.learned_parents() as u32),
+                ),
+                (
+                    "graft.trained_leaves".into(),
+                    Kv::U32(self.learned_leaves() as u32),
+                ),
+                (
+                    "graft.training_sources".into(),
+                    Kv::U32(self.training_sources),
+                ),
+                (
+                    "graft.backbone".into(),
+                    Kv::Str("byte_bigram_integer".into()),
+                ),
+                (
+                    "graft.scope".into(),
+                    Kv::Str("real sparse corrections; no trained empty slot".into()),
+                ),
             ],
             tensors: vec![
-                ("backbone.sparse".into(), sparse.into_iter().map(|x| x as i8).collect()),
-                ("parents.patch".into(), parents.into_iter().map(|x| x as i8).collect()),
-                ("leaves.patch".into(), leaves.into_iter().map(|x| x as i8).collect()),
+                (
+                    "backbone.sparse".into(),
+                    sparse.into_iter().map(|x| x as i8).collect(),
+                ),
+                (
+                    "parents.patch".into(),
+                    parents.into_iter().map(|x| x as i8).collect(),
+                ),
+                (
+                    "leaves.patch".into(),
+                    leaves.into_iter().map(|x| x as i8).collect(),
+                ),
             ],
         };
         gguf_model::write(&meta)
@@ -362,7 +388,9 @@ impl Graft {
         {
             return Err("wrong architecture, metadata or tensor count");
         }
-        let sparse = f.tensor("backbone.sparse").ok_or("missing shared backbone")?;
+        let sparse = f
+            .tensor("backbone.sparse")
+            .ok_or("missing shared backbone")?;
         let ph = f.tensor("parents.patch").ok_or("missing parent patches")?;
         let lh = f.tensor("leaves.patch").ok_or("missing leaf patches")?;
         if sparse.len() % 4 != 0 || ph.len() % 4 != 0 || lh.len() % 5 != 0 {
@@ -383,7 +411,8 @@ impl Graft {
         }
         let mut result = Self::new(
             Backbone::from_counts(counts),
-            f.u32("graft.training_sources").ok_or("source count missing")?,
+            f.u32("graft.training_sources")
+                .ok_or("source count missing")?,
         );
         for row in ph.chunks_exact(4) {
             let id = row[0] as u8 as usize;
@@ -457,7 +486,12 @@ impl Router {
         let active = if mode == RoutingMode::Tree {
             graft.first_any_leaf().expect("no trained leaf")
         } else if mode == RoutingMode::Parents {
-            graft.parents.iter().position(Option::is_some).expect("no parent") * 81
+            graft
+                .parents
+                .iter()
+                .position(Option::is_some)
+                .expect("no parent")
+                * 81
         } else {
             0
         };
@@ -488,7 +522,9 @@ impl Router {
         if mode == RoutingMode::Tree {
             if parent != self.active / 81 {
                 self.parent_epoch = past.len();
-                next = model.first_leaf(parent).expect("parent without trained leaf");
+                next = model
+                    .first_leaf(parent)
+                    .expect("parent without trained leaf");
             } else if past.len() - self.parent_epoch < BLOCK {
                 next = self.active;
             } else {
@@ -571,7 +607,11 @@ mod tests {
         g.leaves[0] = Some([0; 3]);
         let raw = g.gguf();
         let mut f = gguf_model::read(&raw).unwrap();
-        let patches = f.tensors.iter_mut().find(|(n, _)| n == "leaves.patch").unwrap();
+        let patches = f
+            .tensors
+            .iter_mut()
+            .find(|(n, _)| n == "leaves.patch")
+            .unwrap();
         patches.1[4] = 20;
         assert!(Graft::from_gguf(&gguf_model::write(&f)).is_err());
     }
