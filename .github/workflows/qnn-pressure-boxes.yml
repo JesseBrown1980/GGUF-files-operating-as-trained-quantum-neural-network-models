@@ -72,6 +72,9 @@ jobs:
             build/pressure/repos/finite build/pressure/repos/ym4 build/pressure/repos/new \
             build/pressure/results | tee build/pressure/results/STDOUT.hbp
           grep '^PRESSURE_' build/pressure/results/STDOUT.hbp
+          grep '^PRESSURE_ARM|variant=0|corpus=new_Aether|prefix=1024|' build/pressure/results/PRESSURE-RESULT.hbp
+          grep '^PRESSURE_ARM|variant=1|corpus=new_Aether|prefix=1024|' build/pressure/results/PRESSURE-RESULT.hbp
+          grep '^PRESSURE_ARM|variant=2|corpus=new_Aether|prefix=1024|' build/pressure/results/PRESSURE-RESULT.hbp
           test "$(grep -c '^PRESSURE_ARM|' build/pressure/results/PRESSURE-RESULT.hbp)" -eq 864
           test "$(grep -c '^PRESSURE_BASELINE|' build/pressure/results/PRESSURE-RESULT.hbp)" -eq 6
           test "$(grep -c '^PRESSURE_GGUF|' build/pressure/results/PRESSURE-RESULT.hbp)" -eq 3
