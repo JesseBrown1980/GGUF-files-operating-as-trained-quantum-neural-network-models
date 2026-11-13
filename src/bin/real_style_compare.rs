@@ -23,7 +23,8 @@ const YM4_REV: &str = "05de0ff7c8d13409fbf1bb9ef71e7ae23831b056";
 const SPLIT: &str = include_str!("../../grafts/REALSTYLE-SPLIT.tsv");
 const PRESSURE_NEW_MANIFEST: &str = include_str!("../../grafts/PRESSURE-NEW-HOLDOUT-20261113.tsv");
 const PRESSURE_NEW_REV: &str = "b793c6a294d5d12776bc371932e9ee29021c3cae";
-const PRESSURE_NEW_REPO: &str = "JesseBrown1980/With-Felipe-Miguel-Olimpio-da-Cruz-as-The-omega-and-Aether...";
+const PRESSURE_NEW_REPO: &str =
+    "JesseBrown1980/With-Felipe-Miguel-Olimpio-da-Cruz-as-The-omega-and-Aether...";
 const CLASSES: [&str; 4] = ["rust", "python", "markdown", "hbp"];
 const NCLASS: usize = 4;
 const TRAIN_BYTES: usize = 1_536;
@@ -1157,7 +1158,6 @@ fn run_surgery(
     Ok(())
 }
 
-
 const PRESSURE_N: usize = 81;
 const PRESSURE_STEPS: usize = 3;
 type PressureState = [i32; PRESSURE_N];
@@ -1331,7 +1331,9 @@ fn pressure_variant(source: &Graft, variant: usize) -> Result<Graft, Box<dyn Err
         }
         _ => return Err("unknown direct weight surgery control".into()),
     }
-    if edited.leaves != source.leaves || edited.backbone.raw_counts() != source.backbone.raw_counts() {
+    if edited.leaves != source.leaves
+        || edited.backbone.raw_counts() != source.backbone.raw_counts()
+    {
         return Err("pressure surgery changed protected backbone or leaves".into());
     }
     Ok(edited)
@@ -1349,12 +1351,16 @@ fn load_pressure_holdout(repo_dir: &Path) -> Result<Vec<Document>, Box<dyn Error
         if row.len() != 6 || row[1] != PRESSURE_NEW_REPO || row[2] != PRESSURE_NEW_REV {
             return Err("unfrozen third-repository manifest row".into());
         }
-        let class = CLASSES.iter().position(|&x| x == row[0]).ok_or("bad holdout class")?;
+        let class = CLASSES
+            .iter()
+            .position(|&x| x == row[0])
+            .ok_or("bad holdout class")?;
         if !seen.insert(row[3].to_string()) {
             return Err("duplicate new holdout blob".into());
         }
         let refpath = format!("{}:{}", PRESSURE_NEW_REV, row[5]);
-        let actual_sha = String::from_utf8(external_git_bytes(repo_dir, &["rev-parse", &refpath])?)?;
+        let actual_sha =
+            String::from_utf8(external_git_bytes(repo_dir, &["rev-parse", &refpath])?)?;
         if actual_sha.trim() != row[3] {
             return Err("new holdout SHA pin mismatch".into());
         }
@@ -1413,8 +1419,10 @@ fn run_pressure(
         let file = output_dir.join(format!("pressure_variant_{i}.gguf"));
         fs::write(&file, &raw)?;
         let cold = Graft::from_gguf(&fs::read(file)?)?;
-        if cold.gguf() != raw || cold.parents != model.parents
-            || cold.leaves != source.leaves || cold.backbone.raw_counts() != source.backbone.raw_counts()
+        if cold.gguf() != raw
+            || cold.parents != model.parents
+            || cold.leaves != source.leaves
+            || cold.backbone.raw_counts() != source.backbone.raw_counts()
         {
             return Err("pressure GGUF cold reload mismatch".into());
         }
@@ -1471,13 +1479,15 @@ PRESSURE_GRAPH|nodes=81|plus_center=YES|attractive={count_positive}|repulsive={c
             for density in [27_usize, 54, 81] {
                 for pressure in [0_i32, 1, 3, 9] {
                     for boxes in 0..4_usize {
-                        let centroids = pressure_fit(model, &docs, prefix, density, pressure, boxes, &graph);
+                        let centroids =
+                            pressure_fit(model, &docs, prefix, density, pressure, boxes, &graph);
                         let bytes = pressure_centroid_bytes(&centroids);
                         if bytes.len() != 1_296 {
                             return Err("wrong linear readout storage".into());
                         }
                         if density == 54 && pressure == 3 && boxes == 2 {
-                            let filename = output_dir.join(format!("pressure_v{variant}_p{prefix}.readout"));
+                            let filename =
+                                output_dir.join(format!("pressure_v{variant}_p{prefix}.readout"));
                             fs::write(&filename, &bytes)?;
                             let cold = pressure_readback(&fs::read(&filename)?)?;
                             if centroids != cold {
@@ -1505,7 +1515,9 @@ PRESSURE_GRAPH|nodes=81|plus_center=YES|attractive={count_positive}|repulsive={c
                                     return Err("pressure-zero should be identical".into());
                                 }
                                 omega_checks += 1;
-                                correct += usize::from(pressure_predict(&cold_readout, &state) == doc.class);
+                                correct += usize::from(
+                                    pressure_predict(&cold_readout, &state) == doc.class,
+                                );
                                 transported += flux;
                                 concentration += density_energy;
                                 max_amplitude = max_amplitude.max(peak);
@@ -1531,7 +1543,7 @@ PRESSURE_GRAPH|nodes=81|plus_center=YES|attractive={count_positive}|repulsive={c
                 unigrams += usize::from(baselines.classify(2, sample) == doc.class);
                 bigrams += usize::from(baselines.classify(4, sample) == doc.class);
                 old_router += usize::from(
-                    routed_parent(&real_graft, sample, RoutingMode::Parents) == doc.class
+                    routed_parent(&real_graft, sample, RoutingMode::Parents) == doc.class,
                 );
             }
             result.push_str(&format!(
@@ -1562,13 +1574,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.as_slice() {
         [_, flag] if flag == "--inspect-weights" => inspect_train_weights(),
-        [_, flag, synthetic, finite, ym4, new_repo, out] if flag == "--pressure-boxes" => run_pressure(
-            Path::new(synthetic),
-            Path::new(finite),
-            Path::new(ym4),
-            Path::new(new_repo),
-            Path::new(out),
-        ),
+        [_, flag, synthetic, finite, ym4, new_repo, out] if flag == "--pressure-boxes" => {
+            run_pressure(
+                Path::new(synthetic),
+                Path::new(finite),
+                Path::new(ym4),
+                Path::new(new_repo),
+                Path::new(out),
+            )
+        }
         [_, flag, synthetic, finite, ym4, out] if flag == "--brain-surgery" => run_surgery(
             Path::new(synthetic),
             Path::new(finite),
