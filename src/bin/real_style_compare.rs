@@ -635,8 +635,7 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
         let mut both_correct = 0_usize;
         for doc in docs.iter().filter(|d| d.partition == Partition::Test) {
             let nb = baseline.classify(2, &doc.data[..take]) == doc.class;
-            let route =
-                routed_parent(&graft, &doc.data[..take], RoutingMode::Parents) == doc.class;
+            let route = routed_parent(&graft, &doc.data[..take], RoutingMode::Parents) == doc.class;
             if nb && !route {
                 base_only_correct += 1;
             } else if route && !nb {
