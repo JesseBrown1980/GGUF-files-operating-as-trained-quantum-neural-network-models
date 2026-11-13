@@ -356,11 +356,8 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
     let parent_bytes = parent.gguf();
     fs::write(out.join("real_graft_tree.gguf"), &graft_bytes)?;
     fs::write(out.join("real_graft_parents.gguf"), &parent_bytes)?;
-    for method in 0..=4 {
-        fs::write(
-            out.join(format!("{}.model", METHOD_NAMES[method])),
-            baseline.serialized(method),
-        )?;
+    for (method, name) in METHOD_NAMES.iter().enumerate().take(5) {
+        fs::write(out.join(format!("{name}.model")), baseline.serialized(method))?;
     }
     let model_sizes: [usize; 8] = [
         baseline.serialized(0).len(),
