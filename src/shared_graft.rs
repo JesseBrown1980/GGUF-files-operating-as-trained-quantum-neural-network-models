@@ -77,7 +77,7 @@ impl Backbone {
         assert_eq!(counts.len(), 65_536);
         let mut prefix = vec![[0_u16; 3]; 65_536];
         let mut group_sums = vec![[0_u16; 3]; 256];
-        for prev in 0..256 {
+        for (prev, sums) in group_sums.iter_mut().enumerate() {
             let mut seen = [0_u16; 3];
             for next in 0..256 {
                 let i = prev * 256 + next;
@@ -85,7 +85,7 @@ impl Backbone {
                 let g = family_of_byte(next as u8);
                 seen[g] += counts[i] + 1;
             }
-            group_sums[prev] = seen;
+            *sums = seen;
         }
         Self {
             counts,
@@ -419,7 +419,7 @@ impl Graft {
             if id >= PARENTS || result.parents[id].is_some() {
                 return Err("duplicate or invalid parent");
             }
-            let d = [row[1], row[2], row[3]].map(|x| x as i8);
+            let d = [row[1], row[2], row[3]];
             if d.iter().any(|x| !(-2..=2).contains(x)) {
                 return Err("bad parent delta");
             }
@@ -430,7 +430,7 @@ impl Graft {
             if id >= CAPACITY || result.leaves[id].is_some() {
                 return Err("duplicate or invalid leaf");
             }
-            let d = [row[2], row[3], row[4]].map(|x| x as i8);
+            let d = [row[2], row[3], row[4]];
             if d.iter().any(|x| !(-2..=2).contains(x)) || result.parents[id / 81].is_none() {
                 return Err("bad leaf delta or missing parent");
             }
