@@ -1570,6 +1570,68 @@ PRESSURE_GRAPH|nodes=81|plus_center=YES|attractive={count_positive}|repulsive={c
     Ok(())
 }
 
+
+#[cfg(test)]
+mod pressure_topology_tests {
+    use super::*;
+
+    #[test]
+    fn pairs_are_ternary_symmetric_and_conserve_center_at_all_pressures() {
+        let g = pressure_edges();
+        let mut attract = 0;
+        let mut repel = 0;
+        for i in 0..PRESSURE_N {
+            assert_eq!(g[i][i], 0);
+            for j in i + 1..PRESSURE_N {
+                assert_eq!(g[i][j], g[j][i]);
+                match g[i][j] {
+                    1 => attract += 1,
+                    -1 => repel += 1,
+                    0 => {}
+                    _ => panic!("invalid ternary edge"),
+                }
+            }
+        }
+        assert_eq!((attract, repel), (567, 243));
+        let mut input = [0_i32; PRESSURE_N];
+        for (i, q) in input.iter_mut().enumerate() {
+            *q = if i % 7 == 0 { 1 } else if i % 11 == 0 { -1 } else { 0 };
+        }
+        for p in [0, 1, 3, 9] {
+            for boxes in 0..4 {
+                let (final_state, transferred, _, _) = pressure_flow(&input, &g, p, boxes);
+                assert_eq!(input.iter().sum::<i32>(), final_state.iter().sum::<i32>());
+                if p == 0 || boxes == 0 {
+                    assert_eq!(final_state, input);
+                    assert_eq!(transferred, 0);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn full_tape_relabelling_preserves_all_81_integer_states() {
+        let graph = pressure_edges();
+        let input: PressureState = std::array::from_fn(|i| {
+            if i % 7 == 0 { 1 } else if i % 11 == 0 { -1 } else { 0 }
+        });
+        let mut reindexed = [0_i32; PRESSURE_N];
+        let mut remapped = [[0_i8; PRESSURE_N]; PRESSURE_N];
+        for i in 0..PRESSURE_N {
+            let i2 = (5 * i + 1) % PRESSURE_N;
+            reindexed[i2] = input[i];
+            for j in 0..PRESSURE_N {
+                remapped[i2][(5 * j + 1) % PRESSURE_N] = graph[i][j];
+            }
+        }
+        let (base, _, _, _) = pressure_flow(&input, &graph, 3, 3);
+        let (renamed, _, _, _) = pressure_flow(&reindexed, &remapped, 3, 3);
+        for i in 0..PRESSURE_N {
+            assert_eq!(base[i], renamed[(5 * i + 1) % PRESSURE_N]);
+        }
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.as_slice() {
