@@ -657,7 +657,6 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-
 fn external_git_bytes(dir: &Path, args: &[&str]) -> Result<Vec<u8>, Box<dyn Error>> {
     let output = Command::new("git").arg("-C").arg(dir).args(args).output()?;
     if !output.status.success() {
@@ -676,7 +675,10 @@ fn load_external_test(finite_dir: &Path, ym4_dir: &Path) -> Result<Vec<Document>
         .filter_map(|line| line.split('\t').nth(2))
         .collect();
 
-    for line in CROSSREPO_MANIFEST.lines().filter(|s| !s.is_empty() && !s.starts_with('#')) {
+    for line in CROSSREPO_MANIFEST
+        .lines()
+        .filter(|s| !s.is_empty() && !s.starts_with('#'))
+    {
         let fields: Vec<&str> = line.splitn(7, '\t').collect();
         if fields.len() != 7 {
             return Err("external manifest requires seven fields".into());
@@ -708,10 +710,8 @@ fn load_external_test(finite_dir: &Path, ym4_dir: &Path) -> Result<Vec<Document>
             return Err("external path not allowed".into());
         }
         let rev_path = format!("{expected_rev}:{path}");
-        let actual_sha = String::from_utf8(external_git_bytes(
-            source_dir,
-            &["rev-parse", &rev_path],
-        )?)?;
+        let actual_sha =
+            String::from_utf8(external_git_bytes(source_dir, &["rev-parse", &rev_path])?)?;
         if actual_sha.trim() != fields[4] || !seen.insert(fields[4].to_string()) {
             return Err(format!("external source hash mismatch or duplicate: {path}").into());
         }
@@ -818,19 +818,21 @@ fn run_crossrepo(
                     0..=4 => cold_baselines[method].classify(method, obs),
                     5 => routed_parent(&parent_cold, obs, RoutingMode::Parents),
                     6 => routed_parent(&tree_cold, obs, RoutingMode::Tree),
-                    7 => usize::from(map[routed_parent(
-                        &synthetic_cold,
-                        obs,
-                        RoutingMode::Tree,
-                    )]),
+                    7 => usize::from(map[routed_parent(&synthetic_cold, obs, RoutingMode::Tree)]),
                     _ => unreachable!(),
                 };
                 if predicted != reload {
-                    return Err(format!("cold model prediction changed: {}", METHOD_NAMES[method]).into());
+                    return Err(
+                        format!("cold model prediction changed: {}", METHOD_NAMES[method]).into(),
+                    );
                 }
                 matrix[doc.class][predicted] += 1;
                 per_method_correct[method] += usize::from(predicted == doc.class);
-                let slot = if doc.path.starts_with("finite:") { 0 } else { 1 };
+                let slot = if doc.path.starts_with("finite:") {
+                    0
+                } else {
+                    1
+                };
                 repo_correct[slot] += usize::from(predicted == doc.class);
                 report.push_str(&format!(
                     "CROSSREPO_PRED|method={}|prefix={take}|true={}|pred={}|blob={}|path={}|json=0\n",
@@ -861,9 +863,7 @@ fn run_crossrepo(
         for method in [1_usize, 2_usize, 4_usize] {
             let correct = external
                 .iter()
-                .filter(|doc| {
-                    baseline.classify(method, &doc.data[take - BLOCK..take]) == doc.class
-                })
+                .filter(|doc| baseline.classify(method, &doc.data[take - BLOCK..take]) == doc.class)
                 .count();
             report.push_str(&format!(
                 "CROSSREPO_RECENT256|method={}|prefix={take}|correct={correct}|total=36|context_matched=YES|json=0\n",
