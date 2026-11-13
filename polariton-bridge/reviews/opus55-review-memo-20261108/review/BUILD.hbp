@@ -1,0 +1,17 @@
+GATE_STEP|crate=e04|cmd=/root/.cargo/bin/cargo~+1.81.0~fmt~--all~--~--check|exit=0|tests=0_passed_0_failed|json=0
+GATE_STEP|crate=e04|cmd=/root/.cargo/bin/cargo~+1.81.0~clippy~--locked~--offline~--release~--~-D~warnings|exit=0|tests=0_passed_0_failed|json=0
+GATE_STEP|crate=e04|cmd=/root/.cargo/bin/cargo~+1.81.0~clippy~--locked~--offline~--release~--all-targets~--~-D~warnings|exit=0|tests=0_passed_0_failed|json=0
+GATE_STEP|crate=e04|cmd=/root/.cargo/bin/cargo~+1.81.0~test~--locked~--offline~--release|exit=0|tests=21_passed_0_failed|json=0
+GATE_STEP|crate=e04|cmd=/root/.cargo/bin/cargo~+1.81.0~build~--locked~--offline~--release|exit=0|tests=0_passed_0_failed|json=0
+GATE_SCAN|crate=e04|RV_FLOATSCAN_SRC_DONE|files=2|code_uses=0|float_used=0|json=0
+GATE_SRC|crate=e04|main.rs=1d768fa9aba719d0439625f08ea2711cc0d28a5e751b25a81667b4b3d5fcacbb|sha256.rs=7447d1e84a95fe1ab84882938a0344119d017c347809e0f7e929c2e8c27d4621|Cargo.toml=9dcc6a6ea537c0ce926cb86c1e33116b1c37cfab7da56446bfce68eab1b6df94|Cargo.lock=44f9051fb25b2aa44aefffb9edd7eb8ac5935fcab786d9e72a06052af2be46d0|toolchain=6646e2db3cd46526264fd4914b3a411ad7bcfad8281a098c8378f6c986843d3a|binary=33e62fbe0837aeddc916a57d67848338cbc258aa1dfb85a01cfba53fb8a4e03f|bytes=733688|cr=0|rustc=cargo_1.81.0_(2dbb1af80_2024-08-20)|json=0
+GATE_VERSION|crate=e04|TWB_VERSION|engine=twens|version=0.4.0|binary_sha256=33e62fbe0837aeddc916a57d67848338cbc258aa1dfb85a01cfba53fb8a4e03f|source_sha256=main.rs:1d768fa9aba719d0439625f08ea2711cc0d28a5e751b25a81667b4b3d5fcacbb,sha256.rs:7447d1e84a95fe1ab84882938a0344119d017c347809e0f7e929c2e8c27d4621|float_used=0|json=0
+GATE_STEP|crate=b03|cmd=/root/.cargo/bin/cargo~+1.81.0~fmt~--all~--~--check|exit=0|tests=0_passed_0_failed|json=0
+GATE_STEP|crate=b03|cmd=/root/.cargo/bin/cargo~+1.81.0~clippy~--locked~--offline~--release~--~-D~warnings|exit=0|tests=0_passed_0_failed|json=0
+GATE_STEP|crate=b03|cmd=/root/.cargo/bin/cargo~+1.81.0~clippy~--locked~--offline~--release~--all-targets~--~-D~warnings|exit=0|tests=0_passed_0_failed|json=0
+GATE_STEP|crate=b03|cmd=/root/.cargo/bin/cargo~+1.81.0~test~--locked~--offline~--release|exit=0|tests=14_passed_0_failed|json=0
+GATE_STEP|crate=b03|cmd=/root/.cargo/bin/cargo~+1.81.0~build~--locked~--offline~--release|exit=0|tests=0_passed_0_failed|json=0
+GATE_SCAN|crate=b03|RV_FLOATSCAN_SRC_DONE|files=2|code_uses=0|float_used=0|json=0
+GATE_SRC|crate=b03|main.rs=723b36745af6c926849ff7a6da74d8c82007dfc4071761795bb639fcd8d4a609|sha256.rs=7447d1e84a95fe1ab84882938a0344119d017c347809e0f7e929c2e8c27d4621|Cargo.toml=ee2f0e6650f8ca7b9cc4bbdacca0e5d26a60f32d5fe7312297ef0214dd3550a8|Cargo.lock=9c57df215dea030065e5721271525367be7498f3708cef641cf2c187f2a5bea4|toolchain=6646e2db3cd46526264fd4914b3a411ad7bcfad8281a098c8378f6c986843d3a|binary=75530df9c7414b9a1b28f7408cbacd512f35d48836e2a6823beefb4941b9598d|bytes=648592|cr=0|rustc=cargo_1.81.0_(2dbb1af80_2024-08-20)|json=0
+GATE_VERSION|crate=b03|TWB_VERSION|engine=twens|version=0.3.0|binary_sha256=75530df9c7414b9a1b28f7408cbacd512f35d48836e2a6823beefb4941b9598d|source_sha256=main.rs:723b36745af6c926849ff7a6da74d8c82007dfc4071761795bb639fcd8d4a609,sha256.rs:7447d1e84a95fe1ab84882938a0344119d017c347809e0f7e929c2e8c27d4621|float_used=0|json=0
+GATE_BUILD_END|steps=10|nonzero=0|json=0

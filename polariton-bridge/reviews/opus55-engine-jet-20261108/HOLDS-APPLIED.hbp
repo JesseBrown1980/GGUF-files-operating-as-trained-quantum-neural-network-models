@@ -1,0 +1,14 @@
+ENGINE_JET_HOLDS_APPLIED|date=2026-11-08|seat=ACER-CLAUDE-FABLE5|engine=polariton-bridge/engines/jet(jetens_0.2.0)|source=src/main.rs_ac5672374f95e9b9f44c1675ef1e2ea028ac702d2bbe27c0ee5880f077d53fb8|binary=334dddec67fc557ee66a8b7259f91c25b178c86f2ed4bcb343babb63486cec1e|plan=PLAN-JETS.hbp_6950d41c83abb392afdfa84172b482fa1539cff2ff6cac4179cb72433275aa95|decision=the_operator's_(1)_of_2026-11-06,jets_beside_the_frozen_Monte_Carlo,filed_by_hash_before_it|review=PASS_WITH_HOLDS|json=0
+ENGINE_JET_DECISION|item=1|on=the_analog_for_y=2/27|disposition=ACCEPTED|text=y=1/18_for_the_16_analog_rows;the_blind_jets_run_at_the_frozen_points|json=0
+ENGINE_JET_DECISION|item=2|on=the_conservation_gate_band|disposition=ACCEPTED|text=ratio_in_[12,20]_around_2^4=16,the_RK4_step-halving_ratio;chosen_after_the_first_pass(6/83_failed_the_1000_ppb_form),both_passes_on_file|json=0
+ENGINE_JET_DECISION|item=3|on=E_PAIR|disposition=OPERATOR_TOLD_2026-11-08|text=L0637,L0673,L0686,L0687_may_read_outside_the_frozen_E_PAIR_tolerance(CONJECTURE_from_the_analogs:1.54,2.16,2.40,1.09_times_it);the_frozen_rule_stays_as_frozen|json=0
+ENGINE_JET_DECISION|item=4|on=the_truncation_number|disposition=RECORDED|text=e_trunc_is_the_last-term_estimate(NAMED);a_rigorous_remainder_bound_is_OPEN|json=0
+ENGINE_JET_DECISION|item=5|on=a_second-seat_review|disposition=DONE|text=review/(PASS_WITH_HOLDS)|json=0
+ENGINE_JET_DECISION|item=6|on=the_order|disposition=ACCEPTED|text=the_blind_jets_run_and_their_READ_DONE_hashes_are_committed_before_the_ensemble_Monte_Carlo_phase|json=0
+ENGINE_JET_HOLD|lane=review|hold=H1|file=polariton-bridge/README.md|severity=low|disposition=APPLIED_AS_HELD|json=0
+ENGINE_JET_HOLD|lane=review|hold=H2|file=engines/jet/tools/jetread.py|severity=medium|disposition=DECLINED|reason=it_turns_the_pair's_physical_departure_from_the_closed_form_P(1.1-2.4_tolerances_at_four_analog_rows)_into_a_status_failure;the_VNC/V1_swap_it_targets_stays_visible_in_the_printed_within_tol_field_and_in_the_Monte_Carlo_comparison_at_the_read|json=0
+ENGINE_JET_HOLD|lane=review|hold=H3|file=engines/jet/tools/drive_jets.py|severity=low|disposition=DECLINED|reason=untested;the_refusal_already_prints_on_stderr_with_a_nonzero_exit|json=0
+ENGINE_JET_HOLD|lane=review|hold=CI_plain_clippy|file=.github/workflows/polariton-bridge.yml|severity=low|disposition=APPLIED|text=cargo_+1.81.0_clippy_--locked_--offline_--_-D_warnings_in_the_jet_job|json=0
+ENGINE_JET_HOLD|lane=build|hold=H1-H4|file=ENGINE-CHANGES.hbp,README.md,SHA256SUMS,.github/workflows/polariton-bridge.yml|disposition=APPLIED_REBASED_ONTO_46b92e8(three-way_merge;ENGINE-CHANGES_row_18;SHA256SUMS_recomputed)|json=0
+ENGINE_JET_HOLD|lane=build|hold=H5|file=C:/tmp/opus55/ensemble-skip-20261106/RESULTS.hbp|disposition=FILED_BESIDE|text=build/RECORD-CORRECTIONS.hbp|json=0
+ENGINE_JET_HOLDS_END|decisions=6|holds=8|applied=4|declined=2|filed_beside=1|done=1|json=0

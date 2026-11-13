@@ -1,0 +1,2 @@
+CI_NEGCTL|mutant=M10_core_never_used|step_exit=1|caught=1|files=2|json=0
+CI_NEGCTL|mutant=M1_k4_weight_dropped|step_exit=1|caught=1|files=2|json=0

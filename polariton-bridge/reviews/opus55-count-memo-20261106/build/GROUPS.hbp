@@ -1,0 +1,2 @@
+GROUP|point=EN-N81_delta-3/5_y2/27|mask=VNC,V1|t_end=1/16|launches=21|samples=5432252880|per_launch_distinct_sum=3238764145|per_launch_saved_per_variant=2193488734(40.3%)|one_memo_distinct=649704392|one_memo_saved_per_variant=4782548487(88.0%)|tag=DERIVED|json=0
+GROUP|point=EN-N81_delta-3/5_y4/27|mask=VNC,V1|t_end=1/16|launches=19|samples=5074829908|per_launch_distinct_sum=2991410239|per_launch_saved_per_variant=2083419668(41.0%)|one_memo_distinct=634437366|one_memo_saved_per_variant=4440392541(87.4%)|tag=DERIVED|json=0

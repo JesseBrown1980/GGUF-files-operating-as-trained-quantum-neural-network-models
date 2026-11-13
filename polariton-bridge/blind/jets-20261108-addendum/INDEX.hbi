@@ -1,0 +1,7 @@
+EMIT|family=polariton-bridge-blind-jets-addendum|name=ADDENDUM.hbp|bytes=3044|sha256=767cb8c83830c828b8bf51a22ad3c0a82c0aa4ee22e808eb0160e9dbe5e5032f|sh=767cb8c83830c828|pid=3772782b0eab1887|json=0
+EMIT|family=polariton-bridge-blind-jets-addendum|name=README.md|bytes=1457|sha256=850c2c9533ba660e1b85d622103e66da5d44289b64d611eeb75d764d1048d1c0|sh=850c2c9533ba660e|pid=8007b6df58bef57f|json=0
+EMIT|family=polariton-bridge-blind-jets-addendum|name=RULE-J.list|bytes=3760|sha256=33bb399313c897cf95b3bbb32d3c619d2cb6d273c385a99811783233722b4356|sh=33bb399313c897cf|pid=04a3947703de00a8|json=0
+EMIT|family=polariton-bridge-blind-jets-addendum|name=RULE-R.list|bytes=6225|sha256=e92b18e3b9c77ae6bc9327ebcfba7243bd8455f1b8bc05ecb779be61c9e91652|sh=e92b18e3b9c77ae6|pid=32645f1dbe9be17f|json=0
+EMIT|family=polariton-bridge-blind-jets-addendum|name=RULE-J-NO-HEAD.list|bytes=3760|sha256=c54244b78db59be2b159e7de2116c866ece8daa337c67e9052505a550fb4bdaf|sh=c54244b78db59be2|pid=3e4318a5295450f9|json=0
+EMIT|family=polariton-bridge-blind-jets-addendum|name=RULE-J2.list|bytes=3760|sha256=e44b66c6cc506682801e069001861673c114cc1ef77b548aaed5a7c0a2e5b19b|sh=e44b66c6cc506682|pid=88f603de9b984a0e|json=0
+EMIT|family=polariton-bridge-blind-jets-addendum|name=JET-COUNTERS.list|bytes=3859|sha256=64a8198919952c16feab9b16b621bca2c95621297ec3dce48520989a834a1c46|sh=64a8198919952c16|pid=5abf979fe598720c|json=0

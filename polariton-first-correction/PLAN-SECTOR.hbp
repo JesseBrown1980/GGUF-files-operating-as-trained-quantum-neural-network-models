@@ -1,0 +1,15 @@
+FC_SECTOR_PLAN|written_before_any_stage_of_this_plan_runs=1|seat=ACER-CLAUDE-FABLE5|engine_mode=sector(the_Q=0_sector_at_y=0,src/bin/polariton_first_correction.rs)|for=polariton-bridge/PREDICTION.hbp_BRIDGE_ENGINE_CHANGE_line_451(a_memory-layout_change)|points=allowed_only:delta_not_+-3/5,abs(y)_not_2/27_at_N_in{81,729,6561}|stages=sector(y=0,sector_against_point),sector_control(y=0,the_two_y=0_sabotages),sector_control_y(y!=0,the_lifted_refusal)|json=0
+FC_RUN|stage=sector|group=full_space|N=81|K=81|delta=1/2|y=0|W=6|times=1,2,3|json=0
+FC_RUN|stage=sector|group=block_odd_K|N=81|K=63|delta=1/2|y=0|W=6|times=1,2|json=0
+FC_RUN|stage=sector|group=full_space|N=243|K=243|delta=1/3|y=0|W=6|times=1,2|json=0
+FC_RUN|stage=sector|group=full_space|N=729|K=729|delta=-1/2|y=0|W=6|times=1|json=0
+FC_RUN|stage=sector|group=block|N=729|K=128|delta=1/2|y=0|W=6|times=2|json=0
+FC_RUN|stage=sector|group=block_odd_K|N=729|K=127|delta=0|y=0|W=6|times=2|json=0
+FC_RUN|stage=sector|group=block|N=729|K=256|delta=-1/2|y=0|W=6|times=1,2|json=0
+FC_RUN|stage=sector|group=block|N=2187|K=1000|delta=0|y=0|W=6|times=1|json=0
+FC_RUN|stage=sector|group=block_6561|N=6561|K=2039|delta=-1/2|y=0|W=6|times=1/64,1/8|json=0
+FC_RUN|stage=sector|group=full_space_6561|N=6561|K=6561|delta=1/4|y=0|W=6|times=1/64,1/32|json=0
+FC_RUN|stage=sector_control|group=sabotage_base|N=81|K=81|delta=1/2|y=0|W=6|times=1,2|json=0
+FC_RUN|stage=sector_control|group=sabotage_base|N=729|K=128|delta=1/2|y=0|W=6|times=2|json=0
+FC_RUN|stage=sector_control_y|group=sabotage_base|N=81|K=81|delta=1/2|y=1/27|W=6|times=1,2|json=0
+FC_RUN|stage=sector_control_y|group=sabotage_base|N=729|K=128|delta=1/2|y=1/108|W=6|times=2|json=0

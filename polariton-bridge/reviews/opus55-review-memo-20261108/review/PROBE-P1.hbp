@@ -1,0 +1,5 @@
+PROBE_P1|batch=G1|rows_after_head_equal_reference=1|TWB_MEMO_fields_differing=k4_wraps|k4_wraps=51296|reference_k4_wraps=0|tag=MEASURED|json=0
+PROBE_P1|batch=G2|rows_after_head_equal_reference=1|TWB_MEMO_fields_differing=k4_wraps|k4_wraps=51445|reference_k4_wraps=0|tag=MEASURED|json=0
+PROBE_P1|batch=G3|rows_after_head_equal_reference=1|TWB_MEMO_fields_differing=none|k4_wraps=0|reference_k4_wraps=0|tag=MEASURED|json=0
+PROBE_P1|batch=G5|rows_after_head_equal_reference=1|TWB_MEMO_fields_differing=none|k4_wraps=0|reference_k4_wraps=0|tag=MEASURED|json=0
+PROBE_P1_CI|batch=A|memo_stdout_equal_plain=1|memo_err=TWB_MEMO!count=4194311!per_sample=none!k4=VNC,V1!k4_core=ball_r88!k4_in_core=3736377!k4_distinct=3683893!k4_outside=457934!k4_wraps=51675!k2=LOCK!k2_core=box_255!k2_in_core=4194311!k2_distinct=45415!k2_outside=0!ps_samples=0!integrations=8329069!plain_integrations=12582933!json=0|tag=MEASURED|json=0
