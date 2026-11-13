@@ -1570,7 +1570,6 @@ PRESSURE_GRAPH|nodes=81|plus_center=YES|attractive={count_positive}|repulsive={c
     Ok(())
 }
 
-
 #[cfg(test)]
 mod pressure_topology_tests {
     use super::*;
@@ -1595,7 +1594,13 @@ mod pressure_topology_tests {
         assert_eq!((attract, repel), (567, 243));
         let mut input = [0_i32; PRESSURE_N];
         for (i, q) in input.iter_mut().enumerate() {
-            *q = if i % 7 == 0 { 1 } else if i % 11 == 0 { -1 } else { 0 };
+            *q = if i % 7 == 0 {
+                1
+            } else if i % 11 == 0 {
+                -1
+            } else {
+                0
+            };
         }
         for p in [0, 1, 3, 9] {
             for boxes in 0..4 {
@@ -1613,7 +1618,13 @@ mod pressure_topology_tests {
     fn full_tape_relabelling_preserves_all_81_integer_states() {
         let graph = pressure_edges();
         let input: PressureState = std::array::from_fn(|i| {
-            if i % 7 == 0 { 1 } else if i % 11 == 0 { -1 } else { 0 }
+            if i % 7 == 0 {
+                1
+            } else if i % 11 == 0 {
+                -1
+            } else {
+                0
+            }
         });
         let mut reindexed = [0_i32; PRESSURE_N];
         let mut remapped = [[0_i8; PRESSURE_N]; PRESSURE_N];
