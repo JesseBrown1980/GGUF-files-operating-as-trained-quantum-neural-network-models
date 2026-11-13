@@ -1,0 +1,84 @@
+name: QNN real-file cross-repository zero-shot transfer (frozen source holdout)
+on:
+  push:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/CROSSREPO-*'
+      - '.github/workflows/qnn-realstyle-crossrepo.yml'
+  pull_request:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/CROSSREPO-*'
+      - '.github/workflows/qnn-realstyle-crossrepo.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-pinned-crossrepo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Enforce prediction-before-code, source and manifest pins
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor b36eef810efceba2b65f59d9aec689c7f9ba9adb HEAD
+          git merge-base --is-ancestor e01cb29074b43c5042464d5cd2f54619d3bcb99e HEAD
+          test "$(git hash-object grafts/CROSSREPO-HOLDOUT.tsv)" = '767ec1f7c874a57c9269540b24bb854450cd2c16'
+          grep -Fq 'state=BEFORE_CODE_AND_EVALUATION' grafts/CROSSREPO-PREDICTION.hbp
+          grep -Fq 'all_16_external_accuracies=UNDETERMINED' grafts/CROSSREPO-PREDICTION.hbp
+          test "$(grep -vc '^#' grafts/CROSSREPO-HOLDOUT.tsv)" -eq 36
+          ! grep -nE '\bf(32|64)\b|serde_json|unsafe\s*\{' src/bin/real_style_compare.rs
+      - name: Install Rust 1.81 and validate original tests and no-warning lint
+        run: |
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --bin real_style_compare
+      - name: Fetch only pinned source trees, without checking out 5,000 files
+        run: |
+          set -euo pipefail
+          for alias in finite ym4; do
+            mkdir -p "build/crossrepo/repos/$alias"
+            git -C "build/crossrepo/repos/$alias" init -q
+          done
+          git -C build/crossrepo/repos/finite remote add origin https://github.com/JesseBrown1980/Finite-universe-Yang-mills-existence-and-mass-gap-using-HEB-C.git
+          git -C build/crossrepo/repos/ym4 remote add origin https://github.com/JesseBrown1980/yang-mills-4-dimensional-continum-proof.git
+          git -C build/crossrepo/repos/finite fetch -q --depth=1 --filter=blob:none origin 3616cb1a2c41a9b42b217fb816699cbe4afddd79
+          test "$(git -C build/crossrepo/repos/finite rev-parse FETCH_HEAD)" = 3616cb1a2c41a9b42b217fb816699cbe4afddd79
+          git -C build/crossrepo/repos/ym4 fetch -q --depth=1 --filter=blob:none origin 05de0ff7c8d13409fbf1bb9ef71e7ae23831b056
+          test "$(git -C build/crossrepo/repos/ym4 rev-parse FETCH_HEAD)" = 05de0ff7c8d13409fbf1bb9ef71e7ae23831b056
+      - name: Rebuild pinned 6,561-head synthetic checkpoint
+        run: |
+          set -euo pipefail
+          mkdir -p build/crossrepo/fixture build/crossrepo/results
+          cargo run --locked --release --bin shared_6561 -- --fixture-6561 build/crossrepo/fixture > build/crossrepo/fixture/FIXTURE.hbp
+          test "$(sha256sum build/crossrepo/fixture/full_tree.gguf | cut -d' ' -f1)" = '606c4d8478b8dbd72dfda0dad6c6ef1895c081a7cd5d5bb6c363525f57b941b2'
+      - name: Test zero-shot cross-repository heldouts and cold reloaded classifiers
+        run: |
+          set -euo pipefail
+          cargo run --locked --release --bin real_style_compare -- --crossrepo \
+            build/crossrepo/fixture/full_tree.gguf \
+            build/crossrepo/repos/finite build/crossrepo/repos/ym4 \
+            build/crossrepo/results > build/crossrepo/results/STDOUT.hbp
+          grep '^CROSSREPO_RESULT|' build/crossrepo/results/CROSSREPO-RESULT.hbp
+          grep '^CROSSREPO_DECISION|' build/crossrepo/results/CROSSREPO-RESULT.hbp
+          grep '^CROSSREPO_RECENT256|' build/crossrepo/results/CROSSREPO-RESULT.hbp
+          grep '^CROSSREPO_PAIRED|' build/crossrepo/results/CROSSREPO-RESULT.hbp
+          test "$(grep -c '^CROSSREPO_RESULT|' build/crossrepo/results/CROSSREPO-RESULT.hbp)" -eq 16
+          test "$(grep -c '^CROSSREPO_PRED|' build/crossrepo/results/CROSSREPO-RESULT.hbp)" -eq 576
+          test "$(grep -c '^CROSSREPO_CONFUSION|' build/crossrepo/results/CROSSREPO-RESULT.hbp)" -eq 64
+          test "$(grep -c '^CROSSREPO_RECENT256|' build/crossrepo/results/CROSSREPO-RESULT.hbp)" -eq 6
+          grep -Fq 'CROSSREPO_COMPLETE|files=36|methods=8|prefixes=2|cold_models=PASS|all_16_confusion_matrices=FILED|no_external_fit=PASS|historical_PR28_untouched=YES|json=0' build/crossrepo/results/CROSSREPO-RESULT.hbp
+          (cd build/crossrepo/results && sha256sum CROSSREPO-RESULT.hbp *.gguf *.model *.bin > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qnn-crossrepo-36-files-pinned-holdout
+          path: |
+            build/crossrepo/results/
+            build/crossrepo/fixture/FIXTURE.hbp
+          retention-days: 30
