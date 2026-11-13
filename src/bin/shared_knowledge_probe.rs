@@ -114,8 +114,7 @@ fn grade(output: &[u8], answer: &str) -> bool {
     if !candidate[..answer_bytes.len()].eq_ignore_ascii_case(answer_bytes) {
         return false;
     }
-    candidate.len() == answer_bytes.len()
-        || !candidate[answer_bytes.len()].is_ascii_alphanumeric()
+    candidate.len() == answer_bytes.len() || !candidate[answer_bytes.len()].is_ascii_alphanumeric()
 }
 
 fn escape_bytes(data: &[u8]) -> String {
@@ -165,12 +164,10 @@ fn run(model_path: &Path, output_dir: &Path) -> Result<(), Box<dyn Error>> {
     ));
 
     let mut correctness = [[0_usize; 2]; 3];
-    let mut unique_completions: Vec<[BTreeSet<Vec<u8>>; 2]> = (0..3)
-        .map(|_| [BTreeSet::new(), BTreeSet::new()])
-        .collect();
-    let mut initial_heads: Vec<[BTreeSet<usize>; 2]> = (0..3)
-        .map(|_| [BTreeSet::new(), BTreeSet::new()])
-        .collect();
+    let mut unique_completions: Vec<[BTreeSet<Vec<u8>>; 2]> =
+        (0..3).map(|_| [BTreeSet::new(), BTreeSet::new()]).collect();
+    let mut initial_heads: Vec<[BTreeSet<usize>; 2]> =
+        (0..3).map(|_| [BTreeSet::new(), BTreeSet::new()]).collect();
     let mut results = Vec::new();
     let mut first_expected = None::<Vec<u8>>;
 
@@ -244,7 +241,10 @@ fn run(model_path: &Path, output_dir: &Path) -> Result<(), Box<dyn Error>> {
     // Keep an unambiguous raw-byte response file for each question and arm.
     for (mode, context, id, response) in results {
         fs::write(
-            output_dir.join(format!("{mode}-{}-{id}.bin", if context == 0 { "short" } else { "long" })),
+            output_dir.join(format!(
+                "{mode}-{}-{id}.bin",
+                if context == 0 { "short" } else { "long" }
+            )),
             response.bytes,
         )?;
     }
