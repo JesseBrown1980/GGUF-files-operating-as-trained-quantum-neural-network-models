@@ -15,6 +15,10 @@ Node. Receipts are HBP/HBI with SHA-256, and every receipt line ends in `json=0`
 Predictions were sealed in [`PREREG.hbp`](PREREG.hbp) (sha256 `5485a600…`) and
 pushed in commit `03ff607` before any code existed.
 
+## November 13, 2026 — pressure boxes and steered layers on 729 tables (own repository)
+
+The local counterpart of the 81-node pressure/box experiment lives in its own repository, [STEER-QNN-and-NN](https://github.com/JesseBrown1980/STEER-QNN-and-NN): 729 codex tables trained on Asolaria material, cut to densities from 1/2 to 1/256 under three flow rules, and stacked as layers (normal, pressurized, neutron star, black hole and back) that either choose freely or steer one another. Measured on one stream and one split, integer Rust 1.81, predictions sealed before each run; not yet reviewed by a second seat. Headline numbers: the heaviest 1/16 of entries hold 90.2% of the weight; with open flow and fallback to the box table, a cut to 1/8 costs 0.2% of coded size and a cut to 1/256 costs 12.4%; under full steering the layer after the black-hole layer is 13.7% worse and the next layer recovers to 3.9%. The first run's rows and both sealed specs are also kept here in [`panels/pressure729-v39-20261113/`](panels/pressure729-v39-20261113/).
+
 ## November 13, 2026 — real-file classifier benchmark (**IN REVIEW**, draft PR #28)
 
 **Status: hosted evaluation PASS; scientific review OPEN; PR not merged.** [Draft PR #28](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/28) · [Exact benchmark protocol and fixed source split (PR branch)](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/tree/3c5a3a5a6b425021a6802eb9518051ed3d43fc20/grafts) · [Hosted measured run 43365139979](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/43365139979).
