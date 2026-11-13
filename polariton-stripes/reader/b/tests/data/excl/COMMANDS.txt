@@ -1,0 +1,10 @@
+CMD|/tmp/claude-0/-home-user/b2fb539a-cb4d-5f0b-a22f-ca1a7fcb500d/scratchpad/stripes-build/tw/release/twens dump N=27 delta=1/4 u=1 y=1/40 seed_string=stripes-ens-v1:N27:d1/4:y1/40 start=0 count=4096 dtden=64 threads=1 steps=64,128 "ctrl=0:0:0;0:0:0" mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL > X1.0.txt
+rc=0 secs=1.081249912 stderr_bytes=0
+CMD|/tmp/claude-0/-home-user/b2fb539a-cb4d-5f0b-a22f-ca1a7fcb500d/scratchpad/stripes-build/tw/release/twens dump N=27 delta=1/4 u=1 y=1/40 seed_string=stripes-ens-v1:N27:d1/4:y1/40 start=4096 count=4096 dtden=64 threads=1 steps=64,128 "ctrl=0:0:0;0:0:0" mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL > X1.1.txt
+rc=0 secs=1.104461047 stderr_bytes=0
+CMD|/tmp/claude-0/-home-user/b2fb539a-cb4d-5f0b-a22f-ca1a7fcb500d/scratchpad/stripes-build/tw/release/twens dump N=27 delta=1/4 u=1 y=0 seed_string=stripes-ens-v1:N27:d1/4:y0 start=0 count=4096 dtden=64 threads=1 steps=64,128 "ctrl=0:0:0;0:0:0" mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL > X0.0.txt
+rc=0 secs=1.140498902 stderr_bytes=0
+CMD|/tmp/claude-0/-home-user/b2fb539a-cb4d-5f0b-a22f-ca1a7fcb500d/scratchpad/stripes-build/tw/release/twens dump N=27 delta=1/4 u=1 y=0 seed_string=stripes-ens-v1:N27:d1/4:y0 start=4096 count=4096 dtden=64 threads=1 steps=64,128 "ctrl=0:0:0;0:0:0" mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL > X0.1.txt
+rc=0 secs=1.066846016 stderr_bytes=0
+CMD|/tmp/claude-0/-home-user/b2fb539a-cb4d-5f0b-a22f-ca1a7fcb500d/scratchpad/stripes-build/tw/release/twens dump N=27 delta=1/4 u=1 y=1/40 seed_string=stripes-ens-v1:N27:d1/4:y1/40 start=0 count=4096 dtden=64 threads=1 steps=64,128,192,256 "ctrl=0:0:0;0:0:0;0:0:0;0:0:0" mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL > X1s4.0.txt
+rc=0 stderr_bytes=0

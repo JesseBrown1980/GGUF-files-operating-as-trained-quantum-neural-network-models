@@ -1,0 +1,5 @@
+PRED_HEAD|lane=review-memo-20261108|file=PREDICTIONS-REVIEW-b.hbp|date=2026-11-08|written=after_R-CHECK_and_before_the_thread-count_batches_T1,T7_and_the_Windows_build_of_this_lane|json=0
+PRED|id=T1|claim=G1's_batch_(N243,delta1/3,y1/9,K4_VNC,V1,RN,FLIP,NL,count_2^22+1,start_1234567)_with_memo=1_at_threads=1_and_at_threads=7_gives_rows_after_the_head_equal_byte_for_byte_to_G1's_0.3.0_rows_at_threads=3,the_head_differing_in_threads,version,binary_sha256,source_sha256_only,and_TWB_MEMO_rows_equal_to_G1's|basis=phase_1_chunks_and_phase_2_units_change_only_the_order_of_exact_integer_sums|tag=DERIVED;MEASURED_to_follow|json=0
+PRED|id=T2|claim=the_0.4.0_crate_built_here_with_the_Windows_toolchain(rustc_1.81.0,x86_64-pc-windows-msvc,/Brepro)_gives_binary_483ffa29ca55352fbe27b28bb02ddf9d9aeb0c63c637b090a2f21ee247721981|tag=CONJECTURE|json=0
+PRED|id=T3|claim=the_proposed_ensemble_CI_job_replayed_on_46b92e8_with_the_proposed_files_laid_over(toolchain_gate,float_scan,version_names_source,TEST-RUNS-T1B,count-weighted_step)_exits_0_at_every_step|tag=CONJECTURE|json=0
+PRED_END|rows=5|float_used=0|json=0

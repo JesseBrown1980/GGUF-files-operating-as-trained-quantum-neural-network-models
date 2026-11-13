@@ -1,0 +1,17 @@
+CMD|XR1|0|run N=27 delta=1/4 u=1 y=1/40 start=0 count=512 steps=32,64,128|rc=0
+CMD|XR1|1|run N=27 delta=1/4 u=1 y=1/40 start=512 count=512 steps=32,64,128|rc=0
+CMD|XR1|2|run N=27 delta=1/4 u=1 y=1/40 start=1024 count=512 steps=32,64,128|rc=0
+CMD|XR1|3|run N=27 delta=1/4 u=1 y=1/40 start=1536 count=512 steps=32,64,128|rc=0
+CMD|XR1|4|run N=27 delta=1/4 u=1 y=1/40 start=2048 count=512 steps=32,64,128|rc=0
+CMD|XR1|5|run N=27 delta=1/4 u=1 y=1/40 start=2560 count=512 steps=32,64,128|rc=0
+CMD|XR1|6|run N=27 delta=1/4 u=1 y=1/40 start=3072 count=512 steps=32,64,128|rc=0
+CMD|XR1|7|run N=27 delta=1/4 u=1 y=1/40 start=3584 count=512 steps=32,64,128|rc=0
+CMD|XR0|0|run N=27 delta=1/4 u=1 y=0 start=0 count=512 steps=32,64|rc=0
+CMD|XR0|1|run N=27 delta=1/4 u=1 y=0 start=512 count=512 steps=32,64|rc=0
+CMD|XR0|2|run N=27 delta=1/4 u=1 y=0 start=1024 count=512 steps=32,64|rc=0
+CMD|XR0|3|run N=27 delta=1/4 u=1 y=0 start=1536 count=512 steps=32,64|rc=0
+CMD|XR0|4|run N=27 delta=1/4 u=1 y=0 start=2048 count=512 steps=32,64|rc=0
+CMD|XR0|5|run N=27 delta=1/4 u=1 y=0 start=2560 count=512 steps=32,64|rc=0
+CMD|XR0|6|run N=27 delta=1/4 u=1 y=0 start=3072 count=512 steps=32,64|rc=0
+CMD|XR0|7|run N=27 delta=1/4 u=1 y=0 start=3584 count=512 steps=32,64|rc=0
+XR1.<j>.rc, XR0.<j>.rc: the rc column above, filed one file per batch as the run wrapper files it (rule STOP).

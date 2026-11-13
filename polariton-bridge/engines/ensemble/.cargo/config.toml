@@ -1,0 +1,4 @@
+# Windows MSVC: link with /Brepro, so the PE header carries no time stamp and a rebuild of the same source at any path
+# gives the same binary (the second seat's R1). Linux ELF builds of this crate are reproducible without a flag.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/Brepro"]

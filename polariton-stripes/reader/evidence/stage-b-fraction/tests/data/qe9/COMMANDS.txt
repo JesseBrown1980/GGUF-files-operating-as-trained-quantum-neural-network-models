@@ -1,0 +1,10 @@
+CMD|sector 9 9 1/3 0 6 1/4,1/2
+rc=0
+CMD|point 9 9 1/3 0 6 1/4,1/2
+rc=0
+CMD|point 9 9 1/3 1/9 6 1/4,1/2
+rc=0
+CMD|point 9 9 1/3 -1/9 6 1/4,1/2
+rc=0
+CMD|point 9 9 1/3 1/18 6 1/4,1/2
+rc=0

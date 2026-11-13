@@ -1,0 +1,3 @@
+TCHECK|batch=T1|threads=1|rows_after_head_equal_G1_0.3.0_threads3=1|head_equal_but_threads_version_hashes=1|TWB_MEMO_equal_G1=1|wall_ms=44213|verdict=PASS|tag=MEASURED|json=0
+TCHECK|batch=T7|threads=7|rows_after_head_equal_G1_0.3.0_threads3=1|head_equal_but_threads_version_hashes=1|TWB_MEMO_equal_G1=1|wall_ms=10283|verdict=PASS|tag=MEASURED|json=0
+TCHECK_END|rows=3|failures=0|float_used=0|json=0

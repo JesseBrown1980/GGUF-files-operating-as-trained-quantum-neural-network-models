@@ -1,0 +1,5 @@
+# Rust 1.81 is the toolchain of the bridge's engines (both source lanes built and gated on it); clippy -D warnings and
+# rustfmt --check are this crate's gate.
+[toolchain]
+channel = "1.81"
+components = ["clippy", "rustfmt"]

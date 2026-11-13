@@ -1,0 +1,4 @@
+PRED_HEAD|lane=count-memo-20261106|file=PREDICTIONS-2026-11-08b.hbp|date=2026-11-08|written=after_plan.o285.base_(0.3.0,267096311_samples)_stopped_at_the_30-minute_limit(exit_124,0_bytes)_and_before_the_jobs_that_replace_it|seen_before_writing=plan.o285.memo(0.4.0_memo=1,exit_0,1212593_ms):its_rows_after_the_head_equal_the_stopped_run's_0.3.0_output_of_the_same_batch(out/plan/plan.o285.base.hbp,binary_75530df9)|json=0
+PRED|id=S1|claim=0.3.0_and_0.4.0_memo=1_on_the_two_halves_of_order_285's_batch([5209124797,+133548155)_and_[5342672952,+133548156)):every_row_after_the_head_equal_between_the_two_engines_on_2_of_2_halves,each_run_under_30_minutes|tag=DERIVED_identity;CONJECTURE_until_run|json=0
+PRED|id=S2|claim=the_wall_time_ratio_of_0.4.0_memo=1_on_the_whole_batch_over_the_sum_of_0.3.0's_two_halves_lies_within_0.08_of_the_stopped_run's_0.621|tag=CONJECTURE|json=0
+PRED_END|rows=4|float_used=0|json=0

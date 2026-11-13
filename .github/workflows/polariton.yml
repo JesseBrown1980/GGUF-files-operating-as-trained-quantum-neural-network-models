@@ -43,7 +43,10 @@ jobs:
           set -euo pipefail
           test "$(sed -n 36,41p polariton/PREDICTION.hbp | sha256sum | cut -d' ' -f1)" = "f79daa9d83d970b73edeb447226c6920aefcb3b8a918e131704b109a5c5d5761"
           test "$(sha256sum Cargo.toml | cut -d' ' -f1)" = "ca4bec9c2df84724821c75765e991354bd277d1ce8eb3e64183e520094208e55"
-          test "$(sha256sum .gitattributes | cut -d' ' -f1)" = "708128c3ba9bdf8c82d8b92f28e8f79ea3a42b304a7061269b0ae2743eb7aef9"
+          # .gitattributes moved from 708128c3... by one added line, "polariton-stripes/** -text" (stripe reader review note N2, commit d594ac0c);
+          # its three earlier lines, the ones that govern polariton/**, are unchanged. Found by the hosted run on PR #20, 2026-11-12.
+          test "$(sha256sum .gitattributes | cut -d' ' -f1)" = "ec0a7727a79f47fda064d28a9dea32ee439578f8c2ad3e8bbdce35bf2b50d3e6"
+          test "$(head -n 3 .gitattributes | sha256sum | cut -d' ' -f1)" = "708128c3ba9bdf8c82d8b92f28e8f79ea3a42b304a7061269b0ae2743eb7aef9"
       - name: The receipt hash is the one the attempt record in the prediction file names
         run: |
           set -euo pipefail
