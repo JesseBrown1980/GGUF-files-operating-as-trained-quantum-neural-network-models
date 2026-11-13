@@ -199,7 +199,10 @@ fn run(model_path: &Path, output_dir: &Path) -> Result<(), Box<dyn Error>> {
     fs::write(output_dir.join("source_model.gguf"), model_bytes)?;
     fs::write(output_dir.join("position_swapped.gguf"), swapped_bytes)?;
     fs::write(output_dir.join("base_state.trits"), state_bytes(&computed))?;
-    fs::write(output_dir.join("swapped_state.trits"), state_bytes(&swapped_out))?;
+    fs::write(
+        output_dir.join("swapped_state.trits"),
+        state_bytes(&swapped_out),
+    )?;
 
     let receipt = format!(
         "ONEBUTTON81_SOURCE|schema=QNN_81_PLUS_0_TERNARY_V1|original_synthetic_gguf_sha256={SYNTHETIC_SHA}|active_trained_parent_heads=81|learned_leaf_heads=6561|arithmetic=INTEGER|json=0\n\
