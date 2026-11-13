@@ -52,6 +52,14 @@ jobs:
           test "$(grep -c '^PROBE_SCORE|' build/knowledge/probe/KNOWLEDGE-RESULT.hbp)" -eq 6
           test "$(find build/knowledge/probe -name '*.bin' | wc -l)" -eq 48
           (cd build/knowledge/probe && sha256sum KNOWLEDGE-RESULT.hbp *.bin > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - name: Exploratory synthetic file-family recognition on all 6561 pieces
+        run: |
+          set -euo pipefail
+          grep -q 'stage=ADDED_AFTER_ZERO_FACTUAL_RESULTS' grafts/KNOWLEDGE-PROBE-POSTCHECK.hbp
+          cargo run --locked --release --bin shared_knowledge_probe -- --style build/knowledge/fixture/full_tree.gguf build/knowledge/fixture/target.raw build/knowledge/probe | tee build/knowledge/probe/STYLE-LOG.hbp
+          test "$(grep -c '^STYLE_RESULT|' build/knowledge/probe/STYLE-RESULT.hbp)" -eq 4
+          grep -q '^STYLE_COMPLETE|synthetic_classification_only=YES' build/knowledge/probe/STYLE-RESULT.hbp
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
