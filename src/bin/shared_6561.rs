@@ -39,8 +39,7 @@ struct Input {
 fn make_synthetic(slot: usize, phase: u8, length: usize) -> Vec<u8> {
     let parent = slot / LEAVES_PER_PARENT;
     let leaf = slot % LEAVES_PER_PARENT;
-    let mut state = (slot as u64 + 1)
-        .wrapping_mul(0x9e37_79b9_7f4a_7c15)
+    let mut state = (slot as u64 + 1).wrapping_mul(0x9e37_79b9_7f4a_7c15)
         ^ (u64::from(phase) + 1).wrapping_mul(0xbf58_476d_1ce4_e5b9);
     let mut output = Vec::with_capacity(length);
     for index in 0..length {
@@ -107,7 +106,9 @@ fn real_input(list_path: &Path) -> Result<Input, Box<dyn Error>> {
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
-        let (index, filename) = line.split_once('\t').ok_or("expected slot<TAB>source_path")?;
+        let (index, filename) = line
+            .split_once('\t')
+            .ok_or("expected slot<TAB>source_path")?;
         let slot: usize = index.parse()?;
         if slot != parts.len() || slot >= CAPACITY || filename.is_empty() {
             return Err("source rows must be exactly 0..6560, consecutive and unique".into());
@@ -282,7 +283,13 @@ fn execute(input: Input, out: &Path) -> Result<(), Box<dyn Error>> {
     write_case("parents", &parents, &target, RoutingMode::Parents, out)?;
     write_case("full_tree", &graft, &target, RoutingMode::Tree, out)?;
     write_case("zero_deltas", &zero, &target, RoutingMode::Tree, out)?;
-    write_case("shuffled_deltas", &shuffled, &target, RoutingMode::Tree, out)?;
+    write_case(
+        "shuffled_deltas",
+        &shuffled,
+        &target,
+        RoutingMode::Tree,
+        out,
+    )?;
     println!(
         "FULL6561_COMPLETE|populated_parent_heads=81|populated_leaf_heads=6561|heldout_bytes=3359232|exact_stream_replays=5|synthetic={synthetic}|result=PASS|json=0"
     );
