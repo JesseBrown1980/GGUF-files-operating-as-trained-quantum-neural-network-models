@@ -940,7 +940,6 @@ fn inspect_train_weights() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-
 const SURGERY_NAMES: [&str; 8] = [
     "majority",
     "byte_unigram_nb",
@@ -953,12 +952,14 @@ const SURGERY_NAMES: [&str; 8] = [
 ];
 
 fn edited_parent_model(model: &Graft, choice: usize) -> Result<Graft, Box<dyn Error>> {
-    if model.parents[..4] != [
-        Some([1, 0, -1]),
-        Some([1, 0, -1]),
-        Some([0, 0, -2]),
-        Some([-2, 2, 1]),
-    ] {
+    if model.parents[..4]
+        != [
+            Some([1, 0, -1]),
+            Some([1, 0, -1]),
+            Some([0, 0, -2]),
+            Some([-2, 2, 1]),
+        ]
+    {
         return Err("original learned vectors differ from preregistered inspection".into());
     }
     let mut out = model.clone();
