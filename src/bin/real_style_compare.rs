@@ -175,8 +175,7 @@ impl Baselines {
                 let row_total = log2_q12(self.row_sum[c][prev] + 256);
                 for next in 0..256 {
                     let i = prev * 256 + next;
-                    self.bigram_loss[c][i] =
-                        row_total - log2_q12(u32::from(self.bigram[c][i]) + 1);
+                    self.bigram_loss[c][i] = row_total - log2_q12(u32::from(self.bigram[c][i]) + 1);
                 }
             }
         }
