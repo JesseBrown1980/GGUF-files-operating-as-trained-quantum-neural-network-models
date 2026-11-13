@@ -469,8 +469,8 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
             baseline.serialized(method),
         )?;
     }
-    for method in 0..=4 {
-        let stored = fs::read(out.join(format!("{}.model", METHOD_NAMES[method])))?;
+    for (method, name) in METHOD_NAMES.iter().enumerate().take(5) {
+        let stored = fs::read(out.join(format!("{name}.model")))?;
         let loaded = Baselines::from_serialized(method, &stored)?;
         if loaded.serialized(method) != stored {
             return Err("baseline serialized model roundtrip differed".into());
@@ -480,7 +480,7 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
                 if loaded.classify(method, &doc.data[..take])
                     != baseline.classify(method, &doc.data[..take])
                 {
-                    return Err(format!("cold baseline model changed predictions: {}", METHOD_NAMES[method]).into());
+                    return Err(format!("cold baseline model changed predictions: {name}").into());
                 }
             }
         }
