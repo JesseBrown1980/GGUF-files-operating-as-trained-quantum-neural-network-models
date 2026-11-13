@@ -118,6 +118,9 @@ struct Baselines {
     row_sum: Vec<[u32; 256]>,
     group_sum: [u32; NCLASS],
     unigram_sum: [u32; NCLASS],
+    group_loss: [[u32; 3]; NCLASS],
+    unigram_loss: Vec<[u32; 256]>,
+    bigram_loss: Vec<Vec<u32>>,
 }
 
 impl Baselines {
@@ -129,6 +132,9 @@ impl Baselines {
             row_sum: vec![[0; 256]; NCLASS],
             group_sum: [0; NCLASS],
             unigram_sum: [0; NCLASS],
+            group_loss: [[0; 3]; NCLASS],
+            unigram_loss: vec![[0; 256]; NCLASS],
+            bigram_loss: vec![vec![0; 65_536]; NCLASS],
         };
         for doc in docs.iter().filter(|d| d.partition == Partition::Train) {
             let bytes = &doc.data[..TRAIN_BYTES];
@@ -145,20 +151,38 @@ impl Baselines {
             model.group_sum[c] += bytes.len() as u32;
             model.unigram_sum[c] += bytes.len() as u32;
         }
+        // Both graft and baseline classifiers now precompute their integer
+        // probability tables once, instead of paying for Q12 log2 per byte.
+        for c in 0..NCLASS {
+            let gtotal = log2_q12(model.group_sum[c] + 3);
+            for g in 0..3 {
+                model.group_loss[c][g] = gtotal - log2_q12(model.group[c][g] + 1);
+            }
+            let utotal = log2_q12(model.unigram_sum[c] + 256);
+            for b in 0..256 {
+                model.unigram_loss[c][b] = utotal - log2_q12(model.unigram[c][b] + 1);
+            }
+            for prev in 0..256 {
+                let row_total = log2_q12(model.row_sum[c][prev] + 256);
+                for next in 0..256 {
+                    let i = prev * 256 + next;
+                    model.bigram_loss[c][i] =
+                        row_total - log2_q12(u32::from(model.bigram[c][i]) + 1);
+                }
+            }
+        }
         model
     }
 
     fn group_score(&self, c: usize, data: &[u8]) -> u64 {
-        let total = log2_q12(self.group_sum[c] + 3);
         data.iter()
-            .map(|&byte| u64::from(total - log2_q12(self.group[c][family_of_byte(byte)] + 1)))
+            .map(|&byte| u64::from(self.group_loss[c][family_of_byte(byte)]))
             .sum()
     }
 
     fn unigram_score(&self, c: usize, data: &[u8]) -> u64 {
-        let total = log2_q12(self.unigram_sum[c] + 256);
         data.iter()
-            .map(|&byte| u64::from(total - log2_q12(self.unigram[c][usize::from(byte)] + 1)))
+            .map(|&byte| u64::from(self.unigram_loss[c][usize::from(byte)]))
             .sum()
     }
 
@@ -167,8 +191,7 @@ impl Baselines {
         let mut score = 0_u64;
         for &byte in data {
             let slot = usize::from(previous) * 256 + usize::from(byte);
-            let total = self.row_sum[c][usize::from(previous)] + 256;
-            score += u64::from(log2_q12(total) - log2_q12(u32::from(self.bigram[c][slot]) + 1));
+            score += u64::from(self.bigram_loss[c][slot]);
             previous = byte;
         }
         score
@@ -496,6 +519,9 @@ mod tests {
             row_sum: vec![[0; 256]; NCLASS],
             group_sum: [0; NCLASS],
             unigram_sum: [0; NCLASS],
+            group_loss: [[0; 3]; NCLASS],
+            unigram_loss: vec![[0; 256]; NCLASS],
+            bigram_loss: vec![vec![0; 65_536]; NCLASS],
         };
         assert_eq!(b.classify(0, b"test"), 0);
         assert_eq!(b.classify(1, b"test"), 0);
