@@ -182,7 +182,7 @@ fn run(model_path: &Path, output_dir: &Path) -> Result<(), Box<dyn Error>> {
     let differences = computed
         .iter()
         .zip(swapped_out)
-        .filter(|(a, b)| a != b)
+        .filter(|(a, b)| **a != *b)
         .count();
     let (swap_rgb, swap_total, swap_omega) = center(&swapped_out);
 
