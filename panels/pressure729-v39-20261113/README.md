@@ -6,7 +6,7 @@ stream of Asolaria material are edited directly (no training loop, after *Sparks
 Programming*, Takehi, Teoh, Zhang, Khattab, 2026-11-02) and measured by how small 4,478,976 bytes
 of held-out text code. The spec and its eight predictions were sealed before the run.
 
-**Status: MEASURED once in the local Node lane, one stream, one split. Integer Rust redo pending. Not yet reviewed by a second seat.**
+**Status: superseded as the record by the integer run in [STEER-QNN-and-NN](https://github.com/JesseBrown1980/STEER-QNN-and-NN), which reproduces every number below exactly (all 62 arms and 10 layer rows identical) and adds the STEER layer rule. This folder keeps the first measurement and the sealed specs: `SPEC-PRESSURE729-V39.hbp` (before the first run) and `SPEC-PRESSURE729-V40-INTEGER-STEER.hbp` (commit `0c28863`, before the integer run; the Rust program was committed on this branch as `fc9d6a8` before its run and now lives in the new repository).**
 
 ## Setup
 
@@ -81,10 +81,5 @@ largest rule at 1/64 and 1/256 with PARENT fallback. See `JUDGE-PRESSURE729-V39.
 - In the hourglass the last NORMAL layer can answer almost every context itself, so by this
   pass-through rule the stack is close to transparent by construction.
 - The baseline through the real range coder is 1,091,311 bytes against 1,090,464 by the cost table.
-- **Lane.** This run was made with a local Node program whose cost table uses floating logarithms once
-  (as panels V33 to V38). This repository admits Rust 1.81 integer code only, so the program is not
-  filed here; its sha256 is `98419609f950461ec475f9fdab7156b2a9a7a152bd8319d51b8566d5c4c98d2b` and it stays at
-  `D:/asolaria-unpump-20261113/pressure729/pressure729_v39.mjs`. These rows are evidence from that
-  lane. **The integer Rust redo is the next step**; until it reproduces the table, read the numbers
-  as measured once.
+- **Lane.** This first run used a local Node program whose cost table was built with floating logarithms. The integer Rust program in the new repository computes the same table exactly and reproduces these rows.
 - The stream and the tables (2.7 GB and 0.6 GB) stay on the local machine.
