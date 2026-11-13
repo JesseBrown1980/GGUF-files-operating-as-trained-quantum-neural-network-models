@@ -136,10 +136,8 @@ impl Generator {
     /// Compact context-dependent low-rank weight generation: B + g*u*v^T.
     #[must_use]
     pub fn matrix(&self, a: Address) -> [[i16; 3]; 3] {
-        let trit_sum = u32::from(a.x) % 3
-            + u32::from(a.y) % 3
-            + u32::from(a.z) % 3
-            + u32::from(a.channel) % 3;
+        let trit_sum =
+            u32::from(a.x) % 3 + u32::from(a.y) % 3 + u32::from(a.z) % 3 + u32::from(a.channel) % 3;
         let gate = (trit_sum % 3) as i16 - 1;
         let mut m = self.base;
         for (i, row) in m.iter_mut().enumerate() {
@@ -351,7 +349,15 @@ mod tests {
         }
         assert_eq!(to_path(CAPACITY), None);
         assert_eq!(decode_address(CAPACITY), None);
-        assert_eq!(encode_address(Address { x: 0, y: 0, z: 424, channel: 0 }), None);
+        assert_eq!(
+            encode_address(Address {
+                x: 0,
+                y: 0,
+                z: 424,
+                channel: 0
+            }),
+            None
+        );
         assert_eq!(from_path(&[2; 22]), None);
         let mut bad_path = [0; 22];
         bad_path[11] = 3;
@@ -360,7 +366,12 @@ mod tests {
 
     #[test]
     fn bounded_neighbor_and_final_room_rejection() {
-        let a = Address { x: 50, y: 50, z: 50, channel: 5 };
+        let a = Address {
+            x: 50,
+            y: 50,
+            z: 50,
+            channel: 5,
+        };
         let id = encode_address(a).unwrap();
         let z_plus = neighbor_within(id, 14, CAPACITY).unwrap();
         assert_eq!(decode_address(z_plus).unwrap().z, 51);
@@ -375,10 +386,23 @@ mod tests {
     #[test]
     fn generator_is_contextual_integer_only_and_tamper_sensitive() {
         let generator = Generator::default();
-        let a = Address { x: 4, y: 4, z: 4, channel: 0 };
-        let b = Address { x: 5, y: 4, z: 4, channel: 0 };
+        let a = Address {
+            x: 4,
+            y: 4,
+            z: 4,
+            channel: 0,
+        };
+        let b = Address {
+            x: 5,
+            y: 4,
+            z: 4,
+            channel: 0,
+        };
         assert_ne!(generator.matrix(a), generator.matrix(b));
-        assert_ne!(generator.coeff_hash(), generator.changed_one_weight().coeff_hash());
+        assert_ne!(
+            generator.coeff_hash(),
+            generator.changed_one_weight().coeff_hash()
+        );
         let id = encode_address(a).unwrap();
         for s in 0..27 {
             let v = generator.infer(id, s, 1, 2).unwrap();
