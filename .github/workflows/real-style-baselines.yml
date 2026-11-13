@@ -1,0 +1,70 @@
+name: Real source-disjoint file type baseline comparison
+on:
+  push:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/REALSTYLE-*'
+      - '.github/workflows/real-style-baselines.yml'
+  pull_request:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/REALSTYLE-*'
+      - '.github/workflows/real-style-baselines.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real_style_baselines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rust 1.81, strict, reproducible
+        run: |
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+      - name: Verify frozen split, no floats, no Node or JSON
+        run: |
+          set -euo pipefail
+          grep -q 'stage=BEFORE_BENCHMARK_CODE' grafts/REALSTYLE-PREDICTION.hbp
+          test "$(grep -vc '^#' grafts/REALSTYLE-SPLIT.tsv)" -eq 72
+          ! grep -nE '\bf(32|64)\b|serde_json|unsafe\s*\{' src/bin/real_style_compare.rs
+          ! git ls-files | grep -iE '\.(json|js|mjs|ts)$|package\.json'
+          test "$(git rev-parse 2ee84bfaa3163ea8f0fe405e1d0af0915652f1e0)" = "2ee84bfaa3163ea8f0fe405e1d0af0915652f1e0"
+      - name: Rust 1.81 format and Clippy
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --bin real_style_compare -- --nocapture
+      - name: Load exact existing 6561-head synthetic GGUF checkpoint
+        run: |
+          set -euo pipefail
+          mkdir -p build/realstyle/fixture build/realstyle/results
+          cargo run --locked --release --bin shared_6561 -- --fixture-6561 build/realstyle/fixture > build/realstyle/fixture/FIXTURE.hbp
+          test "$(sha256sum build/realstyle/fixture/full_tree.gguf | awk '{print $1}')" = "606c4d8478b8dbd72dfda0dad6c6ef1895c081a7cd5d5bb6c363525f57b941b2"
+      - name: Run frozen real-file accuracy, saved model size, CPU timing and confusion tests
+        run: |
+          set -euo pipefail
+          cargo run --locked --release --bin real_style_compare -- --run build/realstyle/fixture/full_tree.gguf build/realstyle/results > build/realstyle/results/STDOUT.hbp
+          grep '^REALSTYLE_RESULT|' build/realstyle/results/REALSTYLE-RESULT.hbp
+          grep '^REALSTYLE_INVARIANT|' build/realstyle/results/REALSTYLE-RESULT.hbp
+          grep -q '^REALSTYLE_COMPLETE|heldout_real_source_files=36|classes=4|methods=8|prefixes=2|all_16_confusion_matrices=FILED' build/realstyle/results/REALSTYLE-RESULT.hbp
+          test "$(grep -c '^REALSTYLE_RESULT|' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 16
+          test "$(grep -c '^REALSTYLE_CONFUSION|' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 64
+          test "$(grep -c '^REALSTYLE_PRED|' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 576
+          test "$(grep -c 'parent_only_vs_tree_classification_equal=PASS' build/realstyle/results/REALSTYLE-RESULT.hbp)" -eq 2
+          test -s build/realstyle/results/real_graft_tree.gguf
+          test -s build/realstyle/results/real_graft_parents.gguf
+          test -s build/realstyle/results/byte_bigram_nb.model
+          (cd build/realstyle/results && sha256sum REALSTYLE-RESULT.hbp *.gguf *.model *.bin > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-file-72-doc-disjoint-classifier-baselines
+          path: |
+            build/realstyle/results/
+            build/realstyle/fixture/FIXTURE.hbp
+          retention-days: 30
+          if-no-files-found: warn
