@@ -23,6 +23,8 @@ pub struct Backbone {
     counts: Vec<u16>,
     prefix: Vec<[u16; 3]>,
     group_sums: Vec<[u16; 3]>,
+    /// 9^3 distinct effective corrections, with 256 cached integer log totals each.
+    score_log_totals: Vec<[u32; 256]>,
 }
 
 #[derive(Clone, Default)]
@@ -87,16 +89,42 @@ impl Backbone {
             }
             *sums = seen;
         }
+        let mut score_log_totals = vec![[0_u32; 256]; 729];
+        for a in -4_i8..=4 {
+            for b in -4_i8..=4 {
+                for c in -4_i8..=4 {
+                    let delta = [a, b, c];
+                    let weights = Self::weights(delta);
+                    let index = Self::shift_index(delta);
+                    for (prev, target) in score_log_totals[index].iter_mut().enumerate() {
+                        let total: u32 = group_sums[prev]
+                            .iter()
+                            .zip(weights)
+                            .map(|(sum, weight)| u32::from(*sum) * weight)
+                            .sum();
+                        *target = log2_q12(total);
+                    }
+                }
+            }
+        }
         Self {
             counts,
             prefix,
             group_sums,
+            score_log_totals,
         }
     }
 
     #[must_use]
     pub fn trained_entries(&self) -> usize {
         self.counts.iter().filter(|&&x| x > 0).count()
+    }
+
+    fn shift_index(delta: Delta) -> usize {
+        ((i16::from(delta[0]) + 4) * 81
+            + (i16::from(delta[1]) + 4) * 9
+            + i16::from(delta[2])
+            + 4) as usize
     }
 
     fn weights(delta: Delta) -> [u32; 3] {
@@ -161,12 +189,11 @@ impl Backbone {
 
     #[must_use]
     pub fn score(&self, hist: &Histogram, delta: Delta) -> i64 {
-        let weights = Self::weights(delta);
+        let logs = &self.score_log_totals[Self::shift_index(delta)];
         let mut score = 0_i64;
         for (prev, &number) in hist.prev.iter().enumerate() {
             if number != 0 {
-                let total = self.total_with_weights(prev as u8, weights);
-                score += i64::from(number) * i64::from(log2_q12(total));
+                score += i64::from(number) * i64::from(logs[prev]);
             }
         }
         for (g, &number) in hist.groups.iter().enumerate() {
@@ -597,6 +624,41 @@ mod tests {
                     assert!(tot >= hi);
                 }
                 assert_eq!(sum, b.bounds(previous, 255, delta).2);
+            }
+        }
+    }
+
+    #[test]
+    fn cached_scores_match_direct_integer_log_totals_for_every_delta() {
+        let mut counts = Counts::new();
+        counts.add_file(b"aAaB b C | 127\n").unwrap();
+        let base = counts.finish();
+        let mut hist = Histogram::default();
+        hist.add_file(b"A B B B 4|C");
+        for a in -4_i8..=4 {
+            for b in -4_i8..=4 {
+                for c in -4_i8..=4 {
+                    let delta = [a, b, c];
+                    let weights = Backbone::weights(delta);
+                    let direct: i64 = hist
+                        .prev
+                        .iter()
+                        .enumerate()
+                        .map(|(prev, &count)| {
+                            let total = base.total_with_weights(prev as u8, weights);
+                            i64::from(count) * i64::from(log2_q12(total))
+                        })
+                        .sum::<i64>()
+                        - hist
+                            .groups
+                            .iter()
+                            .enumerate()
+                            .map(|(g, &count)| {
+                                i64::from(count) * (i64::from(delta[g]) + 4) * 4096
+                            })
+                            .sum::<i64>();
+                    assert_eq!(base.score(&hist, delta), direct);
+                }
             }
         }
     }
