@@ -19,6 +19,23 @@ This module and CLI use **a deliberately simple integer byte-bigram predictor**,
 
 The training and evaluation sources are **the QNN repository's own tracked files**, not the large local Asolaria `D:` corpora. This gives a reproducible independent host test of the mechanics, but is not evidence that the original V31 corpora were trained or reproduced here.
 
+## First hosted measurement — November 13, 2026
+
+The initial source-disjoint repository-file run passed all six **byte-exact encoder/decoder and routing replays**, with a 14,004-byte interleaved held-out target. Its [HBP result record](MEASURED-20261113.hbp) is transcribed from [Actions run 43351554828](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/43351554828).
+
+| Configuration | Models | Coded stream | Serialized models + stream |
+|---|---:|---:|---:|
+| Single generalist | 1 | **9,325 B** | **15,548 B** |
+| 9 uncorrected | 9 | 11,733 B | 27,208 B |
+| 9 corrected | 9 | 10,784 B | 26,259 B |
+| 27 uncorrected | 27 | 12,688 B | 37,031 B |
+| 27 corrected | 27 | 11,486 B | 35,829 B |
+| 27 shuffled-edits control | 27 | 11,359 B | 35,702 B |
+
+Nine compact-edited specialists saved 949 bytes (8.1%) against the nine unedited specialists; 27 saved 1,202 bytes (9.5%) against 27 unedited. **But 27 corrected lost to nine corrected, shuffled edits beat the intended 27 assignments, and the one generalist won every storage comparison.** Even the generalist's 15,548-byte full model+stream exceeded the raw 14,004 bytes. All failures are retained. The method establishes valid decoder-side activation and data-fitted 3-integer edits, **not** a compression advantage over a generalist, validated per-specialist edit selection, or improved large-model inference.
+
+A next stage should model specialists as *small deltas against one shared base*, since serialized full-table overhead is the major cost here; it must then be evaluated on **new** blind source files rather than using these observed measurements to choose the winner.
+
 ## Reproduce
 
 ```sh
