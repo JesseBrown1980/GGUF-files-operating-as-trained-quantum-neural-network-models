@@ -15,6 +15,31 @@ Node. Receipts are HBP/HBI with SHA-256, and every receipt line ends in `json=0`
 Predictions were sealed in [`PREREG.hbp`](PREREG.hbp) (sha256 `5485a600…`) and
 pushed in commit `03ff607` before any code existed.
 
+## November 13, 2026 — real-file classifier benchmark (**IN REVIEW**, draft PR #28)
+
+**Status: hosted evaluation PASS; scientific review OPEN; PR not merged.** [Draft PR #28](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/28) · [Exact benchmark protocol and fixed source split (PR branch)](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/tree/3c5a3a5a6b425021a6802eb9518051ed3d43fc20/grafts) · [Hosted measured run 43365139979](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/43365139979).
+
+To test whether the previously observed **6,561/6,561 synthetic style-family classification** transfers to actual documents, this prediction-first benchmark classifies **36 withheld real Git blobs** into Rust, Python, Markdown and HBP, using a frozen 72-file manifest (24 train, 12 validation, 36 test; six/three/nine of each type). Whole paths and exact Git blob SHAs are disjoint between partitions. Models see prefixes of either 256 or 1,024 bytes. This is **file-type recognition**, not factual answering, reasoning, independently trained quantum circuits, or an independent cross-project corpus.
+
+| Classifier | Correct / 36 at 256 bytes | Correct / 36 at 1,024 bytes | Serialized model storage |
+|---|---:|---:|---:|
+| Fixed majority class | 9 | 9 | 5 B |
+| Three byte-family Naive Bayes | 14 | 16 | 56 B |
+| Byte-unigram Naive Bayes | 21 | **34** | **4,104 B** |
+| Nearest byte-frequency centroid | 19 | 25 | 4,104 B |
+| Byte-bigram Naive Bayes | **22** | 32 | 16,972 B |
+| Real-file-fitted GGUF parent router | 18 | 23 | 10,176 B |
+| Real-file-fitted GGUF parent + leaf tree | 18 | 23 | 10,304 B |
+| Previously trained **synthetic** 6,561-leaf GGUF, with validation-only label map | 13 | 20 | 49,169 B |
+
+The real-file-fitted GGUF has **four populated parent addresses and 24 populated leaf addresses**, despite the architecture's capacity of 81 parents and 6,561 leaves. The synthetic model has all 6,561 leaf corrections populated, but those corrections were trained on synthetic data, **not** on this real-file dataset. The parent and full-tree GGUFs make exactly the same four-way classification decisions in both prefix conditions; fitting leaf corrections does not improve the parent-class readout in this experiment.
+
+**Verification and cost:** The GitHub workflow (Rust 1.81, strict Clippy) checked the sealed split and source hashes, saved actual serialized baseline tables and GGUFs, reloaded them and verified that all held-out classifications matched their original in-memory predictions, including cold GGUF reloading. It also checked model round trips, corruption/short-file controls, confusion matrices, class-by-class predictions and checksum manifests. The original 6,561-head synthetic checkpoint is byte-hash-pinned. **Model bytes exclude temporary precomputed Q12 scoring caches**, which were approximately 4,096 B for the unigram model, 1,048,576 B for bigram scoring, and 746,496 B for the GGUF routing arms; these are not measured peak RAM. CPU figures in the receipt are measured over ten classification passes and exclude file I/O, training and cold-load overhead, so they are **not** end-to-end latency.
+
+**Fairness and limitations:** The GGUF router selects parents using the most recent 256 bytes, while the original 1,024-byte frequency baselines can score all 1,024. The explicitly **post-hoc** recent-256 control scored **33/36** for unigram and **34/36** for bigram at the 1,024-byte observation point, versus **23/36** for the router. In a paired comparison, unigram alone correctly classified 13 examples that the router missed; the router alone got two that unigram missed. This control is exploratory, not part of the frozen prediction. Every file is from the **same repository**; source disjointness by Git blob does not eliminate near-duplicate files or common project conventions. The results show **ordinary byte-frequency baselines outperform this GGUF routing scheme on this task**, not a universal negative conclusion about the architecture. The next research gate is a separately frozen **cross-repository holdout**, class balance, and prefix-/context-matched comparisons.
+
+The original synthetic-capacity result, its negative controls, and the 0/48 factual-answer probe remain unchanged below. **Do not promote draft #28 to an accepted merged result until review and its acceptance gates are complete.**
+
 ## Can the 6,561-head model answer questions? Direct probe (November 13, 2026)
 
 **[Actual generated answers and evaluation](grafts/KNOWLEDGE-PROBE-README.md)** · **[Measured and negative-control HBP](grafts/KNOWLEDGE-PROBE-MEASURED.hbp)** · **[PR #27](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/27)**.
