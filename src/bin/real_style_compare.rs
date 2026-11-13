@@ -124,8 +124,8 @@ struct Baselines {
 }
 
 impl Baselines {
-    fn train(docs: &[Document]) -> Self {
-        let mut model = Self {
+    fn empty() -> Self {
+        Self {
             group: [[0; 3]; NCLASS],
             unigram: vec![[0; 256]; NCLASS],
             bigram: vec![vec![0; 65_536]; NCLASS],
@@ -135,7 +135,11 @@ impl Baselines {
             group_loss: [[0; 3]; NCLASS],
             unigram_loss: vec![[0; 256]; NCLASS],
             bigram_loss: vec![vec![0; 65_536]; NCLASS],
-        };
+        }
+    }
+
+    fn train(docs: &[Document]) -> Self {
+        let mut model = Self::empty();
         for doc in docs.iter().filter(|d| d.partition == Partition::Train) {
             let bytes = &doc.data[..TRAIN_BYTES];
             let c = doc.class;
@@ -151,27 +155,31 @@ impl Baselines {
             model.group_sum[c] += bytes.len() as u32;
             model.unigram_sum[c] += bytes.len() as u32;
         }
+        model.prepare_logs();
+        model
+    }
+
+    fn prepare_logs(&mut self) {
         // Both graft and baseline classifiers now precompute their integer
         // probability tables once, instead of paying for Q12 log2 per byte.
         for c in 0..NCLASS {
-            let gtotal = log2_q12(model.group_sum[c] + 3);
+            let gtotal = log2_q12(self.group_sum[c] + 3);
             for g in 0..3 {
-                model.group_loss[c][g] = gtotal - log2_q12(model.group[c][g] + 1);
+                self.group_loss[c][g] = gtotal - log2_q12(self.group[c][g] + 1);
             }
-            let utotal = log2_q12(model.unigram_sum[c] + 256);
+            let utotal = log2_q12(self.unigram_sum[c] + 256);
             for b in 0..256 {
-                model.unigram_loss[c][b] = utotal - log2_q12(model.unigram[c][b] + 1);
+                self.unigram_loss[c][b] = utotal - log2_q12(self.unigram[c][b] + 1);
             }
             for prev in 0..256 {
-                let row_total = log2_q12(model.row_sum[c][prev] + 256);
+                let row_total = log2_q12(self.row_sum[c][prev] + 256);
                 for next in 0..256 {
                     let i = prev * 256 + next;
-                    model.bigram_loss[c][i] =
-                        row_total - log2_q12(u32::from(model.bigram[c][i]) + 1);
+                    self.bigram_loss[c][i] =
+                        row_total - log2_q12(u32::from(self.bigram[c][i]) + 1);
                 }
             }
         }
-        model
     }
 
     fn group_score(&self, c: usize, data: &[u8]) -> u64 {
