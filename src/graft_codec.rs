@@ -179,11 +179,9 @@ pub fn encode(input: &[u8], model_bytes: &[u8], mode: RoutingMode) -> Encoded {
             }
             routes.push(slot as u16);
         }
-        let (lo, hi, total) = model.backbone.bounds(
-            prev,
-            next,
-            model.shifts(router.active, mode),
-        );
+        let (lo, hi, total) = model
+            .backbone
+            .bounds(prev, next, model.shifts(router.active, mode));
         arithmetic.push(lo, hi, total);
         prev = next;
     }
@@ -205,10 +203,7 @@ pub fn encode(input: &[u8], model_bytes: &[u8], mode: RoutingMode) -> Encoded {
     }
 }
 
-pub fn decode(
-    raw: &[u8],
-    model_bytes: &[u8],
-) -> Result<(Vec<u8>, Vec<u16>), &'static str> {
+pub fn decode(raw: &[u8], model_bytes: &[u8]) -> Result<(Vec<u8>, Vec<u16>), &'static str> {
     if raw.len() < HEADER_LEN || raw.get(..4) != Some(&b"SGS1"[..]) {
         return Err("bad stream magic or length");
     }
@@ -220,9 +215,7 @@ pub fn decode(
     if n > 100_000_000 {
         return Err("decoder allocation limit");
     }
-    if raw[15..47] != digest(model_bytes)
-        || raw[79..111] != digest(&raw[HEADER_LEN..])
-    {
+    if raw[15..47] != digest(model_bytes) || raw[79..111] != digest(&raw[HEADER_LEN..]) {
         return Err("model or stream hash mismatch");
     }
     let model = Graft::from_gguf(model_bytes)?;
