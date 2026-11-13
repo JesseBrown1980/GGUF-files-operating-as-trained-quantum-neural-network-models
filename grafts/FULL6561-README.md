@@ -4,6 +4,26 @@ This is the follow-up to the [81×81 shared-backbone model](README.md) and [PR #
 
 The model remains a shared conditional-byte predictor, not 6,561 fully independent byte function tables and not 6,561 independent LLMs or simulated quantum processors. Each leaf has **three fitted signed integer correction weights**; every parent also has three. A single 256×256 backbone holds the common byte-transition counts and is serialized once.
 
+## Verified synthetic 6,561-head measurement — November 13, 2026
+
+The [complete hosted run](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/43359606249) succeeded on **synthetic fixture V2**. The deterministic generator creates different parent-level distributions so the hierarchical router must change both parents and leaves. The original fixture V1 had filled all slots but never changed parents; that deficiency is retained explicitly in [POSTCHECK.hbp](FULL6561-POSTCHECK.hbp), rather than obscured by the corrected fixture.
+
+All 81 parents and all 6,561 leaf slots were fitted and populated; 5,988 of the leaf correction triples were nonzero. Shared count model trained from 6,718,464 synthetic bytes, with an additional 3,359,232 validation bytes and 3,359,232 test bytes. Every configuration used the same synthetic held-out bytes, source SHA-256 `bdb209e56732eb6ec7ae98d31ae0995d9a4847b640f28a4814fa6a1a536b9e2f`.
+
+| Case | GGUF bytes | Arithmetic stream bytes | Total cold transfer | Parent switches | All switches |
+|---|---:|---:|---:|---:|---:|
+| One shared base | 15,904 | 2,058,446 | 2,074,350 | 0 | 0 |
+| 81 trained parents only | 16,256 | 1,972,807 | **1,989,063** | 2,496 | 2,496 |
+| All 6,561 trained leaves | 49,088 | 1,971,762 | 2,020,850 | 2,496 | 3,849 |
+| All heads, zero corrections | 49,088 | 2,058,446 | 2,107,534 | 0 | 0 |
+| All heads, shuffled leaf corrections | 49,088 | 1,971,151 | 2,020,239 | 2,496 | 3,225 |
+
+**The full tree worked and replayed exactly**, including all 13,122 routing decisions and byte-identical recovery in separate processes. On this fixture, the full tree improved the encoded stream by only **1,045 bytes** compared with the parent-only model, but paid **32,832 extra GGUF bytes**, so its cold total was **31,787 bytes worse**. Shuffled leaf heads were also **611 total bytes better** than the intended leaf assignments. This does *not* demonstrate that correct leaf-specific surgery or extra nodes improves predictive quality. The parent-only arm was the best of the five.
+
+The full tree's GGUF contains just **49,088 bytes** for a shared count table, 81 trained parent correction triples, and all 6,561 trained leaf correction triples. This is not a lossless encoding of 6,561 unrelated full dense function tables. Fit time on the hosted synthetic fixture was 101 ms (the timing excludes synthetic corpus generation, model encoding/decoding, and Actions setup); the full tree's encode and decode were 362 ms and 499 ms respectively in that measurement. Treat timings as one host observation, not universal performance.
+
+[Full numerical HBP receipt](FULL6561-MEASURED.hbp). **The operator's original 6,561 local artifact files were not available and have not been fitted by this hosted run.**
+
 ## Run a complete 6,561-head synthetic proof
 
 ```sh
