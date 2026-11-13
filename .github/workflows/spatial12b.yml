@@ -1,0 +1,61 @@
+name: Spatial 12B virtual QNN exact sparse CPU gates
+on:
+  push:
+    paths:
+      - 'src/spatial12b.rs'
+      - 'src/bin/spatial12b.rs'
+      - 'src/lib.rs'
+      - 'spatial12b/**'
+      - '.github/workflows/spatial12b.yml'
+  pull_request:
+    paths:
+      - 'src/spatial12b.rs'
+      - 'src/bin/spatial12b.rs'
+      - 'src/lib.rs'
+      - 'spatial12b/**'
+      - '.github/workflows/spatial12b.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rust_cpu:
+    name: Integer-only 12B address and active-node replay
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust 1.81
+        run: |
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+      - name: Fail-closed no float, no Node and pre-implementation prediction freeze
+        run: |
+          set -euo pipefail
+          test -f spatial12b/PREDICTION.hbp
+          grep -q 'phase=PREIMPLEMENTATION' spatial12b/PREDICTION.hbp
+          ! grep -nE '\bf(32|64)\b|serde_json|unsafe\s*\{' src/spatial12b.rs src/bin/spatial12b.rs
+          ! git ls-files | grep -iE '\.(json|js|mjs|ts)$|package\.json'
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+      - name: Test exact addresses, weight matrices and replay
+        run: cargo test --locked --lib spatial12b -- --nocapture
+      - name: Benchmark four capacities and save HBP receipt
+        run: |
+          set -euo pipefail
+          mkdir -p build/spatial12b
+          cargo run --release --locked --bin spatial12b -- --bench | tee build/spatial12b/RESULT.hbp
+          grep -q 'SPATIAL12B_RUNG|capacity=23887872' build/spatial12b/RESULT.hbp
+          grep -q 'SPATIAL12B_RUNG|capacity=100000000' build/spatial12b/RESULT.hbp
+          grep -q 'SPATIAL12B_RUNG|capacity=1000000000' build/spatial12b/RESULT.hbp
+          grep -q 'SPATIAL12B_RUNG|capacity=12000000000' build/spatial12b/RESULT.hbp
+          grep -q 'SPATIAL12B_COMPLETE|status=PASS' build/spatial12b/RESULT.hbp
+          cargo run --release --locked --bin spatial12b -- --lookup 11999999999 | tee build/spatial12b/LOOKUP.hbp
+          ! cargo run --release --locked --bin spatial12b -- --lookup 12000000000
+          (cd build/spatial12b && sha256sum RESULT.hbp LOOKUP.hbp > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spatial12b-integer-cpu-receipts
+          path: build/spatial12b
+          retention-days: 30
+          if-no-files-found: warn
