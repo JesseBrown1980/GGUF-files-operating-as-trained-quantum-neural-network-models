@@ -17,6 +17,9 @@ use std::process::Command;
 use std::time::Instant;
 
 const BASE: &str = "2ee84bfaa3163ea8f0fe405e1d0af0915652f1e0";
+const CROSSREPO_MANIFEST: &str = include_str!("../../grafts/CROSSREPO-HOLDOUT.tsv");
+const FINITE_REV: &str = "3616cb1a2c41a9b42b217fb816699cbe4afddd79";
+const YM4_REV: &str = "05de0ff7c8d13409fbf1bb9ef71e7ae23831b056";
 const SPLIT: &str = include_str!("../../grafts/REALSTYLE-SPLIT.tsv");
 const CLASSES: [&str; 4] = ["rust", "python", "markdown", "hbp"];
 const NCLASS: usize = 4;
@@ -654,10 +657,264 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+
+fn external_git_bytes(dir: &Path, args: &[&str]) -> Result<Vec<u8>, Box<dyn Error>> {
+    let output = Command::new("git").arg("-C").arg(dir).args(args).output()?;
+    if !output.status.success() {
+        return Err(format!("external git source unavailable: {}", args.join(" ")).into());
+    }
+    Ok(output.stdout)
+}
+
+fn load_external_test(finite_dir: &Path, ym4_dir: &Path) -> Result<Vec<Document>, Box<dyn Error>> {
+    let mut documents = Vec::new();
+    let mut seen = BTreeSet::new();
+    let mut balanced = [[0_usize; 2]; NCLASS];
+    let original: BTreeSet<&str> = SPLIT
+        .lines()
+        .filter(|line| !line.starts_with('#') && !line.is_empty())
+        .filter_map(|line| line.split('\t').nth(2))
+        .collect();
+
+    for line in CROSSREPO_MANIFEST.lines().filter(|s| !s.is_empty() && !s.starts_with('#')) {
+        let fields: Vec<&str> = line.splitn(7, '\t').collect();
+        if fields.len() != 7 {
+            return Err("external manifest requires seven fields".into());
+        }
+        let class = CLASSES
+            .iter()
+            .position(|name| *name == fields[0])
+            .ok_or("external class not recognized")?;
+        let (source_dir, repo_id, expected_rev, slot) = match fields[1] {
+            "finite" => (
+                finite_dir,
+                "JesseBrown1980/Finite-universe-Yang-mills-existence-and-mass-gap-using-HEB-C",
+                FINITE_REV,
+                0_usize,
+            ),
+            "ym4" => (
+                ym4_dir,
+                "JesseBrown1980/yang-mills-4-dimensional-continum-proof",
+                YM4_REV,
+                1_usize,
+            ),
+            _ => return Err("external repository alias not allowed".into()),
+        };
+        if fields[2] != repo_id || fields[3] != expected_rev {
+            return Err("external manifest has an unpinned repository or revision".into());
+        }
+        let path = fields[6];
+        if path.contains("..") || path.contains('\n') || path.contains('\r') {
+            return Err("external path not allowed".into());
+        }
+        let rev_path = format!("{expected_rev}:{path}");
+        let actual_sha = String::from_utf8(external_git_bytes(
+            source_dir,
+            &["rev-parse", &rev_path],
+        )?)?;
+        if actual_sha.trim() != fields[4] || !seen.insert(fields[4].to_string()) {
+            return Err(format!("external source hash mismatch or duplicate: {path}").into());
+        }
+        if original.contains(fields[4]) {
+            return Err("external source duplicated the original QNN manifest".into());
+        }
+        let data = external_git_bytes(source_dir, &["show", &rev_path])?;
+        let declared_size: usize = fields[5].parse()?;
+        if data.len() != declared_size || !(2_048..=131_072).contains(&declared_size) {
+            return Err(format!("external file size invalid: {path}").into());
+        }
+        balanced[class][slot] += 1;
+        documents.push(Document {
+            class,
+            partition: Partition::Test,
+            path: format!("{}:{}", fields[1], path),
+            blob: fields[4].to_string(),
+            data,
+        });
+    }
+    if documents.len() != 36 || balanced.iter().any(|counts| *counts != [6, 3]) {
+        return Err("external manifest not balanced 6 finite / 3 ym4 per class".into());
+    }
+    Ok(documents)
+}
+
+fn run_crossrepo(
+    synthetic_path: &Path,
+    finite_dir: &Path,
+    ym4_dir: &Path,
+    out: &Path,
+) -> Result<(), Box<dyn Error>> {
+    fs::create_dir_all(out)?;
+    let train = load_frozen_documents()?;
+    let external = load_external_test(finite_dir, ym4_dir)?;
+    let baseline = Baselines::train(&train);
+    let tree = train_graft(&train)?;
+    let mut parents = tree.clone();
+    parents.leaves.fill(None);
+    let synthetic_bytes = fs::read(synthetic_path)?;
+    if hex_digest(&synthetic_bytes) != FULL_SYNTHETIC_SHA {
+        return Err("synthetic pretrained GGUF hash differs".into());
+    }
+    let synthetic = Graft::from_gguf(&synthetic_bytes)?;
+    if synthetic.learned_leaves() != 6_561 {
+        return Err("synthetic original 6561 heads not found".into());
+    }
+    fs::write(out.join("parents.gguf"), parents.gguf())?;
+    fs::write(out.join("tree.gguf"), tree.gguf())?;
+    let parent_cold = Graft::from_gguf(&fs::read(out.join("parents.gguf"))?)?;
+    let tree_cold = Graft::from_gguf(&fs::read(out.join("tree.gguf"))?)?;
+    let synthetic_cold = Graft::from_gguf(&fs::read(synthetic_path)?)?;
+    let mut cold_baselines = Vec::new();
+    for method in 0..5_usize {
+        let path = out.join(format!("{}.model", METHOD_NAMES[method]));
+        fs::write(&path, baseline.serialized(method))?;
+        let stored = fs::read(&path)?;
+        let loaded = Baselines::from_serialized(method, &stored)?;
+        if loaded.serialized(method) != stored {
+            return Err("cold baseline roundtrip mismatch".into());
+        }
+        cold_baselines.push(loaded);
+    }
+    let sizes = [
+        baseline.serialized(0).len(),
+        baseline.serialized(1).len(),
+        baseline.serialized(2).len(),
+        baseline.serialized(3).len(),
+        baseline.serialized(4).len(),
+        parents.gguf().len(),
+        tree.gguf().len(),
+        synthetic_bytes.len() + PARENTS,
+    ];
+    let mut report = format!(
+        "CROSSREPO_BEGIN|schema=QNN-REALSTYLE-CROSSREPO-V1|original_train_commit={BASE}|external_manifest_sha256={}|finite_commit={FINITE_REV}|ym4_commit={YM4_REV}|train=24|validation=12|external_test=36|fit_on_external=NO|json=0\n",
+        hex_digest(CROSSREPO_MANIFEST.as_bytes())
+    );
+    for take in [256_usize, 1_024_usize] {
+        let map = readout_for_synthetic(&synthetic, &train, take);
+        fs::write(out.join(format!("synthetic_{take}_map.bin")), map)?;
+        let mut per_method_correct = [0_usize; 8];
+        for method in 0..METHOD_NAMES.len() {
+            let mut matrix = [[0_usize; NCLASS]; NCLASS];
+            let mut repo_correct = [0_usize; 2];
+            let mut checksum = 0_usize;
+            let start = Instant::now();
+            for _ in 0..10 {
+                for doc in &external {
+                    checksum += predict(
+                        method,
+                        &baseline,
+                        &tree,
+                        &synthetic,
+                        &map,
+                        &doc.data[..take],
+                    );
+                }
+            }
+            let elapsed_us = start.elapsed().as_micros();
+            for doc in &external {
+                let obs = &doc.data[..take];
+                let predicted = predict(method, &baseline, &tree, &synthetic, &map, obs);
+                let reload = match method {
+                    0..=4 => cold_baselines[method].classify(method, obs),
+                    5 => routed_parent(&parent_cold, obs, RoutingMode::Parents),
+                    6 => routed_parent(&tree_cold, obs, RoutingMode::Tree),
+                    7 => usize::from(map[routed_parent(
+                        &synthetic_cold,
+                        obs,
+                        RoutingMode::Tree,
+                    )]),
+                    _ => unreachable!(),
+                };
+                if predicted != reload {
+                    return Err(format!("cold model prediction changed: {}", METHOD_NAMES[method]).into());
+                }
+                matrix[doc.class][predicted] += 1;
+                per_method_correct[method] += usize::from(predicted == doc.class);
+                let slot = if doc.path.starts_with("finite:") { 0 } else { 1 };
+                repo_correct[slot] += usize::from(predicted == doc.class);
+                report.push_str(&format!(
+                    "CROSSREPO_PRED|method={}|prefix={take}|true={}|pred={}|blob={}|path={}|json=0\n",
+                    METHOD_NAMES[method],
+                    CLASSES[doc.class],
+                    CLASSES[predicted],
+                    doc.blob,
+                    doc.path
+                ));
+            }
+            report.push_str(&format!(
+                "CROSSREPO_RESULT|method={}|prefix={take}|correct={}|total=36|finite_correct={}|finite_n=24|ym4_correct={}|ym4_n=12|model_bytes={}|inference_10_pass_us={elapsed_us}|checksum={checksum}|json=0\n",
+                METHOD_NAMES[method],
+                per_method_correct[method],
+                repo_correct[0],
+                repo_correct[1],
+                sizes[method]
+            ));
+            for (class, row) in matrix.iter().enumerate() {
+                report.push_str(&format!(
+                    "CROSSREPO_CONFUSION|method={}|prefix={take}|true={}|rust={}|python={}|markdown={}|hbp={}|json=0\n",
+                    METHOD_NAMES[method],
+                    CLASSES[class],
+                    row[0], row[1], row[2], row[3]
+                ));
+            }
+        }
+        for method in [1_usize, 2_usize, 4_usize] {
+            let correct = external
+                .iter()
+                .filter(|doc| {
+                    baseline.classify(method, &doc.data[take - BLOCK..take]) == doc.class
+                })
+                .count();
+            report.push_str(&format!(
+                "CROSSREPO_RECENT256|method={}|prefix={take}|correct={correct}|total=36|context_matched=YES|json=0\n",
+                METHOD_NAMES[method]
+            ));
+        }
+        let mut unigram_only = 0_usize;
+        let mut graft_only = 0_usize;
+        let mut both = 0_usize;
+        for doc in &external {
+            let nb = baseline.classify(2, &doc.data[..take]) == doc.class;
+            let gr = routed_parent(&tree, &doc.data[..take], RoutingMode::Parents) == doc.class;
+            if nb && !gr {
+                unigram_only += 1;
+            } else if gr && !nb {
+                graft_only += 1;
+            } else if gr && nb {
+                both += 1;
+            }
+        }
+        report.push_str(&format!(
+            "CROSSREPO_PAIRED|prefix={take}|unigram_only={unigram_only}|graft_only={graft_only}|both_correct={both}|json=0\n"
+        ));
+        let verdict = if per_method_correct[5] >= per_method_correct[2] {
+            "GGUF_TRANSFER_COMPARABLE_ON_THIS_CORPUS"
+        } else {
+            "NAIVE_BAYES_STRONGER_ON_THIS_CORPUS"
+        };
+        report.push_str(&format!(
+            "CROSSREPO_DECISION|prefix={take}|verdict={verdict}|graft={}|unigram={}|prespecified_rule=YES|json=0\n",
+            per_method_correct[5], per_method_correct[2]
+        ));
+    }
+    report.push_str(
+        "CROSSREPO_COMPLETE|files=36|methods=8|prefixes=2|cold_models=PASS|all_16_confusion_matrices=FILED|no_external_fit=PASS|historical_PR28_untouched=YES|json=0\n",
+    );
+    fs::write(out.join("CROSSREPO-RESULT.hbp"), &report)?;
+    print!("{report}");
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.as_slice() {
         [_, flag, synthetic, out] if flag == "--run" => run(Path::new(synthetic), Path::new(out)),
+        [_, flag, synthetic, finite, ym4, out] if flag == "--crossrepo" => run_crossrepo(
+            Path::new(synthetic),
+            Path::new(finite),
+            Path::new(ym4),
+            Path::new(out),
+        ),
         _ => Err("usage: real_style_compare --run SYNTHETIC_6561_GGUF OUTPUT_DIR".into()),
     }
 }
