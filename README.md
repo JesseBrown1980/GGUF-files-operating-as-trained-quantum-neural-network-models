@@ -15,6 +15,14 @@ Node. Receipts are HBP/HBI with SHA-256, and every receipt line ends in `json=0`
 Predictions were sealed in [`PREREG.hbp`](PREREG.hbp) (sha256 `5485a600…`) and
 pushed in commit `03ff607` before any code existed.
 
+## Complete 6,561-head shared GGUF table — synthetic capacity verified (November 13, 2026)
+
+**[Training and exact decoding guide](grafts/FULL6561-README.md)** · **[Source-list interface and benchmark receipts](grafts/FULL6561-MEASURED.hbp)** · **[Full-population PR #26](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/26)**.
+
+This follow-up **populates every one of the 81 parent and 6,561 leaf correction addresses** of one shared integer predictor, rather than allocating only virtual addresses or training 27 heads. The reproducible hosted gate uses **6,561 unique deterministic synthetic training/validation pairs** and a separate 3,359,232-byte test target. The full model GGUF is **49,088 bytes**; the lossless actual stream is **1,971,762 bytes**, and a separate process reproduced all bytes and all **13,122 past-only route decisions** exactly. The router made 2,496 parent changes and 3,849 total specialist changes.
+
+**Negative result:** the 81-parent-only model is **31,787 bytes smaller overall** than the full tree despite the tree's 1,045-byte encoded-stream benefit, and shuffled leaf corrections also slightly outperform the correct assignments on this synthetic test. The real 6,561 D:-drive corpus **has not been trained on the GitHub runner**; use the `--fit-source-list` command with real ordered file paths to do that locally. These 6,561 heads are three-integer bias corrections, not independent large neural models or quantum circuits.
+
 ## Shared Graft 81×81 GGUF: one base, tiny learned corrections (November 13, 2026)
 
 **[Actual model implementation, manifest commands and limits](grafts/README.md)** · **[Preimplementation freeze](grafts/PREDICTION.hbp)** · **[PR #25](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/25)**
