@@ -905,9 +905,46 @@ fn run_crossrepo(
     Ok(())
 }
 
+
+fn inspect_train_weights() -> Result<(), Box<dyn Error>> {
+    let docs = load_frozen_documents()?;
+    let graft = train_graft(&docs)?;
+    println!("SURGERY_INSPECT|scope=QNN_24_train_12_validation_ONLY|json=0");
+    for (class, name) in CLASSES.iter().enumerate() {
+        let mut train_counts = [0_u64; 3];
+        let mut valid_counts = [0_u64; 3];
+        for doc in docs.iter().filter(|d| d.class == class) {
+            let counts = if doc.partition == Partition::Validation {
+                &mut valid_counts
+            } else if doc.partition == Partition::Train {
+                &mut train_counts
+            } else {
+                continue;
+            };
+            for &byte in &doc.data[..1_024] {
+                counts[family_of_byte(byte)] += 1;
+            }
+        }
+        println!(
+            "SURGERY_PARENT|class={name}|id={class}|trained_delta={:?}|train_ws_alpha_other={train_counts:?}|valid_ws_alpha_other={valid_counts:?}|json=0",
+            graft.parents[class].ok_or("missing parent correction")?
+        );
+        for leaf in 0..6 {
+            println!(
+                "SURGERY_LEAF|class={name}|id={}|trained_delta={:?}|json=0",
+                class * 81 + leaf,
+                graft.leaves[class * 81 + leaf].ok_or("missing leaf correction")?
+            );
+        }
+    }
+    println!("SURGERY_INSPECT_COMPLETE|heads=4|leaf_heads=24|test_files_read=0|json=0");
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.as_slice() {
+        [_, flag] if flag == "--inspect-weights" => inspect_train_weights(),
         [_, flag, synthetic, out] if flag == "--run" => run(Path::new(synthetic), Path::new(out)),
         [_, flag, synthetic, finite, ym4, out] if flag == "--crossrepo" => run_crossrepo(
             Path::new(synthetic),
