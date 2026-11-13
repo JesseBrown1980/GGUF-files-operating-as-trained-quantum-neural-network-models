@@ -13,7 +13,11 @@ use std::time::Instant;
 const TRAIN: [[&str; 3]; 3] = [
     ["src/qnn.rs", "src/gguf_model.rs", "src/qutrit.rs"],
     ["README.md", "polariton/README.md", "spatial12b/README.md"],
-    ["PREREG.hbp", "PREREG-YM-Z3.hbp", "spatial12b/PREDICTION.hbp"],
+    [
+        "PREREG.hbp",
+        "PREREG-YM-Z3.hbp",
+        "spatial12b/PREDICTION.hbp",
+    ],
 ];
 const VALIDATION: [&str; 3] = [
     "src/train.rs",
@@ -180,20 +184,44 @@ fn main() -> Result<(), Box<dyn Error>> {
     for expert in &mut small_corrected {
         expert.fit_correction(&validation[usize::from(expert.family)]);
     }
-    run_case("nine_corrected", &small_corrected, &validation, &heldout, out)?;
+    run_case(
+        "nine_corrected",
+        &small_corrected,
+        &validation,
+        &heldout,
+        out,
+    )?;
 
     let large = build_experts(&training, 27);
-    run_case("twentyseven_uncorrected", &large, &validation, &heldout, out)?;
+    run_case(
+        "twentyseven_uncorrected",
+        &large,
+        &validation,
+        &heldout,
+        out,
+    )?;
     let mut corrected = large.clone();
     for expert in &mut corrected {
         expert.fit_correction(&validation[usize::from(expert.family)]);
     }
-    run_case("twentyseven_corrected", &corrected, &validation, &heldout, out)?;
+    run_case(
+        "twentyseven_corrected",
+        &corrected,
+        &validation,
+        &heldout,
+        out,
+    )?;
     let mut shuffled = corrected.clone();
     for (index, expert) in shuffled.iter_mut().enumerate() {
         expert.correction = corrected[(index + 7) % corrected.len()].correction;
     }
-    run_case("twentyseven_shuffled_edits", &shuffled, &validation, &heldout, out)?;
+    run_case(
+        "twentyseven_shuffled_edits",
+        &shuffled,
+        &validation,
+        &heldout,
+        out,
+    )?;
     println!("SPECIALIST_COMPLETE|scenarios=6|reproduced=6|heldout_files=6|decoder_has_training_data=NO|stream_only_compression_claim=NO|12b_trained_nodes=NO|status=PASS|json=0");
     Ok(())
 }
