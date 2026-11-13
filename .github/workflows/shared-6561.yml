@@ -62,8 +62,8 @@ jobs:
           for name in base parents full_tree zero_deltas shuffled_deltas; do
             cargo run --locked --release --bin shared_6561 -- --decode-check "build/full-6561/$name.gguf" "build/full-6561/$name.stream" build/full-6561/target.raw | tee "build/full-6561/$name.DECODE.hbp"
             grep -q 'FULL6561_EXTERNAL_DECODE|bytes=3359232|route_blocks=13122' "build/full-6561/$name.DECODE.hbp"
-            expected_route=$(grep "^FULL6561_RESULT|name=$name|" build/full-6561/RESULT.hbp | sed -E 's/.*\\|routes_sha256=([0-9a-f]+)\\|.*/\\1/')
-            actual_route=$(grep '^FULL6561_EXTERNAL_DECODE|' "build/full-6561/$name.DECODE.hbp" | sed -E 's/.*\\|route_sha256=([0-9a-f]+)\\|.*/\\1/')
+            expected_route=$(grep "^FULL6561_RESULT|name=$name|" build/full-6561/RESULT.hbp | awk -F'|' '{for(i=1;i<=NF;i++) if(index($i,"routes_sha256=")==1) {split($i,a,"="); print a[2]}}')
+            actual_route=$(grep '^FULL6561_EXTERNAL_DECODE|' "build/full-6561/$name.DECODE.hbp" | awk -F'|' '{for(i=1;i<=NF;i++) if(index($i,"route_sha256=")==1) {split($i,a,"="); print a[2]}}')
             test -n "$expected_route"
             test "$expected_route" = "$actual_route"
           done
