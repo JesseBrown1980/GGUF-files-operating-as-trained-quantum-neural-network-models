@@ -345,6 +345,11 @@ fn predict(
     }
 }
 
+const FROZEN_INITIAL_ACCURACY: [[usize; 8]; 2] = [
+    [9, 14, 21, 19, 22, 18, 18, 13],
+    [9, 16, 34, 25, 32, 23, 23, 20],
+];
+
 const METHOD_NAMES: [&str; 8] = [
     "majority",
     "three_group_nb",
@@ -394,6 +399,18 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
         parent_bytes.len(),
         graft_bytes.len(),
         synthetic_bytes.len() + PARENTS,
+    ];
+    // Ephemeral Q12 score caches are not serialized and must not be
+    // mistaken for on-disk model bytes or actual measured peak RSS.
+    let log_cache_bytes: [usize; 8] = [
+        0,
+        NCLASS * 3 * 4,
+        NCLASS * 256 * 4,
+        0,
+        NCLASS * 65_536 * 4,
+        729 * 256 * 4,
+        729 * 256 * 4,
+        729 * 256 * 4,
     ];
     let mut report = format!(
         "REALSTYLE_CONTRACT|schema=QNN-REAL-STYLE-COMPARE-V1|base={BASE}|train_sources=24|validation_sources=12|test_sources=36|classes=rust,python,markdown,hbp|leakage=NONE_BY_WHOLE_GIT_BLOB|synthetic_pretrained_not_retrained=YES|json=0\nREALSTYLE_MODELS|real_parent_heads=4|real_leaf_heads=24|synthetic_parent_heads=81|synthetic_leaf_heads=6561|real_graft_train_us={graft_us}|baseline_train_us={baselines_us}|json=0\n"
@@ -447,12 +464,20 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
                 ));
             }
             let correct: usize = (0..NCLASS).map(|c| matrix[c][c]).sum();
+            let length_index = usize::from(take == 1_024);
+            if correct != FROZEN_INITIAL_ACCURACY[length_index][method] {
+                return Err(format!(
+                    "cache-only optimization changed frozen accuracy: method={} prefix={take}",
+                    METHOD_NAMES[method]
+                )
+                .into());
+            }
             if count != 36 {
                 return Err("test source count not 36".into());
             }
             report.push_str(&format!(
-                "REALSTYLE_RESULT|method={}|prefix={take}|correct={correct}|total={count}|model_bytes={}|inference_10_pass_us={elapsed_us}|timing_checksum={checksum}|json=0\n",
-                METHOD_NAMES[method], model_sizes[method]
+                "REALSTYLE_RESULT|method={}|prefix={take}|correct={correct}|total={count}|model_bytes={}|q12_log_cache_bytes={}|inference_10_pass_us={elapsed_us}|timing_checksum={checksum}|json=0\n",
+                METHOD_NAMES[method], model_sizes[method], log_cache_bytes[method]
             ));
             for (truth, row) in matrix.iter().enumerate() {
                 report.push_str(&format!(
