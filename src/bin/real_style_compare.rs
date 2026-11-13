@@ -278,7 +278,7 @@ fn train_graft(docs: &[Document]) -> Result<Graft, Box<dyn Error>> {
 }
 
 fn routed_parent(graft: &Graft, bytes: &[u8], mode: RoutingMode) -> usize {
-    assert!(bytes.len().is_multiple_of(BLOCK));
+    assert!(bytes.len() % BLOCK == 0);
     let mut router = Router::new(graft, mode);
     for end in (BLOCK..=bytes.len()).step_by(BLOCK) {
         router.select(graft, &bytes[..end], mode);
@@ -297,7 +297,7 @@ fn readout_for_synthetic(graft: &Graft, docs: &[Document], take: usize) -> [u8; 
         map[parent] = counts
             .iter()
             .enumerate()
-            .max_by_key(|(c, &n)| (n, std::cmp::Reverse(*c)))
+            .max_by_key(|(c, n)| (**n, std::cmp::Reverse(*c)))
             .map_or(0, |(c, _)| c as u8);
     }
     map
