@@ -15,6 +15,14 @@ Node. Receipts are HBP/HBI with SHA-256, and every receipt line ends in `json=0`
 Predictions were sealed in [`PREREG.hbp`](PREREG.hbp) (sha256 `5485a600…`) and
 pushed in commit `03ff607` before any code existed.
 
+## Shared Graft 81×81 GGUF: one base, tiny learned corrections (November 13, 2026)
+
+**[Actual model implementation, manifest commands and limits](grafts/README.md)** · **[Preimplementation freeze](grafts/PREDICTION.hbp)** · **[PR #25](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/25)**
+
+A new **one-backbone byte-prediction model** uses GGUF v3 to store a single trained shared byte bigram table plus up to 81 parent correction heads and 6,561 leaf correction heads, with only **three signed integer logit-shift weights per populated address**. Native Rust 1.81 integer arithmetic coding and an independent cold decoder reproduce every input byte and every **past-only** hierarchical specialist decision. The initial QNN-file demo fits **27** leaf heads and nine parent heads, leaving 6,534 leaf addresses untrained; a fail-closed manifest interface can train genuinely supplied files at other addresses. The 6,561-file operator dataset remains outside this hosted runner.
+
+**Measured outcome from the initial tracked-file benchmark:** the parent-only arm encoded the existing 14,004-byte held-out set in 9,234 stream bytes using a 6,880-byte GGUF, compared with 9,342 stream bytes + a 7,040-byte GGUF for the shared parent/leaf tree. The single shared base was 9,424 stream bytes + 6,816 model bytes. This establishes real compact model storage and exact independent replay, **not** a blind intelligence gain or net cold compression over raw bytes. Full model+stream costs and failed controls are retained.
+
 ## Compact QNN specialist activation: actual 9 vs 27 byte-stream test (November 13, 2026)
 
 **[Codec, validation-fit parameter edits and full results](specialists/README.md)** · **[Verified source-disjoint HBP record](specialists/MEASURED-20261113.hbp)** · **[PR #23](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/23)**.

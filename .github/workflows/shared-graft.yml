@@ -1,0 +1,85 @@
+name: Shared backbone 81x81 GGUF graft and exact independent decode
+on:
+  push:
+    paths:
+      - 'src/shared_graft.rs'
+      - 'src/graft_codec.rs'
+      - 'src/bin/shared_graft.rs'
+      - 'src/lib.rs'
+      - 'grafts/**'
+      - '.github/workflows/shared-graft.yml'
+  pull_request:
+    paths:
+      - 'src/shared_graft.rs'
+      - 'src/graft_codec.rs'
+      - 'src/bin/shared_graft.rs'
+      - 'src/lib.rs'
+      - 'grafts/**'
+      - '.github/workflows/shared-graft.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  graft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust 1.81
+        run: |
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+      - name: Prediction freeze and no floats / JSON / Node
+        run: |
+          set -euo pipefail
+          grep -q 'phase=PREIMPLEMENTATION' grafts/PREDICTION.hbp
+          ! grep -nE '\bf(32|64)\b|serde_json|unsafe\s*\{' src/shared_graft.rs src/graft_codec.rs src/bin/shared_graft.rs
+          ! git ls-files | grep -iE '\.(json|js|mjs|ts)$|package\.json'
+      - name: Cargo format
+        run: cargo fmt --all -- --check
+      - name: Strict Rust 1.81 clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Shared backbone, 81x81, model and coder negative controls
+        run: |
+          cargo test --locked --lib shared_graft -- --nocapture
+          cargo test --locked --lib graft_codec -- --nocapture
+      - name: Five exact heldout control streams
+        run: |
+          set -euo pipefail
+          mkdir -p build/grafts
+          cargo run --locked --release --bin shared_graft -- --demo build/grafts | tee build/grafts/RESULT.hbp
+          grep -q 'GRAFT_DEMO_COMPLETE|cases=5|exact_replays=5' build/grafts/RESULT.hbp
+          for name in shared_base parents_only shared_tree zero_deltas shuffled_deltas; do
+            grep -q "GRAFT_RESULT|name=$name" build/grafts/RESULT.hbp
+            test -s "build/grafts/$name.gguf"
+            test -s "build/grafts/$name.stream"
+            cargo run --locked --release --bin shared_graft -- --decode "build/grafts/$name.gguf" "build/grafts/$name.stream" "build/grafts/$name.decoded" | tee "build/grafts/$name.DECODE.hbp"
+            cmp build/grafts/heldout.raw "build/grafts/$name.decoded"
+          done
+          cargo run --locked --release --bin shared_graft -- --inspect build/grafts/shared_tree.gguf | tee build/grafts/INSPECT.hbp
+          grep -q 'trained_leaves=27' build/grafts/INSPECT.hbp
+          cp build/grafts/shared_tree.stream build/grafts/corrupt.stream
+          printf 'X' | dd of=build/grafts/corrupt.stream bs=1 seek=0 conv=notrunc status=none
+          ! cargo run --locked --release --bin shared_graft -- --decode build/grafts/shared_tree.gguf build/grafts/corrupt.stream build/grafts/SHOULD_NOT_EXIST
+          cp build/grafts/shared_tree.gguf build/grafts/corrupt.gguf
+          printf 'X' | dd of=build/grafts/corrupt.gguf bs=1 seek=0 conv=notrunc status=none
+          ! cargo run --locked --release --bin shared_graft -- --decode build/grafts/corrupt.gguf build/grafts/shared_tree.stream build/grafts/SHOULD_NOT_EXIST
+      - name: Manifest fit with nonconsecutive 0,81,6560 heads
+        run: |
+          set -euo pipefail
+          printf '0\tsrc/qnn.rs\tsrc/train.rs\n81\tsrc/qutrit.rs\tsrc/task.rs\n6560\tsrc/gguf_model.rs\tsrc/virtual_qnn.rs\n' > build/grafts/manifest.tsv
+          cargo run --locked --release --bin shared_graft -- --fit-manifest build/grafts/manifest.tsv build/grafts/manifest-model.gguf | tee build/grafts/MANIFEST.hbp
+          cargo run --locked --release --bin shared_graft -- --inspect build/grafts/manifest-model.gguf
+          cargo run --locked --release --bin shared_graft -- --encode build/grafts/manifest-model.gguf docs/FULL-Q24-INTEGER-20261104.md build/grafts/manifest.stream tree
+          cargo run --locked --release --bin shared_graft -- --decode build/grafts/manifest-model.gguf build/grafts/manifest.stream build/grafts/manifest.decoded
+          cmp docs/FULL-Q24-INTEGER-20261104.md build/grafts/manifest.decoded
+          printf '0\tsrc/qnn.rs\tsrc/train.rs\n0\tsrc/qutrit.rs\tsrc/task.rs\n' > build/grafts/duplicate.tsv
+          ! cargo run --locked --release --bin shared_graft -- --fit-manifest build/grafts/duplicate.tsv build/grafts/REJECT.gguf
+          (cd build/grafts && sha256sum *.gguf *.stream *.hbp > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shared-graft-gguf-cpu-replays
+          path: build/grafts/
+          retention-days: 30
+          if-no-files-found: warn

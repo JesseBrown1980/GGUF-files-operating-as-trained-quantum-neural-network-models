@@ -1,0 +1,12 @@
+SHARED_GRAFT_MEASURED|schema=QNN-SHARED-GRAFT81X81-V1|date=2026-11-13|source_hosted_run=43357097345|scope=QNN_BURNED_FIXTURE|blind=NO|json=0
+SOURCE|train_files=9|validation_files=3|heldout_files=6|heldout_bytes=14004|heldout_sha256=f7171d2283790da6fa59db3ad1a12c2a71c4b91306b363ee64ca4ad068eb4f68|json=0
+MODEL|architecture=asolaria-shared-graft-byte81x81|base_tables=1|address_capacity=6561|actual_learned_parent_heads=9|actual_learned_leaf_heads=27|untrained_leaf_addresses=6534|source_full_6561_manifest=NOT_PROVIDED|json=0
+RESULT|arm=shared_base|gguf_bytes=6816|stream_bytes=9424|cold_total_bytes=16240|parent_switches=0|leaf_switches=0|independent_decode=PASS|json=0
+RESULT|arm=parents_only|gguf_bytes=6880|stream_bytes=9234|cold_total_bytes=16114|parent_switches=22|independent_decode=PASS|json=0
+RESULT|arm=shared_tree|gguf_bytes=7040|stream_bytes=9342|cold_total_bytes=16382|parent_switches=22|total_switches=32|independent_decode=PASS|json=0
+RESULT|arm=zero_deltas|gguf_bytes=7040|stream_bytes=9424|cold_total_bytes=16464|parent_switches=0|total_switches=0|independent_decode=PASS|json=0
+RESULT|arm=shuffled_deltas|gguf_bytes=7040|stream_bytes=9267|cold_total_bytes=16307|parent_switches=22|total_switches=33|independent_decode=PASS|json=0
+NEGATIVE|shared_tree_vs_parents_only_cold_bytes=268_MORE|shared_tree_vs_shuffled_cold_bytes=75_MORE|all_arms_cold_larger_than_raw=YES|json=0
+ROUNDTRIP|separate_process_byte_exact_5_of_5|full_route_replay_5_of_5|hash_wrong_model_rejected=YES|hash_corrupt_stream_rejected=YES|manifest_slots=0_81_6560|manifest_leaves_trained=3|json=0
+INTERPRETATION|one_backbone_shared_model=EXISTS|compact_graft_GGUF=EXISTS|causal_decoder=PASS|full_6561_trained_experts=NOT_RUN|blind_better_generalist=NOT_DEMONSTRATED|net_cold_compression=NOT_DEMONSTRATED|large_language_model=NO|quantum_simulation=NO|json=0
+SCOPE|experiment_performance_uses_prior_inspected_QNN_files_not_V32_local_243_or_V33_local_6561|operator_surgery_run_separate=1|json=0
