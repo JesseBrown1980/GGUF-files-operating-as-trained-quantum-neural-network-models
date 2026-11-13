@@ -1,0 +1,13 @@
+SPATIAL12B_FREEZE|schema=QNN-SPATIAL12B-V1|date=2026-11-12|phase=PREIMPLEMENTATION|json=0
+OWNING_REPO|repo=JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models|rust=1.81|no_float=1|no_json=1|no_node=1|unsafe=forbidden|json=0
+SOURCE_BOUNDARY|hebc_repo=JesseBrown1980/qoled-internet-HEB-C-revisted-HTTP---free-0-hbi-hbp-sha-sh-hash|existing_engine=96^3*27_ternary_channels|source_engine_unchanged=1|json=0
+CAPACITY|virtual_nodes=12000000000|room_stride=27|rooms=444444445|width=1024|height=1024|last_room_partially_occupied=1|json=0
+STATE|each_active_node_one_27_state_glyph_0_to_26|value_zero_means_unallocated|address_22_base3_digits|json=0
+ADDRESS|id=room*27+channel|room=(z*1024+y)*1024+x|x_y_range=0_to_1023|channel=0_to_26|last_15_channels_of_last_room_invalid|json=0
+EXECUTION|active_nodes_per_rung=4096|steps_per_rung=3|no_dense_12b_allocation|rungs=23887872,100000000,1000000000,12000000000|json=0
+WEIGHT_GENERATOR|small_shared_integer_3x3_rank1_context_matrix|27_shared_coefficients|no_per_node_matrix_storage|no_gradient_training|json=0
+CONTROLS|address_roundtrip_all_edge_cases|reject_out_of_range|directional_neighbors|changing_address_changes_generated_matrix|deterministic_replay|distinct_active_subset|hash_tamper_failure|json=0
+METRICS|wall_clock_microseconds|active_nodes_before_after|actual_evaluations|virtual_capacity|packed_theoretical_state_bytes|sha256_state_receipt|json=0
+PHYSICS|27_states_are_discrete_proxy_not_entangled_qutrits|not_12b_quantum_simulation|nonlinear_jump_gate=HOLD_UNTIL_REDUCTION_THEOREM|json=0
+GATES|cargo_test|clippy_D_warnings|cargo_fmt_check|CPU_only|memory_sublinear_in_capacity|json=0
+PREDICTIONS|all_rungs_addressable=EXPECTED|all_rungs_sparse_step_completion=EXPECTED|full_12b_node_execution=NOT_ATTEMPTED|neural_prediction_quality=NOT_MEASURED|json=0
