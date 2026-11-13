@@ -1,0 +1,88 @@
+name: GPT-6 direct GGUF weight surgery — exact CPU A/B and controls
+on:
+  push:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/WEIGHT-SURGERY-*'
+      - '.github/workflows/qnn-manual-brain-surgery.yml'
+  pull_request:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/WEIGHT-SURGERY-*'
+      - '.github/workflows/qnn-manual-brain-surgery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-surgery-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin original model, train-only inspection and edit freeze
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor c98d81d43584a9918270a547a8ae80115dc4f8fa HEAD
+          git merge-base --is-ancestor 6a3b95c5a69769a28d45acbcf56b54a7a53c6566 HEAD
+          git merge-base --is-ancestor acceb54be7a10c4a6a8b3ed0b7531e6b19a87cb3 HEAD
+          grep -Fq 'phase=BEFORE_SURGICAL_EVALUATION_CODE' grafts/WEIGHT-SURGERY-EDIT-FREEZE-20261113.hbp
+          grep -Fq 'rust_parent_id=0|before=[1,0,-1]|after=[0,1,-1]' grafts/WEIGHT-SURGERY-EDIT-FREEZE-20261113.hbp
+          grep -Fq 'python_parent_id=1|before=[1,0,-1]|after=[2,-1,-1]' grafts/WEIGHT-SURGERY-EDIT-FREEZE-20261113.hbp
+          test "$(git hash-object grafts/CROSSREPO-HOLDOUT.tsv)" = 767ec1f7c874a57c9269540b24bb854450cd2c16
+          ! grep -nE '\bf(32|64)\b|serde_json|unsafe\s*\{' src/bin/real_style_compare.rs
+      - name: Rust 1.81 exact integer, formatting, Clippy
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --bin real_style_compare
+      - name: Reinspect training-only original GGUF codices
+        run: |
+          set -euo pipefail
+          mkdir -p build/surgery/fixture build/surgery/results
+          cargo run --locked --release --bin real_style_compare -- --inspect-weights > build/surgery/TRAIN-ONLY.hbp
+          grep -Fq 'class=rust|id=0|trained_delta=[1, 0, -1]' build/surgery/TRAIN-ONLY.hbp
+          grep -Fq 'class=python|id=1|trained_delta=[1, 0, -1]' build/surgery/TRAIN-ONLY.hbp
+          grep -Fq 'SURGERY_INSPECT_COMPLETE|heads=4|leaf_heads=24|test_files_read=0' build/surgery/TRAIN-ONLY.hbp
+      - name: Fetch two exact heldout repository snapshots
+        run: |
+          set -euo pipefail
+          mkdir -p build/surgery/repos/finite build/surgery/repos/ym4
+          git -C build/surgery/repos/finite init -q
+          git -C build/surgery/repos/ym4 init -q
+          git -C build/surgery/repos/finite remote add origin https://github.com/JesseBrown1980/Finite-universe-Yang-mills-existence-and-mass-gap-using-HEB-C.git
+          git -C build/surgery/repos/ym4 remote add origin https://github.com/JesseBrown1980/yang-mills-4-dimensional-continum-proof.git
+          git -C build/surgery/repos/finite fetch -q --depth=1 --filter=blob:none origin 3616cb1a2c41a9b42b217fb816699cbe4afddd79
+          git -C build/surgery/repos/ym4 fetch -q --depth=1 --filter=blob:none origin 05de0ff7c8d13409fbf1bb9ef71e7ae23831b056
+          test "$(git -C build/surgery/repos/finite rev-parse FETCH_HEAD)" = 3616cb1a2c41a9b42b217fb816699cbe4afddd79
+          test "$(git -C build/surgery/repos/ym4 rev-parse FETCH_HEAD)" = 05de0ff7c8d13409fbf1bb9ef71e7ae23831b056
+      - name: Rebuild original synthetic 6561 checkpoint
+        run: |
+          set -euo pipefail
+          cargo run --locked --release --bin shared_6561 -- --fixture-6561 build/surgery/fixture > build/surgery/fixture/FIXTURE.hbp
+          test "$(sha256sum build/surgery/fixture/full_tree.gguf | cut -d' ' -f1)" = 606c4d8478b8dbd72dfda0dad6c6ef1895c081a7cd5d5bb6c363525f57b941b2
+      - name: Apply GPT-6 frozen real-GGUF weight edit and test all comparisons
+        run: |
+          set -euo pipefail
+          cargo run --locked --release --bin real_style_compare -- --brain-surgery             build/surgery/fixture/full_tree.gguf             build/surgery/repos/finite build/surgery/repos/ym4             build/surgery/results > build/surgery/results/STDOUT.hbp
+          grep '^SURGERY_MODEL|' build/surgery/results/SURGERY-RESULT.hbp
+          grep '^SURGERY_RESULT|' build/surgery/results/SURGERY-RESULT.hbp
+          test "$(grep -c '^SURGERY_MODEL|' build/surgery/results/SURGERY-RESULT.hbp)" -eq 4
+          test "$(grep -c '^SURGERY_RESULT|' build/surgery/results/SURGERY-RESULT.hbp)" -eq 32
+          test "$(grep -c '^SURGERY_PRED|' build/surgery/results/SURGERY-RESULT.hbp)" -eq 1152
+          test "$(grep -c '^SURGERY_CONFUSION|' build/surgery/results/SURGERY-RESULT.hbp)" -eq 128
+          grep -Fq 'SURGERY_COMPLETE|corpora=2|prefixes=2|arms=8|rows=32|prediction_rows=1152|confusion_rows=128|all_GGUF_cold_reloaded=PASS|no_gradients=YES|no_GPU=YES|test_labels_not_used_to_edit=YES|blind_claim=NO|json=0' build/surgery/results/SURGERY-RESULT.hbp
+          (cd build/surgery/results && sha256sum SURGERY-RESULT.hbp *.gguf *.model > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gpt6-manual-GGUF-weight-surgery-cpu
+          path: |
+            build/surgery/TRAIN-ONLY.hbp
+            build/surgery/results/
+            build/surgery/fixture/FIXTURE.hbp
+          retention-days: 30
