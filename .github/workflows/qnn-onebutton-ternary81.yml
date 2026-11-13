@@ -1,0 +1,64 @@
+name: QNN One Button 81 plus zero balanced ternary matrix (exact CPU)
+on:
+  push:
+    paths:
+      - 'src/bin/onebutton_ternary81.rs'
+      - 'experiments/ONEBUTTON-TERNARY81-*'
+      - '.github/workflows/qnn-onebutton-ternary81.yml'
+  pull_request:
+    paths:
+      - 'src/bin/onebutton_ternary81.rs'
+      - 'experiments/ONEBUTTON-TERNARY81-*'
+      - '.github/workflows/qnn-onebutton-ternary81.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-cpu-ternary81:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Confirm model and experimental protocol frozen before implementation
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 556c576fc6d4c832035dcb2c04a74edea3ba3fd0 HEAD
+          grep -Fq 'phase=BEFORE_CODE_AND_MEASUREMENT' experiments/ONEBUTTON-TERNARY81-FREEZE-20261113.hbp
+          grep -Fq 'weight_swap_original_parent_indices=0_and_80' experiments/ONEBUTTON-TERNARY81-FREEZE-20261113.hbp
+          grep -Fq 'position_swap_outcome=UNDETERMINED' experiments/ONEBUTTON-TERNARY81-FREEZE-20261113.hbp
+          ! grep -nE '\bf(32|64)\b|serde_json|unsafe\s*\{|Math.sin|Math.cos' src/bin/onebutton_ternary81.rs
+      - name: Rust 1.81 all-integer Clippy and exact topology tests
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --bin onebutton_ternary81
+      - name: Regenerate pinned 81-parent 6561-leaf synthetic GGUF
+        run: |
+          set -euo pipefail
+          mkdir -p build/onebutton81/fixture build/onebutton81/results
+          cargo run --locked --release --bin shared_6561 -- --fixture-6561 build/onebutton81/fixture > build/onebutton81/fixture/FIXTURE.hbp
+          test "$(sha256sum build/onebutton81/fixture/full_tree.gguf | cut -d' ' -f1)" = 606c4d8478b8dbd72dfda0dad6c6ef1895c081a7cd5d5bb6c363525f57b941b2
+      - name: Run exact 81-node matrix, Omega and relocation/position-swap controls
+        run: |
+          set -euo pipefail
+          cargo run --locked --release --bin onebutton_ternary81 -- --run \
+            build/onebutton81/fixture/full_tree.gguf \
+            build/onebutton81/results | tee build/onebutton81/results/STDOUT.hbp
+          grep '^ONEBUTTON81_' build/onebutton81/results/ONEBUTTON81-RESULT.hbp
+          grep -Fq 'all_81_states_identical_after_reverse_map=PASS' build/onebutton81/results/ONEBUTTON81-RESULT.hbp
+          grep -Fq 'ONEBUTTON81_COMPLETE|literal_balanced_ternary=PASS|no_float=PASS|cold_changed_GGUF=PASS|same_backbone_and_leaves=PASS|identity_relabel_invariant=PASS|classification_benchmark=NOT_RUN|json=0' build/onebutton81/results/ONEBUTTON81-RESULT.hbp
+          test -s build/onebutton81/results/position_swapped.gguf
+          (cd build/onebutton81/results && sha256sum *.gguf *.trits *.hbp > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onebutton-81plus0-ternary-cpu-matrix
+          path: |
+            build/onebutton81/results/
+            build/onebutton81/fixture/FIXTURE.hbp
+          retention-days: 30
