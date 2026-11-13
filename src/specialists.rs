@@ -53,7 +53,9 @@ impl Expert {
         let mut prev = 0_u8;
         for &next in data {
             let slot = usize::from(prev) * 256 + usize::from(next);
-            counts[slot] = counts[slot].checked_add(1).expect("training count fits u16");
+            counts[slot] = counts[slot]
+                .checked_add(1)
+                .expect("training count fits u16");
             prev = next;
         }
         Self::from_counts(counts, [0; 3], family)
@@ -84,8 +86,7 @@ impl Expert {
 
     fn frequency(&self, prev: u8, next: u8) -> u32 {
         let idx = usize::from(prev) * 256 + usize::from(next);
-        (u32::from(self.counts[idx]) + 1)
-            * Self::scale(self.correction, family_of_byte(next))
+        (u32::from(self.counts[idx]) + 1) * Self::scale(self.correction, family_of_byte(next))
     }
 
     fn total(&self, prev: u8) -> u32 {
@@ -284,8 +285,7 @@ impl<'a> Decoder<'a> {
     fn pop(&mut self, model: &Expert, prev: u8) -> u8 {
         let total = model.total(prev);
         let width = self.high - self.low + 1;
-        let value =
-            ((self.code - self.low + 1) * u64::from(total) - 1) / width;
+        let value = ((self.code - self.low + 1) * u64::from(total) - 1) / width;
         let (sym, bottom, top, _) = model.symbol_at(prev, value as u32);
         let old = self.low;
         self.high = old + width * u64::from(top) / u64::from(total) - 1;
@@ -326,9 +326,7 @@ pub fn route(models: &[Expert], history: &[u8], first: usize) -> usize {
         for pos in start..history.len() {
             let prev = if pos == 0 { 0 } else { history[pos - 1] };
             let next = history[pos];
-            loss += u64::from(
-                log2_q12(model.total(prev)) - log2_q12(model.frequency(prev, next)),
-            );
+            loss += u64::from(log2_q12(model.total(prev)) - log2_q12(model.frequency(prev, next)));
         }
         if loss < best {
             best = loss;
@@ -343,9 +341,7 @@ pub fn static_expert(models: &[Expert], validation: &[Vec<u8>]) -> usize {
     models
         .iter()
         .enumerate()
-        .min_by_key(|(i, model)| {
-            (validation.iter().map(|v| model.loss(v)).sum::<u64>(), *i)
-        })
+        .min_by_key(|(i, model)| (validation.iter().map(|v| model.loss(v)).sum::<u64>(), *i))
         .map_or(0, |(i, _)| i)
 }
 
