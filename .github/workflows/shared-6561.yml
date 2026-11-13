@@ -1,0 +1,97 @@
+name: Full 6561 populated shared GGUF graft heads
+on:
+  push:
+    paths:
+      - 'src/bin/shared_6561.rs'
+      - 'src/shared_graft.rs'
+      - 'src/graft_codec.rs'
+      - 'grafts/FULL6561-*'
+      - '.github/workflows/shared-6561.yml'
+  pull_request:
+    paths:
+      - 'src/bin/shared_6561.rs'
+      - 'src/shared_graft.rs'
+      - 'src/graft_codec.rs'
+      - 'grafts/FULL6561-*'
+      - '.github/workflows/shared-6561.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full_6561_populated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust 1.81 toolchain
+        run: |
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+      - name: Frozen predictions and source safety checks
+        run: |
+          set -euo pipefail
+          grep -q 'stage=BEFORE_IMPLEMENTATION' grafts/FULL6561-PREDICTION.hbp
+          ! grep -nE '\bf(32|64)\b|serde_json|unsafe\s*\{' src/bin/shared_6561.rs
+          ! git ls-files | grep -iE '\.(json|js|mjs|ts)$|package\.json'
+      - name: Rust format and Clippy
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+      - name: Synthetic generator deterministic controls
+        run: cargo test --locked --bin shared_6561 -- --nocapture
+      - name: Full 81 parents x 81 learned correction heads with 3,359,232 exact bytes
+        run: |
+          set -euo pipefail
+          mkdir -p build/full-6561
+          cargo run --locked --release --bin shared_6561 -- --fixture-6561 build/full-6561 | tee build/full-6561/RESULT.hbp
+          grep -q 'FULL6561_TRAIN|parents=81|leaves=6561' build/full-6561/RESULT.hbp
+          grep -q 'FULL6561_COMPLETE|populated_parent_heads=81|populated_leaf_heads=6561|heldout_bytes=3359232|exact_stream_replays=5|synthetic=true|result=PASS' build/full-6561/RESULT.hbp
+          grep -Eq '^FULL6561_RESULT\|name=parents\|.*parent_switches=[1-9]' build/full-6561/RESULT.hbp
+          grep -Eq '^FULL6561_RESULT\|name=full_tree\|.*parent_switches=[1-9]' build/full-6561/RESULT.hbp
+          awk -F'|' '/^FULL6561_RESULT\|name=full_tree\|/ { for(i=1;i<=NF;i++) { split($i,kv,"="); if(kv[1]=="parent_switches") p=kv[2]+0; if(kv[1]=="total_switches") t=kv[2]+0; } if(p<1 || t<=p) exit 1; seen=1; } END { if(!seen) exit 1; }' build/full-6561/RESULT.hbp
+          for name in base parents full_tree zero_deltas shuffled_deltas; do
+            grep -q "FULL6561_RESULT|name=$name" build/full-6561/RESULT.hbp
+            test -s "build/full-6561/$name.gguf"
+            test -s "build/full-6561/$name.stream"
+          done
+          cargo run --locked --release --bin shared_graft -- --inspect build/full-6561/full_tree.gguf | tee build/full-6561/INSPECT.hbp
+          grep -q 'trained_parents=81|trained_leaves=6561' build/full-6561/INSPECT.hbp
+      - name: Fresh-process proof of zero-lookahead and byte-exact full-capacity decode
+        run: |
+          set -euo pipefail
+          for name in base parents full_tree zero_deltas shuffled_deltas; do
+            cargo run --locked --release --bin shared_6561 -- --decode-check "build/full-6561/$name.gguf" "build/full-6561/$name.stream" build/full-6561/target.raw | tee "build/full-6561/$name.DECODE.hbp"
+            grep -q 'FULL6561_EXTERNAL_DECODE|bytes=3359232|route_blocks=13122' "build/full-6561/$name.DECODE.hbp"
+            expected_route=$(grep "^FULL6561_RESULT|name=$name|" build/full-6561/RESULT.hbp | awk -F'|' '{for(i=1;i<=NF;i++) if(index($i,"routes_sha256=")==1) {split($i,a,"="); print a[2]}}')
+            actual_route=$(grep '^FULL6561_EXTERNAL_DECODE|' "build/full-6561/$name.DECODE.hbp" | awk -F'|' '{for(i=1;i<=NF;i++) if(index($i,"route_sha256=")==1) {split($i,a,"="); print a[2]}}')
+            test -n "$expected_route"
+            test "$expected_route" = "$actual_route"
+          done
+          cp build/full-6561/full_tree.stream build/full-6561/corrupted.stream
+          printf '0' | dd of=build/full-6561/corrupted.stream bs=1 seek=0 conv=notrunc status=none
+          ! cargo run --locked --release --bin shared_6561 -- --decode-check build/full-6561/full_tree.gguf build/full-6561/corrupted.stream build/full-6561/target.raw
+          printf '0\tsrc/qnn.rs\n1\tsrc/qutrit.rs\n' > build/full-6561/incomplete-source-list.tsv
+          ! cargo run --locked --release --bin shared_6561 -- --fit-source-list build/full-6561/incomplete-source-list.tsv build/full-6561/REJECT
+          (cd build/full-6561 && sha256sum *.gguf *.stream *.hbp target.raw > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - name: Prove 6561 independent source-file manifest path reproduces identical models and streams
+        run: |
+          set -euo pipefail
+          corpus="$RUNNER_TEMP/full6561-sources"
+          cargo run --locked --release --bin shared_6561 -- --emit-fixture-source-list "$corpus" | tee build/full-6561/EMIT.hbp
+          grep -q 'FULL6561_EMITTED_SOURCE_LIST|file_count=6561|each_file_bytes=2048' build/full-6561/EMIT.hbp
+          test "$(find "$corpus" -name 'fixture_*.bin' | wc -l)" -eq 6561
+          mkdir -p build/full-6561/from-source-list
+          cargo run --locked --release --bin shared_6561 -- --verify-fixture-source-list "$corpus/source-list.tsv" build/full-6561/from-source-list | tee build/full-6561/FROM-SOURCE-LIST.hbp
+          grep -q 'FULL6561_COMPLETE|populated_parent_heads=81|populated_leaf_heads=6561|heldout_bytes=3359232|exact_stream_replays=5|synthetic=true|result=PASS' build/full-6561/FROM-SOURCE-LIST.hbp
+          cmp build/full-6561/target.raw build/full-6561/from-source-list/target.raw
+          for name in base parents full_tree zero_deltas shuffled_deltas; do
+            cmp "build/full-6561/$name.gguf" "build/full-6561/from-source-list/$name.gguf"
+            cmp "build/full-6561/$name.stream" "build/full-6561/from-source-list/$name.stream"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-6561-populated-synthetic-gguf-replay
+          path: build/full-6561/
+          retention-days: 30
+          if-no-files-found: warn
