@@ -299,6 +299,25 @@ fn execute(input: Input, out: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn emit_fixture_source_list(out: &Path) -> Result<(), Box<dyn Error>> {
+    fs::create_dir_all(out)?;
+    let mut manifest = String::with_capacity(CAPACITY * 88);
+    for slot in 0..CAPACITY {
+        let path = out.join(format!("fixture_{slot:04}.bin"));
+        let mut raw = make_synthetic(slot, 0, FIXTURE_TRAIN_BYTES);
+        raw.extend(make_synthetic(slot, 1, FIXTURE_VALID_BYTES));
+        raw.extend(make_synthetic(slot, 2, TARGET_PER_HEAD));
+        fs::write(&path, &raw)?;
+        manifest.push_str(&format!("{slot}\t{}\n", path.display()));
+    }
+    fs::write(out.join("source-list.tsv"), &manifest)?;
+    println!(
+        "FULL6561_EMITTED_SOURCE_LIST|file_count=6561|each_file_bytes=2048|manifest_sha256={}|synthetic=true|json=0",
+        hex_digest(manifest.as_bytes())
+    );
+    Ok(())
+}
+
 fn decode_check(
     model_path: &Path,
     stream_path: &Path,
@@ -330,6 +349,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         [_, command, list, out] if command == "--fit-source-list" => {
             execute(real_input(Path::new(list))?, Path::new(out))
+        }
+        [_, command, out] if command == "--emit-fixture-source-list" => {
+            emit_fixture_source_list(Path::new(out))
+        }
+        [_, command, list, out] if command == "--verify-fixture-source-list" => {
+            let mut input = real_input(Path::new(list))?;
+            input.synthetic = true;
+            execute(input, Path::new(out))
         }
         [_, command, model, coded, raw] if command == "--decode-check" => {
             decode_check(Path::new(model), Path::new(coded), Path::new(raw))
