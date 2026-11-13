@@ -12,6 +12,7 @@ pub mod google_qsim;
 pub mod graft_codec;
 pub mod hbp;
 pub mod pixels;
+pub mod pressure_boxes;
 pub mod qnn;
 pub mod qutrit;
 pub mod qutrit9;
