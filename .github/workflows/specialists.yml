@@ -1,0 +1,59 @@
+name: Nine and twenty-seven compact specialist panels
+on:
+  push:
+    paths:
+      - 'src/specialists.rs'
+      - 'src/bin/specialist_router.rs'
+      - 'src/lib.rs'
+      - 'specialists/**'
+      - '.github/workflows/specialists.yml'
+  pull_request:
+    paths:
+      - 'src/specialists.rs'
+      - 'src/bin/specialist_router.rs'
+      - 'src/lib.rs'
+      - 'specialists/**'
+      - '.github/workflows/specialists.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integer_specialists:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust 1.81
+        run: |
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+      - name: Prediction-first and strict source guard
+        run: |
+          set -euo pipefail
+          grep -q 'stage=PREIMPLEMENTATION' specialists/PREDICTION.hbp
+          grep -q 'test_not_used_for_learning=YES' specialists/PREDICTION.hbp
+          ! grep -nE '\bf(32|64)\b|serde_json|unsafe\s*\{' src/specialists.rs src/bin/specialist_router.rs
+          ! git ls-files | grep -iE '\.(json|js|mjs|ts)$|package\.json'
+      - name: Strict Clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Codec negative controls
+        run: cargo test --locked --lib specialists -- --nocapture
+      - name: Independent serialized decoder replay on six held-out tracked files
+        run: |
+          set -euo pipefail
+          mkdir -p build/specialists
+          cargo run --locked --release --bin specialist_router -- --run build/specialists | tee build/specialists/RESULT.hbp
+          for scenario in static_generalist nine_uncorrected nine_corrected twentyseven_uncorrected twentyseven_corrected twentyseven_shuffled_edits; do
+            grep -q "SPECIALIST_RESULT|name=$scenario" build/specialists/RESULT.hbp
+            test -s "build/specialists/$scenario.model"
+            test -s "build/specialists/$scenario.stream"
+          done
+          grep -q 'SPECIALIST_COMPLETE|scenarios=6|reproduced=6' build/specialists/RESULT.hbp
+          (cd build/specialists && sha256sum * > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compact-integer-specialists-verified-streams
+          path: build/specialists/
+          retention-days: 30
+          if-no-files-found: warn

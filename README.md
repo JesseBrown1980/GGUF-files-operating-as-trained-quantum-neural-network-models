@@ -15,6 +15,12 @@ Node. Receipts are HBP/HBI with SHA-256, and every receipt line ends in `json=0`
 Predictions were sealed in [`PREREG.hbp`](PREREG.hbp) (sha256 `5485a600…`) and
 pushed in commit `03ff607` before any code existed.
 
+## Compact QNN specialist activation: actual 9 vs 27 byte-stream test (November 13, 2026)
+
+**[Codec, validation-fit parameter edits and full results](specialists/README.md)** · **[Verified source-disjoint HBP record](specialists/MEASURED-20261113.hbp)** · **[PR #23](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/23)**.
+
+Rust 1.81, exact integer arithmetic coding and decoder-side **past-only** specialist routing were tested on six held-out repository files, with 9 versus 27 independent byte-bigram tables and three compact signed corrections per expert. All six streams replayed byte for byte, including every selected model. On this small benchmark, compact corrections improve either panel compared with its uncorrected version, **but the one generalist is best overall, the 27-expert panel loses to the 9-expert panel, and shuffled edits beat the targeted 27-expert edit assignment**. This is an actual lossless routing/codec test, not trained GGUF model surgery, 12-billion-node computation, or demonstrated economical compression after model storage.
+
 ## Spatial12B: HEB-C/HTTP-0 integer network-of-networks (November 12, 2026)
 
 **[Spatial12B implementation and precise boundaries](spatial12b/README.md)** · **[Prediction-first HBP freeze](spatial12b/PREDICTION.hbp)** · **[QNN PR #21](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/21)**
