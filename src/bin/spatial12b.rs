@@ -30,7 +30,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             let id: u64 = args[2].parse()?;
             let a = decode_address(id).ok_or("address outside twelve billion")?;
             let path = to_path(id).ok_or("no ternary address")?;
-            let p: String = path.iter().rev().map(|trit| char::from(b'0' + *trit)).collect();
+            let p: String = path
+                .iter()
+                .rev()
+                .map(|trit| char::from(b'0' + *trit))
+                .collect();
             println!(
                 "SPATIAL12B_LOOKUP|id={id}|x={}|y={}|z={}|channel={}|ternary22={p}|status=PASS|json=0",
                 a.x, a.y, a.z, a.channel
