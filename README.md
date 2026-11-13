@@ -15,6 +15,12 @@ Node. Receipts are HBP/HBI with SHA-256, and every receipt line ends in `json=0`
 Predictions were sealed in [`PREREG.hbp`](PREREG.hbp) (sha256 `5485a600…`) and
 pushed in commit `03ff607` before any code existed.
 
+## Can the 6,561-head model answer questions? Direct probe (November 13, 2026)
+
+**[Actual generated answers and evaluation](grafts/KNOWLEDGE-PROBE-README.md)** · **[Measured and negative-control HBP](grafts/KNOWLEDGE-PROBE-MEASURED.hbp)** · **[PR #27](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/27)**.
+
+Tested the **exact** trained synthetic 6,561-head GGUF checkpoint on eight ordinary factual questions, two prompt lengths and three model configurations. The unassisted byte-model generation answered **0/48** correctly; every question in each configuration got the same greedy continuation. The model has no long-context semantic mechanism or trained factual corpus. An explicitly exploratory follow-up showed it **can classify the intentionally distinct three synthetic style families in 6,561/6,561 cases** after 256 observed bytes, but it identified only **6 of 6,561 exact leaf IDs** after 512 bytes. These are useful *statistical structure* results, **not** general knowledge, real document classification, or instruction following.
+
 ## Complete 6,561-head shared GGUF table — synthetic capacity verified (November 13, 2026)
 
 **[Training and exact decoding guide](grafts/FULL6561-README.md)** · **[Source-list interface and benchmark receipts](grafts/FULL6561-MEASURED.hbp)** · **[Full-population PR #26](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/26)**.
