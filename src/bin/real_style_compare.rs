@@ -262,6 +262,8 @@ impl Baselines {
                     bytes.extend_from_slice(&count.to_le_bytes());
                 }
             } else {
+                let entries = self.bigram[c].iter().filter(|&&x| x != 0).count();
+                bytes.extend_from_slice(&(entries as u32).to_le_bytes());
                 for (i, &count) in self.bigram[c].iter().enumerate() {
                     if count > 0 {
                         bytes.extend_from_slice(&(i as u16).to_le_bytes());
@@ -271,6 +273,75 @@ impl Baselines {
             }
         }
         bytes
+    }
+
+    fn from_serialized(variant: usize, bytes: &[u8]) -> Result<Self, &'static str> {
+        let magic = match variant {
+            0 => &b"MAJ1"[..],
+            1 => &b"GRP1"[..],
+            2 => &b"UNI1"[..],
+            3 => &b"CEN1"[..],
+            4 => &b"BIG1"[..],
+            _ => return Err("invalid baseline arm"),
+        };
+        if bytes.get(..4) != Some(magic) {
+            return Err("bad baseline model header");
+        }
+        let mut model = Self::empty();
+        if variant == 0 {
+            if bytes.len() != 5 || bytes[4] != 0 {
+                return Err("invalid majority model");
+            }
+            return Ok(model);
+        }
+        let mut pos = 4_usize;
+        for c in 0..NCLASS {
+            let label = *bytes.get(pos).ok_or("missing class ID")?;
+            pos += 1;
+            if label != c as u8 {
+                return Err("unexpected class ID");
+            }
+            if variant == 1 {
+                for group in 0..3 {
+                    let count = Self::read_u32(bytes, &mut pos)?;
+                    model.group[c][group] = count;
+                    model.group_sum[c] += count;
+                }
+            } else if variant == 2 || variant == 3 {
+                for symbol in 0..256 {
+                    let count = Self::read_u32(bytes, &mut pos)?;
+                    model.unigram[c][symbol] = count;
+                    model.unigram_sum[c] += count;
+                }
+            } else {
+                let entries = Self::read_u32(bytes, &mut pos)? as usize;
+                if entries > 65_536 {
+                    return Err("invalid sparse table entry count");
+                }
+                for _ in 0..entries {
+                    let row = bytes.get(pos..pos + 4).ok_or("short bigram entry")?;
+                    let slot = usize::from(u16::from_le_bytes([row[0], row[1]]));
+                    let count = u16::from_le_bytes([row[2], row[3]]);
+                    if count == 0 || model.bigram[c][slot] != 0 {
+                        return Err("zero or duplicate bigram entry");
+                    }
+                    model.bigram[c][slot] = count;
+                    model.row_sum[c][slot / 256] += u32::from(count);
+                    pos += 4;
+                }
+            }
+        }
+        if pos != bytes.len() {
+            return Err("baseline model trailing bytes");
+        }
+        model.prepare_logs();
+        Ok(model)
+    }
+
+    fn read_u32(bytes: &[u8], pos: &mut usize) -> Result<u32, &'static str> {
+        let value = bytes.get(*pos..*pos + 4).ok_or("short baseline count")?;
+        *pos += 4;
+        Ok(u32::from_le_bytes([value[0], value[1], value[2], value[3]]))
     }
 }
 
@@ -397,6 +468,35 @@ fn run(synthetic_path: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
             out.join(format!("{name}.model")),
             baseline.serialized(method),
         )?;
+    }
+    for method in 0..=4 {
+        let stored = fs::read(out.join(format!("{}.model", METHOD_NAMES[method])))?;
+        let loaded = Baselines::from_serialized(method, &stored)?;
+        if loaded.serialized(method) != stored {
+            return Err("baseline serialized model roundtrip differed".into());
+        }
+        for doc in docs.iter().filter(|d| d.partition == Partition::Test) {
+            for take in [256_usize, 1_024_usize] {
+                if loaded.classify(method, &doc.data[..take])
+                    != baseline.classify(method, &doc.data[..take])
+                {
+                    return Err(format!("cold baseline model changed predictions: {}", METHOD_NAMES[method]).into());
+                }
+            }
+        }
+    }
+    let stored_tree = Graft::from_gguf(&fs::read(out.join("real_graft_tree.gguf"))?)?;
+    let stored_parents = Graft::from_gguf(&fs::read(out.join("real_graft_parents.gguf"))?)?;
+    for doc in docs.iter().filter(|d| d.partition == Partition::Test) {
+        for take in [256_usize, 1_024_usize] {
+            if routed_parent(&stored_tree, &doc.data[..take], RoutingMode::Tree)
+                != routed_parent(&graft, &doc.data[..take], RoutingMode::Tree)
+                || routed_parent(&stored_parents, &doc.data[..take], RoutingMode::Parents)
+                    != routed_parent(&parent, &doc.data[..take], RoutingMode::Parents)
+            {
+                return Err("reloaded GGUF changed real file predictions".into());
+            }
+        }
     }
     let model_sizes: [usize; 8] = [
         baseline.serialized(0).len(),
@@ -540,6 +640,27 @@ mod tests {
                     .count(),
                 18
             );
+        }
+    }
+
+    #[test]
+    fn saved_baselines_replay_cold_and_reject_corruption() {
+        let mut model = Baselines::empty();
+        model.group[0][1] = 37;
+        model.group_sum[0] = 37;
+        model.unigram[0][usize::from(b'A')] = 42;
+        model.unigram_sum[0] = 42;
+        model.bigram[0][usize::from(b'A')] = 9;
+        model.row_sum[0][0] = 9;
+        model.prepare_logs();
+        for kind in 0..=4 {
+            let serialized = model.serialized(kind);
+            let cold = Baselines::from_serialized(kind, &serialized).unwrap();
+            assert_eq!(cold.serialized(kind), serialized);
+            assert!(Baselines::from_serialized(kind, &serialized[..serialized.len() - 1]).is_err());
+            let mut tampered = serialized;
+            tampered[0] ^= 1;
+            assert!(Baselines::from_serialized(kind, &tampered).is_err());
         }
     }
 
