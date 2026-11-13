@@ -765,8 +765,8 @@ fn run_crossrepo(
     let tree_cold = Graft::from_gguf(&fs::read(out.join("tree.gguf"))?)?;
     let synthetic_cold = Graft::from_gguf(&fs::read(synthetic_path)?)?;
     let mut cold_baselines = Vec::new();
-    for method in 0..5_usize {
-        let path = out.join(format!("{}.model", METHOD_NAMES[method]));
+    for (method, name) in METHOD_NAMES.iter().enumerate().take(5) {
+        let path = out.join(format!("{name}.model"));
         fs::write(&path, baseline.serialized(method))?;
         let stored = fs::read(&path)?;
         let loaded = Baselines::from_serialized(method, &stored)?;
