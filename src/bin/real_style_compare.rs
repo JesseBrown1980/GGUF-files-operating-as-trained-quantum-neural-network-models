@@ -940,10 +940,229 @@ fn inspect_train_weights() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+
+const SURGERY_NAMES: [&str; 8] = [
+    "majority",
+    "byte_unigram_nb",
+    "byte_bigram_nb",
+    "original_graft",
+    "gpt6_manual_weight_edit",
+    "shuffled_gpt6_edit",
+    "rust_python_zero_ablation",
+    "synthetic_6561_transfer",
+];
+
+fn edited_parent_model(model: &Graft, choice: usize) -> Result<Graft, Box<dyn Error>> {
+    if model.parents[..4] != [
+        Some([1, 0, -1]),
+        Some([1, 0, -1]),
+        Some([0, 0, -2]),
+        Some([-2, 2, 1]),
+    ] {
+        return Err("original learned vectors differ from preregistered inspection".into());
+    }
+    let mut out = model.clone();
+    match choice {
+        0 => {}
+        1 => {
+            out.parents[0] = Some([0, 1, -1]);
+            out.parents[1] = Some([2, -1, -1]);
+        }
+        2 => {
+            out.parents[0] = Some([2, -1, -1]);
+            out.parents[1] = Some([0, 1, -1]);
+        }
+        3 => {
+            out.parents[0] = Some([0, 0, 0]);
+            out.parents[1] = Some([0, 0, 0]);
+        }
+        _ => return Err("invalid surgery variant".into()),
+    }
+    if out.backbone.raw_counts() != model.backbone.raw_counts()
+        || out.leaves != model.leaves
+        || out.parents[2..] != model.parents[2..]
+    {
+        return Err("the surgical patch changed data outside two parents".into());
+    }
+    Ok(out)
+}
+
+fn run_surgery(
+    synthetic_path: &Path,
+    finite_dir: &Path,
+    ym4_dir: &Path,
+    out: &Path,
+) -> Result<(), Box<dyn Error>> {
+    fs::create_dir_all(out)?;
+    let docs = load_frozen_documents()?;
+    let external = load_external_test(finite_dir, ym4_dir)?;
+    let baselines = Baselines::train(&docs);
+    let model = train_graft(&docs)?;
+    let synthetic_bytes = fs::read(synthetic_path)?;
+    if hex_digest(&synthetic_bytes) != FULL_SYNTHETIC_SHA {
+        return Err("the synthetic 6561-head fixture differs".into());
+    }
+    let synthetic = Graft::from_gguf(&synthetic_bytes)?;
+    if synthetic.learned_leaves() != 6_561 {
+        return Err("synthetic checkpoint has missing heads".into());
+    }
+
+    let variants: Vec<Graft> = (0..4)
+        .map(|i| edited_parent_model(&model, i))
+        .collect::<Result<_, _>>()?;
+    let mut cold = Vec::new();
+    for (i, graft) in variants.iter().enumerate() {
+        let raw = graft.gguf();
+        let path = out.join(format!("surgery_variant_{i}.gguf"));
+        fs::write(&path, &raw)?;
+        let reload = Graft::from_gguf(&fs::read(&path)?)?;
+        if reload.gguf() != raw
+            || reload.parents != graft.parents
+            || reload.leaves != graft.leaves
+            || reload.backbone.raw_counts() != graft.backbone.raw_counts()
+        {
+            return Err("cold GGUF surgery roundtrip mismatch".into());
+        }
+        cold.push(reload);
+    }
+    if variants[0].gguf() == variants[1].gguf()
+        || variants[1].gguf() == variants[2].gguf()
+        || variants[1].gguf() == variants[3].gguf()
+    {
+        return Err("surgery did not alter the actual serialized GGUF weights".into());
+    }
+    // A changed integer byte inside one of the actual three-byte parent codices
+    // must be visible to the cold reader. No adjustment to decoding or backbone.
+    let raw_test = variants[1].gguf();
+    let mut corrupt = raw_test.clone();
+    corrupt[0] ^= 1;
+    if Graft::from_gguf(&corrupt).is_ok() {
+        return Err("corrupt GGUF magic was accepted".into());
+    }
+
+    let cold_baselines: Vec<Baselines> = [2_usize, 4_usize]
+        .iter()
+        .map(|&method| {
+            let encoded = baselines.serialized(method);
+            let filename = out.join(format!("surgery_baseline_{method}.model"));
+            fs::write(&filename, encoded)?;
+            let raw = fs::read(&filename)?;
+            Baselines::from_serialized(method, &raw).map_err(Into::into)
+        })
+        .collect::<Result<_, Box<dyn Error>>>()?;
+
+    let source_internal: Vec<&Document> = docs
+        .iter()
+        .filter(|d| d.partition == Partition::Test)
+        .collect();
+    let source_external: Vec<&Document> = external.iter().collect();
+    let source_sets = [
+        ("original_QNN_repo", &source_internal),
+        ("external_finite_ym4", &source_external),
+    ];
+    let file_sizes = [
+        5_usize,
+        baselines.serialized(2).len(),
+        baselines.serialized(4).len(),
+        cold[0].gguf().len(),
+        cold[1].gguf().len(),
+        cold[2].gguf().len(),
+        cold[3].gguf().len(),
+        synthetic_bytes.len() + PARENTS,
+    ];
+    let mut report = format!(
+        "SURGERY_BEGIN|date=2026-11-13|scope=EXPLORATORY_PREVIOUSLY_SEEN_CORPORA|fixed_parent_edit_bytes=4|parent_addresses_changed=2|synthetic_sha256={FULL_SYNTHETIC_SHA}|json=0\n"
+    );
+    for (i, graft) in cold.iter().enumerate() {
+        report.push_str(&format!(
+            "SURGERY_MODEL|variant={i}|name={}|serialized_bytes={}|gguf_sha256={}|rust={:?}|python={:?}|markdown={:?}|hbp={:?}|json=0\n",
+            ["original", "gpt6_edit", "shuffled", "ablated"][i],
+            file_sizes[i + 3],
+            hex_digest(&graft.gguf()),
+            graft.parents[0].ok_or("rust missing")?,
+            graft.parents[1].ok_or("python missing")?,
+            graft.parents[2].ok_or("markdown missing")?,
+            graft.parents[3].ok_or("hbp missing")?
+        ));
+    }
+    for (corpus, test_docs) in source_sets {
+        if test_docs.len() != 36 {
+            return Err("test corpus lost its exact 36 documents".into());
+        }
+        for take in [256_usize, 1_024_usize] {
+            let synthetic_map = readout_for_synthetic(&synthetic, &docs, take);
+            for (method, name) in SURGERY_NAMES.iter().enumerate() {
+                let mut confusion = [[0_usize; NCLASS]; NCLASS];
+                let mut checksum = 0_usize;
+                for doc in test_docs {
+                    let obs = &doc.data[..take];
+                    let route = |graft: &Graft| routed_parent(graft, obs, RoutingMode::Parents);
+                    let guessed = match method {
+                        0 => 0,
+                        1 => baselines.classify(2, obs),
+                        2 => baselines.classify(4, obs),
+                        3..=6 => route(&variants[method - 3]),
+                        7 => usize::from(
+                            synthetic_map[routed_parent(&synthetic, obs, RoutingMode::Tree)],
+                        ),
+                        _ => unreachable!(),
+                    };
+                    let cold_guess = match method {
+                        0 => 0,
+                        1 => cold_baselines[0].classify(2, obs),
+                        2 => cold_baselines[1].classify(4, obs),
+                        3..=6 => route(&cold[method - 3]),
+                        7 => usize::from(
+                            synthetic_map[routed_parent(&synthetic, obs, RoutingMode::Tree)],
+                        ),
+                        _ => unreachable!(),
+                    };
+                    if guessed != cold_guess {
+                        return Err(format!("cold prediction mismatch on {corpus} {name}").into());
+                    }
+                    confusion[doc.class][guessed] += 1;
+                    checksum += guessed;
+                    report.push_str(&format!(
+                        "SURGERY_PRED|corpus={corpus}|prefix={take}|method={name}|truth={}|pred={}|blob={}|path={}|json=0\n",
+                        CLASSES[doc.class],
+                        CLASSES[guessed],
+                        doc.blob,
+                        doc.path
+                    ));
+                }
+                let correct: usize = (0..NCLASS).map(|c| confusion[c][c]).sum();
+                report.push_str(&format!(
+                    "SURGERY_RESULT|corpus={corpus}|prefix={take}|method={name}|correct={correct}|n=36|model_bytes={}|checksum={checksum}|json=0\n",
+                    file_sizes[method]
+                ));
+                for (truth, row) in confusion.iter().enumerate() {
+                    report.push_str(&format!(
+                        "SURGERY_CONFUSION|corpus={corpus}|prefix={take}|method={name}|truth={}|rust={}|python={}|markdown={}|hbp={}|json=0\n",
+                        CLASSES[truth],
+                        row[0], row[1], row[2], row[3]
+                    ));
+                }
+            }
+        }
+    }
+    report.push_str(
+        "SURGERY_COMPLETE|corpora=2|prefixes=2|arms=8|rows=32|prediction_rows=1152|confusion_rows=128|all_GGUF_cold_reloaded=PASS|no_gradients=YES|no_GPU=YES|test_labels_not_used_to_edit=YES|blind_claim=NO|json=0\n",
+    );
+    fs::write(out.join("SURGERY-RESULT.hbp"), &report)?;
+    print!("{report}");
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.as_slice() {
         [_, flag] if flag == "--inspect-weights" => inspect_train_weights(),
+        [_, flag, synthetic, finite, ym4, out] if flag == "--brain-surgery" => run_surgery(
+            Path::new(synthetic),
+            Path::new(finite),
+            Path::new(ym4),
+            Path::new(out),
+        ),
         [_, flag, synthetic, out] if flag == "--run" => run(Path::new(synthetic), Path::new(out)),
         [_, flag, synthetic, finite, ym4, out] if flag == "--crossrepo" => run_crossrepo(
             Path::new(synthetic),
