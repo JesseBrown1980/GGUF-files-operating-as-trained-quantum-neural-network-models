@@ -1,0 +1,12 @@
+SPECIALIST_PANEL_MEASURED|schema=QNN-COMPACT-SPECIALISTS-V1|date=2026-11-13|source_hosted_run=43351554828|source_branch_head=a8d00d12b2f3f22400b7a2d3c74b52d52aefc2aa|status=INITIAL_HOSTED_RESULT|json=0
+DATA|train_bytes=12600|validation_bytes=8969|heldout_bytes=14004|heldout_sha256=f7171d2283790da6fa59db3ad1a12c2a71c4b91306b363ee64ca4ad068eb4f68|split_by_file=1|json=0
+RESULT|name=static_generalist|models=1|model_bytes=6223|stream_bytes=9325|full_bytes=15548|switches=0|replay=PASS|json=0
+RESULT|name=nine_uncorrected|models=9|model_bytes=15475|stream_bytes=11733|full_bytes=27208|switches=43|replay=PASS|json=0
+RESULT|name=nine_corrected|models=9|model_bytes=15475|stream_bytes=10784|full_bytes=26259|switches=38|changed_corrections=21|replay=PASS|json=0
+RESULT|name=twentyseven_uncorrected|models=27|model_bytes=24343|stream_bytes=12688|full_bytes=37031|switches=51|replay=PASS|json=0
+RESULT|name=twentyseven_corrected|models=27|model_bytes=24343|stream_bytes=11486|full_bytes=35829|switches=49|changed_corrections=73|replay=PASS|json=0
+RESULT|name=twentyseven_shuffled_edits|models=27|model_bytes=24343|stream_bytes=11359|full_bytes=35702|switches=36|replay=PASS|json=0
+CONTROL|decode_all_6=PASS|route_all_6=PASS|same_heldout_hash_all_6=PASS|source_files_only_from_QNN_repo=1|json=0
+OUTCOME|nine_correction_reduces_stream_bytes=949|twentyseven_correction_reduces_stream_bytes=1202|twentyseven_corrected_worse_than_nine_corrected_stream_bytes=702|twentyseven_shuffled_beats_target_stream_bytes=127|generalist_best_stream=1|generalist_best_total=1|json=0
+INTERPRETATION|causal_decoder=SUPPORTED|compact_edits_help_relative_uncorrected=SUPPORTED|bigger_panel_better=REJECTED_ON_THIS_DATA|specialist_specific_edit_advantage=NOT_SUPPORTED|net_compression_including_model=NO|12b_neural_execution=NOT_TESTED|json=0
+LIMIT|operator_V31_2_36MB_material_not_loaded=1|experimental_QNN_repo_self_dataset=1|small_source_disjoint_holds=1|future_source_generalization=OPEN|json=0
