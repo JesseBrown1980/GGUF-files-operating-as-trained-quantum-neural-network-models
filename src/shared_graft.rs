@@ -121,10 +121,8 @@ impl Backbone {
     }
 
     fn shift_index(delta: Delta) -> usize {
-        ((i16::from(delta[0]) + 4) * 81
-            + (i16::from(delta[1]) + 4) * 9
-            + i16::from(delta[2])
-            + 4) as usize
+        ((i16::from(delta[0]) + 4) * 81 + (i16::from(delta[1]) + 4) * 9 + i16::from(delta[2]) + 4)
+            as usize
     }
 
     fn weights(delta: Delta) -> [u32; 3] {
@@ -653,9 +651,7 @@ mod tests {
                             .groups
                             .iter()
                             .enumerate()
-                            .map(|(g, &count)| {
-                                i64::from(count) * (i64::from(delta[g]) + 4) * 4096
-                            })
+                            .map(|(g, &count)| i64::from(count) * (i64::from(delta[g]) + 4) * 4096)
                             .sum::<i64>();
                     assert_eq!(base.score(&hist, delta), direct);
                 }
