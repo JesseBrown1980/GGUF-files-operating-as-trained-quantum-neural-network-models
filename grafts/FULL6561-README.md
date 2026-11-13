@@ -48,6 +48,17 @@ The run measures five arms on identical bytes:
 
 All five emit complete GGUF model and byte-coded streams. Every stream and all 13,122 expected routing decisions are reconstructed by a separate process using the GGUF file and stream only; file identity is not passed to the decoder. The output reports **GGUF model bytes + stream bytes** as cold transfer, and SHA-256s for model, stream, decoded bytes and route sequence.
 
+## Verified 6,561-file input path
+
+The [file-list cross-check](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/43360169455) also generated **6,561 separate synthetic fixture files** (2,048 bytes each), wrote a full 6,561-row file-path list, loaded those files using the same bounded-prefix file-reading path as the real corpus, and independently refitted all heads. This produced **byte-identical model GGUFs, encoded streams and 3,359,232-byte held-out target** in all five cases compared with the in-memory generator. Exact route-hash equality was enforced across each fresh-process decoder. The source-list training path has therefore been exercised end-to-end on 6,561 physical files, though they are **synthetically generated files, not the operator's originals**.
+
+To repeat this file-input gate:
+
+```sh
+cargo +1.81.0 run --release --locked --bin shared_6561 -- --emit-fixture-source-list build/synthetic-files
+cargo +1.81.0 run --release --locked --bin shared_6561 -- --verify-fixture-source-list build/synthetic-files/source-list.tsv build/from-files
+```
+
 ## Run against the actual 6,561 source artifacts
 
 Prepare a UTF-8 text list with exactly 6,561 rows and no header, in order `0` through `6560`. Each row is:
