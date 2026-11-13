@@ -1,0 +1,91 @@
+name: QNN pressure density boxed sectors with direct 81-parent GGUF surgery
+on:
+  push:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/PRESSURE-*'
+      - 'experiments/PRESSURE-*'
+      - '.github/workflows/qnn-pressure-boxes.yml'
+  pull_request:
+    paths:
+      - 'src/bin/real_style_compare.rs'
+      - 'grafts/PRESSURE-*'
+      - 'experiments/PRESSURE-*'
+      - '.github/workflows/qnn-pressure-boxes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-pressure-boxes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check original 36-file manifest and frozen 36-file NEW third repo test and fixed experiment
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor cde3623c9983436fbe125141c404e20930d5ad25 HEAD
+          git merge-base --is-ancestor 63b88902fd9f1eeeee9fbb58fba4b5223cc8389b HEAD
+          test "$(git hash-object grafts/PRESSURE-NEW-HOLDOUT-20261113.tsv)" = aaf20ff09c7a220aea45dbb9e45b22b4284de2e9
+          grep -Fq 'phase=BEFORE_IMPLEMENTATION_OR_RESULTS' experiments/PRESSURE-BOXES-TERNARY81-FREEZE-20261113.hbp
+          grep -Fq 'density=54|pressure=3|boxes=three_sectors' experiments/PRESSURE-BOXES-TERNARY81-FREEZE-20261113.hbp
+          grep -Fq 'all_48_arms_reported' experiments/PRESSURE-BOXES-TERNARY81-FREEZE-20261113.hbp
+          test "$(grep -vc '^#' grafts/PRESSURE-NEW-HOLDOUT-20261113.tsv)" -eq 36
+      - name: Rust 1.81 formatting, no warnings and tests
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.81.0 --profile minimal --component clippy,rustfmt
+          rustup override set 1.81.0
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --bin real_style_compare
+      - name: Fetch three exact source repository commits without working tree
+        run: |
+          set -euo pipefail
+          for alias in finite ym4 new; do
+            mkdir -p "build/pressure/repos/$alias"
+            git -C "build/pressure/repos/$alias" init -q
+          done
+          git -C build/pressure/repos/finite remote add origin https://github.com/JesseBrown1980/Finite-universe-Yang-mills-existence-and-mass-gap-using-HEB-C.git
+          git -C build/pressure/repos/ym4 remote add origin https://github.com/JesseBrown1980/yang-mills-4-dimensional-continum-proof.git
+          git -C build/pressure/repos/new remote add origin 'https://github.com/JesseBrown1980/With-Felipe-Miguel-Olimpio-da-Cruz-as-The-omega-and-Aether....git'
+          git -C build/pressure/repos/finite fetch -q --depth=1 --filter=blob:none origin 3616cb1a2c41a9b42b217fb816699cbe4afddd79
+          git -C build/pressure/repos/ym4 fetch -q --depth=1 --filter=blob:none origin 05de0ff7c8d13409fbf1bb9ef71e7ae23831b056
+          git -C build/pressure/repos/new fetch -q --depth=1 --filter=blob:none origin b793c6a294d5d12776bc371932e9ee29021c3cae
+          test "$(git -C build/pressure/repos/finite rev-parse FETCH_HEAD)" = 3616cb1a2c41a9b42b217fb816699cbe4afddd79
+          test "$(git -C build/pressure/repos/ym4 rev-parse FETCH_HEAD)" = 05de0ff7c8d13409fbf1bb9ef71e7ae23831b056
+          test "$(git -C build/pressure/repos/new rev-parse FETCH_HEAD)" = b793c6a294d5d12776bc371932e9ee29021c3cae
+      - name: Produce original unmodified 81x81 trained synthetic GGUF and pin SHA
+        run: |
+          set -euo pipefail
+          mkdir -p build/pressure/fixture build/pressure/results
+          cargo run --locked --release --bin shared_6561 -- --fixture-6561 build/pressure/fixture > build/pressure/fixture/FIXTURE.hbp
+          test "$(sha256sum build/pressure/fixture/full_tree.gguf | cut -d' ' -f1)" = 606c4d8478b8dbd72dfda0dad6c6ef1895c081a7cd5d5bb6c363525f57b941b2
+      - name: Pressure, density and nine-box versus three-sector versus full tape exact comparison
+        run: |
+          set -euo pipefail
+          /usr/bin/time -f 'PRESSURE_CPU_RESOURCE|wall_seconds=%e|peak_rss_kb=%M|json=0' -o build/pressure/results/RESOURCE.hbp \
+          cargo run --locked --release --bin real_style_compare -- --pressure-boxes \
+            build/pressure/fixture/full_tree.gguf \
+            build/pressure/repos/finite build/pressure/repos/ym4 build/pressure/repos/new \
+            build/pressure/results | tee build/pressure/results/STDOUT.hbp
+          grep '^PRESSURE_' build/pressure/results/STDOUT.hbp
+          grep '^PRESSURE_ARM|variant=0|corpus=new_Aether|prefix=1024|' build/pressure/results/PRESSURE-RESULT.hbp
+          grep '^PRESSURE_ARM|variant=1|corpus=new_Aether|prefix=1024|' build/pressure/results/PRESSURE-RESULT.hbp
+          grep '^PRESSURE_ARM|variant=2|corpus=new_Aether|prefix=1024|' build/pressure/results/PRESSURE-RESULT.hbp
+          test "$(grep -c '^PRESSURE_ARM|' build/pressure/results/PRESSURE-RESULT.hbp)" -eq 864
+          test "$(grep -c '^PRESSURE_BASELINE|' build/pressure/results/PRESSURE-RESULT.hbp)" -eq 6
+          test "$(grep -c '^PRESSURE_GGUF|' build/pressure/results/PRESSURE-RESULT.hbp)" -eq 3
+          grep -Fq 'PRESSURE_COMPLETE|models=3|densities=3|pressures=4|box_configs=4|corpora=3|prefixes=2|rows=864|original_GGUF_and_leaves=UNCHANGED|model_cold=PASS|center_mass_conserved=PASS|benchmark_prospective_manifest=YES|physical_fluid_claim=NO|json=0' build/pressure/results/PRESSURE-RESULT.hbp
+          cat build/pressure/results/RESOURCE.hbp
+          (cd build/pressure/results && sha256sum *.gguf *.readout *.bin *.hbp > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pressure-boxed-81-qnn-36-new-files
+          path: |
+            build/pressure/results/
+            build/pressure/fixture/FIXTURE.hbp
+          retention-days: 30
