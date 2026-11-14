@@ -19,6 +19,22 @@ pushed in commit `03ff607` before any code existed.
 
 The local counterpart of the 81-node pressure/box experiment lives in its own repository, [STEER-QNN-and-NN](https://github.com/JesseBrown1980/STEER-QNN-and-NN): 729 codex tables trained on Asolaria material, cut to densities from 1/2 to 1/256 under three flow rules, and stacked as layers (normal, pressurized, neutron star, black hole and back) that either choose freely or steer one another. Measured on one stream and one split, integer Rust 1.81, predictions sealed before each run; not yet reviewed by a second seat. Headline numbers: the heaviest 1/16 of entries hold 90.2% of the weight; with open flow and fallback to the box table, a cut to 1/8 costs 0.2% of coded size and a cut to 1/256 costs 12.4%; under full steering the layer after the black-hole layer is 13.7% worse and the next layer recovers to 3.9%. The first run's rows and both sealed specs are also kept here in [`panels/pressure729-v39-20261113/`](panels/pressure729-v39-20261113/).
 
+**Update, November 14, 2026 (panels V41 to V59 in STEER-QNN-and-NN; one stream, local runs filed with their commits, no second-seat review yet).** Each figure is a change in coded size; "shuffled" means the test pieces were read in an unrelated order, which removes the benefit of neighbouring text.
+
+| Finding | Stream order | Shuffled | Panel |
+|---|---|---|---|
+| A referee that corrects the stored values after each prediction | −8.6% | −8.0% | V50 |
+| A box cell whose own earlier choice returns to it (autapse, strength 4,096) | −4.0% | −1.5%, −0.9% | V51 |
+| A long guide memory (512) | −5% | **+11%** | V44, V46 |
+| Autapse guide and referee together (the gains overlap, they do not add) | −10.2% | −7.5%, −7.0% | V57 |
+| A trained gated mixer in place of the hard switch | −5.1% | −4.3% | V59 |
+
+- **The guide must be full; the answering layer can be cut.** In the trained mixer a guide cut to 1/256 costs 2.4 to 3.6 points over full answerers and nothing over cut ones (V59).
+- **Cut by information, not by weight.** Keeping the 1/16 of entries with the most information costs +0.1% (by weight: +1.4%); with the referee on, that 1/16 core equals the full network (V54, V57).
+- **What did not hold:** untrained side loops, three delay sizes, stronger autapses, maturing cells that slow down, hand edits of trained weights, and a mixer trained and then frozen (+45%, cause open). Through V59, 73 of 123 sealed predictions were met.
+
+The map of panels, judgement files and prior-work notes are in the [STEER README](https://github.com/JesseBrown1980/STEER-QNN-and-NN#map-of-the-panels); a refutation request is open as [STEER issue #1](https://github.com/JesseBrown1980/STEER-QNN-and-NN/issues/1).
+
 ## November 13, 2026 — real-file classifier benchmark (**IN REVIEW**, draft PR #28)
 
 **Status: hosted evaluation PASS; scientific review OPEN; PR not merged.** [Draft PR #28](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/pull/28) · [Exact benchmark protocol and fixed source split (PR branch)](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/tree/3c5a3a5a6b425021a6802eb9518051ed3d43fc20/grafts) · [Hosted measured run 43365139979](https://github.com/JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models/actions/runs/43365139979).
