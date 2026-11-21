@@ -1,0 +1,206 @@
+name: Polariton bridge, the frozen prediction and its stage files
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "polariton-bridge/**"
+      - ".github/workflows/polariton-bridge.yml"
+  push:
+    branches: [main]
+    paths:
+      - "polariton-bridge/**"
+      - ".github/workflows/polariton-bridge.yml"
+permissions:
+  contents: read
+jobs:
+  frozen:
+    name: The frozen prediction at its pin, every file of the stage at its sums, LF line endings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout, on a pull request its merge with the base
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: PREDICTION.hbp at its sha256 of the freeze, commit 38ce248
+        run: test "$(sha256sum polariton-bridge/PREDICTION.hbp | cut -d' ' -f1)" = "fadd84122e820cc03e9a4d6d5dd47fe7118ab4b16e1d4db93a601fb44c90b892"
+      - name: The stage's SHA256SUMS and each review folder's
+        run: |
+          set -euo pipefail
+          (cd polariton-bridge && sha256sum --strict -c --quiet SHA256SUMS)
+          for d in polariton-bridge/reviews/*/; do (cd "$d" && sha256sum --strict -c --quiet SHA256SUMS); done
+      - name: LF line endings in every file of the stage
+        run: |
+          set -euo pipefail
+          test "$(find polariton-bridge -type f -exec cat {} + | tr -cd '\r' | wc -c)" = "0"
+  ensemble:
+    name: The ensemble integrator twens 0.4.0, its toolchain gate, TEST-RUNS-T1B.hbp reproduced byte for byte, and count-weighted reuse against the plain path
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: polariton-bridge/engines/ensemble
+    steps:
+      - name: Checkout, on a pull request its merge with the base
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Rust 1.81 and lints
+        run: rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
+      - name: Format, Clippy in both forms, unit tests, build
+        run: |
+          set -euo pipefail
+          cargo +1.81.0 fmt -- --check
+          cargo +1.81.0 clippy --locked --offline --release -- -D warnings
+          cargo +1.81.0 clippy --locked --offline --release --all-targets -- -D warnings
+          cargo +1.81.0 test --locked --offline --release
+          cargo +1.81.0 build --locked --offline --release
+      - name: Integer types only in the engine's source (float_used=0, the second seat's lexer-based scan, its self-test first)
+        run: |
+          set -euo pipefail
+          python3 -I -X utf8 tools/floatscan.py selftest | tee scan-self.hbp
+          grep -q '^RV_FLOATSCAN_SELFTEST|literals_found=6|expected=6|types_found=1|expected=1|' scan-self.hbp
+          python3 -I -X utf8 tools/floatscan.py src src/main.rs src/sha256.rs | tee scan.hbp
+          grep -q '^RV_FLOATSCAN_SRC_DONE|files=2|code_uses=0|float_used=0|' scan.hbp
+      - name: The binary names the source it was compiled from, and that source is this one
+        run: |
+          set -euo pipefail
+          ./target/release/twens version | tee version.hbp
+          grep -q "|source_sha256=main.rs:$(sha256sum src/main.rs | cut -d' ' -f1),sha256.rs:$(sha256sum src/sha256.rs | cut -d' ' -f1)|" version.hbp
+          grep -q "|binary_sha256=$(sha256sum target/release/twens | cut -d' ' -f1)|" version.hbp
+      - name: The guard refuses its neighbourhood bands before any model code (zero samples, no exact reserved point started), and lifts only on lift_reserved_guard=1
+        run: |
+          set -euo pipefail
+          K="u=1 seed=1 start=0 count=0 dtden=64 threads=1 steps=0 ctrl=1099511627776:0:0"
+          for pt in "N=81 delta=29/50 y=1/18" "N=6561 delta=-31/50 y=0" "N=729 delta=1/2 y=71/1000"; do
+            for mask in VNC NL; do
+              rc=0
+              ./target/release/twens run $pt $K mask=$mask > refused.hbp 2> refused.err || rc=$?
+              test "$rc" = 3
+              test ! -s refused.hbp
+              grep -q '^TWB_REFUSED|' refused.err
+            done
+          done
+          rc=0
+          ./target/release/twens run N=81 delta=1/2 y=1/18 $K mask=VNC lift_reserved_guard=yes > lift.hbp 2> lift.err || rc=$?
+          test "$rc" = 2
+          ./target/release/twens run N=81 delta=1/2 y=1/18 $K mask=VNC lift_reserved_guard=1 > lift1.hbp
+          head -1 lift1.hbp | grep -q '|reserved=0|guard=lifted|'
+          ./target/release/twens run N=81 delta=1/2 y=1/18 $K mask=VNC > nolift.hbp
+          head -1 nolift.hbp | grep -q '|reserved=0|guard=active|'
+      - name: TEST-RUNS-T1B.hbp of the controls lane (its four twctl runs, PREDICTION.hbp BRIDGE_ENGINE_CHANGE lines 447 to 450), byte for byte
+        run: |
+          set -euo pipefail
+          for d in 1/2 -1/2; do
+            for ph in fixed random30; do
+              ./target/release/twens twctl 6561 $d 1 1/162 1 vac $ph 240000 20261105 64 4 64,128 | grep '^TWCTL|'
+            done
+          done > TEST-RUNS-T1B.hbp
+          test "$(sha256sum TEST-RUNS-T1B.hbp | cut -d' ' -f1)" = "8aee3a7fe77cb6cd6f0daf3291e12b917823e694b83e797bbf78e9cd0958bd0d"
+          test "$(tr -cd '\r' < TEST-RUNS-T1B.hbp | wc -c)" = "0"
+      - name: Count-weighted reuse (memo=1, AMENDMENT-2026-11-06-G-MEMO.hbp) byte for byte against the plain path on four allowed batches, the rows pinned to twens 0.3.0's
+        run: |
+          set -euo pipefail
+          K="N=81 delta=1/2 u=1 y=1/27 dtden=64 threads=2"
+          C2="ctrl=1099511627776:0:0;1099511628776:3000:-5000"
+          C3="ctrl=1099511627776:0:0;1099511628776:3000:-5000;1099511636776:7000:-9000"
+          check() {
+            b="$1"; pin="$2"; memo_row="$3"; shift 3
+            ./target/release/twens "$@" > "plain-$b.hbp" 2> "plain-$b.err"
+            ./target/release/twens "$@" memo=1 > "memo-$b.hbp" 2> "memo-$b.err"
+            test ! -s "plain-$b.err"
+            cmp "plain-$b.hbp" "memo-$b.hbp"
+            test "$(tail -n +2 "memo-$b.hbp" | sha256sum | cut -d' ' -f1)" = "$pin"
+            test "$(cat "memo-$b.err")" = "$memo_row"
+            test "$(cat "plain-$b.hbp" "memo-$b.hbp" | tr -cd '\r' | wc -c)" = "0"
+          }
+          check A b9ded2c9471319f419e6a3d69cacd1346a64fe8d5f66626d90616ee80d98f5fb 'TWB_MEMO|count=4194311|per_sample=none|k4=VNC,V1|k4_core=ball_r88|k4_in_core=3736377|k4_distinct=3683893|k4_outside=457934|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=4194311|k2_distinct=45415|k2_outside=0|ps_samples=0|integrations=8329069|plain_integrations=12582933|json=0' run $K seed_string=count-memo-rr-batchA start=7 count=4194311 steps=0,4 "$C2" mask=VNC,V1,LOCK
+          check B 43b6f63dc2d0a077e5c2ecfaf745f7ed74bf178d25e969d7f03abe6e6e0ba687 'TWB_MEMO|count=4194304|per_sample=VNC,V1,V0|k4=FLIP|k4_core=ball_r88|k4_in_core=3735524|k4_distinct=3683316|k4_outside=458780|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=4194304|k2_distinct=45537|k2_outside=0|ps_samples=4194304|integrations=16770545|plain_integrations=20971520|json=0' run $K seed_string=count-memo-rr-batchB start=0 count=4194304 steps=0,4 "$C2" mask=VNC,V1,V0,FLIP,LOCK
+          check C 236a53f92c386ac3deff499f0eb20bb557834e21587a532e0f4972dfe36ea6f4 'TWB_MEMO|count=20000|per_sample=VNC,V1,V0,RN,FLIP,MODE0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=20000|k2_distinct=11046|k2_outside=0|ps_samples=20000|integrations=131046|plain_integrations=140000|json=0' run $K seed_string=count-memo-rr-batchC start=0 count=20000 steps=0,8,16 "$C3" mask=VNC,V1,V0,RN,FLIP,LOCK,MODE0,NL
+          check D 549a15d6aded94f80760b5f583c98459616942d1886ac62bd388f2925f2deef6 'TWB_MEMO|count=19998|per_sample=VNC,V1,V0,RN,FLIP,MODE0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=LOCK|k2_core=box_255|k2_in_core=19998|k2_distinct=11122|k2_outside=0|ps_samples=19998|integrations=131110|plain_integrations=139986|json=0' twens 81 1/2 1 1/27 20000 20261108 64 3 32,64 '1204211555720:283548732622:0;1538251237657:621098771141:0'
+  trajectory:
+    name: The trajectory engine, its guard and step tests, float scan, the audit at one point and the line-446 byte gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout, on a pull request its merge with the base
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: The engine folder at its sums, and the interpreter
+        run: |
+          set -euo pipefail
+          (cd polariton-bridge/engines/trajectory && sha256sum --strict -c --quiet SHA256SUMS)
+          python3 --version
+      - name: The tools' reserved-point check, predicate only
+        run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/reserved.py
+      - name: The guard and step tests (the review's 172 and the round-2 tests), with and without python -O
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/trajectory"
+          cd polariton-bridge/engines/trajectory
+          python3 -I -B -X utf8 test_engine.py traj_int.py "$RUNNER_TEMP/trajectory" engine
+          python3 -O -I -B -X utf8 test_engine.py traj_int.py "$RUNNER_TEMP/trajectory" engine_O
+      - name: float_used=0 by the static scan and the two dynamic scans
+        run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/float_scan.py polariton-bridge/engines/trajectory/traj_int.py "$RUNNER_TEMP/trajectory" engine
+      - name: The audit of the printed bounds at delta = 1/2, y = 1/27, 320 steps and a half-step read
+        run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/check_audit.py polariton-bridge/engines/trajectory/traj_int.py 1/2 1/27 320 d1o2_y1o27 "$RUNNER_TEMP/trajectory"
+      - name: The line-446 byte gate, three runs against the sha256 values line 446 names
+        run: python3 -I -B -X utf8 polariton-bridge/engines/trajectory/gate446.py "$RUNNER_TEMP/trajectory/gate446"
+  jet:
+    name: The flow-map jet jetens 0.2.0, its toolchain gate, its guard, its driver's dry run and one analog jet byte for byte
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: polariton-bridge/engines/jet
+    steps:
+      - name: Checkout, on a pull request its merge with the base
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Rust 1.81 and lints
+        run: rustup toolchain install 1.81.0 --profile minimal --component clippy --component rustfmt
+      - name: Format, Clippy in three forms, unit tests, build
+        run: |
+          set -euo pipefail
+          cargo +1.81.0 fmt -- --check
+          cargo +1.81.0 clippy --locked --offline --release -- -D warnings
+          cargo +1.81.0 clippy --locked --offline --release --all-targets -- -D warnings
+          cargo +1.81.0 clippy --locked --offline -- -D warnings
+          cargo +1.81.0 test --locked --offline --release
+          cargo +1.81.0 build --locked --offline --release
+      - name: Integer types only in the engine's source (the ensemble engine's lexer-based scan, its self-test first)
+        run: |
+          set -euo pipefail
+          python3 -I -X utf8 ../ensemble/tools/floatscan.py selftest | tee scan-self.hbp
+          grep -q '^RV_FLOATSCAN_SELFTEST|literals_found=6|expected=6|types_found=1|expected=1|' scan-self.hbp
+          python3 -I -X utf8 ../ensemble/tools/floatscan.py src src/main.rs ../ensemble/src/sha256.rs | tee scan.hbp
+          grep -q '^RV_FLOATSCAN_SRC_DONE|files=2|code_uses=0|float_used=0|' scan.hbp
+      - name: The binary names the source it was compiled from, and that source is this one
+        run: |
+          set -euo pipefail
+          ./target/release/jetens version | tee version.hbp
+          grep -q "|source_sha256=main.rs:$(sha256sum src/main.rs | cut -d' ' -f1),sha256.rs:$(sha256sum ../ensemble/src/sha256.rs | cut -d' ' -f1)|" version.hbp
+          grep -q "|binary_sha256=$(sha256sum target/release/jetens | cut -d' ' -f1)|" version.hbp
+          grep -q "|source_sha256=main.rs:$(sha256sum src/main.rs | cut -d' ' -f1),sha256.rs:" ../../PLAN-JETS.hbp
+      - name: The jet guard refuses its bands at every N before any step (p=2, steps=0), and lifts only on lift_reserved_guard=1
+        run: |
+          set -euo pipefail
+          K="p=2 q=64 dtden=64 steps=0"
+          for pt in "delta=29/50 y=0 for_n=243" "delta=-31/50 y=0 for_n=243" "delta=1/2 y=71/1000 for_n=243" "delta=0 y=1/16 for_n=2187"; do
+            rc=0
+            ./target/release/jetens jet $pt $K > refused.hbp 2> refused.err || rc=$?
+            test "$rc" = 3
+            test ! -s refused.hbp
+            grep -q '^JET_REFUSED|' refused.err
+          done
+          rc=0
+          ./target/release/jetens jet delta=1/2 y=1/18 for_n=81 $K lift_reserved_guard=yes > lift.hbp 2> lift.err || rc=$?
+          test "$rc" = 2
+          ./target/release/jetens jet delta=1/2 y=1/18 for_n=81 $K lift_reserved_guard=1 > lift1.hbp
+          head -1 lift1.hbp | grep -q '|reserved=0|guard=lifted|'
+          ./target/release/jetens jet delta=1/2 y=1/18 for_n=81 $K > nolift.hbp
+          head -1 nolift.hbp | grep -q '|reserved=0|guard=active|'
+      - name: The driver's dry run over PLAN-JETS.hbp (every byte it names verified; nothing launched)
+        run: |
+          set -euo pipefail
+          python3 -I -B -X utf8 tools/drive_jets.py dry-run --plan=../../PLAN-JETS.hbp --plan-sha256="$(sha256sum ../../PLAN-JETS.hbp | cut -d' ' -f1)" --root="$RUNNER_TEMP/jets" --binary=target/release/jetens --prediction=../../PREDICTION.hbp --amendment=../../AMENDMENT-2026-11-06-F-SAMPLING.hbp > dry.hbp || { tail -3 dry.hbp; exit 1; }
+          tail -1 dry.hbp | grep -q '^DRV_END|mode=dry-run|launches_listed=80|reads_listed=83|launched=0|read=0|'
+      - name: The plan's first analog jet (delta = 1/2, y = 1/27, P = 10, steps 0,24,32) byte for byte, its head and time rows aside
+        run: |
+          set -euo pipefail
+          ./target/release/jetens jet delta=1/2 y=1/27 for_n=81 p=10 q=64 dtden=64 steps=0,24,32 > analog1.hbp
+          test "$(grep -v '^JET_TIME|' analog1.hbp | grep -v '^JET_HEAD|' | sha256sum | cut -d' ' -f1)" = "70b06f2882fc94d22801466de33ec0654396a7674d71ce7e7ca8282f00b9ee94"

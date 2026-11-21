@@ -56,17 +56,31 @@ jobs:
           sha256sum --strict -c --quiet SHA256SUMS
       - name: The route builds the Hamiltonian in the full Fock space and meets the engine's rows, parity, bandwidth and interval
         run: python3 -I -X utf8 polariton-first-correction/route_first_correction.py rows target/release/polariton_first_correction
-      - name: The baseline reproduces byte for byte, and its read is the one on file
+      - name: Reads at multiples of the window reproduce RECEIPT-DYADIC.hbp at two allowed points, and an off-grid time is refused
+        run: |
+          set -euo pipefail
+          E=target/release/polariton_first_correction
+          { $E point 100 40 1/2 1/20 6 1/64,1/2,33/64,3/2; $E point 243 243 -1/4 1/9 6 1/64,1/4,7/8,317/64; } > dyadic.hbp
+          cmp dyadic.hbp polariton-first-correction/RECEIPT-DYADIC.hbp
+          rc=0
+          $E point 100 40 1/2 1/20 6 1/2,1/3 > off-grid.hbp 2> off-grid.err || rc=$?
+          test "$rc" = 2
+          test ! -s off-grid.hbp
+      - name: The baseline reproduces byte for byte at its 40 runs outside the bridge's reserved points, and its read is the one on file
         run: |
           set -euo pipefail
           D=polariton-first-correction
-          python3 -I -X utf8 $D/run_stage.py target/release/polariton_first_correction $D/PLAN.hbp baseline baseline.hbp baseline-cost.hbp 4
+          # The two baseline runs at N = 729, y = 2/27 (delta = 0, 1/2) sit in the bridge's reserved set (polariton-bridge/PREDICTION.hbp,
+          # BRIDGE_RESERVED); they stay unrun here until the operator's word. The other 40 runs print 58 of the receipt's 64 rows.
+          grep -v -E '^FC_RUN\|stage=baseline\|.*\|N=729\|K=729\|delta=(0|1/2)\|y=2/27\|' $D/PLAN.hbp > plan-allowed.hbp
+          python3 -I -X utf8 $D/run_stage.py target/release/polariton_first_correction plan-allowed.hbp baseline baseline.hbp baseline-cost.hbp 4
           cat baseline-cost.hbp
-          cmp baseline.hbp $D/RECEIPT-BASELINE.hbp
-          python3 -I -X utf8 $D/read_first_correction.py baseline polariton/PREDICTION.hbp $D/PLAN.hbp baseline.hbp polariton/RECEIPT.hbp > read-baseline.hbp
+          grep -v -E '\|N=729\|K=729\|.*\|y=2/27\|delta=(0|1/2)\|' $D/RECEIPT-BASELINE.hbp | sed -e '1s/runs=42/runs=40/' -e '$s/runs=42/runs=40/' > receipt-allowed.hbp
+          cmp baseline.hbp receipt-allowed.hbp
+          python3 -I -X utf8 $D/read_first_correction.py baseline polariton/PREDICTION.hbp $D/PLAN.hbp $D/RECEIPT-BASELINE.hbp polariton/RECEIPT.hbp > read-baseline.hbp
           cmp read-baseline.hbp $D/READ-BASELINE.hbp
-      - name: The route's big-integer Bessel series meet the engine's tables on the baseline
-        run: python3 -I -X utf8 polariton-first-correction/route_first_correction.py bessel target/release/polariton_first_correction polariton-first-correction/RECEIPT-BASELINE.hbp
+      - name: The route's big-integer Bessel series meet the engine's tables on the baseline's 40 allowed runs
+        run: python3 -I -X utf8 polariton-first-correction/route_first_correction.py bessel target/release/polariton_first_correction receipt-allowed.hbp
       - name: The reader's grid mode, on synthetic receipts built from the closed forms, reads each scenario as the row asks. No engine and no model run in this step
         run: python3 -I -X utf8 polariton-first-correction/synthetic/synth_reader.py polariton-first-correction/read_first_correction.py "$RUNNER_TEMP/synth"
       - name: The real engine passes the controls' checks, and each sabotage fails a named one
@@ -94,7 +108,7 @@ jobs:
           python3 -I -X utf8 $D/read_first_correction.py control polariton/RECEIPT.hbp real-and-crosscheck.hbp > /dev/null
           CARGO_TARGET_DIR="$RUNNER_TEMP/cheb" cargo +1.81.0 build --release --manifest-path polariton/second-seat/recheck-ce44be7/contact/cheb/Cargo.toml
           mkdir -p "$RUNNER_TEMP/tables"
-          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" $D/RECEIPT-BASELINE.hbp 4
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" receipt-allowed.hbp 4
           python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" crosscheck.hbp 4
           python3 -I -X utf8 $D/route_first_correction.py certificate $E
       - name: The frozen grid, once filed, reproduces byte for byte, reads as on file, and meets the second seat's propagator
@@ -115,3 +129,76 @@ jobs:
           CARGO_TARGET_DIR="$RUNNER_TEMP/cheb" cargo +1.81.0 build --release --manifest-path polariton/second-seat/recheck-ce44be7/contact/cheb/Cargo.toml
           mkdir -p "$RUNNER_TEMP/tables"
           python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" grid.hbp 4
+      - name: The streaming layout reproduces the grid and the baseline's 40 runs outside the bridge's reserved points, every field but array_bytes
+        run: |
+          set -euo pipefail
+          D=polariton-first-correction
+          printf '#!/usr/bin/env bash\nshift\nexec "%s" stream "$@"\n' "$PWD/target/release/polariton_first_correction" > stream-engine.sh
+          chmod +x stream-engine.sh
+          strip() { sed -E 's/\|array_bytes=[0-9]+\|/|array_bytes=X|/' "$1"; }
+          python3 -I -X utf8 $D/run_stage.py ./stream-engine.sh $D/PLAN.hbp grid grid-stream.hbp grid-stream-cost.hbp 4
+          cat grid-stream-cost.hbp
+          cmp <(strip grid-stream.hbp) <(strip $D/RECEIPT-GRID.hbp)
+          # The two baseline runs at N = 729, y = 2/27 (delta = 0, 1/2) sit in the bridge's reserved set and stay unrun here.
+          grep -v -E '^FC_RUN\|stage=baseline\|.*\|N=729\|K=729\|delta=(0|1/2)\|y=2/27\|' $D/PLAN.hbp > plan-allowed-stream.hbp
+          python3 -I -X utf8 $D/run_stage.py ./stream-engine.sh plan-allowed-stream.hbp baseline baseline-stream.hbp baseline-stream-cost.hbp 4
+          cat baseline-stream-cost.hbp
+          grep -v -E '\|N=729\|K=729\|.*\|y=2/27\|delta=(0|1/2)\|' $D/RECEIPT-BASELINE.hbp | sed -e '1s/runs=42/runs=40/' -e '$s/runs=42/runs=40/' > receipt-allowed-stream.hbp
+          cmp <(strip baseline-stream.hbp) <(strip receipt-allowed-stream.hbp)
+          # Many tiles and many sweeps, as the full space at N = 6561 takes them (7 tiles of 512 rows): the baseline's 8 runs at
+          # N = 729, K = 128 and 192 at tile = depth = 8 and at tile = depth = 3, every field but array_bytes as filed.
+          grep -E '^FC_RUN\|stage=baseline\|group=sweep\|N=729\|K=(128|192)\|' $D/PLAN.hbp > plan-small.hbp
+          grep -E '^POLARITON_FIRST_CORRECTION_READ\|N=729\|K=(128|192)\|' $D/RECEIPT-BASELINE.hbp > receipt-small.hbp
+          for opts in "depth=8 tile=8" "depth=3 tile=3"; do
+            printf '#!/usr/bin/env bash\nshift\nexec "%s" stream "$@" %s\n' "$PWD/target/release/polariton_first_correction" "$opts" > stream-small.sh
+            chmod +x stream-small.sh
+            python3 -I -X utf8 $D/run_stage.py ./stream-small.sh plan-small.hbp baseline small.hbp small-cost.hbp 4
+            grep -E '^POLARITON_FIRST_CORRECTION_READ' small.hbp > small-rows.hbp
+            cmp <(strip small-rows.hbp) <(strip receipt-small.hbp)
+          done
+          # The dyadic reads of RECEIPT-DYADIC.hbp in the streaming layout.
+          { ./stream-engine.sh point 100 40 1/2 1/20 6 1/64,1/2,33/64,3/2; ./stream-engine.sh point 243 243 -1/4 1/9 6 1/64,1/4,7/8,317/64; } > dyadic-stream.hbp
+          cmp <(strip dyadic-stream.hbp) <(strip $D/RECEIPT-DYADIC.hbp)
+      - name: The Q = 0 sector mode at y = 0 meets point mode in every field but array_bytes, each sabotage fails the checks CONTROLS-SECTOR.hbp names, and y != 0 is refused
+        run: |
+          set -euo pipefail
+          D=polariton-first-correction
+          E=target/release/polariton_first_correction
+          printf '#!/usr/bin/env bash\nshift\nexec "%s" sector "$@"\n' "$PWD/target/release/polariton_first_correction" > sector-engine.sh
+          chmod +x sector-engine.sh
+          # Point rows at the plan's allowed y = 0 points (N = 81 to 6561, K = N and K < N, odd and even K), as filed.
+          python3 -I -X utf8 $D/run_stage.py $E $D/PLAN-SECTOR.hbp sector sector-point.hbp sector-point-cost.hbp 4
+          cmp sector-point.hbp $D/RECEIPT-SECTOR.hbp
+          python3 -I -X utf8 $D/run_stage.py ./sector-engine.sh $D/PLAN-SECTOR.hbp sector sector.hbp sector-cost.hbp 4
+          cat sector-cost.hbp
+          python3 -I -X utf8 $D/check_sector.py sector $D/RECEIPT-SECTOR.hbp sector.hbp
+          # The controls' point rows, as filed; the real sector mode passes every check at them.
+          python3 -I -X utf8 $D/run_stage.py $E $D/PLAN-SECTOR.hbp sector_control point-control.hbp point-control-cost.hbp 4
+          cmp point-control.hbp $D/RECEIPT-SECTOR-CONTROL.hbp
+          python3 -I -X utf8 $D/run_stage.py $E $D/PLAN-SECTOR.hbp sector_control_y point-control-y.hbp point-control-y-cost.hbp 4
+          cmp point-control-y.hbp $D/RECEIPT-SECTOR-CONTROL-Y.hbp
+          python3 -I -X utf8 $D/run_stage.py ./sector-engine.sh $D/PLAN-SECTOR.hbp sector_control real-sector.hbp real-sector-cost.hbp 4
+          python3 -I -X utf8 $D/check_sector.py sector_control $D/RECEIPT-SECTOR-CONTROL.hbp real-sector.hbp
+          # Each sabotage: a sector mode that drops the Q != 0 couplings from the whole block's account, one with the
+          # wrong basis order, one run at y != 0 with the refusal lifted. Each fails exactly the checks on file.
+          for name in drop_off_sector_couplings wrong_basis_order run_at_nonzero_y; do
+            stage=sector_control
+            receipt=$D/RECEIPT-SECTOR-CONTROL.hbp
+            if [ "$name" = run_at_nonzero_y ]; then
+              stage=sector_control_y
+              receipt=$D/RECEIPT-SECTOR-CONTROL-Y.hbp
+            fi
+            python3 -I -X utf8 $D/run_stage.py ./sector-engine.sh $D/PLAN-SECTOR.hbp $stage sab.hbp sab-cost.hbp 4 sabotage=$name
+            rc=0
+            python3 -I -X utf8 $D/check_sector.py $stage $receipt sab.hbp > sab-read.hbp || rc=$?
+            test "$rc" = 1
+            grep -E '^FC_SECTOR_DONE' sab-read.hbp
+            cmp <(grep -E '^FC_SECTOR_DONE' sab-read.hbp) <(grep -E "^FC_SECTOR_CONTROL_EXPECT\|sabotage=$name\|" $D/CONTROLS-SECTOR.hbp | cut -d'|' -f3-)
+          done
+          # y != 0 is refused before any model code: exit 2 and no row.
+          for y in 1/27 -1/27; do
+            rc=0
+            $E sector 81 81 1/2 $y 6 1 > refused.hbp 2> refused.err || rc=$?
+            test "$rc" = 2
+            test ! -s refused.hbp
+          done

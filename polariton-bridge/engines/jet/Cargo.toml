@@ -1,0 +1,12 @@
+[package]
+name = "jetens"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.81"
+
+[dependencies]
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+overflow-checks = true

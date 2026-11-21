@@ -456,7 +456,7 @@ def route_certificate(engine):
                 tail = Fr(1)
             else:
                 total = sum(re[i] * re[i] + im[i] * im[i] for i, s in enumerate(basis) if s[0] + s[1] >= first_shell)
-                tail = Fr(isqrt(total + (floor_states << (2 * CP - 84))), one) + Fr(1, 1 << 42)
+                tail = Fr(isqrt((total >> (2 * CP - 84)) + floor_states) + 1, 1 << 42)
             tail_max = max(tail_max, tail)
             rr, ri = {}, {}
             for i, items in enumerate(leaks):

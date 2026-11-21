@@ -1,0 +1,312 @@
+FINDINGS: polariton quantum-to-classical bridge (QNN issue #9), design lane "clocks, sample times, exposure audit, quantum cost"
+seat: opus55, second seat for ACER-CLAUDE-FABLE5 (pid 8467a937cba309f7), owner OP-JESSE. date 2026-11-05.
+vantage: host acer, Windows 11, i5-8300H (4 cores / 8 threads), 16 GB; Git Bash; Python 3.13.14 run as python3 -I -B -X utf8.
+repo read: JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models, main at bde1035, cloned into gguf-main/ here.
+tags: MEASURED (number from a named script or command in this folder) / DERIVED (algebra or closed-form evaluation written here)
+      / NAMED (stated in the task or thread, coherent, not run here) / CONJECTURE / CANNOT_SEE.
+E = 0 for the model: no model of any kind was evolved in this lane, quantum or classical, at any point. Every number below is
+a closed form, a count over files, or an exact replica of a pure function of the engine (Bessel table, majorant, degree,
+Gershgorin bound), evaluated only at non-reserved (delta, y), with the reserved points bounded by convexity.
+Written in pieces as each task finished.
+
+======================================================================
+F0. WHAT WAS READ, AND WHERE THE AGREED TERMS STAND
+======================================================================
+- Issue #9 body and its comments, read with gh at about 20:37Z, and again at 21:01Z. MEASURED:
+  comment 6668027024 (20:05:31Z, the Brown and Fedotov framework note), and comment 6669283598 (20:58:07Z, GPT-6's pre-freeze
+  design review), which was posted after my first read. Files: issue9-body.txt, issue9-comments.txt, issue9-comment-6669283598.txt.
+- The thread as read holds: "Three particle-number scales ... The values are OPEN"; t* = ln N/(2 gamma); the seven acceptance
+  requirements; and in GPT-6's comment "no reserved delta=+-3/5 evaluation" and "Freeze the sample clocks, ensemble sizes/seeds
+  and uncertainty procedure, including enough precision to distinguish a 9-like first-order decline from an 81-like second-order
+  decline". MEASURED by reading.
+- N = 81, 729, 6561, the two families, s = 1/3, 2/3, 4/3, y0 = 2/27, the clocks t_q and t_tr, and the reserved list reach this
+  lane through the task text. The thread as read at 21:01Z carries the delta = +-3/5 reservation and not the rest: NAMED here,
+  their place of agreement CANNOT_SEE from this vantage. Nothing below depends on where they were agreed.
+- The fabric, recall :4796 and the owning seats were not asked in this lane (the task scopes it to this folder and GitHub):
+  CANNOT_SEE, not FALSE.
+
+======================================================================
+F2. THE CLOCKS, EXACTLY. DERIVED (closed forms); values MEASURED by clocks.py, CLOCKS.hbp sha256 in CLOCKS.hbp.sha256
+======================================================================
+Definitions (NAMED, from the task): gamma^2 = 1 - delta^2, Yinf = 2 s^2/(1 + delta),
+   t_q  = ln((1 + delta) N/(1 + Yinf))/(2 gamma),   t_tr = ln((1 + delta) N/Yinf)/(2 gamma),   t* = ln N/(2 gamma).
+What they are, DERIVED from the law of PREDICTION.hbp line 39:
+ - At large gamma t, 4 sinh^2(gamma t) -> e^(2 gamma t) and 8 (cosh(gamma t) - 1)^2 -> 2 e^(2 gamma t), so the law's
+   C1 -> e^(2 gamma t)(1 + Yinf)/((1 + delta) N). t_q is the time this asymptote reaches 1: the law's C1, fluctuation plus
+   coherent parts, reaches order one there and the law leaves its range. Its coherent part alone, A1^2/2 ->
+   Yinf e^(2 gamma t)/((1 + delta) N), reaches 1 at t_tr: the scale at which one mean-field trajectory saturates.
+   So t_tr > t_q always, and t_tr - t_q = ln((1 + Yinf)/Yinf)/(2 gamma).
+ - At fixed s, t_tr - t_q does not depend on N. At fixed y, (1 + delta) N/Yinf = (1 + delta)^2/(2 y^2), so t_tr does not depend
+   on N: t_tr = (5/8) ln(5832/25) = 3.407649655512683 at delta = 3/5 and (5/8) ln(729/50) = 1.674781704112820 at delta = -3/5,
+   at all three N. The mean field in units JN = 1 does not know N at fixed y, and the clock says so.
+ - At the blind points gamma = 4/5, 1/(2 gamma) = 5/8, and with N = 3^4, 3^6, 3^8, t* = (5/2) ln 3, (15/4) ln 3, 5 ln 3
+   = 2.746530721670274, 4.119796082505411, 5.493061443340548. With D3 = ln(3)/(2 gamma) = (5/8) ln 3 = 0.686632680417568,
+   t* = 4 D3, 6 D3, 8 D3 exactly: the ternary step divides t*.
+ - t_q - t* = (5/8) ln((1 + delta)/(1 + Yinf)): at delta = -3/5 it is negative at every s; at delta = 3/5 it is positive only for
+   Yinf < 3/5 (s = 1/3 and 2/3 here).
+ - Zero field, y = 0: t_q = (5/8) ln((1 + delta) N); t_tr is undefined (Yinf = 0), and so is V^2.
+Values (interval width below 2^-190 before rounding to 15 places; clock in closed form, then its value):
+ delta  N     family     s     y       Yinf   t_q                                  t_tr
+ 3/5    81    fixed s    1/3   1/27    5/36   (5/8)ln(23328/205)   = 2.958999784793735   (5/8)ln(23328/25)  = 4.274083631212614
+ 3/5    81    fixed s    2/3   2/27    5/9    (5/8)ln(2916/35)     = 2.764137519774459   (5/8)ln(5832/25)   = 3.407649655512683
+ 3/5    81    fixed s    4/3   4/27    20/9   (5/8)ln(5832/145)    = 2.308988457042449   (5/8)ln(1458/25)   = 2.541215679812751
+ 3/5    81    fixed y    2/3   2/27    5/9    the same point as fixed s, s = 2/3
+ 3/5    81    y = 0      0     0       0      (5/8)ln(648/5)       = 3.040282989948858   undefined
+ 3/5    729   fixed s    1/3   1/81    5/36   (5/8)ln(209952/205)  = 4.332265145628872   (5/8)ln(209952/25) = 5.647348992047752
+ 3/5    729   fixed s    2/3   2/81    5/9    (5/8)ln(26244/35)    = 4.137402880609596   (5/8)ln(52488/25)  = 4.780915016347820
+ 3/5    729   fixed s    4/3   4/81    20/9   (5/8)ln(52488/145)   = 3.682253817877586   (5/8)ln(13122/25)  = 3.914481040647888
+ 3/5    729   fixed y    2     2/27    5      (5/8)ln(972/5)       = 3.293698682516461   (5/8)ln(5832/25)   = 3.407649655512683
+ 3/5    729   y = 0      0     0       0      (5/8)ln(5832/5)      = 4.413548350783996   undefined
+ 3/5    6561  fixed s    1/3   1/243   5/36   (5/8)ln(1889568/205) = 5.705530506464009   (5/8)ln(1889568/25)= 7.020614352882889
+ 3/5    6561  fixed s    2/3   2/243   5/9    (5/8)ln(236196/35)   = 5.510668241444733   (5/8)ln(472392/25) = 6.154180377182957
+ 3/5    6561  fixed s    4/3   4/243   20/9   (5/8)ln(472392/145)  = 5.055519178712724   (5/8)ln(118098/25) = 5.287746401483025
+ 3/5    6561  fixed y    6     2/27    45     (5/8)ln(26244/115)   = 3.393912838813448   (5/8)ln(5832/25)   = 3.407649655512683
+ 3/5    6561  y = 0      0     0       0      (5/8)ln(52488/5)     = 5.786813711619133   undefined
+ -3/5   81    fixed s    1/3   1/27    5/9    (5/8)ln(729/35)      = 1.897703544074527   (5/8)ln(1458/25)   = 2.541215679812751
+ -3/5   81    fixed s    2/3   2/27    20/9   (5/8)ln(1458/145)    = 1.442554481342518   (5/8)ln(729/50)    = 1.674781704112820
+ -3/5   81    fixed s    4/3   4/27    80/9   (5/8)ln(1458/445)    = 0.741716644001477   (5/8)ln(729/200)   = 0.808347728412888
+ -3/5   81    fixed y    2/3   2/27    20/9   the same point as fixed s, s = 2/3
+ -3/5   81    y = 0      0     0       0      (5/8)ln(162/5)       = 2.173849014248927   undefined
+ -3/5   729   fixed s    1/3   1/81    5/9    (5/8)ln(6561/35)     = 3.270968904909664   (5/8)ln(13122/25)  = 3.914481040647888
+ -3/5   729   fixed s    2/3   2/81    20/9   (5/8)ln(13122/145)   = 2.815819842177655   (5/8)ln(6561/50)   = 3.048047064947957
+ -3/5   729   fixed s    4/3   4/81    80/9   (5/8)ln(13122/445)   = 2.114982004836614   (5/8)ln(6561/200)  = 2.181613089248025
+ -3/5   729   fixed y    2     2/27    20     (5/8)ln(486/35)      = 1.644287851506925   (5/8)ln(729/50)    = 1.674781704112820
+ -3/5   729   y = 0      0     0       0      (5/8)ln(1458/5)      = 3.547114375084064   undefined
+ -3/5   6561  fixed s    1/3   1/243   5/9    (5/8)ln(59049/35)    = 4.644234265744802   (5/8)ln(118098/25) = 5.287746401483025
+ -3/5   6561  fixed s    2/3   2/243   20/9   (5/8)ln(118098/145)  = 4.189085203012792   (5/8)ln(59049/50)  = 4.421312425783094
+ -3/5   6561  fixed s    4/3   4/243   80/9   (5/8)ln(118098/445)  = 3.488247365671751   (5/8)ln(59049/200) = 3.554878450083162
+ -3/5   6561  fixed y    6     2/27    180    (5/8)ln(13122/905)   = 1.671319091378060   (5/8)ln(729/50)    = 1.674781704112820
+ -3/5   6561  y = 0      0     0       0      (5/8)ln(13122/5)     = 4.920379735919201   undefined
+Coincidences that follow from the forms, DERIVED: t_tr = (5/8) ln((1 + delta)^2 N/(2 s^2)) depends on (1 + delta)/s and N only,
+so (3/5, s = 4/3) and (-3/5, s = 1/3) share t_tr at each N: 2.541215679812751, 3.914481040647888, 5.287746401483025.
+At fixed y and large Yinf the two clocks nearly meet: separation 0.0137 at (3/5, 6561) and 0.0035 at (-3/5, 6561).
+How the values were checked: ln(r) by 2 atanh((r - 1)/(r + 1)) after reduction by powers of 2, exact rationals, tail bounded
+by |z|^(2J+1)/((2J+1)(1 - z^2)); ln 2 by 2 atanh(1/3). Falsifier: any of these values off in its 15th place by another exact
+evaluation (for example mpmath at 50 digits, or the same series in another language).
+
+======================================================================
+F3. THE SAMPLE TIMES. The rule is a proposal (NAMED); the times it gives are DERIVED, in CLOCKS.hbp and SAMPLES-BY-POINT.txt
+======================================================================
+Rule, depending on (N, delta, s) through the closed forms only:
+ - For each clock tau in {t_q, t_tr}: tau + k D3 for k = -2, -1, 0, +1, with D3 = ln 3/(2 gamma) = (5/8) ln 3, one ternary step:
+   on the leading-order state the pair population e^(2 gamma t) triples per step, so the four samples sit at 1/9, 1/3, 1 and 3
+   times the clock's population. For the zero-field control only t_q.
+ - For t*: t* + k D3 for k = -1, 0, +1 ("before, near and after t*", requirement 4). These are 3 D3 ... 9 D3 at the three N.
+ - Each time is rounded to the nearest multiple of 1/64 = 2^-6, the window of the first-correction engine's grid runs, from a
+   certified interval; the script refuses a time whose interval holds a rounding boundary. No refusal occurred. MEASURED.
+ - Times <= 0 are dropped (two at (-3/5, 81, s = 4/3)), and equal times merge with all their labels.
+Result: 300 sample rows on 30 listed points (28 distinct), 7 to 11 per point, 1/16 <= t <= 493/64. MEASURED (CLOCKS.hbp).
+Every time is a dyadic rational with denominator dividing 64, so the integer integrators (windows 2^-W, W >= 6, or classical
+steps 2^-k, k >= 6) land on it exactly.
+The full lists, per point (the labels q-2 ... star+1 of each time are in SAMPLES-BY-POINT.txt and PROPOSED-ROWS.hbp):
+ 3/5  N=81   s=1/3 : 101/64 33/16 145/64 11/4 93/32 189/64 55/16 115/32 233/64 137/32 317/64
+ 3/5  N=81   s=2/3 (also fixed y): 89/64 65/32 33/16 133/64 87/32 11/4 177/64 109/32 55/16 221/64 131/32
+ 3/5  N=81   s=4/3 : 15/16 75/64 13/8 119/64 33/16 37/16 163/64 11/4 3 207/64 55/16
+ 3/5  N=81   y=0   : 107/64 33/16 151/64 11/4 195/64 55/16 239/64
+ 3/5  N=729  s=1/3 : 189/64 55/16 233/64 33/8 137/32 277/64 77/16 317/64 321/64 361/64 405/64
+ 3/5  N=729  s=2/3 : 177/64 109/32 55/16 221/64 131/32 33/8 265/64 153/32 77/16 309/64 175/32
+ 3/5  N=729  s=4/3 : 37/16 163/64 3 207/64 55/16 59/16 251/64 33/8 35/8 147/32 77/16
+ 3/5  N=729  y=2/27: 123/64 65/32 167/64 87/32 211/64 109/32 55/16 255/64 131/32 33/8 77/16
+ 3/5  N=729  y=0   : 195/64 55/16 239/64 33/8 141/32 77/16 163/32
+ 3/5  N=6561 s=1/3 : 277/64 77/16 321/64 11/2 361/64 365/64 99/16 405/64 409/64 449/64 493/64
+ 3/5  N=6561 s=2/3 : 265/64 153/32 77/16 309/64 175/32 11/2 353/64 197/32 99/16 397/64 219/32
+ 3/5  N=6561 s=4/3 : 59/16 251/64 35/8 147/32 77/16 81/16 169/32 11/2 367/64 191/32 99/16
+ 3/5  N=6561 y=2/27: 129/64 65/32 173/64 87/32 217/64 109/32 261/64 131/32 77/16 11/2 99/16
+ 3/5  N=6561 y=0   : 141/32 77/16 163/32 11/2 185/32 99/16 207/32
+ -3/5 N=81   s=1/3 : 17/32 75/64 39/32 119/64 121/64 33/16 163/64 165/64 11/4 207/64 55/16
+ -3/5 N=81   s=2/3 (also fixed y): 1/16 19/64 3/4 63/64 23/16 107/64 33/16 17/8 151/64 11/4 55/16
+ -3/5 N=81   s=4/3 : 1/16 1/8 47/64 13/16 91/64 3/2 33/16 11/4 55/16
+ -3/5 N=81   y=0   : 51/64 95/64 33/16 139/64 11/4 183/64 55/16
+ -3/5 N=729  s=1/3 : 121/64 163/64 165/64 207/64 209/64 55/16 251/64 253/64 33/8 147/32 77/16
+ -3/5 N=729  s=2/3 : 23/16 107/64 17/8 151/64 45/16 195/64 55/16 7/2 239/64 33/8 77/16
+ -3/5 N=729  s=4/3 : 47/64 13/16 91/64 3/2 135/64 35/16 179/64 23/8 55/16 33/8 77/16
+ -3/5 N=729  y=2/27: 17/64 19/64 61/64 63/64 105/64 107/64 149/64 151/64 55/16 33/8 77/16
+ -3/5 N=729  y=0   : 139/64 183/64 55/16 227/64 33/8 271/64 77/16
+ -3/5 N=6561 s=1/3 : 209/64 251/64 253/64 147/32 297/64 77/16 169/32 341/64 11/2 191/32 99/16
+ -3/5 N=6561 s=2/3 : 45/16 195/64 7/2 239/64 67/16 283/64 77/16 39/8 327/64 11/2 99/16
+ -3/5 N=6561 s=4/3 : 135/64 35/16 179/64 23/8 223/64 57/16 267/64 271/64 77/16 11/2 99/16
+ -3/5 N=6561 y=2/27: 19/64 63/64 107/64 151/64 77/16 11/2 99/16   (q and tr samples coincide pairwise)
+ -3/5 N=6561 y=0   : 227/64 271/64 77/16 315/64 11/2 359/64 99/16
+Falsifier for the rule's independence from runs: the rule's output is a function of (N, delta, s) only; rerunning clocks.py on any
+machine must reproduce CLOCKS.hbp byte for byte (sha256 2e4eb736...459f at this writing).
+
+======================================================================
+F4. THE LAW AT THE SAMPLE TIMES. DERIVED (closed forms, integer fixed point at 2^-160), LAW-AT-SAMPLES.hbp
+======================================================================
+The clocks sit where the leading-order law leaves its range: of the 300 sample rows, 46 have the law's predicted f <= 1/10
+(the frozen range of POLARITON_QUENCH_CONVERSION), 254 have f above it. MEASURED (count over LAW-AT-SAMPLES.hbp).
+The 46 are mostly at delta = -3/5 and before t_q (at delta = 3/5 only (81, s = 4/3, t = 15/16)). Examples of the single
+trajectory's failure there, eps_V2 = |(N - 1)/N - Y/(1 + Y)|: (-3/5, 6561, s = 1/3, t = 209/64) 0.70703; (-3/5, 6561, y = 2/27,
+t = 63/64) 0.03793; (-3/5, 729, s = 4/3, t = 3/2) 0.27923. On the other 254 rows the quantum V^2 has no closed form here, so the
+frozen prediction for the single trajectory's failure there has to be read against the quantum rows: OPEN.
+At y = 0 the single trajectory is undefined (V^2 = 0/0 with A = 0), as GPT-6's comment requires; LAW rows say so.
+
+======================================================================
+F1. EXPOSURE AUDIT. MEASURED unless marked. Rows: audit/EXPOSURE-GIT.hbp, audit/EXPOSURE-LOCAL.hbp, audit/EXPOSURE-SIBLINGS.hbp
+======================================================================
+Method. Remote: gh repo list JesseBrown1980 --limit 1000 gave 277 repos (11 forks); each was mirror-cloned
+(git clone --mirror, every ref including refs/pull/*) with blobs above 5 MB left out, 20:38Z to 20:52Z. Every blob present,
+128,967 in all, was streamed through git cat-file --batch and searched with 13 patterns (audit/audit_scan.py): delta = +-3/5
+written as 3/5, 0.6, a list after "delta=", Greek delta, "d=", Fraction(3,5) or the engine's CLI; gamma = 4/5 or 0.8; x = -2/5 or
+-8/5; y = 2/27 and the nine s-family values y = 1/27, 2/27, 4/27, 1/81, 2/81, 4/81, 1/243, 2/243, 4/243 (as fractions, decimals
+or in lists); "2/27" anywhere; s = 1/3, 2/3, 4/3. This covers what git grep over every tip and git log -S/-G over all history
+would see, since every historical version of every file is a blob. Cross-check on the GGUF mirror by the other method:
+git log --all -G and -S and git grep over all ref tips find the same delta text (one commit, 6303717) and the same y = 2/27
+commits (099b0c6, 8dfa11a, ce44be7, 5792654, f303c35, 2d77636). Each hit line was then parsed for N, y, s, delta (or x + u)
+and t (audit/classify.py), and each hit blob placed on its paths and commits with git log --all --find-object.
+CANNOT_SEE: 153 blobs above 5 MB in 22 repos (72 in Asolaria, 21 in asolaria-stone-to-moss, 9 in With-Felipe-..., 7 in
+llama-instruct-dataset-prep-agent, 6 in GitRAM, the rest 1 to 5 each); pushes after 20:52Z (GGUF main was still bde1035 at 21:46Z);
+repos outside this owner's listing; other machines (liris, falcon) and the external models' own environments.
+Local: C:/tmp/opus55/* except this folder, C:/tmp/qnn-*, C:/tmp/ym4-03-*: 67 roots, 34,294 text files, 0 skipped, from 20:57Z;
+the four bridge-design folders again at 21:46Z, since they were being written; D:/ym-3x4-room-run (2,292 files) by GNU grep -r -I
+for delta = +-3/5, the nine y values, x = -2/5/-8/5, gamma = 4/5, s = 1/3/2/3/4/3 and "polariton", 21:40Z to 21:43Z.
+(My Python pass over D: ran 45 minutes without finishing and I stopped it; its 67 other roots were written before it reached D:.)
+Second pass, after I found that the first pass's word boundaries miss keys joined by underscores (polariton/READ.hbp writes
+row=conversion_V2_N=729_delta=0_y=2/27_t=1): audit/audit_scan2.py matches the keys after any character but a letter or digit,
+over the same 128,967 blobs (21:47Z to 21:54Z) and the same 67 local roots (to 21:51Z), and a second grep of D: for
+_y=, _s= and _x= forms (21:54Z to 21:57Z, 0 files). Rows: audit/EXPOSURE2-GIT.hbp, audit/EXPOSURE2-LOCAL.hbp. It added the read
+files below and the delta = -1 rows of TRACE-N729.hbp, which the first pass's cap of 400 hits per blob had cut; it found no new
+point. A file over that cap in pass one is covered by pass two, which has no cap.
+
+Results.
+ R1. delta = +-3/5, any N, y, t: no numerical run of any model, quantum or classical, in any of the 277 repos or the local
+     folders. MEASURED as "0 run rows" over the scope above.
+     Text only, remote: 6 lines in GGUF, all in polariton-first-correction/reviews/ (opus55-read-4725b81 README, numerics and reread
+     FINDINGS/REPORT; opus55-source-2d77636 independent FINDINGS line 155), first committed 2026-11-05T15:27-03:00 (e106d63) and
+     17:10-03:00 (6303717), each stating that no run touched delta = +-3/5.
+     Closed forms only, local, all permitted by the reservation's own clause: bridge-design-controls out/CONTROLS-CLOSED.hbp
+     (275 rows, tag DERIVED_closed_form_evaluated, script header "no model is integrated") and out/ZERO-FIELD.hbp (58 rows);
+     bridge-design-ensemble out/BLIND-EVAL.hbp (294 rows, "closed_forms_only_no_model_run") and out/ROWS-BLIND.hbp (136, tag DERIVED);
+     bridge-design-trajectory out/s3_blind.hbp ("closed_forms_only=1|model_runs=0", series to y^11). Their run tools refuse the
+     reserved points in code: ensemble tools/twrun.py line 17, trajectory src/traj_int.py line 39.
+ R2. y = 2/27 at N = 81 or 6561: no numerical run of any model. Rows with that (N, y) exist only as the sibling lanes' closed
+     forms at delta = +-3/5 (controls CONTROLS-CLOSED.hbp, ensemble BLIND-EVAL.hbp and ROWS-BLIND.hbp) and as text in their tools
+     and FINDINGS.
+ R3. y = 2/27 at N = 729, the fixed-y point s = 2, is already run at other delta, all filed on GitHub before the reservation
+     (first author dates -03:00), MEASURED:
+       polariton/RECEIPT.hbp, POLARITON_QUENCH_CONVERSION, engine leapfrog: delta = 0, 1/2 at t = 1, 2, 3; ce44be7, 2026-11-05 03:39
+       polariton-first-correction/RECEIPT-BASELINE.hbp, certified Chebyshev at K = 729 (full even space): delta = 0, 1/2 at t = 1, 2, 3;
+         with READ-BASELINE.hbp and COST-LOCAL-BASELINE.hbp as its read and cost records; 2d77636, 2026-11-05 12:35
+       polariton/second-seat/recheck-ce44be7/contact/out/ (my earlier lane, integer Chebyshev route), 5792654, 2026-11-05 09:43:
+         GRID-band-N729.hbp   delta = -1, -3/4, -1/2, 0, 1/2, 3/4, 1 at t = 1/2, 1, 2, 3        (28 points)
+         GRID-outside-N729.hbp delta = +-5/4, +-5/3, +-2 at t = 1/2, 1, 2, 3, 4, 6              (36 points)
+         TRACE-N729.hbp       delta = -1, -1/2, 0, 1/2 at t = 1/4, 1/2, ..., 12                (192 points)
+         FINE-outside.hbp     delta = 2 at t = 5/2 ... 7/2; compare_receipt.hbp, the receipt's 6 points again
+         LAW-PREDICTIONS.hbp  closed-form law values at those points (64), no run
+       Reads of the receipt's rows at those points (delta = 0, 1/2): polariton/READ.hbp and the second seat's read copies
+       (engine/out/fresh/read.hbp, engine/out/held_read.hbp, text/out/my_read.hbp, window/out/read_again.hbp).
+     Local reruns of the same points: C:/tmp/opus55/fc-review-mutation-20261105/run/ (cross-baseline.out, cheb-cache.hbp, the
+     baseline's delta = 0, 1/2 at t = 1, 2, 3) and C:/tmp/opus55/polariton-recheck-engine-20261105/out/mut/base/receipt.hbp (the
+     fourth run's conversion rows); and copies of the filed rows in C:/tmp/qnn-* worktrees and review copies.
+     So the fixed-y family's N = 729 point is unrun at delta = +-3/5, and its line in delta is seen on both sides of each blind
+     point: 1/2 and 3/4 bracket 3/5 (t <= 3, and t <= 12 at 1/2), -1/2 and -3/4 bracket -3/5 (t <= 3, and t <= 12 at -1/2
+     and -1).
+ R4. s = 1/3, 2/3, 4/3 at N = 81, 729, 6561 (any delta): no quantum run in any repo or local folder; the sibling lanes hold
+     closed forms there at delta = +-3/5 and a text summary (trajectory out/s3_compact.txt). Two GGUF text lines parse
+     as (N = 729, y = 1/81), but their y = 1/81 belongs to N = 6561 on the same line (s = 1): recorded as parser hits, no exposure.
+     Classical single-trajectory runs at the s-family y values exist in the sibling lane bridge-design-trajectory
+     (out/s2_validate_d1o2.txt, _d3o4.txt, _dm1o2.txt, 2026-11-05 18:04 to 18:17 local): delta = 1/2, 3/4, -1/2 with
+     y = 1/27, 4/27, 1/81, 4/81, 1/243, t to 39/4, integrator traj_int.py (Taylor 28, h = 1/32, fixed point 2^-256). The single
+     trajectory at fixed y does not depend on N, so these are the mean-field orbits of the points (N = 81, s = 1/3 and 4/3),
+     (N = 729, s = 1/3 and 4/3) and (N = 6561, s = 1/3) at delta = 1/2, 3/4, -1/2: not reserved, and seen on both sides of
+     delta = 3/5 and on one side of -3/5.
+ R5. The sibling lanes' other numerical runs, all at non-reserved points: controls twctl at N = 6561, delta = +-1/2,
+     y = 0 and 1/162; ensemble raw_* at N = 81, 243, 729, 2187, delta = 0, +-1/2, y = 0 and y = s/sqrt(N) with s = 1/2, 1.
+ R6. Outside GGUF every raw hit is unrelated text: dates written 2/27/2026, probability tables (P(3) = 2/27), lattice weights
+     (w1 = 2/27), package URLs, a colour function. None carries N, delta or y of this model.
+Falsifier for R1 and R2: a file in the scope above carrying a model output row with delta = +-3/5, or with y = 2/27 and
+N = 81 or 6561; or a blob above 5 MB, once fetched, carrying one.
+Last look, 22:00Z, at the three sibling folders (they are still being written): the row kinds carrying delta = +-3/5 are
+CLOCKS, CTRL_LO, SUMMARY, ZF, ZF_IDENTITY (controls), BLIND, BLIND_CLOCKS, ENS_ROW_PAIR, ENS_ROW_QUANTUM, ENS_ROW_SCALING
+(ensemble), BLIND_LINVALID, BLIND_POINT, BLIND_ROW, BLIND_SERIES (trajectory) and their PROPOSED-ROWS clauses: the same
+closed-form and proposal kinds as at 21:46Z. A later run there is outside this record.
+
+======================================================================
+F5. WHAT THE QUANTUM SIDE COSTS. Files: COST-VALIDATE.hbp, COST-FULL.hbp, COST-BLOCKS.hbp (cost.py)
+======================================================================
+F5.1 Which computation reaches each point. NAMED route, MEASURED facts beside it.
+ - Engine: src/bin/polariton_first_correction.rs at main, the certified integer Chebyshev integrator on states even under
+   n+ <-> n-, labelled (q, m), q <= K. With K >= N the block is the full exchange-even space: b_norm returns 0 and the Duhamel
+   tail term is 0, so only the series and rounding terms remain. MEASURED on the filed K = 729 rows at N = 729:
+   norm_B_s20=0, eps_tail_e18=0, eps_e18 = 698,361 to 5,454,015 (7e-13 to 5.5e-12) at t = 1, 2, 3.
+ - Exchange-even dimension sum_{q<=K}(floor(q/2) + 1): 1,722 at N = 81; 133,590 at N = 729 (equal to the filed even_states);
+   10,768,242 at N = 6561. DERIVED. Memory: the engine prints array_bytes = 120 x dim: 206,640 B, 16,030,800 B,
+   1,292,189,040 B; the filed peak working set is 1.03 of array_bytes at K = 1600 (79,232 kB against 76,992,120 B).
+ - Time argument: the engine reads only at integer T (usage text "T are integers"; it reads when T*2^W windows are done). The
+   frozen times are multiples of 1/64, so the engine needs a read at window boundaries, T given in units of 2^-W: a change to
+   review and gate before the blind runs. NAMED.
+ - At N = 81 and 729: the full exchange-even space at every frozen time. At N = 6561: see F5.4.
+F5.2 Replicas of the engine's pure functions, MEASURED: degree, applies, c and E equal the engine's printed values on 84 of 84
+   filed receipt rows; E with m sampled every 64 equals the exact E on 4 of 4 checks (N = 729 full twice, N = 6561 at K = 1600
+   and 1200). Rate over the 84 rows, ms/(applies x even_states): 29.40 to 48.77 ns per state-apply, median 39.72, with 4 runs in
+   parallel on this machine.
+F5.3 E at the blind points. E is the half width of a Gershgorin interval whose ends are a max and a min of functions affine in
+   (delta, |y|), so E is convex in (delta, |y|) and lies under the chord of its brackets: E(3/5) <= (3/5)E(1/2) + (2/5)E(3/4),
+   E(-3/5) <= (3/5)E(-1/2) + (2/5)E(-3/4), and E at y = 2/27 under the chord of y = 1/14 and 1/13 (weights 182/351, 169/351).
+   DERIVED. The replica was evaluated only at those non-reserved brackets (COST_E_BRACKET_POINT rows, reserved=0).
+   Full space, upper bounds: N = 81: 34 to 46 at delta = 3/5, 68 to 78 at -3/5; N = 729: 283 to 331 and 595 to 629;
+   N = 6561: 2,522 to 2,948 and 5,334 to 5,634. Degrees at W = 6: 14 to 17, 27 to 38, 85 to 154.
+F5.4 The K a certificate needs, and what it costs.
+ - The certificate holds while the state's weight on shells above K - R stays small for the whole interval, R = 2 x degree + 1.
+   The pair population grows as e^(2 gamma t) = e^(8t/5) at the blind points, so K grows with it until the bulk fills the space.
+ - Tail model (DERIVED): the leading-order Gaussian state of the s and a modes, read through its Husimi distribution, with a
+   Chernoff bound on P(n+ + n- >= Q) and a factor 2 from number against Husimi. Checked against every filed row above the
+   engine's rounding floor (sqrt(states above K - R) x 2^-42): 27 rows, proxy over filed 4.41 to 3.09e6, never below 1. MEASURED.
+   It carries no depletion, so it overstates the tail most where Q/N is large (by 1e3 to 3e6 at N = 729, K = 384 to 512).
+ - At N = 6561, asking the amplitude above the top shells to stay at most 1e-10, the proxy gives Q >= N at 89 of the 98
+   frozen times, and below N at nine: (-3/5, s = 4/3) t = 135/64: 1,894, 35/16: 2,167, 179/64: 6,095; (-3/5, s = 2/3)
+   t = 45/16: 4,752; (-3/5, y = 2/27) t = 19/64: 113, 63/64: 606, 107/64: 2,682; (3/5, y = 2/27) t = 129/64: 3,280 and
+   65/32: 3,369. Elsewhere 6,948 to 9.7e6. MEASURED (K_PROXY rows).
+ - The energy shell (DERIVED; CONJECTURE for the quantum tail beyond it): from |N,0,0>, <H> = 0 exactly and its spread is
+   sqrt((N - 1)/N + 2 s^2) in units JN, so the energy per particle stays within 1.3e-3 of 0 at N = 6561, s = 6. A mean-field orbit
+   at e = 0 obeys (7/4) f^2 - (1 + delta) f <= 2 y sqrt(2 f (1 - f)), so f <= f_max, 4(1 + delta)/7 at y = 0.
+   f_max: delta = -3/5: 0.2285 (y = 0), 0.2403 (s = 1/3), 0.2515 (s = 2/3), 0.2720 (s = 4/3), 0.3811 (y = 2/27);
+          delta = 3/5: 0.9142 (y = 0), 0.9162, 0.9182, 0.9220, 0.9435.
+   Past the turning point a WKB estimate at delta = -3/5, y = 0 gives the amplitude falling as exp(-0.71 N df^(3/2)), 1e-10 at
+   df = 0.029, 190 states at N = 6561 (DERIVED estimate). Proposed margin N/16 = 410 states.
+ - So, at N = 6561:
+     delta = -3/5: K_shell = ceil(f_max N + N/16) + R = 2,039 / 2,123 / 2,200 / 2,343 / 3,108 for y = 0, s = 1/3, 2/3, 4/3,
+       y = 2/27; 1,041,420 to 2,418,025 even states, 125 to 290 MB, E <= 1,636 to 3,093, degree 64 to 98, t to 99/16:
+       1,550 to 9,141 s per point, 3.6 to 6.0 h for the five. CONJECTURE until the engine prints tail_max at that K.
+       The two estimates disagree here, side by side: the proxy, which has neither depletion nor the energy constraint, asks
+       Q >= N at most delta = -3/5 times; the shell says the weight beyond f_max N + N/16 stays below 1e-10. The engine's own
+       tail_max at K_shell, and K_shell against K_shell + N/16, decide it. Falsifier: tail_max above 1e-10 in any window at
+       K_shell, or the two blocks apart by more than their certified widths.
+       Full-space fallback: 37,062 to 63,973 s per point, 52.0 to 86.2 h for the five.
+     delta = +3/5: f_max N + N/16 + R >= N, so K = N, the full space: 10,768,242 even states, 1.29 GB per run,
+       21,787 to 44,487 s per point (t to 207/32 ... 493/64), 32.9 to 54.6 h for the five, median 44.5 h.
+   At N = 729: 68 to 152 s per point, 6.1 to 10.1 min for the five at 3/5 and 7.5 to 12.5 min for the five at -3/5.
+   At N = 81: under 1 s per point.
+ - Where the quantum side cannot certify within reach: with blocks of the filed size (K <= 1600, the first-correction stage's
+   20 runs of at most 6 minutes), at N = 6561 none of the 51 frozen times at delta = +3/5 certify, and at delta = -3/5 the shell
+   block, 1.3 to 1.9 times the filed K, certifies on the conjecture above. The full space at N = 6561 fits this machine's memory
+   (16 GB) at 1.29 GB per run, and needs 1.4 to 2.3 days of compute for delta = +3/5 at the filed rates. Every estimate scales
+   with the rate; the filed rates were taken with 4 runs in parallel.
+F5.5 Precision at long times (DERIVED estimate): the engine's rounding term per window is
+   ((sum_k |a_k| k(k+1)/2) >> 22 + 1) x sqrt(dim) x 4 units of 2^-62 plus smaller terms. For the full space at N = 6561, E = 2,545,
+   degree 86, that is about 8e-12 per window, 3.8e-9 over 493 windows, so a C1 half width near 1e-8 absolute. The runs print
+   their own. The largest filed run holds 641,601 states; 10,768,242 is 16.8 times that, unrun (CONJECTURE that the i64 amplitude
+   and i128 sum widths hold, which the printed norm and energy offsets check on every row).
+
+======================================================================
+F6. THE TIME RANGE THE ROW CAN CLAIM, PER N (proposal)
+======================================================================
+ - N = 81: every frozen time, 38 distinct rows at delta = -3/5 (t <= 55/16) and 40 at delta = 3/5 (t <= 317/64), full space.
+ - N = 729: every frozen time, 51 rows at each delta (t <= 77/16 at -3/5, t <= 405/64 at 3/5), full space.
+ - N = 6561, delta = -3/5: every frozen time, 47 rows (t <= 99/16), on the shell block K_shell, if at every point the certificate
+   holds (tail_max <= 1e-10 at every window) and K_shell and K_shell + N/16 agree within their certified widths; a point that
+   fails either falls back to K = N before its rows are read.
+ - N = 6561, delta = +3/5: every frozen time, 51 rows (t <= 493/64), only on the full space, only with that lane's budget approved
+   before execution; without it those rows are frozen NOT_MEASURED|reason=BUDGET and the N-scaling at delta = +3/5 reads
+   N = 81 and 729.
+
+======================================================================
+F7. OPEN
+======================================================================
+ - The engine's time argument (dyadic reads), its review, its 1.81 clippy gate and its byte identity on the filed integer-T rows.
+ - K_shell at delta = -3/5: the margin N/16 and the energy-shell argument stand as a conjecture until the engine prints tail_max.
+ - The full-space run at N = 6561 (16.8 times the largest filed state) has never been made; its budget is the operator's call.
+ - The leading-order law is outside f <= 1/10 on 254 of the 300 frozen rows, so the frozen prediction for the single trajectory's
+   failure at those rows needs the quantum rows (F4).
+ - The ensemble's sample counts and seeds, the controls and the single-trajectory rows belong to the other three lanes.
+ - The exposure audit's CANNOT_SEE list (F1): 153 blobs above 5 MB, other machines, pushes after 20:52Z.
