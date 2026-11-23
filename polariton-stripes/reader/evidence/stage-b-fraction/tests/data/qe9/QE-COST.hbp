@@ -1,0 +1,10 @@
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=520|delta=1/3|y=0|t=1/4|ms=0|peak_rss_kB=2228|layout=sector|sector=Q0|sector_states=5|array_bytes_point_layout=3600|json=0
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=520|delta=1/3|y=0|t=1/2|ms=0|peak_rss_kB=2296|layout=sector|sector=Q0|sector_states=5|array_bytes_point_layout=3600|json=0
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=3600|delta=1/3|y=0|t=1/4|ms=0|peak_rss_kB=2236|json=0
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=3600|delta=1/3|y=0|t=1/2|ms=0|peak_rss_kB=2300|json=0
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=3600|delta=1/3|y=1/9|t=1/4|ms=0|peak_rss_kB=2344|json=0
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=3600|delta=1/3|y=1/9|t=1/2|ms=0|peak_rss_kB=2344|json=0
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=3600|delta=1/3|y=-1/9|t=1/4|ms=0|peak_rss_kB=2236|json=0
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=3600|delta=1/3|y=-1/9|t=1/2|ms=0|peak_rss_kB=2300|json=0
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=3600|delta=1/3|y=1/18|t=1/4|ms=0|peak_rss_kB=2360|json=0
+POLARITON_FIRST_CORRECTION_COST|N=9|K=9|even_states=30|array_bytes=3600|delta=1/3|y=1/18|t=1/2|ms=0|peak_rss_kB=2360|json=0

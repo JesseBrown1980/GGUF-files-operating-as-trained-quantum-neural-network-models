@@ -1,0 +1,1 @@
+READER|binary=/tmp/claude-0/-home-user/b2fb539a-cb4d-5f0b-a22f-ca1a7fcb500d/scratchpad/stripes-build/ra/release/stripes-read-a|sha256=742eea62f2107cbf5c9d888da78a88c28d155daf6c4e4d354e874bd2a25b8400|version=0.1.0

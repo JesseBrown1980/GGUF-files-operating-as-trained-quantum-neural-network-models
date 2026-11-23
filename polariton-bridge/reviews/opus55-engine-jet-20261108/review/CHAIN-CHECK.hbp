@@ -1,0 +1,11 @@
+CHAIN_SHA|SHA256SUMS_sha256=2866ff2c9aee7eb5c074207e6cf3ecfbe4a3c046a8d64d0b79fcb1e29f54b666|equal_to_seal_row=1|lines=1062|equal_to_seal_files=1|files_rehashed=1062|mismatch_or_missing=0|first=none|CR_in_chain_files=0|json=0
+CHAIN_HBI|INDEX.hbi_sha256=82aeac36e77941a95e0c125d5d6d6a8cd577f6df87394aba9864c8b97a229361|equal_to_seal_row=1|emit_rows=1062|head_files=1062|seed_pid_recomputed=1|order_equal_to_SHA256SUMS=1|last_pid=0bbb4e181f9cc249|equal_to_seal_last_pid=1|emit_problems=0|first=none|rows_declared=1066|rows_counted=1066|json=0
+CHAIN_ROLES|analog_jet_final=40|analog_jet_first_pass=40|analog_read_final=83|analog_read_first_pass=83|binary=1|driver_log_final=2|driver_log_first_pass=2|engine_crate_or_tool=11|engine_source=1|git_ignore=1|harness_sandbox=6|lane_tool=31|log=10|plan=1|prediction=2|proposed_repo_file=15|record=29|result=1|sabotage_sandbox=647|scratch=56|json=0
+CHAIN_REF_REPO|files=991|sorted_sums_sha256=2ce1d994d082bd35d22253430560eead1d0eb94c75ef18d84d69ec1adfb69c92|equal_to_REF=1|json=0
+CHAIN_REF_GIT|commits=5|equal_to_REF=0|json=0
+CHAIN_SEAL|seal_recomputed=833dfe1e5174d7463685253fdc22eb04a29537a14e4e821c085c644f776dfd45|equal_to_seal_row=1|equal_to_833dfe1e5174d746=1|sh=833dfe1e5174d746|sh_equal=1|json=0
+CHAIN_COMMIT|commit=7805dd257aeb|seal_of_its_files=833dfe1e5174d746|its_SEAL_row_seal=833dfe1e5174d746|its_prior=0209d218dc98d2a2|equal_to_prior_0209d218=0|json=0
+CHAIN_COMMIT|commit=ac85c997e589|seal_of_its_files=0209d218dc98d2a2|its_SEAL_row_seal=0209d218dc98d2a2|its_prior=none|equal_to_prior_0209d218=1|json=0
+CHAIN_COMMIT|commit=8076d4d75c0c|seal_of_its_files=a94732c031cfc37c|its_SEAL_row_seal=a94732c031cfc37c|its_prior=none|equal_to_prior_0209d218=0|json=0
+CHAIN_UNINDEXED|files_on_disk_outside_the_index_and_its_skip_list=0|first=none|VERIFY.hbp_sha256=23e2d96df139b589399ff08f93af934f342d666b3f24fdc9f1f51573f51a4867|json=0
+CHAIN_END|rows=10|float_used=0|json=0

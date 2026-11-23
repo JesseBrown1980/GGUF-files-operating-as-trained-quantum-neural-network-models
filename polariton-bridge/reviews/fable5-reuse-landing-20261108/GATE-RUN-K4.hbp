@@ -1,0 +1,13 @@
+K4_RUN|engine=twens04-memo|rc=0,0|json=0
+K4_MEMO_ROW|TWB_MEMO|count=7000|per_sample=V1,V0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=none|k2_core=box_255|k2_in_core=0|k2_distinct=0|k2_outside=0|ps_samples=7000|integrations=14000|plain_integrations=14000|json=0
+K4_MEMO_ROW|TWB_MEMO|count=13000|per_sample=V1,V0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=none|k2_core=box_255|k2_in_core=0|k2_distinct=0|k2_outside=0|ps_samples=13000|integrations=26000|plain_integrations=26000|json=0
+MERGE|case=k4_union_ref03_parts_twens04-memo|rc=0|CMP_DONE|parts=2|rows=30|integer_fields_compared=576|result=EQUAL|json=0 
+K4_RUN|engine=mut-F3_dropped_count-memo|rc=0,0|json=0
+K4_MEMO_ROW|TWB_MEMO|count=7000|per_sample=V1,V0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=none|k2_core=box_255|k2_in_core=0|k2_distinct=0|k2_outside=0|ps_samples=7000|integrations=14000|plain_integrations=14000|json=0
+K4_MEMO_ROW|TWB_MEMO|count=13000|per_sample=V1,V0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=none|k2_core=box_255|k2_in_core=0|k2_distinct=0|k2_outside=0|ps_samples=13000|integrations=26000|plain_integrations=26000|json=0
+MERGE|case=k4_union_ref03_parts_mut-F3_dropped_count-memo|rc=0|CMP_DONE|parts=2|rows=30|integer_fields_compared=576|result=EQUAL|json=0 
+K4_RUN|engine=mut-F1_key_merges_two_starts-memo|rc=0,0|json=0
+K4_MEMO_ROW|TWB_MEMO|count=7000|per_sample=V1,V0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=none|k2_core=box_255|k2_in_core=0|k2_distinct=0|k2_outside=0|ps_samples=7000|integrations=14000|plain_integrations=14000|json=0
+K4_MEMO_ROW|TWB_MEMO|count=13000|per_sample=V1,V0|k4=none|k4_core=ball_r88|k4_in_core=0|k4_distinct=0|k4_outside=0|k4_wraps=0|k2=none|k2_core=box_255|k2_in_core=0|k2_distinct=0|k2_outside=0|ps_samples=13000|integrations=26000|plain_integrations=26000|json=0
+MERGE|case=k4_union_ref03_parts_mut-F1_key_merges_two_starts-memo|rc=0|CMP_DONE|parts=2|rows=30|integer_fields_compared=576|result=EQUAL|json=0 
+K4_DONE|sha256sums=c072e1ac7c89b4755e48c1633a62fb85bf9afc97eef05821adba587a68805ef7|json=0

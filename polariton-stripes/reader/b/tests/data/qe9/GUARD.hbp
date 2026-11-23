@@ -1,0 +1,5 @@
+TWB_GUARD|N=9|delta=1/3|y=0|verdict=allowed|reason=none|computed=0|json=0
+TWB_GUARD|N=9|delta=1/3|y=0|verdict=allowed|reason=none|computed=0|json=0
+TWB_GUARD|N=9|delta=1/3|y=1/9|verdict=allowed|reason=none|computed=0|json=0
+TWB_GUARD|N=9|delta=1/3|y=-1/9|verdict=allowed|reason=none|computed=0|json=0
+TWB_GUARD|N=9|delta=1/3|y=1/18|verdict=allowed|reason=none|computed=0|json=0

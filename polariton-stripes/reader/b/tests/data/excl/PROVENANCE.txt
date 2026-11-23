@@ -1,0 +1,27 @@
+Real twens 0.4.0 dumps at the excluded test points X1 (N=27, delta=1/4, u=1, y=1/40) and X0 (N=27, delta=1/4, u=1,
+y=0), calls 0 and 1, and stage A's blocks and side files on them. No row point (P01-P14, R1-R4, QR1-QR5) is here.
+
+The cloud seat made them between 10:11 and 10:22 UTC on 2026-11-09, before the freeze review, with a scratch build of
+twens (sha256 33e62fbe...), in its scratch folder
+/tmp/claude-0/-home-user/b2fb539a-cb4d-5f0b-a22f-ca1a7fcb500d/scratchpad/stripes-build/excl/.
+COMMANDS.txt, READER.txt and GUARD.hbp are those files, byte for byte; their absolute scratch paths are the historical
+record and name no path in this repo. Every command in COMMANDS.txt is at N=27 delta=1/4, and each was preceded by
+twens guard (GUARD.hbp, verdict=allowed).
+
+They were copied here at 21:21 UTC on 2026-11-09, after `sha256sum -c` of that folder's own SHA256SUMS gave 13 of 13 OK:
+
+- X1.0.agg X1.1.agg X0.0.agg X0.1.agg, and X1.0.side X1.1.side X0.0.side X0.1.side: as they were. The four .agg files
+  are byte-identical to ../agg/X*.agg. READER.txt names the stage A build that wrote them (742eea62...); the pinned
+  remapped build 7fe3c18f... writes the same .agg and .side files (reader/README.md, stage A).
+- X1.0.txt X1.1.txt X0.0.txt X0.1.txt (the dumps, 26.7 to 26.8 MB each): here only as X*.txt.xz, written with
+  `xz -9 -k -c -T1 X.txt > X.txt.xz` (XZ Utils 5.4.5), 4.2 to 4.3 MB each.
+- X1s4.0.txt (the same call 0 of X1 with steps=64,128,192,256; 47,252,815 bytes): its sha256 only, in SHA256SUMS. Its
+  xz -9 copy is 8,518,892 bytes, over the 8 MB limit of this copy, and no test reads it.
+- Not copied: X*.err, the engine's stderr of each dump, all 0 bytes (stderr_bytes=0 in COMMANDS.txt); SABOTAGE.txt,
+  the log that the third ignored stage A test writes into the dump folder (written there at 20:34 UTC).
+
+SHA256SUMS: the 13 lines of the source folder's SHA256SUMS first, unchanged (the five dumps, the four .agg and the four
+.side files), then every other file here. In this folder `sha256sum -c --ignore-missing SHA256SUMS` checks every file
+that is present. check/excl_unpack.py unpacks the dumps into a folder outside the repo and checks all of it:
+
+    python3 -I polariton-stripes/reader/check/excl_unpack.py --out /abs/folder/outside/the/repo

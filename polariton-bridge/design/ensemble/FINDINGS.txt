@@ -1,0 +1,254 @@
+FINDINGS: the sampled ensemble (truncated Wigner) at first order in 1/N, against the quantum first correction of line 48.
+Seat: opus55, second seat for ACER-CLAUDE-FABLE5. Date 2026-11-05. Folder C:/tmp/opus55/bridge-design-ensemble-20261105/.
+Repo read: JesseBrown1980/GGUF-files-operating-as-trained-quantum-neural-network-models at main bde1035457157dccbf09a3e4967a7dfa9cb5ac2e
+(cloned into repo/ here; nothing edited, committed, pushed or commented). polariton/PREDICTION.hbp sha256 0628e397606cad697bab8bd6a1d758db0660cc91e5e6c0b7266847ba21446798;
+its line 48 (POLARITON_FIRST_CORRECTION, LF) sha256 3b1e0477a98624b619d12f82775666d88f8d2c14671b453a1198bedd9d50d549.
+Tags: MEASURED (a number from a named run in this folder) / DERIVED (algebra written here, checked where stated) / NAMED / CONJECTURE / CANNOT_SEE.
+Units as in the issue: JN = 1, u = 1, delta = x + u, gamma^2 = 1 - delta^2, s = y sqrt(N), c_k = cosh(k gamma t), gs_k = gamma t sinh(k gamma t).
+Written in pieces as each part finished.
+
+======================================================================
+F0. GUARD. MEASURED.
+======================================================================
+Every numerical run went through tools/twrun.py, which refuses before anything runs: delta = +-3/5 at any N, y, t; y = 2/27 at N in
+{81, 729, 6561}; delta outside {0, +-1/4, +-1/2, +-3/4}; N > 2187. Refusal tested: (81, 3/5, 0) and (729, 0, 2/27) printed
+CANNOT_SEE|reason=reserved_delta and CANNOT_SEE|reason=reserved_y and wrote no file. The quantum reference rows read by tools/twread.py
+pass the same filter (the second seat's N = 729, s = 2 rows sit at y = 2/27 and are skipped). Points actually run: listed in F3.
+Every number at delta = +-3/5 or y = 2/27 in this folder is a closed form (tools/t4_blind.py, tools/t6_rows.py, tools/t5_pairvar.py),
+which runs no model.
+
+======================================================================
+F1. THE INITIAL DISTRIBUTION AND THE ORDERING RULES (task 1). DERIVED.
+======================================================================
+Fields c_m with E|c|^2 = 1/2 for a vacuum mode (each quadrature variance 1/4), g_i iid normal(0, 1):
+  c+ = (g1 + i g2)/2,  c- = (g3 + i g4)/2,  n(0) = |c+|^2 + |c-|^2.
+Mode 0, four choices, all with uniform phase phi (or phi fixed: see the symmetry below):
+  VNC (proposed): c0 = sqrt(N + 3/2 - n(0)) e^(i phi). Total sum |c_m|^2 = N + 3/2 on every sample, the Weyl symbol of N-hat plus 3/2.
+  V1  (plain ring, the second seat's tw engine): c0 = sqrt(N + 1/2) e^(i phi), independent of c+-. Mean of sum |c_m|^2 is N + 3/2,
+       but on each sample it is N + 1/2 + n(0): variance 1/2, and correlated with the +- noise, cov(n_total, |c+-(0)|^2) = 1/4.
+  V0  (coherent stand-in): c0 = sqrt(N) e^(i phi) + (g5 + i g6)/2. Mean |c0|^2 = N + 1/2, variance N + 1/4.
+  RN  (ring at N): c0 = sqrt(N) e^(i phi).
+  A radial spread on the V1 ring independent of c+- (for example variance 1/4, which matches the Fock state's second symmetric
+  moment of |c0|^2) changes nothing at first order: it enters as (v_r/2N) d^2/de^2 of the law, order 1/N^3 in C1.
+Symmetry, used: H and every observable below are invariant under c_m -> e^(i chi) c_m for all m together (number conservation, the
+field term included). Rotating each sample by -phi leaves c+- vacuum-distributed and independent of phi, so the phase law of mode 0
+alone changes no observable mean. Consequence for the negative controls: "a changed initial phase distribution" of mode 0 alone is a
+null control and must read as no change; a detectable change has to move the phase of c+ c- relative to c0^2 (for example
+E[c+ c- conj(c0)^2] different from 0, which leaves the vacuum), see F6.
+Weyl (symmetric) rules: a^dag a -> |c|^2 - 1/2; distinct modes multiply; (a^dag a)^2 -> |c|^4 - |c|^2; a0 a0 -> c0^2; P -> conj(c+) conj(c-) c0^2.
+  A = a0^dag a+ + a-^dag a0  ->  A_W = conj(c0) c+ + conj(c-) c0  (exact, no correction).   A1 = 2 |E[A_W]| / N.
+  X = n0 (n+ + n-) + P + P^dag  ->  X_W = (|c0|^2 - 1/2)(n - 1) + 2 Re(conj(c+) conj(c-) c0^2) = |A_W|^2 - |c0|^2 - n/2 + 1/2,  n = |c+|^2 + |c-|^2.
+  Number-conserving form of the same operator on the N-particle space, X = (N - n)n + P + P^dag  ->
+       X_NC = N(n - 1) - (n - 1)^2 + 1/2 + 2 Re(conj(c+) conj(c-) c0^2).   With VNC use X_NC; X_NC - X_W = 1/2 exactly on a VNC sample.
+  C1 = 2 E[X] / (N(N - 1)).   V^2 = A1^2 / (2 C1), from the ensemble means (a ratio of means).
+  f = E[n - 1]/N.   C2 = 2 E[(|c+|^2 - 1/2)(|c-|^2 - 1/2)] / (N(N - 1)).
+  Hamiltonian: the c-number form H_cl of the normal-ordered H. Its Weyl symbol is H_W = H_cl - U N_total + const, and U N_total
+  generates a global phase, so H_cl and H_W give the same values of every invariant observable above.
+The single trajectory (no noise) has the classical identity n0 n + P + P^dag = |A|^2, so C1 = 2|A|^2/(N(N-1)) and V^2 = (N-1)/N there,
+as the issue states; with noise, the 1/2 terms of the Weyl rules above carry the vacuum part.
+
+======================================================================
+F2. FIRST ORDER IN 1/N (task 2). DERIVED at general (delta, s); checks in F2.6 and F3.
+======================================================================
+F2.1 Why an ensemble can carry the whole first correction. Exact number-conserving map on the N-particle space (as in the second
+seat's F1, contact lane): n0 = N - n, a0^dag a+ = b+ sqrt(N - n + 1), a-^dag a0 = b-^dag sqrt(N - n), P = b+^dag b-^dag sqrt((N-n)(N-n-1)),
+the roots acting first. At fixed s: H = H2 + H1/N + O(1/N^2), H2 = delta n + (b+^dag b-^dag + b+ b-) - s Sum(b + b^dag), quadratic.
+First order: <O(t)> = <O_I(t)>_0 + (i/N) Int_0^t <[H1_I(tau), O_I(t)]>_0 dtau, interaction picture along H2.
+  (i)  H2 is quadratic, so its flow maps Weyl symbols exactly: (U2^dag F U2)_W = F_W o Phi2.
+  (ii) The Moyal bracket equals the Poisson bracket when one side is at most quadratic (the next term needs three derivatives on
+       each side). O's leading part is linear (A/sqrt N -> z = b+ + conj b-) or quadratic (X/N -> |z|^2 - 1).
+  (iii) O's 1/N-relative parts (the cubic part of A, the quartic part of X) need only <.>_0 along H2, exact by (i).
+So the vacuum-Gaussian average of the classical first-order solution, built from the Weyl symbols of H, A and X, equals the quantum
+first order term by term. Weyl symbols needed, computed here:
+  H1_W = -u[|b+|^4 + |b-|^4 + |b+|^2|b-|^2 - (3/2) n] - (n - 3/2)(conj b+ conj b- + b+ b-) + (s/2)(n - 3/2) Sum(b + conj b),
+  A_W/sqrt N = z [1 - (n - 3/2)/(2N)],  X_W/N = |z|^2 - 1 + [1/2 - (n-1)^2 - (n - 3/2)(conj b+ conj b- + b+ b-)]/N.
+VNC is exactly this: with sum |c|^2 = N + 3/2 on every sample, the reduced 3-mode Hamiltonian equals H2 + H1_W/N up to a constant and
+O(1/N^2) (pair: conj b+ conj b- (N + 3/2 - n); field: -y sqrt(N + 3/2 - n)(...); contact: u n - (u/N)[... - (3/2) n]), A_W = |c0|(b+ + conj b-)
+matches, and X_NC matches X_W above.
+RESULT (VNC): w10, w11, C10, C11, C12 of line 48 are all reproduced. The residual against the quantum is O(1/N^2) relative on A1, C1
+and V^2, so at fixed s it falls by about 81 from N = 729 to N = 6561.
+
+F2.2 The plain ring V1 (the ensemble on file in the second seat's tw engine) misses one term. On a V1 sample the total number is
+N + 3/2 + xi, xi = n(0) - 1, E[xi] = 0, E[xi |z0|^2] = E[xi |w0|^2] = 1/2 (z0 = b+ + conj b-, w0 = b+ - conj b-, independent unit
+circular Gaussians). xi changes each trajectory's coupling, JN -> JN(1 + e) with e = xi/N (pair 1 + e, delta -> delta + e at u = 1,
+s -> s sqrt(1 + e)), and the observable's prefactor (A_W ~ sqrt(N_total), X_W ~ N_total). To first order:
+  <A>_V1 - <A>_VNC = 0: every xi term multiplies an odd moment.
+  <X>_V1 - <X>_VNC = E[xi (X0 + dX0/de)] - 1/2 = (1/2)[F(0) + F'(0)] - 1/2,
+     F(e) = cosh^2(g_e t) + ((1 - delta)/(1 + delta + 2e)) sinh^2(g_e t), g_e^2 = (1 - delta)(1 + delta + 2e)   (the -1/2 is X_NC - X_W).
+  dC1v_V1 = 2 [2 delta sinh^2(gamma t) + gamma t sinh(2 gamma t)] / (1 + delta)^2 = [2 delta (c_2 - 1) + 2 gs_2] / (1 + delta)^2,
+  where C1 = C0/N + C1v/N^2 + ..., C1v = C10 + s^2 C11 + s^4 C12. It does not depend on s: V1 carries w10, w11, C11, C12 exactly and
+  its C10 is shifted. In line 48's own form:
+  C10_V1 D3 = (d - 5/2) c_4 + (3 + 12d - 7d^2 - 2d^3)(1-d) c_2 + (-1/2 - 10d + 19d^2 - 5d^3 - 2d^4) + (8 - 14d + 16d^2 - 4d^3) gs_2
+  (line 48: (3 + 10d - 7d^2), (-1/2 - 8d + 17d^2 - 7d^3), (6 - 12d + 18d^2 - 6d^3); the c_4 term is unchanged).
+  So THE 1/N TERM V1 MISSES, against the quantum: C1_V1 - C1_q = dC1v_V1 / N^2 + O(1/N^3); relative, rho_C1 = dC1v_V1/(N^2 C1),
+  which falls as 1/N (about 9 from N = 729 to 6561), with V^2_V1/V^2_q - 1 = -rho_C1 + O(1/N^2) and A1 exact at first order.
+  At t -> 0: dC1v_V1 -> 4(1 - delta) t^2 and C0 -> 4(1 - delta) t^2, so rho_C1 -> 1/N: V1 reads C1 with N + 1 in place of N at the start.
+  dC1v_V1 > 0 for -1 < delta < 1 at every t > 0 (gs_2 >= 2 sinh^2(gamma t)), so the sign is fixed: C1_V1 above, V^2_V1 below.
+  Identity, DERIVED and checked: dC1v_V1 = d/de of the zero-field law X0(e) = 2(1+e)^2 sinh^2(g_e t)/(1+delta+2e). In words: for the
+  vacuum-amplified part, the noise-weighted excess of the total number is E[xi |z0|^2]/E|z0|^2 = 1/2 above the Weyl mean.
+F2.3 The other choices, same method:
+  V3 (sharp total N + 3/2 but the 3-mode X_W):  dw1 = 0, dC1v = -1 (X_W - X_NC = -1/2 on every sample; <n0 n> = -1/2 at t = 0).
+  RN (ring at N, kappa = -1/2):  dw1 = -(1/2) dw/de,  dC1v = dC1v_V1 - dX/de = -(s^2 part of dX/de): C10 is reproduced, w10 and C11 are not.
+  V0 (coherent stand-in): the Poisson spread of N_total adds (1/(2N)) d^2/de^2 of the law:
+     dw10_V0 = -[(gamma t)^2 c_1 + (2 delta - 3) gs_1 + 4(1 - delta)(c_1 - 1)] / (1 + delta)^3,
+     dC10_V0 = dC1v_V1 + [2(1 - delta)^2 (c_2 - 1) + 2(4 delta - 1) gs_2 + 4 (gamma t)^2 c_2] / (1 + delta)^3,
+     dC11_V0 = 8[(1 - delta)(5 - delta)(c_1 - 1)^2 - (5 - 4 delta)(c_1 - 1) gs_1 + gs_1^2 + (gamma t)^2 c_1 (c_1 - 1)] / (1 + delta)^4,
+     dC12_V0 = 0. These carry (gamma t)^2 c_k terms, outside the span of line 48's basis.
+  Here w(e) = -2(1+e)(cosh(g_e t) - 1)/(1+delta+2e) and X(e) = (1+e)^2[4 s^2 (cosh(g_e t) - 1)^2/(1+delta+2e)^2 + 2 sinh^2(g_e t)/(1+delta+2e)].
+F2.4 Checks of F2.1 to F2.3 that need no sampling.
+  (a) Short-time expansion by hand, Poisson brackets to second order in t at y = 0, any u. Quantum (two-level expansion from |N,0,0>):
+      <X> = t^2 [2N(1 - delta) - 2(1 - delta) - (4 - 3u)] + O(t^3, 1/N). b-picture ensemble with H1_W and X_W of F2.1: the same three
+      terms. V1: <X> = t^2 [2N(1 - delta) - (3 - 2u)], so V1 - quantum = [1 - u + 2(1 - delta)] t^2, which at u = 1 is 2(1 - delta) t^2,
+      the small-t limit of dC1v_V1/2. DERIVED.
+  (b) tools/cf.py evaluates line 48 from the row's own text with a whitelist walker; tools/t0_selfcheck.py reproduces on-file values:
+      N = 729, delta = 0, s = 1/4, t = 2: C1_law 0.077409 and C1_first 0.070160 (second seat F5: 0.077409, 0.070160); C10 -> -2t^2 at
+      small t for delta = 0, +-1/2; law over first at the touched (0, 1/2), N = 6561, t = 2: +12711.5 ppm, consistent with the README's
+      -12,355 ppm (read over law) and +199.8 ppm (read over first). out/t0_selfcheck.txt. MEASURED.
+  (c) tools/t1_forms.py: the explicit forms of F2.2 and F2.3 (D3 form of C10_V1, dC1v_V1 = dX0/de, dw10_V0, dC10_V0, dC11_V0) against
+      exact e-series of the law at 10 delta (including +-3/5, closed forms only) and 4 times: worst relative difference 2e-393, PASS on
+      all six (out/t1_forms.txt). MEASURED.
+
+======================================================================
+F3. RUNS AT ALLOWED POINTS (task 3). MEASURED unless marked.
+======================================================================
+F3.1 Engine. tw/src/main.rs (crate twens), Rust 1.81, cargo +1.81 clippy --release -- -D warnings exit 0, no floating types in the
+source (grep count 0), float_used=0. Binary sha256 65f046cd881ceffe16199b5ab40d8c20f62dcd33ab075fbf7bf8217ea4a04473, source
+a971d90dac31f12ffcf3b739ca1d52aef12a1b8fbcd62f807fe6ef173df7eea8. Fields psi = a/sqrt(N) as i64 at 2^40, products through i128;
+RK4 on the classical equations of H_cl at dt = 1/64. Gaussians: popcount of 4096 random bits minus 2048, over 32 (variance exactly 1,
+excess kurtosis -2/4096), xoshiro256** seeded per sample, so the sums do not depend on the thread count. Four initial distributions
+(V1, VN = sharp total, V0, RN) on the SAME +- noise in every sample; VN is read with X_NC (that is VNC) and with X_W (that is V3).
+Control variate: the exact linear trajectory z_lin(t) = m(t) + C(t) z0 + i RS(t) w0 of each sample, with C = cosh(gamma t),
+RS = (1 - delta) sinh(gamma t)/gamma, m = -(2y/(1+delta))(C - 1) from exact rational series (tools/twrun.py), and the estimators
+mean(O - O_lin) + E[O_lin], E[O_lin] exact. The reader (tools/twread.py) forms every mean and error from the integer sums in exact
+rationals. Step check, same samples: dt = 1/64 against 1/128 at N = 243, delta = 1/2, y = 1/16, t = 1, 2, 3: C1 and A1 agree to 4e-10
+relative (out/dtcheck_64.hbp, out/dtcheck_128.hbp).
+F3.2 Quantum references, seen rows at allowed points only:
+  y = 0: polariton/RECEIPT.hbp POLARITON_QUENCH rows (sector engine, dt = 2^-k), C1 floored to ppm by the engine (ppm(fix) = fix*10^6 >> SCALE),
+         read at the midpoint with half-width 1/2 ppm, which is N^2/2 * 10^-6 = 0.03, 0.27, 2.39 in units of N^2 C1 at N = 243, 729, 2187.
+  y != 0: the second seat's GRID-band-N{81,243,729}.hbp, full space, Chebyshev route, C1, A1, V2 at 10^-18.
+F3.3 Points run (N, delta, y; t = 1/2, 1, 3/2, 2, 5/2, 3 recorded; M samples), 27 configurations, two background processes of 3 threads:
+  y = 0:   N = 2187 and 729 at M = 10^6, N = 243 at 5x10^5, N = 81 at 2x10^5; delta = 0, 1/2, -1/2.
+  y != 0:  N = 729 (y = s/27), 243 (y = s/16), 81 (y = s/9); s = 1/2, 1 at delta = 0, 1/2; s = 1/2 at delta = -1/2; M = 5x10^5.
+  None at a reserved point (audit in F0). Raw sums: out/raw_*.hbp. Reads: out/READ-ALL.hbp. Tables: out/SUMMARY.hbp.
+F3.4 to F3.9 follow below, read from the full set (out/READ-ALL.hbp, out/SUMMARY.hbp, out/ZSCORES.txt, out/PAIRTOL.txt).
+F3.4 Against the exact quantum rows, C1 in units of N^2 C1 (in-range rows, f_pred <= 1/50; full list out/TABLE-F3.txt). Each cell is
+     N^2 (C1_TW - C1_q) measured +- sampling SE, (derived first-order value). Examples, full-space references at 10^-18:
+       N = 729, delta = 0, s = 1/2:   t = 1/2: V1 1.167 +- 0.010 (1.175)  VNC 0.003 +- 0.019 (0)  V3 -0.999 +- 0.019 (-1)
+                                      t = 1:   V1 7.013 +- 0.167 (7.254)  VNC -0.003 +- 0.205 (0) V3 -1.004 +- 0.205 (-1)
+       N = 729, delta = 1/2, s = 1/2: t = 1/2: V1 0.547 +- 0.007 (0.554)  VNC -0.007 +- 0.013 (0); t = 1: V1 2.860 +- 0.083 (2.958), VNC -0.003 +- 0.100
+       N = 729, delta = -1/2, s = 1/2: t = 1/2: V1 1.777 +- 0.014 (1.793) VNC -0.006 +- 0.027 (0); t = 1: V1 10.874 +- 0.254 (11.309), VNC -0.071 +- 0.314
+       N = 729, delta = 0, s = 1:     t = 1/2: V1 1.18 +- 0.01 (1.18), VNC 0.01 +- 0.02; t = 1: V1 7.29 +- 0.28 (7.25), VNC 0.35 +- 0.32
+     Zero-field rows (receipt, floored ppm, half-width h): N = 729, delta = 0, t = 1: V1 7.26 +- 0.09 (7.25), VNC 0.23 +- 0.12, h = 0.27;
+       N = 2187, delta = 0, t = 2: V1 100.1 +- 7.1 (109.2), VNC 0.9 +- 7.5, h = 2.39.
+     Aggregate (tools/t8_zscores.py, out/ZSCORES.txt), z = (meas - derived)/sqrt(SE^2 + h^2/3):
+       f_pred <= 1/200, 19 rows: |z| <= 3 on 19 of 19 for each of V1, VNC, V3, V0, RN; sum z^2 = 24.8, 10.3, 8.0, 14.7, 8.0.
+       f_pred <= 1/50, 35 rows, no allowance: V1 29 of 35 within 3, the misses all on the low side, where the next order acts (F3.5);
+       with the next-order allowance 20 f_pred |derived| added in quadrature: V1, V3 and V0 35 of 35 within 2.
+       VNC at f_pred <= 1/50: 32 of 35 within 3; the largest, +0.100 +- 0.022 at N = 81, delta = 0, s = 1, t = 1/2, is VNC's own
+       O(1/N) remainder in these units (O(1/N^2) relative); at N = 729 all 13 VNC cells sit within 1.97 SE of 0 (sampling SE alone).
+     A1 at first order, N (A1_TW - A1_q)/(2|y|) against -dw1: V1 and VN 23 rows each, 22 and 21 within 2 SE, 23 and 23 within 3 SE
+       (derived 0); V0 22 of 23 within 2 SE of its dw10_V0.
+F3.5 The common-sample pair N^2 (C1_V1 - C1_VNC) against P = dC1v_V1 (tools/t9_pairtol.py, out/PAIRTOL.txt), 56 in-range rows:
+       N = 2187, y = 0, delta = 0:  t = 1/2: 1.171 +- 0.007 (1.175); t = 1: 7.184 +- 0.031 (7.254); t = 3/2: 29.10 +- 0.12 (30.05); t = 2: 99.15 +- 0.38 (109.16)
+       N = 2187, y = 0, delta = 1/2: t = 1: 2.908 +- 0.014 (2.958); t = 2: 28.54 +- 0.11 (31.23).  delta = -1/2: t = 1: 11.239 +- 0.046 (11.309); t = 2: 146.97 +- 0.56 (161.17)
+       N = 729, y = 0, delta = 1/4: t = 1/2: 0.860 +- 0.006 (0.860); t = 1: 4.898 +- 0.022 (5.020).  delta = -1/4: t = 1: 9.181 +- 0.038 (9.431)
+     The deviation from P is the next order: it is negative on 54 of 56 rows (the 2 others, at t = 1/2, within 0.6 SE of P), its size
+     over phi0 = 2 sinh^2(gamma t)/((1 - delta^2) N) reads -5.3 to -24.6 except one row at t = 1/2 (-51.5, within 1.5 SE of -20), and
+     at fixed (delta, t) it falls about 3x per 3x in N, e.g. delta = 0, t = 1:
+     -4.3% (N = 729, s = 1), -0.96% (N = 2187); t = 2: -29% (729, s = 1/2), -9.2% (2187). Rule |pair - P| <= 20 phi0 |P| + |P|/100 + 3 SE:
+     holds on 56 of 56; the largest coefficient needed is 13.66.
+F3.6 V0 (coherent stand-in), the pair N^2 (C1_V0 - C1_V1) against dC1v_V0 - dC1v_V1: meets the derived value within next order and
+     sampling at delta = +-1/2 (all N), at delta = +-1/4 (N = 729: 1.014 +- 0.124 (1.015), 8.07 +- 0.44 (8.26); 1.80 +- 0.17 (1.93),
+     17.78 +- 0.77 (19.10)) and at delta = 0 for N <= 729 (N = 729: 1.28 +- 0.15 (1.45), 12.36 +- 0.60 (13.32)).
+     At N = 2187, delta = 0, y = 0 it reads low, on two independent seeds (1101 and 777001):
+       t = 1/2: 0.85 +- 0.25 and 0.74 +- 0.25 (1.45);  t = 1: 9.99 +- 1.06 and 11.28 +- 1.06 (13.32);
+       t = 3/2: 63.6 +- 4.0 and 70.6 +- 4.0 (78.7);  t = 2: 304.0 +- 13.8 and 330.7 +- 13.8 (380.4).
+     Checks run on it: dt = 1/128 on identical samples (N = 729, delta = 0) changes C1 in the 10th digit and the pair not at all; the
+     short-time limit of the derivation is the (1+e)^2 scaling of pair creation, dC1v_V0 - dC1v_V1 -> 4(1 - delta) t^2. The cause is not
+     found: OPEN. The V0 rows below carry this as an open item; V0 is a control, and nothing in the VNC or V1 results depends on it.
+F3.7 V^2, A1 and C1 against the exact rows, relative, in-range rows. N = 729 (10 rows): V1's V^2 -1,254 to -1,709 ppm and C1 +1,240
+     to +1,689 ppm (derived -rho_C1 and +rho_C1, which tend to -+1/N = 1,372 ppm at small t); VNC's V^2 -18 to +117, C1 -21 to +62,
+     A1 -12 to +58 ppm, all within 2 SE of 0 (sampling SE 8 to 30 ppm on A1). N = 243 (8 rows): V1's V^2 -3,982 to -5,000 ppm
+     (-1/N = -4,115); VNC's V^2 -157 to +84, C1 0 to +306, A1 -39 to +151 ppm. N = 81, t = 1/2 (5 rows): V1's V^2 -11,993 to -13,063 ppm
+     (-1/N = -12,346); VNC's V^2 -1,333 to +70, C1 +311 to +1,247 ppm.
+     Matched (delta, s, t): V1's C1 residual falls 2.98 to 3.01x per 3x in N (12,843 -> 4,313 -> 1,434 ppm at delta = 0, s = 1/2,
+     t = 1/2): 1/N. VNC's C1 residual falls 8 to 13x from N = 81 to 243 (510 -> 61, 1,044 -> 82, 614 -> 60 ppm) and at N = 729 sits
+     within 2 SE of 0: 1/N^2 relative, the ratio 81 per 9x in N read as about 9 per 3x; at N = 729 it is bounded by sampling.
+F3.8 Per-sample spread, which sets M (out/SUMMARY.hbp TABLE4). In units of N^2 C1: plain estimator about N C0 times the closed-form
+     relative sd of F4; controlled estimator 3.6 to 197 at t <= 1 and 2,242 to 9,737 at t = 2 (N = 729, 2187); pair 4.6 to 34.8 at t <= 1,
+     95 to 379 at t = 2. The closed-form leading-order pair sd (tools/t5_pairvar.py) reads 7.46, 31.1, 428 at delta = 0, t = 1/2, 1, 2
+     against measured 7.10, 30.5, 379, and 14.4 against 13.8 at delta = 1/2, t = 1: within 2 to 13%, on the high side.
+F3.9 Cost, local: 10^6 samples x 4 ensembles to t = 3 in about 4 to 5 minutes on 3 threads with the machine shared; 31 configurations in all.
+
+======================================================================
+F4. THE BLIND POINTS, CLOSED FORMS ONLY (task 4). DERIVED; no model ran at any of these points.
+======================================================================
+Points: delta = +-3/5 (gamma = 4/5), s = 1/3, 2/3, 4/3 at N = 81, 729, 6561 (y = s/9, s/27, s/81); the fixed-y family y = 2/27
+(s = 2/3, 2, 6); y = 0. Files: out/BLIND-EVAL.hbp (tools/t4_blind.py: clocks, the f <= 1/50 edge, every quantity at the 1/2-grid
+times and at the clocks), out/ROWS-BLIND.hbp (tools/t6_rows.py: the per-point rows proposed). Line 48 is evaluated from its own text.
+F4.1 Clocks (BLIND_CLOCKS rows), t* = 5 ln N/8, t_q, t_tr by an integer logarithm (tools/ilog.py, 2^-256):
+   N = 6561: t* = 5.493061; fixed s: t_q = 5.705531, 5.510668, 5.055519 (delta = 3/5; s = 1/3, 2/3, 4/3), 4.644234, 4.189085, 3.488247
+   (delta = -3/5); t_tr = 7.020614, 6.154180, 5.287746 and 5.287746, 4.421312, 3.554878. Fixed y = 2/27: t_q = 3.393913 and 1.671319.
+   N = 729: t* = 4.119796; N = 81: t* = 2.746531 (all values in the file).
+   First-order range f_pred <= 1/50 ends at t = 2 to 25/8 (N = 6561, fixed s), 9/8 to 7/4 (729), 1/2 to 3/4 (81); 7/8 to 9/8 for y = 2/27.
+   So every clock lies beyond the first-order range: at the clocks f_pred reads 0.2 to 10 and law over first is off by 10^5 to 10^6 ppm.
+   No first-order statement is made there.
+F4.2 Frozen times for the ensemble rows: N = 81: t = 1/2; N = 729: t = 1/2, 1; N = 6561: t = 1/2, 1, 2 (each inside f_pred <= 1/50 at
+   every fixed-s point; rows outside the range carry first_order_range=0).
+F4.3 The pair, P = N^2 (C1_V1 - C1_VNC) on common samples, which depends only on (delta, t):
+   delta = 3/5:  P = 0.4357 (t = 1/2), 2.2242 (t = 1), 20.5980 (t = 2).
+   delta = -3/5: P = 1.9098 (t = 1/2), 11.9247 (t = 1), 160.2678 (t = 2).
+   Tolerance 20 phi0 |P| + |P|/100 (+ 3 SE): N = 6561: 1.2% of P at t = 1/2, 1.8% at t = 1, 6.4% at t = 2; N = 729: 2.4% and 7.8%; N = 81: 14.0%.
+   Per-sample sd (closed form, leading order): 4.6 to 11.6 at t = 1/2, 11.5 to 73.6 at t = 1, 83 to 1,407 at t = 2 (fixed s and y = 0).
+   Samples for 3.29 SE <= |P|/100 (CLT): 1.7 to 12.6 million per point; Chebyshev at failure probability 10^-3: about 92 times that.
+F4.4 Ensemble against the quantum read, relative, ppm (rho = derived first-order residual; tau = 1/200 at N = 81, 1/1000 above):
+   N = 6561, t = 2, delta = 3/5, s = 1/3, 2/3, 4/3: V1 on C1 +211.5, +180.8, +114.7; on V^2 -211.5, -180.7, -114.7; on A1 0.
+                                                    V0 on C1 +692.5, +640.6, +530.1; A1 +43; V^2 -605.6, -553.7, -443.1.
+                                                    law alone on C1 +8,662.5, +11,370.6, +20,489.6; A1 +4,534.9, +5,390.3, +8,826.4; V^2 +424.2, -554.6, -2,703.6.
+   N = 6561, t = 2, delta = -3/5:                   V1 on C1 +351.9, +222.2, +90.7; V^2 -351.7, -222.1, -90.7.
+                                                    V0 on C1 +2,291.8, +1,849.0, +1,410.6; A1 +222; V^2 -1,844.5, -1,402.6, -962.6.
+                                                    law alone on C1 +12,030.3, +16,277.4, +30,549.9; A1 +4,652.0, +6,250.3, +12,694.8; V^2 -2,672.5, -3,677.8, -4,850.9.
+   N = 729, t = 1: V1 on C1 +928 to +1,940 (outside 1/1000 at 5 of 6; inside at delta = -3/5, s = 4/3); V0 +3,276 to +6,619; law +10,650 to +26,117.
+   N = 729, t = 1/2: V1 +1,158 to +1,523 (outside at 6 of 6). N = 81, t = 1/2: V1 +10,770 to +13,956 (outside 1/200 at 6 of 6).
+   VNC: 0 at first order everywhere (measured at allowed points: within 117 ppm at N = 729, within 1,333 ppm at N = 81).
+   So at N = 729 a 1/1000 row separates V1 (outside) from VNC (inside); at N = 6561 V1 and VNC are both inside 1/1000 and only the
+   pair separates them; the law alone sits outside on C1 at every N = 6561 point at t >= 1.
+F4.5 Samples for a VNC row inside tau, plain estimator, CLT k = 3.29 (Chebyshev k = 31.63 in the file): N = 6561, t = 2: C1 4.1 to 13.9
+   million, A1 1.4 to 101 million; t = 1/2: C1 3.8x10^7 to 3.5x10^8, A1 up to 5.7x10^9, since C1 sits far below the vacuum noise of the
+   symbol there.
+   The exact linear control cut the C1 spread at allowed points by 167x in sd at N = 729, t = 1/2 (2,274 -> 13.6 in N^2 C1 units) and by 16x
+   at N = 2187, t = 2 (about 120,000 -> 7,454), so with it these counts fall by 10^2 to 10^4 (CONJECTURE at the blind points, scaled from
+   the measured factors).
+F4.6 Scaling rows (ENS_ROW_SCALING): V1's relative C1 residual between N = 729 (y = s/27) and N = 6561 (y = s/81) at equal s, delta,
+   t = 1/2 and 1 has ratio 9.017 to 9.209 in closed form (1/N with the first correction of C1 in the denominator); VNC's falls as 1/N^2,
+   about 81, which no practical sampling resolves at N = 6561 (a residual of order 10^-6 to 10^-5 relative there).
+
+======================================================================
+F5. PROPOSED ROWS. PROPOSED-ROWS.hbp in this folder: the clause rows (one per clause, each with its tag), then the 136 per-point rows of
+out/ROWS-BLIND.hbp (60 ENS_ROW_PAIR, 60 ENS_ROW_QUANTUM, 16 ENS_ROW_SCALING). Its sha256 is printed at the end of this file.
+======================================================================
+
+======================================================================
+F6. OPEN ITEMS, each with what would settle it.
+======================================================================
+ - The clocks t*, t_q, t_tr: OPEN for the ensemble against the quantum. Both first-order expansions fail there (F4.1). What settles it:
+   the bridge's own ensemble and quantum runs at those frozen times. CONJECTURE, unrun: V1's excess on C1 stays of the size of its
+   large-t first-order form, about (delta + gamma t)/(2(1 + delta)(1 + Y) N), near 2x10^-4 at t_q for N = 6561, delta = 3/5, s = 1/3.
+ - Second order of the ensemble residual: not derived. MEASURED scale only: the pair's next order is -(5 to 25) phi0 of P, and VNC's
+   remainder is O(1/N^2) relative with coefficient up to about 8 at N = 81 (F3.7).
+ - V0 at N = 2187, delta = 0 (F3.6): reads 15 to 45% below its derived first-order value on two seeds, unexplained. What settles it: an
+   independent route for E over the Poisson spread (a ring ensemble swept in N_total, or quadrature in eta), and V0 at N = 2187 for
+   delta = +-1/4.
+ - N = 6561 and delta = +-3/5 were not run (task rules). The VNC residual at N = 6561 (order 10^-6 to 10^-5 relative) is below any
+   practical sample count; the rows state agreement inside tau there, and the 1/N^2 scaling is read between N = 81 and 243 here.
+ - The Wigner function of |N> itself is not positive and was not sampled; the rings are positive stand-ins. At first order VNC needs only
+   the number-conserving reduction, which is exact (F2.1). Where the Fock state's own negativity would enter, beyond first order: NAMED.
+ - The incorrect-coupling control: the e-derivatives of the law (dw/de, dX/de, in tools/cf.py) give the first-order response to
+   JN -> JN(1 + e); its frozen form belongs to the controls lane (C:/tmp/opus55/bridge-design-controls-20261105, not read here).
+ - The fabric, recall and owning seats were not asked in this lane (task scope: this folder). CANNOT_SEE, not FALSE.
+ - Nothing here is pushed, committed or posted; nothing is green until the owning gate reads it.
+
+======================================================================
+HASHES. PROPOSED-ROWS.hbp 155 rows, sha256 1f8e493fa7659e6a6b6b2d47483c95e160ef1961095438e5a346a6822e457630.
+LANE-RECEIPT.hbp (62 files: engine, tools, raw sums, reads, rows) sha256 d009328e61085e1f119c850332323bec1f0cee8f0adce7aebb99609cb531d08b.
+======================================================================

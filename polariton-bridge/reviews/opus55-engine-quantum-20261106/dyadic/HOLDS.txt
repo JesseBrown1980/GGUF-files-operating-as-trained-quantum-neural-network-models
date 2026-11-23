@@ -1,0 +1,269 @@
+HOLD H1 | file=src/bin/polariton_first_correction.rs | severity=LOW
+OLD<<<
+//! The frozen read this serves: `POLARITON_FIRST_CORRECTION` in polariton/PREDICTION.hbp, pushed before this file.
+//! Reads go to stdout and are the same bytes on every machine. Elapsed time and peak memory go to stderr.
+//!
+//! usage: polariton_first_correction point N K DELTA Y W T[,T2,...] [sabotage=NAME]
+//!        polariton_first_correction bessel NUM/DEN
+//!        polariton_first_correction rows N K DELTA Y
+//! W: the window is 2^-W. T are integers. A sabotage breaks the engine on purpose, and the reader must catch it.
+#![forbid(unsafe_code)]
+#![deny(
+    clippy::float_arithmetic,
+>>>
+NEW<<<
+//! The frozen read this serves: `POLARITON_FIRST_CORRECTION` in polariton/PREDICTION.hbp, pushed before this file.
+//! Reads go to stdout and are the same bytes on every machine. Elapsed time and peak memory go to stderr.
+//!
+//! Reads at dyadic times, for the frozen bridge times of polariton-bridge/PREDICTION.hbp (`BRIDGE_ENGINE_CHANGE`):
+//! a time T = a/2^b with b <= W is the end of window T 2^W, and every term of epsilon is a sum over the windows done,
+//! each window's term bounding that window alone, so the certificate at T is the same sum stopped there. An integer T
+//! reads exactly as before.
+//!
+//! usage: polariton_first_correction point N K DELTA Y W T[,T2,...] [sabotage=NAME]
+//!        polariton_first_correction bessel NUM/DEN
+//!        polariton_first_correction rows N K DELTA Y
+//! W: the window is 2^-W. Each T is an integer or a/2^b with b <= W, a multiple of the window. A sabotage breaks the
+//! engine on purpose, and the reader must catch it.
+#![forbid(unsafe_code)]
+#![deny(
+    clippy::float_arithmetic,
+>>>
+REASON: Hunk 1 of the engine change (@@ -20,10 +20,16 @@): the module text: what a dyadic read is and why every term of epsilon stays a per-window sum; the usage line for T. Measured with the whole change: rustc 1.81.0, cargo +1.81 fmt -- --check exit 0, cargo +1.81 clippy --release -- -D warnings exit 0 on all 6 crates of the package, --all-targets and the workflow's --locked --offline --bin form exit 0, float_used=0 (0 code hits, self-tested scanner), changed binary sha256 cc75d83f0a7e07b1d95bf091455f309d2c3fb64cf8f3485222e53e4c5508b776 (x86_64-unknown-linux-gnu). The 8 hunks together are out/polariton_first_correction.rs.diff (sha256 92cff5b1...); applied in order to the 38ce248 file (sha256 ad121216...) they give 8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228 byte for byte. On this machine apply them with git -c core.autocrlf=false: with the global core.autocrlf=true, git apply wrote the file with 1080 CR.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H2 | file=src/bin/polariton_first_correction.rs | severity=HIGH
+OLD<<<
+    }
+}
+
+fn isqrt(n: u128) -> u128 {
+    if n < 2 {
+        return n;
+>>>
+NEW<<<
+    }
+}
+
+/// A read time as its count of windows, T 2^W, with T in lowest terms for the row. T must be positive and its
+/// denominator must divide 2^W, so that the read falls at a window's end; anything else is refused.
+fn window_time(text: &str, w: u32) -> (i128, Rat) {
+    let t = parse_rat(text);
+    let windows_per_unit = 1i128 << w;
+    let on_grid = t.n >= 1 && t.d >= 1 && windows_per_unit % t.d == 0;
+    match t.n.checked_mul(windows_per_unit / t.d.max(1)) {
+        Some(windows) if on_grid => (windows, t),
+        _ => {
+            eprintln!("time {text} is not a positive multiple of the window 2^-{w}");
+            std::process::exit(2);
+        }
+    }
+}
+
+fn isqrt(n: u128) -> u128 {
+    if n < 2 {
+        return n;
+>>>
+REASON: Hunk 2 of the engine change (@@ -105,6 +111,21 @@): window_time: T parsed in lowest terms, refused with exit 2 unless T > 0 and its denominator divides 2^W; returns T 2^W. Measured with the whole change: rustc 1.81.0, cargo +1.81 fmt -- --check exit 0, cargo +1.81 clippy --release -- -D warnings exit 0 on all 6 crates of the package, --all-targets and the workflow's --locked --offline --bin form exit 0, float_used=0 (0 code hits, self-tested scanner), changed binary sha256 cc75d83f0a7e07b1d95bf091455f309d2c3fb64cf8f3485222e53e4c5508b776 (x86_64-unknown-linux-gnu). The 8 hunks together are out/polariton_first_correction.rs.diff (sha256 92cff5b1...); applied in order to the 38ce248 file (sha256 ad121216...) they give 8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228 byte for byte. On this machine apply them with git -c core.autocrlf=false: with the global core.autocrlf=true, git apply wrote the file with 1080 CR.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H3 | file=src/bin/polariton_first_correction.rs | severity=HIGH
+OLD<<<
+    "CANNOT_SEE".to_string()
+}
+
+fn point(n: i128, k_in: usize, delta: Rat, y: Rat, times: &[i128], w: u32, sab: &Sabotage) {
+    let began = Instant::now();
+    let k = k_in.min(usize::try_from(n).unwrap());
+    let block = Block::new(n, k, sab.drop_even_root);
+>>>
+NEW<<<
+    "CANNOT_SEE".to_string()
+}
+
+/// `times`: (window count T 2^W, T), sorted by the count.
+fn point(n: i128, k_in: usize, delta: Rat, y: Rat, times: &[(i128, Rat)], w: u32, sab: &Sabotage) {
+    let began = Instant::now();
+    let k = k_in.min(usize::try_from(n).unwrap());
+    let block = Block::new(n, k, sab.drop_even_root);
+>>>
+REASON: Hunk 3 of the engine change (@@ -743,7 +764,8 @@): point() takes (window count, T) pairs. Measured with the whole change: rustc 1.81.0, cargo +1.81 fmt -- --check exit 0, cargo +1.81 clippy --release -- -D warnings exit 0 on all 6 crates of the package, --all-targets and the workflow's --locked --offline --bin form exit 0, float_used=0 (0 code hits, self-tested scanner), changed binary sha256 cc75d83f0a7e07b1d95bf091455f309d2c3fb64cf8f3485222e53e4c5508b776 (x86_64-unknown-linux-gnu). The 8 hunks together are out/polariton_first_correction.rs.diff (sha256 92cff5b1...); applied in order to the 38ce248 file (sha256 ad121216...) they give 8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228 byte for byte. On this machine apply them with git -c core.autocrlf=false: with the global core.autocrlf=true, git apply wrote the file with 1080 CR.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H4 | file=src/bin/polariton_first_correction.rs | severity=HIGH
+OLD<<<
+    let mut tail_max = 0i128;
+    let mut applies = 0u64;
+    let mut done = 0i128;
+    let last = *times.iter().max().unwrap();
+    let total_windows = last << w;
+    let mut next_read = 0usize;
+    while done < total_windows {
+        // The certificate over the window that starts here.
+>>>
+NEW<<<
+    let mut tail_max = 0i128;
+    let mut applies = 0u64;
+    let mut done = 0i128;
+    let total_windows = times.iter().map(|&(windows, _)| windows).max().unwrap();
+    let mut next_read = 0usize;
+    while done < total_windows {
+        // The certificate over the window that starts here.
+>>>
+REASON: Hunk 4 of the engine change (@@ -797,8 +819,7 @@): the loop runs to the largest window count. Measured with the whole change: rustc 1.81.0, cargo +1.81 fmt -- --check exit 0, cargo +1.81 clippy --release -- -D warnings exit 0 on all 6 crates of the package, --all-targets and the workflow's --locked --offline --bin form exit 0, float_used=0 (0 code hits, self-tested scanner), changed binary sha256 cc75d83f0a7e07b1d95bf091455f309d2c3fb64cf8f3485222e53e4c5508b776 (x86_64-unknown-linux-gnu). The 8 hunks together are out/polariton_first_correction.rs.diff (sha256 92cff5b1...); applied in order to the 38ce248 file (sha256 ad121216...) they give 8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228 byte for byte. On this machine apply them with git -c core.autocrlf=false: with the global core.autocrlf=true, git apply wrote the file with 1080 CR.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H5 | file=src/bin/polariton_first_correction.rs | severity=HIGH
+OLD<<<
+            }
+        }
+        done += 1;
+        while next_read < times.len() && (times[next_read] << w) == done {
+            let r = read(&block, &re, &im);
+            let big = block.n;
+            let nn = big * (big - 1);
+>>>
+NEW<<<
+            }
+        }
+        done += 1;
+        while next_read < times.len() && times[next_read].0 == done {
+            let r = read(&block, &re, &im);
+            let big = block.n;
+            let nn = big * (big - 1);
+>>>
+REASON: Hunk 5 of the engine change (@@ -865,7 +886,7 @@): a read happens when the windows done equal the time's window count. Measured with the whole change: rustc 1.81.0, cargo +1.81 fmt -- --check exit 0, cargo +1.81 clippy --release -- -D warnings exit 0 on all 6 crates of the package, --all-targets and the workflow's --locked --offline --bin form exit 0, float_used=0 (0 code hits, self-tested scanner), changed binary sha256 cc75d83f0a7e07b1d95bf091455f309d2c3fb64cf8f3485222e53e4c5508b776 (x86_64-unknown-linux-gnu). The 8 hunks together are out/polariton_first_correction.rs.diff (sha256 92cff5b1...); applied in order to the 38ce248 file (sha256 ad121216...) they give 8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228 byte for byte. On this machine apply them with git -c core.autocrlf=false: with the global core.autocrlf=true, git apply wrote the file with 1080 CR.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H6 | file=src/bin/polariton_first_correction.rs | severity=HIGH
+OLD<<<
+                x.text(),
+                y.text(),
+                delta.text(),
+                times[next_read],
+                op.c,
+                op.e,
+                op.elem_err_units,
+>>>
+NEW<<<
+                x.text(),
+                y.text(),
+                delta.text(),
+                times[next_read].1.text(),
+                op.c,
+                op.e,
+                op.elem_err_units,
+>>>
+REASON: Hunk 6 of the engine change (@@ -920,7 +941,7 @@): the READ row prints T in lowest terms; an integer T prints as before. Measured with the whole change: rustc 1.81.0, cargo +1.81 fmt -- --check exit 0, cargo +1.81 clippy --release -- -D warnings exit 0 on all 6 crates of the package, --all-targets and the workflow's --locked --offline --bin form exit 0, float_used=0 (0 code hits, self-tested scanner), changed binary sha256 cc75d83f0a7e07b1d95bf091455f309d2c3fb64cf8f3485222e53e4c5508b776 (x86_64-unknown-linux-gnu). The 8 hunks together are out/polariton_first_correction.rs.diff (sha256 92cff5b1...); applied in order to the 38ce248 file (sha256 ad121216...) they give 8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228 byte for byte. On this machine apply them with git -c core.autocrlf=false: with the global core.autocrlf=true, git apply wrote the file with 1080 CR.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H7 | file=src/bin/polariton_first_correction.rs | severity=HIGH
+OLD<<<
+                block.dim,
+                delta.text(),
+                y.text(),
+                times[next_read],
+                began.elapsed().as_millis(),
+                peak_rss_text(),
+            );
+>>>
+NEW<<<
+                block.dim,
+                delta.text(),
+                y.text(),
+                times[next_read].1.text(),
+                began.elapsed().as_millis(),
+                peak_rss_text(),
+            );
+>>>
+REASON: Hunk 7 of the engine change (@@ -952,7 +973,7 @@): the COST row prints T the same way. Measured with the whole change: rustc 1.81.0, cargo +1.81 fmt -- --check exit 0, cargo +1.81 clippy --release -- -D warnings exit 0 on all 6 crates of the package, --all-targets and the workflow's --locked --offline --bin form exit 0, float_used=0 (0 code hits, self-tested scanner), changed binary sha256 cc75d83f0a7e07b1d95bf091455f309d2c3fb64cf8f3485222e53e4c5508b776 (x86_64-unknown-linux-gnu). The 8 hunks together are out/polariton_first_correction.rs.diff (sha256 92cff5b1...); applied in order to the 38ce248 file (sha256 ad121216...) they give 8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228 byte for byte. On this machine apply them with git -c core.autocrlf=false: with the global core.autocrlf=true, git apply wrote the file with 1080 CR.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H8 | file=src/bin/polariton_first_correction.rs | severity=HIGH
+OLD<<<
+            let delta = parse_rat(get(4));
+            let y = parse_rat(get(5));
+            let w: u32 = get(6).parse().expect("W");
+            let mut times: Vec<i128> = get(7).split(',').map(|v| v.parse().expect("T")).collect();
+            times.sort_unstable();
+            assert!(times[0] >= 1, "T starts at 1");
+            let sab = match get(8).strip_prefix("sabotage=") {
+                Some(rest) => parse_sabotage(rest),
+                None => Sabotage::default(),
+>>>
+NEW<<<
+            let delta = parse_rat(get(4));
+            let y = parse_rat(get(5));
+            let w: u32 = get(6).parse().expect("W");
+            let mut times: Vec<(i128, Rat)> =
+                get(7).split(',').map(|v| window_time(v, w)).collect();
+            times.sort_unstable_by_key(|&(windows, _)| windows);
+            let sab = match get(8).strip_prefix("sabotage=") {
+                Some(rest) => parse_sabotage(rest),
+                None => Sabotage::default(),
+>>>
+REASON: Hunk 8 of the engine change (@@ -1031,9 +1052,9 @@): main() parses each T with window_time and sorts by window count; the integer-only parse and its assert go. Measured with the whole change: rustc 1.81.0, cargo +1.81 fmt -- --check exit 0, cargo +1.81 clippy --release -- -D warnings exit 0 on all 6 crates of the package, --all-targets and the workflow's --locked --offline --bin form exit 0, float_used=0 (0 code hits, self-tested scanner), changed binary sha256 cc75d83f0a7e07b1d95bf091455f309d2c3fb64cf8f3485222e53e4c5508b776 (x86_64-unknown-linux-gnu). The 8 hunks together are out/polariton_first_correction.rs.diff (sha256 92cff5b1...); applied in order to the 38ce248 file (sha256 ad121216...) they give 8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228 byte for byte. On this machine apply them with git -c core.autocrlf=false: with the global core.autocrlf=true, git apply wrote the file with 1080 CR.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H9 | file=.github/workflows/polariton-first-correction.yml | severity=MEDIUM
+OLD<<<
+      - name: The baseline reproduces byte for byte, and its read is the one on file
+        run: |
+          set -euo pipefail
+          D=polariton-first-correction
+          python3 -I -X utf8 $D/run_stage.py target/release/polariton_first_correction $D/PLAN.hbp baseline baseline.hbp baseline-cost.hbp 4
+          cat baseline-cost.hbp
+          cmp baseline.hbp $D/RECEIPT-BASELINE.hbp
+          python3 -I -X utf8 $D/read_first_correction.py baseline polariton/PREDICTION.hbp $D/PLAN.hbp baseline.hbp polariton/RECEIPT.hbp > read-baseline.hbp
+          cmp read-baseline.hbp $D/READ-BASELINE.hbp
+      - name: The route's big-integer Bessel series meet the engine's tables on the baseline
+        run: python3 -I -X utf8 polariton-first-correction/route_first_correction.py bessel target/release/polariton_first_correction polariton-first-correction/RECEIPT-BASELINE.hbp
+>>>
+NEW<<<
+      - name: The baseline reproduces byte for byte at its 40 runs outside the bridge's reserved points, and its read is the one on file
+        run: |
+          set -euo pipefail
+          D=polariton-first-correction
+          # The two baseline runs at N = 729, y = 2/27 (delta = 0, 1/2) sit in the bridge's reserved set (polariton-bridge/PREDICTION.hbp,
+          # BRIDGE_RESERVED); they stay unrun here until the operator's word. The other 40 runs print 58 of the receipt's 64 rows.
+          grep -v -E '^FC_RUN\|stage=baseline\|.*\|N=729\|K=729\|delta=(0|1/2)\|y=2/27\|' $D/PLAN.hbp > plan-allowed.hbp
+          python3 -I -X utf8 $D/run_stage.py target/release/polariton_first_correction plan-allowed.hbp baseline baseline.hbp baseline-cost.hbp 4
+          cat baseline-cost.hbp
+          grep -v -E '\|N=729\|K=729\|.*\|y=2/27\|delta=(0|1/2)\|' $D/RECEIPT-BASELINE.hbp | sed -e '1s/runs=42/runs=40/' -e '$s/runs=42/runs=40/' > receipt-allowed.hbp
+          cmp baseline.hbp receipt-allowed.hbp
+          python3 -I -X utf8 $D/read_first_correction.py baseline polariton/PREDICTION.hbp $D/PLAN.hbp $D/RECEIPT-BASELINE.hbp polariton/RECEIPT.hbp > read-baseline.hbp
+          cmp read-baseline.hbp $D/READ-BASELINE.hbp
+      - name: The route's big-integer Bessel series meet the engine's tables on the baseline's 40 allowed runs
+        run: python3 -I -X utf8 polariton-first-correction/route_first_correction.py bessel target/release/polariton_first_correction receipt-allowed.hbp
+>>>
+REASON: A pull request that touches src/bin/polariton_first_correction.rs triggers this workflow (its paths list), and this step reruns all 42 baseline runs, including N = 729, K = 729, y = 2/27 at delta = 0 and 1/2 (t = 1, 2, 3), the two runs this lane's guard refused as inside the reserved set; the Bessel step then builds the Gershgorin interval of those two blocks. Two choices for the seat: on the operator's word keep the OLD text, and the hosted run gives the full-file byte check of RECEIPT-BASELINE.hbp that this lane could not; before that word, the NEW text. Measured by text processing alone (runs/workflow-filter-test/): the plan filter leaves 40 baseline runs (it removes exactly the two y = 2/27 rows), the receipt filter leaves 60 lines with runs=40 in both stage lines, and that file (sha256 ff57d5e8f8dc5697709f10ed42693ac066e45d534aa112b87ebdefbc1a4a9de0) equals byte for byte what run_stage.py writes from this lane's 40 reproduced runs with the changed engine; so the NEW cmp passes with the changed binary (DERIVED from MEASURED rows; the hosted run itself NOT_MEASURED). The read line in NEW reads the filed receipt, closed forms and filed bytes only, as the frozen BRIDGE_RESERVED row allows.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H10 | file=.github/workflows/polariton-first-correction.yml | severity=MEDIUM
+OLD<<<
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" $D/RECEIPT-BASELINE.hbp 4
+>>>
+NEW<<<
+          python3 -I -X utf8 $D/route_first_correction.py integrator polariton/second-seat/recheck-ce44be7/contact "$RUNNER_TEMP/cheb/release/cheb" "$RUNNER_TEMP/tables" receipt-allowed.hbp 4
+>>>
+REASON: The crosscheck step runs the second seat's propagator (cheb) on every row of RECEIPT-BASELINE.hbp, including the 6 rows at N = 729, y = 2/27: a model run at the reserved points by a second code. NEW points it at receipt-allowed.hbp, written by the baseline step in the NEW text of the hold before; with the OLD baseline step kept (operator's word), keep this OLD line too. The grid step's reader (line 112) reads the filed RECEIPT-BASELINE.hbp as filed bytes and runs no model.
+[check: old_occurs=1|new_applied=1]
+
+HOLD H11 | file=polariton-bridge/ENGINE-CHANGES.hbp (a new file beside the frozen rows, or wherever the seat files engine receipts) | severity=MEDIUM
+OLD<<<
+>>>
+NEW<<<
+BRIDGE_ENGINE_CHANGE_RESULT|engine=the_quantum_engine_src/bin/polariton_first_correction.rs|change=reads_at_multiples_of_2^-W(BRIDGE_ENGINE_CHANGE_line_445)|from_sha256=ad121216d53abb414016edecec2e44cfef1116394f957130e2b1de080ac8dfc5|source_sha256=8d8afe48e5006cc146dd05bdd4c9bfdc068463b7aaa43faf362386b0a0d59228|W_of_the_frozen_times=6(352_BRIDGE_AT_rows,denominators_up_to_64)|binary_sha256=cc75d83f0a7e07b1d95bf091455f309d2c3fb64cf8f3485222e53e4c5508b776(rustc_1.81.0,x86_64-unknown-linux-gnu;a_binary_built_elsewhere_carries_its_own)|gate=cargo_+1.81_fmt_--check_exit_0,cargo_+1.81_clippy_--release_--_-D_warnings_exit_0,float_used=0|RECEIPT-GRID.hbp=whole_file_bytes_equal=1(sha256_4a1a277885015a5e937a028d767c617878ae9a05e75bade9eee3e14f0e07e480)|RECEIPT-BASELINE.hbp=58_of_64_rows_byte_for_byte_and_both_stage_lines,6_rows_at_N=729,y=2/27_NOT_MEASURED(reason=RESERVED)|falsifier_a=2_points,0_failed|falsifier_b=72_both_ways_checks,0_failed,36_of_36_interval_pairs_meeting|by=opus55,bridge-engine-quantum-20261106|tag=MEASURED|json=0
+>>>
+REASON: BRIDGE_ENGINE_CHANGE line 445 asks for the changed binary's sha256 in a row before any blind run, and its gate names the full-file byte reproduction of RECEIPT-BASELINE.hbp. This row files what this lane measured, beside the frozen row and without editing PREDICTION.hbp (its sha256 fadd8412... stays). The binary hash is that of the Linux build used here; the blind runs' row needs the hash of the binary that runs them, and a Windows MSVC build hashes differently (NOT_MEASURED here).
+[check: new_file_or_new_row]
+
+HOLD H12 | file=polariton-first-correction/route_first_correction.py | severity=LOW
+OLD<<<
+                tail = Fr(isqrt(total + (floor_states << (2 * CP - 84))), one) + Fr(1, 1 << 42)
+>>>
+NEW<<<
+                tail = Fr(isqrt((total >> (2 * CP - 84)) + floor_states) + 1, 1 << 42)
+>>>
+REASON: The route's certificate walk models the tail's floor as sqrt(W + S 2^-84) + 2^-42, the engine prints (isqrt(W84 + S) + 1) 2^-42, both outward. They differ by frac(sqrt) 2^-42, at most 2^-42, which the walk's 1e-6 relative tolerance absorbs once a real tail dominates, and which decides the check when every window read sits at the floor. A dyadic read at the first window does that: at N = 100, K = 40, delta = 1/2, y = 1/20, T = 1/64 (one window, S = 399 states, isqrt 19) the walk failed on tail_max by 2.21686e-13 = (sqrt(399) - 19) 2^-42 and on eps_tail by 5.6572e-14 = norm(B) h times that (out/ROUTE-CERTIFICATE-DYADIC.hbp, failed=1, the other 5 dyadic cases PASS). With NEW, the walk passes 10 of 10: the 6 dyadic cases and the route's own 4 integer cases (out/ROUTE-CERTIFICATE-DYADIC-INTFLOOR.hbp, T = 1/64 now off 5.1e-19 on tail_max against a limit of 8.5e-18). The route at 38ce248 reads integer T only (route_certificate and route_certificate_parts take int(r["t"]) and windows = t << w); this lane ran it at dyadic T through a text transform, scripts/route_dyadic.py, which the seat can carry into the route with this line if the route is to walk dyadic reads. Editing the route changes the stage's SHA256SUMS.
+[check: old_occurs=1|new_applied=1]

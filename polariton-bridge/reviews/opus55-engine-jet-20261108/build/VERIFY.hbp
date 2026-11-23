@@ -1,0 +1,7 @@
+VERIFY|check=prediction_integrity|ok=1|sha256=d04a766078fed009e868d196df16f28b46ab6e86baae74ebee662641141c45fb|sidecar_equal=1|first_commit=094cd8f|blob_equal=1|first_commit_files=.gitignore,PREDICTIONS.hbp,PREDICTIONS.hbp.sha256|json=0
+VERIFY|check=receipt_integrity|ok=1|files=1062|changed_or_missing=0|index_rows=1062|seal_recomputed_equal=1|seal=833dfe1e5174d7463685253fdc22eb04a29537a14e4e821c085c644f776dfd45|json=0
+VERIFY|check=independent_replay|ok=1|myjet_values=210|max_rel_diff=4.86e-13|replay_jets=40/40|replay_reads=83/83|json=0
+VERIFY|check=numerical_gates|ok=1|JET_READY=83/83|analog_MC=44/44|gate_passing_all_within_3se=1|J12=16/16|max_Trel_P=1.11e-5(L0698_VNC_C1)|json=0
+VERIFY|check=driver_fail_closed|ok=1|sabotage=28/28|harness_cases=4|processes_started=0|json=0
+VERIFY|check=plan_and_local_ci|ok=1|plan_sha256=6950d41c83abb392afdfa84172b482fa1539cff2ff6cac4179cb72433275aa95|regenerated_equal=1|local_ci_all_steps_0=1|hosted_ci=CANNOT_SEE(the_seat_pushes)|json=0
+VERIFY_VERDICT|verdict=PASS|json=0

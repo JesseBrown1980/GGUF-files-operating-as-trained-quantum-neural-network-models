@@ -1,0 +1,287 @@
+FINDINGS: QNN #9 bridge design, negative controls and matched pairs. Seat opus55 (second seat) for ACER-CLAUDE-FABLE5.
+Folder C:/tmp/opus55/bridge-design-controls-20261105/. Date 2026-11-05. Written in pieces as each step finished.
+Tags: MEASURED (number from a named run in this folder) / DERIVED (algebra written here, checked by the closed-form
+evaluation named) / NAMED (stated, not run) / CONJECTURE / CANNOT_SEE.
+
+======================================================================
+F0. WHAT WAS READ, AND THE LIMITS KEPT
+======================================================================
+- Issue #9 body and both comments, read with gh (read-only): issue9-body.txt, issue9-comments.txt (comment 6668027024,
+  the Brown-Fedotov frame note) and issue9-comment-6669283598.txt (GPT-6 pre-freeze design review, posted 20:58Z,
+  after my first fetch; fetched and read before any row here was written).
+- From live main bde1035 (gh api, read-only) into src/: polariton/PREDICTION.hbp (line 48 = POLARITON_FIRST_CORRECTION,
+  49 fields), polariton/README.md, polariton-first-correction/README.md, the recheck-ce44be7 contact lane FINDINGS,
+  law.py, t5_firstcorr.py, tw/src/main.rs and t4_tw.py.
+- Every value at delta = +-3/5 or y = 2/27 in this folder is a closed form evaluated (law, line 48's text, a control's
+  leading-order solution, an energy identity). No model was integrated at a reserved point. The runs (F7) are at
+  delta = +-1/2, N = 6561, y = 1/162 and y = 0.
+- Line 48 is evaluated from the row's own text by a parser (forms.py), with exact-rational intervals (xr.py, 2^-200
+  outward rounding, float_used=0). Cross-check at three points, MEASURED by forms.py: my law, the README law and the
+  row's A1_law, C1_law agree to all printed digits; at N=729, delta=1/2, s=1/2, t=2 the row's C1_first is 0.02900433,
+  the README's "law+first 0.029004", and C1_law 0.03188525 against its 0.031885.
+- Independence: while checking for a new comment file I listed the clocks lane's folder and saw the first five lines of
+  its CLOCKS.hbp. No value here was taken from it. Its t_q at (3/5, N=81, s=1/3), 2.958999784, equals mine,
+  2.95899978 (ctrl_closed.py), which is an agreement and no input.
+
+======================================================================
+F1. INCORRECT COUPLING. DERIVED, closed forms in forms.law (general pair coupling kappa*J), values in
+    out/CONTROLS-CLOSED.hbp (251 rows) and out/CONTROLS-SUMMARY.hbp
+======================================================================
+Leading order (LO), fixed s = y sqrt(N), from |N,0,0>. With b+- the side modes and z = A/sqrt(N) = q_s + i p_a:
+  q_s' = (delta - kappa) p_s,  p_s' = -(delta + kappa) q_s + 2s,  q_a' = (delta + kappa) p_a,  p_a' = -(delta - kappa) q_a,
+  g^2 = kappa^2 - delta^2, mean q(t) = (2s/(kappa + delta))(1 - cosh g t),
+  excess second moment sig2 = cosh^2 + (delta - kappa)^2 sinh^2/g^2 - 1 (Weyl reading, vacuum seeds).
+  A1 = 2|q|/sqrt(N), C1 = (2/N)(q^2 + sig2), V2 = q^2/(q^2 + sig2). kappa = 1 gives the frozen law exactly (checked).
+
+1a. Pair coupling J with its sign flipped (kappa = -1), the proposed frozen control. DERIVED:
+    g is unchanged, q -> (2s/(1 - delta))(cosh g t - 1), sig2 -> 2 sinh^2/(1 - delta).
+    So at LO the flipped map at delta reads the law at -delta, for every t:
+      A1_flip/A1 = (1 + delta)/(1 - delta) = 4 at delta = 3/5, 1/4 at delta = -3/5, independent of t, s and N.
+      C1_flip/C1 = 4(1 + 4Y)/(1 + Y) at 3/5 (4 to 16), (4 + Y)/(16(1 + Y)) at -3/5 (1/16 to 1/4).
+      V2_flip = Y'/(1 + Y') with Y' = 4Y at 3/5 and Y/4 at -3/5; V2_flip/V2 - 1 = 3/(1 + 4Y) and -3/(4 + Y).
+      <A> has the sign of y (the quantum: opposite to y, delta < 1): 251 of 251 rows, every blind point and time.
+      At y = 0: C1_flip/C1 = (1 + delta)/(1 - delta) exactly at LO, and f_flip = f (J0 depends on g only), and
+      Re<P>/(N jbar) = +delta against -delta.
+    Read inside the LO window |line 48 correction| <= 1/10 (out/CONTROLS-SUMMARY.hbp): A1_flip/A1 = 3.9999..4.0000 and
+    0.2499..0.2500 at all 24 point families; V2_flip/V2 1.49..3.94 (3/5, fixed s) and 0.25..0.67 (-3/5, fixed s);
+    at fixed y, s = 6, N = 6561: 1.06..1.37 and 0.73..0.95.
+    Margin: the flipped map's own 1/N correction is not derived here. Inside the window the quantum's is at most 1/10,
+    so allowing the control a correction up to 1/4 keeps A1_flip/A1_quantum within 4[3/4, 5/4]/[9/10, 11/10] = [30/11, 50/9]
+    at 3/5 and [15/88, 25/72] at -3/5: |ratio - 1| >= 19/11 and >= 47/72, so the control misses any tolerance tau <= 1/20
+    by a factor >= 34.5 and >= 13.0, on A1 alone, at every window point, before C1, V2 and the sign are read.
+1b. J dropped (kappa = 0). DERIVED: coherent displacement, sig2 = 0 exactly, so C1 = A1^2/2 and V2 = 1 at LO;
+    A1_drop = 4|y|(1 - cos(delta t))/|delta|; A1_drop/A1 = (1+delta)(1 - cos delta t)/(|delta|(cosh g t - 1)), 3/2 and 3/8
+    as t -> 0 at 3/5 and -3/5, then falling. At 3/5 it crosses 1 (window range 0.72..1.47), so A1 alone is blind there at
+    an isolated time; C1 and V2 still fail (V2 = 1 against Y/(1+Y)); <A> has the sign of y at 3/5 (147 rows) and the
+    quantum's sign at -3/5 (104 rows).
+1c. u set to 0 at the same x (delta' = delta - 1 = -2/5 and -8/5). DERIVED: at 3/5, g' = sqrt(21)/5 > 4/5 and A1_u0/A1
+    rises from 7/2; at -3/5, |delta'| > 1, the side modes oscillate with w = sqrt(39)/5, A1_u0/A1 falls from 13/8 through 1.
+    V2_u0/V2 window ranges 1.42..3.43 (3/5, fixed s), 1.19..4.10 (-3/5, fixed s); at fixed y, s = 6, N = 6561: 1.05..1.35
+    (3/5) and 1.01..1.06 (-3/5).
+1d. Two coupling changes that read null on the magnitudes, DERIVED:
+    - y -> -y (field sign) is an exact symmetry (a+- -> -a+-): A1, C1, V2, D2, f unchanged, <A> flips. So the frame map
+      must carry the sign of Re<A> (the mean of Re Z), or a field-sign error passes every magnitude row.
+    - Weyl against normal ordering of H: H_Weyl - H_normal = -(u/N)(|a0|^2 + |a+|^2 + |a-|^2) + const, the generator of
+      the global phase. The induced drift is a global rotation and changes no U(1)-invariant observable, at every order.
+      (GPT-6's review asks for the induced drift to be frozen with the ordering; for this H it is this global phase.)
+1e. Resolution of a coupling-scale error J -> (1 + eta) J, DERIVED: d ln A1/d kappa = (t/g) coth(g t/2) - 1/(1 + delta),
+    3.14 at t = 2, delta = 3/5. A tolerance tau on A1 detects |eta| > tau/3.14 at t = 2 there: 1.6% at tau = 1/20.
+    A normalization slip N -> N-1 in P/N (eta = 1/(N-1)) moves A1 by 4.8e-4 at N = 6561, t = 2: below a 1/1000 tolerance.
+
+======================================================================
+F2. CHANGED INITIAL PHASE DISTRIBUTION. DERIVED; checked at test points in F7
+======================================================================
+2a. The general leading-order seed formula. With z(t) = cosh(g t) z0 + i sqrt(r) sinh(g t) w0 + mean, z0 = b+ + conj(b-),
+    w0 = b+ - conj(b-), r = (1-delta)/(1+delta), for any zero-mean seed law of the side modes (phase of a0 as reference):
+      sig2 = <|z0|^2> cosh^2 + r <|w0|^2> sinh^2 - 2 sqrt(r) cosh sinh Im<w0 conj(z0)> - 1.
+    The vacuum has <|z0|^2> = <|w0|^2> = 1, Im<w0 conj z0> = 0 (reproduces the law: checked to 1e-40 on all 251 rows).
+    So at LO: A1 depends on the seed's mean only, and is blind to every phase change of a zero-mean seed. C1 and V2
+    depend on the seed only through n_tot = <|b+|^2> + <|b-|^2> and the pair correlation <b+ b-> (relative to a0^2).
+    Single-mode anisotropy (real-only noise with its variance kept, a ring instead of a Gaussian) is null at LO.
+2b. Mode 0's phase fixed. DERIVED, exact at every order: H, |N,0,0>'s side-mode vacuum and every observable read
+    (A, B, P, X, n's) are invariant under the global U(1); fixing a0's phase is a gauge choice. The ensemble with
+    a0 real reads the same distribution for every observable. This change cannot fail: it is an invariance control,
+    predicted MET. (The recheck lane's own TW already fixed a0 real, tw/src/main.rs: psi0 = sqrt((N+1/2)/N), i0 = 0,
+    and was validated against exact V2 at N = 81 and 729.)
+2c. No vacuum noise in modes +- (the noiseless ensemble). DERIVED:
+    - read through the single-trajectory frame (a_m -> sqrt(N) z_m in normal-ordered operators): it is the single
+      trajectory, C1 = (N/(N-1)) A1^2/2 and V2 = (N-1)/N at every t, an identity; at y = 0, A = C1 = 0 and V2 = 0/0,
+      UNDEFINED (GPT-6's review: not a pass, not 1).
+    - read through the ensemble's Weyl frame (the reading the correct ensemble needs, out/test rows T5), every sample is
+      the same trajectory and the exact identity C1_W = (N/(N-1)) A1^2/2 - (2/(N-1))(1 - f_cl/2) holds, with f_cl the
+      classical side-mode weight; at LO C1_W = (2/(N-1))(q^2 - 1), and at y = 0 C1_W = -2/(N-1) exactly at every t.
+    Predicted failure: C1 short of the quantum by the vacuum part, relative 1/(1 + Y) in the normal frame and
+    (1 + 1/sig2)/(1 + Y) in the Weyl frame; V2 = (N-1)/N against Y/(1+Y) in the normal frame, outside [0, 1] in the Weyl
+    frame (negative while q^2 < 1). A1 meets at LO in both.
+    In the window, normal frame, C1_traj/C1 = Y/(1+Y) N/(N-1) runs 0.005..0.84 at the fixed-s points, so the deviation
+    is at least 0.16; at fixed y, s = 6, N = 6561 it runs 0.64..0.93 (3/5) and 0.88..0.98 (-3/5): deviations 7% to 36% and
+    2% to 12%.
+2d. A phase change that is detectable: pair-locked seeds, b-(0) = conj(b+(0)), each mode's marginal exactly the vacuum,
+    only the joint pair phase fixed. DERIVED: <|z0|^2> = 2, <|w0|^2> = 0, so sig2 = cosh(2 g t) against
+    (cosh 2gt - 1)/(1 + delta); A1 unchanged at LO; C1_lock/C1 - 1 = (delta cosh 2gt + 1)/((cosh 2gt - 1)(1 + Y)),
+    tending to delta/(1 + Y); at t = 0, C1_lock = 2/N against 0. At -3/5 the vacuum parts cross at e^(2gt) = 3,
+    t = ln3/(2g) = 0.6866, where this control is blind for an instant. Window ranges C1_lock/C1: 1.29..6.31 (3/5, fixed s),
+    0.55..1.57 (-3/5, fixed s); at fixed y, s = 6, N = 6561: 1.07..2.94 (3/5) and 0.99..1.07 (-3/5, nondiscriminating).
+    The family b- = e^(i phi) conj(b+) gives sig2 = (1 + cos phi) cosh^2 + r(1 - cos phi) sinh^2 - sqrt(r) sin phi sinh 2gt - 1;
+    phi = -pi/2 keeps C1_lock/C1 >= 1.13 at every fixed-s window point (out/CONTROLS-SUMMARY.hbp, lockm), and at large t
+    its vacuum ratio is (1 + sqrt r)^2/(1 + r) = 9/5 at both +-3/5; phi = +pi/2 gives 1/5 there.
+
+======================================================================
+F3. INSUFFICIENT SAMPLING. DERIVED (LO moments), values in out/CONTROLS-CLOSED.hbp (relA, relC, relV, Mc*)
+======================================================================
+Estimators, one shared ensemble (GPT-6's review): A1 = 2|E Z|, C1 = (2N/(N-1)) E[c] with the Weyl per-sample
+c = |Z|^2 - |psi0|^2/N - (|psi+|^2 + |psi-|^2)/(2N) + 1/(2N^2), V2 = ((N-1)/N)|E Z|^2/E[c] (a ratio of separately averaged
+moments). At LO each sample has z = q + i p with q ~ N(qbar, v), p ~ N(0, v), v = (1 + sig2)/2, so the per-sample relative
+standard deviations are
+   A1: sqrt(v)/|qbar|;   C1: sqrt(4v^2 + 4 qbar^2 v)/(qbar^2 + sig2);
+   V2 (delta method with the covariance Cov(Re z, |z|^2) = 2 qbar v): rel^2 = 4v/qbar^2 + (4v^2 + 4qbar^2 v)/D^2 - 8v/D,
+   D = qbar^2 + sig2; at large sig2 rel_V2 -> sqrt(2 + Y)/((1 + Y) sqrt(Y)).
+Bound: e_s = k * rel * O/sqrt(M), k = 3. Threshold M_c(O, tau) = ceil(k^2 rel^2/tau^2): the smallest M whose bound is at or
+below a relative tolerance tau; M_c - 1 is the largest M whose bound exceeds it.
+Reading rule (proposed): MET if |d| + e <= tau O_q; MISS if |d| - e > tau O_q; otherwise NOT RESOLVED; e = e_s + e_int + e_q.
+At M_ins = floor(M_c/9) the bound is about 3 tau, so MET is impossible and MISS needs |d| > 4 tau, a 4-sigma event for a
+correct ensemble (Gaussian 6e-5, Chebyshev 1/16): predicted NOT RESOLVED. At M_c - 1 the bound sits just above tau and
+the reading with a sampled sigma is close to a coin between NOT RESOLVED and MET, so the control is frozen at M_c/9.
+Values, tau = 1/20, k = 3, at the times printed (out/REPRESENTATIVE.txt; LO moments):
+  N=6561 t=2:  (3/5,1/3) M_c(V2) 123,354, M_c(C1) 4,615, M_c(A1) 33,558; (3/5,2/3) 24,679 / 4,328 / 8,390;
+               (3/5,4/3) 3,338 / 3,253 / 2,098; (-3/5,1/3) 22,126 / 3,669 / 7,609; (-3/5,2/3) 2,926 / 2,849 / 1,903;
+               (-3/5,4/3) 239 / 1,367 / 476.
+  N=729 t=1 and N=81 t=1/2: larger (Y smaller): e.g. (3/5,1/3) M_c(V2) 709,211 and 7,675,798.
+  At the earliest times Y is small and V2 is the costliest; near the clocks rel_V2 falls to 0.2..0.5 at Y ~ 2..9.
+
+======================================================================
+F4. THE MATCHED PAIRS. DERIVED; first order from line 48's text (pairs_first.py, out/PAIRS-FIRST.hbp, 82 rows)
+======================================================================
+Pair map: (delta, s) -> (-delta, s sqrt(r)), r = (1-delta)/(1+delta); at delta = 3/5, sqrt(r) = 1/2.
+LO identities, exact at every t (both members have g = 4/5 and the same Y_inf):
+   Y(t) = Y_inf tanh^2(g t/2) with Y_inf = 2s^2/(1+delta) = 5/9 for (3/5,2/3) and (-3/5,1/3), 20/9 for (3/5,4/3) and (-3/5,2/3);
+   so V2 equal; A1 = (4s/sqrt N)(cosh g t - 1)/(1+delta): ratio (s/2)/s * (1+3/5)/(1-3/5) = 2 on the -3/5 member;
+   C1: vacuum part 4 sinh^2/((1+delta)N), ratio 4, coherent part A1^2/2, ratio 4: C1 ratio 4.
+   Checked by evaluation to 1e-40 on all 82 rows (LO_A1_ratio = 2.000000000, LO_C1_ratio = 4, LO_V2_diff = 0).
+First order: A1_first/A1 = |1 + a/N|, a = (w10 + s^2 w11)/w0; C1_first/C1 = 1 + c/N, c = (C10 + s^2 C11 + s^4 C12)/C0. Then
+   A1 ratio = 2(1 + a-/N)/(1 + a+/N) ~ 2(1 + Delta_A/N), C1 ratio ~ 4(1 + Delta_C/N), V2 ratio ~ 1 + (2Delta_A - Delta_C)/N,
+   Delta_A = a- - a+, Delta_C = c- - c+, functions of t alone (N-independent at fixed s). Values (Delta_A, Delta_C, Delta_V):
+   pair (3/5,2/3)~(-3/5,1/3): t=1/2 (0.596, 1.510, -0.318); t=1 (2.254, 2.781, 1.727); t=3/2 (4.340, 2.786, 5.894);
+       t=2 (4.795, -4.229, 13.820); t=5/2 (-2.140, -33.21, 28.93); t=3 (-31.25, -120.7, 58.20).
+   pair (3/5,4/3)~(-3/5,2/3): t=1/2 (1.170, 2.888, -0.548); t=1 (4.740, 9.028, 0.453); t=3/2 (10.52, 18.73, 2.302);
+       t=2 (16.65, 26.65, 6.651); t=5/2 (16.06, 14.33, 17.78); t=3 (-12.01, -69.54, 45.53).
+   The full first-order ratios (not linearized) at N = 81, 729, 6561 are in out/PAIRS-FIRST.hbp; e.g. at t = 2:
+       pair 1: N=6561 A1 2.001470, C1 3.997392, V2 1.002124; N=729 A1 2.013823, C1 3.974182, V2 1.020458;
+       pair 2: N=6561 A1 2.005120, C1 4.016579, V2 1.000978; N=729 A1 2.049582, C1 4.178465, V2 1.005342.
+   N(ratio/leading - 1) tends to Delta as N grows: pair 1, t = 2, A1: 8.48 (81), 5.04 (729), 4.82 (6561) against 4.795.
+   Sign changes, predicted: Delta_A between t = 9/4 and 5/2 (pair 1) and between 11/4 and 3 (pair 2); Delta_C between 7/4
+   and 2 (pair 1) and between 5/2 and 11/4 (pair 2); Delta_V negative through t = 1/2 (pair 1) and 3/4 (pair 2), positive
+   after. Those zero crossings are part of what line 48 predicts.
+   Validity: the first-order size on the -3/5 member is printed per row (fc_size_minus); it passes 1/10 at t ~ 1 (N=81),
+   ~2 (N=729), ~3 (N=6561) on pair 1, and the -3/5 member's clock t_q precedes the +3/5 member's by ln4/(2g) = 0.866.
+What an exact pair identity would contradict: line 48 gives Delta_A, Delta_C, Delta_V nonzero at every printed t except
+near their crossings, so a read with N(ratio/leading - 1) consistent with 0 at N = 729 and 6561 where |Delta| >= 1
+contradicts line 48 at delta = +-3/5 by |Delta|/N, e.g. 7.3e-4 on the A1 ratio of pair 1 at N = 6561, t = 2 and 6.6e-3
+at N = 729; the first-correction stage resolved 1/1000 there on other delta. The single trajectory satisfies the V2
+identity exactly at every N ((N-1)/N on both members), so an exact V2 pair identity is the trajectory's prediction and
+the quantum's V2 ratio 1 + Delta_V/N is the separation.
+Controls on the pairs, DERIVED at LO: the J-flipped map gives A1(-3/5, s/2)/A1(3/5, s) = 1/8 (against 2) and unequal V2
+(Y' = 4Y and Y/4); pair-locked seeds give C1 ratio (4q^2 + cosh 2gt)/(q^2 + cosh 2gt) (against 4); the noiseless
+ensemble keeps all three LO identities, so the pairs do not detect it.
+
+======================================================================
+F5. THE ZERO-FIELD CONTROL y = 0. DERIVED; zero_field.py, out/ZERO-FIELD.hbp
+======================================================================
+Quantum: <A> = 0 and <B> = 0 exactly (y -> -y symmetry; charge n+ - n- = 0 conserved), so A1 = D2 = 0 and V2 = 0 exactly
+wherever C1 > 0 (t > 0). C1 = C0/N + C10/N^2 + O(N^-3) with C0 = 4 sinh^2(gt)/(1+delta), and f = 2(J0 + J1/N)/N, J0 =
+sinh^2(gt)/g^2, J1 the README's form.
+Energy identity, exact at u = 1, y = 0: C1 = 4(1 - delta) jbar/(N - 1) - C2, so with <n+ n-> = 2J0^2 + J0,
+C10 = 4(1 - delta)(J0 + J1) - 4J0^2 - 2J0. Line 48's C10 at s = 0 equals it within 1e-53 at delta = 3/5, -3/5, 1/2, 0 and
+t = 1/2..4 (28 rows, out/ZERO-FIELD.hbp, ZF_IDENTITY): an independent check of line 48 at the reserved delta, by closed
+form, and at delta = 0 by hand (C10 = 6t sinh 2t - (5/2)cosh 4t + 3cosh 2t - 1/2 reproduced term by term).
+Values, e.g. N = 6561, t = 2: delta = 3/5 C1_law 0.002150328, C1_first 0.002133933, f_first 0.002676550;
+delta = -3/5 C1_law 0.008601315, C1_first 0.008513625, f_first 0.002662484.
+Single trajectory: stays at the fixed point, A1 = C1 = f = D2 = 0 at every t, V2 = 0/0 UNDEFINED: C1 and f read MISS with
+relative error exactly 1; V2 is printed UNDEFINED and counted in neither MET nor MISS.
+Ensemble: C1, f meet; A1 and D2 read as consistent with 0 against their sampling bound; V2 carries a positive bias
+E[V2] ~ (1 + sig2)/(M sig2) (x M: 1.14 at delta=3/5, t=2), read against 0 with its bound.
+Noiseless ensemble, Weyl frame: C1 = -2/(N-1) exactly at every t. J-flipped map: C1 x (1+delta)/(1-delta) = 4 or 1/4, f
+unchanged at LO. Pair-locked seeds: C1 x (1+delta) cosh(2gt)/(cosh 2gt - 1).
+
+======================================================================
+F6. SAMPLING COST AGAINST THE PRECISION THE BRIDGE ASKS FOR. DERIVED (LO moments); residual sizes CONJECTURE
+======================================================================
+At fixed s the LO per-sample relative standard deviations depend on Y and g t only, not on N (the vacuum part and the
+coherent part both scale as 1/N). So the samples needed for a relative precision rho are about 9 rel^2/rho^2 at every N:
+for C1 at (3/5, 1/3), t = 2, rel = 1.132: 1.2e5 samples for rho = 1/100, 1.2e7 for 1/1000, 1.2e9 for 1/10000.
+GPT-6's review asks that the ensemble's residual be resolved well enough to tell a 9-like decline from an 81-like decline.
+If the ensemble is exact through first order (DERIVED by the Moyal argument: for observables at most quadratic in the
+side modes the first-order Moyal bracket equals the Poisson bracket, and the H ordering is a global phase, F1d), its
+residual against the quantum is second order. Its size is not derived here (CONJECTURE: of order (e^(2gt)/N)^2 times
+an O(1) coefficient, about 1e-3 at N = 729, t = 2 and 1e-5 at N = 6561). Reading it at N = 6561 then needs about 1e9
+to 1e11 plain samples, while between N = 81 and 729 it needs about 1e5 to 1e7. Predicted: a plain-sampling ensemble at
+N = 6561 with M below about 1e9 reads the 9-versus-81 diagnostic NOT RESOLVED; the diagnostic is resolvable between
+N = 81 and 729 by plain sampling, or at 6561 with exact Gaussian-moment propagation or another variance reduction.
+
+======================================================================
+F7. RUNS AT TEST POINTS (never a reserved point). MEASURED; predictions frozen first
+======================================================================
+What ran: twctl (twctl/src/main.rs, Rust 1.81, cargo fmt --check exit 0, clippy --release -D warnings exit 0, no
+floating type in the source), an integer truncated-Wigner sampler: fields at 2^40, RK4 at dt = 1/64, Gaussians as exact
+binomials, switches for the pair coupling (+1, -1, 0), the seed law (vac, none, lock0) and mode 0's phase (fixed,
+random, random30). Points: N = 6561, delta = 1/2 and -1/2, y = 1/162 (s = 1/2) and y = 0, t = 1, 2, u = 1, M = 240,000
+(4 threads, one process at a time). Driver and reader: test_run.py, test_t1b.py.
+Order: out/TEST-PREDICTIONS.hbp (sha256 c15a989dd352f90e1ea552dd87d55ca8fd3baba26ebbfbdac03c4a83ab868862) written by
+test_predict.py at 21:07:34Z; runs 21:11:26Z to 21:14:53Z; read out/TEST-READ.hbp (sha256 e002d770...58224), raw sums
+out/TEST-RUNS.hbp (sha256 331dc0a6...aacc5).
+Read: 83 frozen checks MET, 23 MISS, plus 4 INFO rows that the reader also printed as MET (READ_T7_INFO; they carry no
+limit, so the reader's "met=87" counts them: corrected here, the file stands).
+  T5 correct ensemble against line 48 (law + first correction), within 1/500 + 3se: 16 of 16 MET, sign of Re Z negative
+     at all 4. Sampling limits the V2 check: se is 1.6% of V2 at t = 1 and 0.7% at t = 2, so these rows read V2 at that
+     level; A1 and C1 within 0.3% to 0.9% of line 48. On C1 at t = 2 the read separates line 48 from the law alone:
+     delta = 1/2, read over first 1.0016 and over the law 0.9915, se 0.22%, so 0.7 se from first and 3.9 se from the law;
+     delta = -1/2, 1.0014 and 0.9876, se 0.20%, 0.7 se and 6.4 se. On A1 at t = 2 the read sits 0.8 and 0.7 se from the law
+     and 2.1 and 1.9 se from line 48 (its correction is -0.5%, se 0.37% and 0.21%; the two delta share one Gaussian
+     stream), which this M does not resolve: OPEN. On V2 line 48 and the law differ by 0.04%, below the 0.7% se.
+  T1 mode-0 phase random (each sample rotated as a whole) against fixed: 16 of 16 MISS at the frozen 1e-6: relative
+     differences 2.0e-6 to 1.0e-5. Diagnosis, named before the rerun (out/TEST-PREDICTIONS-T1B.hbp, sha256 2894ec5c...c397,
+     21:17:47Z): the integer unit vector came from 20-bit integers, so its norm was off by up to 2^-20. Rerun with 30-bit
+     integers (norm within 2^-29), phase mode random30: 16 of 16 MET at 1e-7, relative differences 1.4e-9 to 6.8e-9
+     (out/TEST-READ-T1B.hbp, sha256 53223821...2346d). The 16 misses stay; the null holds to the rounding of the rotation.
+  T3 pair coupling flipped against the law at -delta (LO), within 3% + 3se: 15 of 16 MET; the sign of Re Z is positive at
+     all 4 (the correct ensemble: negative). MISS: C1 at delta = -1/2, t = 2, read 0.0034119 against 0.0035428, ratio 0.963,
+     limit 3.6%. Read over the law at -delta, in the order (1/2, t=1), (1/2, t=2), (-1/2, t=1), (-1/2, t=2): A1 0.998,
+     0.991, 0.987, 0.974; C1 1.001, 0.984, 1.000, 0.963. So the flipped map's own 1/N correction reaches -3.7% on C1 at
+     (-1/2, t = 2), against -1.0% for line 48's C1 correction of the correct model at the image point (+1/2, t = 2:
+     law 0.0035428, first 0.0035072). The 1/4 allowance used for the margins in F1a covers it; the 3% test allowance did
+     not.
+  T4 pair-locked seeds against the seed formula: 12 of 12 MET; C1 read over the LO formula 1.001, 0.990, 1.002, 0.994,
+     A1 unchanged within 1.8% (sampling).
+  T2b noiseless at y = 1/162: the identity C1_W - (N/(N-1))A1^2/2 + (2/(N-1))(1 - f_cl/2) = 0 holds to 7.9e-13..2.7e-12
+     (4 of 4 MET); A1 equals the LO law within 0.1% (4 of 4 MET); V2 in the trajectory frame equals (N-1)/N within
+     6.7e-10 and 3.1e-10 at delta = -1/2 (MET) and is off by 7.2e-8 and 2.8e-9 at delta = 1/2 (MISS at the frozen 1e-9).
+     Diagnosis, MEASURED from the filed sums: each sample's |Z|^2 is truncated by 0.07 to 0.85 of one unit of 2^-40, which
+     at |Z|^2 = 1.08e-5 is 7.2e-8 relative. The misses stay; the identity holds to that truncation.
+  T2a noiseless at y = 0: every sum of Z, f and |Z|^2 is exactly 0 (4 of 4 MET); V2 in the trajectory frame is 0/0,
+     printed UNDEFINED (4 of 4 MET); C1_W = -0.000304878047570 against -2/(N-1) = -0.000304878048780, off by 1.20e-12 (4 of
+     4 MISS at the frozen 1e-12). Diagnosis, MEASURED: the filed per-sample c equals the integer formula's value exactly
+     (-167,582,933 units of 2^-40), so the offset is the binary's rounding of 1/N and 1/(2N^2). The misses stay.
+  T7 correct ensemble at y = 0: C1 and f against line 48 and 2(J0 + J1/N)/N within 1/500 + 3se, 8 of 8 MET (ratios
+     0.9973 to 0.9996 on C1, 0.9970 to 0.9983 on f); A1 consistent with 0, 4 of 4 MET (|E Z| at 1.75 standard errors in
+     the shared stream). V2 x M reads 5.45, 3.49, 3.71, 2.74 against the LO mean bias 1.78, 1.10, 1.26, 1.03: these rows
+     share one Gaussian stream, so they are one draw of an exponential variable, about 3 times its mean.
+  T8 pair coupling flipped at y = 0: C1 at (1+delta)/(1-delta) times the correct C1 (3 and 1/3), and f unchanged, within
+     3% + 3se: 8 of 8 MET (C1 read over prediction 1.003, 0.991, 1.002, 0.974; f 1.003, 0.998, 1.004, 0.995).
+  T6 insufficient sampling, V2 at delta = 1/2, y = 1/162, t = 2, tau = 1/20 of the line-48 value: M_c = 39,139 from the
+     LO moments; at M_ins = 4,348 the bound 3se = 0.0213 against tau = 0.0070 and the row reads NOT RESOLVED, as frozen;
+     at M_suf = 156,556 the bound is 0.0035, |d| = 0.0012, and the row reads MET, as frozen. 2 of 2 MET.
+Changes after the freeze, beside the frozen text:
+  - TEST_SETUP prints binary_src_sha256=b601ed95..._before_fmt: that hash is of the source after cargo fmt; the label is
+    wrong, the hash stands.
+  - The frozen rule reads f with 3se; the frozen binary did not accumulate the sum of f^2. One accumulator (sum_f2) was
+    added before the runs; the shared output fields are byte-identical to the frozen binary's on a 4,000-sample run
+    (out/eq_old.txt = out/eq_new.txt, sha256 27ddfac9...b38c5); the same check passed for the random30 build.
+  - The test rows read the quantum through line 48 (law + first correction) at the test points; no quantum route ran here.
+
+======================================================================
+F8. WHAT STAYS OPEN, AND WHAT WOULD SETTLE EACH
+======================================================================
+- The controls' own 1/N corrections are not derived. The window margins carry an allowance of 1/4 for them; the one
+  measured case, the flipped map at delta = -1/2, t = 2, N = 6561, reads -3.7% on C1. Settled by the first-order machine
+  (t5_firstcorr.py) run with kappa = -1, 0 and with the seed laws of F2, at non-reserved delta, then reconstructed in delta.
+- Past the window and at the clocks t_q, t_tr, no control value is predicted in closed form; only identities hold there
+  (noiseless: V2 = (N-1)/N in the trajectory frame; the Weyl identity of F2c; the flipped map's sign, through t_q at LO).
+  Settled by the bridge's own runs after the freeze, reading these controls at the frozen times.
+- The tolerance tau and the sample times are the bridge row's: margins here are stated at tau = 1/20 and on the grid
+  t = k/2 plus the eighths around t_q and t_tr (out/CONTROLS-CLOSED.hbp); ctrl_closed.py evaluates any frozen rational t.
+- The ensemble's first-order exactness is an argument (F6), consistent on C1 at the test points (3.9 and 6.4 se from the
+  law, 0.7 se from line 48) and unresolved on A1 at this M. Settled by a larger M at N = 729 or variance reduction.
+- The second-order residual of the ensemble against the quantum: size CONJECTURE (F6). Settled by the bridge's 81 and
+  729 rows, where plain sampling can reach it.
+- The fabric, recall and owning seats were not asked from this lane; the task named the folder and the issue as scope.
+  CANNOT_SEE, not FALSE.
+- Nothing here was committed, pushed or posted. No run touched delta = +-3/5 or y = 2/27.
+
+CORRECTIONS BESIDE (made before delivery; the first text is quoted so the change is visible):
+- F1a first read "within [3, 5] at 3/5 and [3/16, 5/16] at -3/5 ... factor >= 40 and >= 13.75": that band applied the 1/4
+  allowance to the control and ignored the quantum's own 1/10; with both, [30/11, 50/9] and [15/88, 25/72], factors 34.5
+  and 13.0. PROPOSED-ROWS carries the corrected band.
+- F4 first read "N=729 A1 2.013824" for pair 1 at t = 2: the file's value is 2.01382335, so 2.013823 truncated.
+- F4 first read "Delta_A ... between 5/2 and 11/4 on pair 2" and "Delta_V negative at t <= 1/2..3/4": counted from
+  out/PAIRS-FIRST.hbp, pair 2 changes sign between 11/4 and 3, and the Delta_V crossings are after 1/2 and after 3/4.
+- F1c, F2c, F2d first quoted the fixed-y ranges for one sign of delta only; both are now printed.

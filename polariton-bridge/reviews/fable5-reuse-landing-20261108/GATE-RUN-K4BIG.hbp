@@ -1,0 +1,8 @@
+K4BIG_RUN|engine=twens03|rc=0|wall_ms=40352|json=0
+K4BIG_RUN|engine=twens04-memo|rc=0|wall_ms=38606|json=0
+K4BIG_MEMO_ROW|TWB_MEMO|count=4194304|per_sample=none|k4=V1|k4_core=ball_r88|k4_in_core=3736948|k4_distinct=3685002|k4_outside=457356|k4_wraps=0|k2=none|k2_core=box_255|k2_in_core=0|k2_distinct=0|k2_outside=0|ps_samples=0|integrations=4142358|plain_integrations=4194304|json=0
+K4BIG_RUN|engine=mut-F3_dropped_count-memo|rc=0|wall_ms=41306|json=0
+K4BIG_MEMO_ROW|TWB_MEMO|count=4194304|per_sample=none|k4=V1|k4_core=ball_r88|k4_in_core=3736948|k4_distinct=3685002|k4_outside=457356|k4_wraps=0|k2=none|k2_core=box_255|k2_in_core=0|k2_distinct=0|k2_outside=0|ps_samples=0|integrations=4142358|plain_integrations=4194304|json=0
+MERGE|case=k4big_union_ref03_part_twens04-memo|rc=0|CMP_DONE|parts=1|rows=9|integer_fields_compared=264|result=EQUAL|json=0 
+MERGE|case=k4big_union_ref03_part_mut-F3_dropped_count-memo|rc=1|CMP_FAIL|check=sum_differs:zr:('TWENS', '0', 'V1')|json=0 
+K4BIG_DONE|sha256sums=d5a31846abd449090cd4cd25bc0d2c7119a323a13e7bed28a899c4ffecb52a2b|json=0
