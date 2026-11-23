@@ -1,0 +1,25 @@
+name: V7 signed crossing acceptance
+on:
+  pull_request:
+    paths:
+      - 'tests/v7_signed_crossing.rs'
+      - '.github/workflows/v7-signed-crossing.yml'
+      - 'src/**'
+      - 'results-v7/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  signed-crossing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust 1.81
+        run: rustup toolchain install 1.81.0 --profile minimal --component clippy
+      - name: Source integrity
+        run: cd results-v7 && sha256sum --check SHA256SUMS
+      - name: Strict Clippy
+        run: cargo +1.81.0 clippy --offline --locked --test v7_signed_crossing -- -D warnings
+      - name: Native exact checkpoint comparison
+        run: cargo +1.81.0 test --offline --locked --release --test v7_signed_crossing -- --nocapture
