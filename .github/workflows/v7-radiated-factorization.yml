@@ -1,0 +1,18 @@
+name: V7 radiated factorization
+on:
+  pull_request:
+    paths:
+      - 'tests/v7_radiated_factorization.rs'
+      - '.github/workflows/v7-radiated-factorization.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  radiated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install 1.81.0 --profile minimal --component clippy
+      - run: cd results-v7 && sha256sum --check SHA256SUMS
+      - run: cargo +1.81.0 clippy --offline --locked --test v7_radiated_factorization -- -D warnings
+      - run: cargo +1.81.0 test --offline --locked --release --test v7_radiated_factorization -- --nocapture
