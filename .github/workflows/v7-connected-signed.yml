@@ -1,0 +1,19 @@
+name: V7 connected signed network
+on:
+  pull_request:
+    paths:
+      - 'tests/v7_connected_signed.rs'
+      - '.github/workflows/v7-connected-signed.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  connected:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install 1.81.0 --profile minimal --component clippy
+      - run: cd results-v7 && sha256sum --check SHA256SUMS
+      - run: cargo +1.81.0 clippy --offline --locked --test v7_connected_signed -- -D warnings
+      - run: cargo +1.81.0 test --offline --locked --release --test v7_connected_signed -- --nocapture
