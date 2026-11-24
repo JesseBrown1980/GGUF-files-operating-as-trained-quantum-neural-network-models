@@ -1,0 +1,17 @@
+name: V7 hybrid crossover
+on:
+  pull_request:
+    paths:
+      - 'tests/v7_hybrid_crossover.rs'
+      - '.github/workflows/v7-hybrid-crossover.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  crossover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install 1.81.0 --profile minimal --component clippy
+      - run: cargo +1.81.0 clippy --offline --locked --test v7_hybrid_crossover -- -D warnings
+      - run: cargo +1.81.0 test --offline --locked --release --test v7_hybrid_crossover -- --nocapture
