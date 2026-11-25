@@ -32,7 +32,7 @@ fn coefficients(j: usize, b: i128) -> [[i128;3];3] {
     let a=6561i128;
     let c=a*a-b*b; let s=2*a*b; let d=a*a+b*b;
     let mut m=[[0;3];3];
-    m[0][0]=c; m[j][j]=c; m[0][j]=-s; m[j][0]=s; m[3-j][3-j]=d;
+    m[0][0]=c; m[j][j]=c; m[0][j] = -s; m[j][0]=s; m[3-j][3-j]=d;
     m
 }
 fn active_gates(params: &[i64]) -> Vec<Gate> {
